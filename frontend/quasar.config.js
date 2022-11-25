@@ -65,6 +65,7 @@ module.exports = configure(function (/* ctx */) {
       // analyze: true,
       env: {
         SOCKETIO_ENDPOINT: "http://127.0.0.1:5000",
+        API_ENDPOINT: "http://127.0.0.1:5000/api",
       },
       // rawDefine: {}
       // ignorePublicFolder: true,

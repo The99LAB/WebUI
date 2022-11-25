@@ -1,8 +1,10 @@
 from flask import Flask
 from flask_socketio import SocketIO, Namespace, emit
+from flask_cors import CORS
 import psutil
 
 app = Flask(__name__)
+CORS(app)
 socketio = SocketIO(app, cors_allowed_origins='http://localhost:9000')
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 vm_results = [{
@@ -14,14 +16,13 @@ vm_results = [{
 
 },
     {
-    "uuid": "1",
+    "uuid": "2",
     "name": "macOS-Ventura",
     "memory": "8192",
     "vcpus": "4",
     "state": 'Running'
 
 }]
-# socketio = SocketIO(app, cors_allowed_origins='http://localhost:8080')
 
 
 @socketio.on('connect')
@@ -43,10 +44,24 @@ def get_mem_usage():
 def get_vm_results():
     print("get vm results")
     emit("vm_results", vm_results)
-# class DownloadISO(Namespace):
-#     def on_connect(self):
-#         emit("testevent", "connected")
-# socketio.on_namespace(DownloadISO('/testnamespace'))
+
+
+@app.route('/api/startvm/<uuid>', methods=['POST'])
+def startvm(uuid):
+    print("request to start vm with uuid: " + uuid)
+    return "Succeed"
+
+
+@app.route('/api/stopvm/<uuid>', methods=['POST'])
+def stopvm(uuid):
+    print("request to stop vm with uuid: " + uuid)
+    return "Succeed"
+
+
+@app.route('/api/forcestopvm/<uuid>', methods=['POST'])
+def forcestopvm(uuid):
+    print("request to forcestop vm with uuid: " + uuid)
+    return "Succeed"
 
 
 if __name__ == '__main__':

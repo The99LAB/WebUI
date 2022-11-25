@@ -43,6 +43,7 @@
 <script>
 import { ref } from 'vue'
 import io from "socket.io-client";
+import { api } from 'src/boot/axios'
 
 const selected = ref()
 
@@ -83,16 +84,18 @@ export default {
       this.socket.emit("vm_results")
     },
     startVm(uuid) {
-      console.log(uuid)
-      console.log("start vm")
+      console.log("starting vm with uuid", uuid)
+      api.post("startvm/" + uuid)
+        .then(response => console.log("resoponse from startvm", response))
+        .catch(error => {
+          console.log("Error starting vm with uuid", uuid, "error", error);
+        });
     },
     stopVm(uuid) {
-      console.log(uuid)
-      console.log("stop vm")
+      console.log("stopping vm with uuid", uuid)
     },
     forceStopVm(uuid) {
-      console.log(uuid)
-      console.log("force stop vm")
+      console.log("force stopping vm with uuid", uuid)
     }
   },
   created() {
@@ -101,6 +104,7 @@ export default {
   mounted() {
     this.socket.on("vm_results", (msg) => {
       console.log("vm results:", msg)
+      this.rows = msg
     })
   }
 }
