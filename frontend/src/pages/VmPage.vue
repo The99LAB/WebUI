@@ -29,6 +29,7 @@
               <q-btn class="q-ma-sm" color="primary" icon="mdi-stop" label="Stop" v-if="props.row.state == 'Running'" @click="stopVm(props.row.uuid)"  />
               <q-btn class="q-ma-sm" color="primary" icon="mdi-bomb" label="Force stop" v-if="props.row.state == 'Running'" @click="forceStopVm(props.row.uuid)" />
               <q-btn  class="q-ma-sm" color="primary" icon="mdi-eye" label="VNC" v-if="props.row.VNC && props.row.state=='Running'" @click="vncVm(props.row.uuid)"/>
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-pencil" label="Edit" v-if="props.row.state == 'Shutdown'" @click="editVm(props.row.uuid)"/>
             </div>
           </q-td>
         </q-tr>
@@ -97,6 +98,9 @@ export default {
       console.log("vnc vm with uuid", uuid)
       // open vnc in new tab
       window.open(process.env.VNC_ENDPOINT_PROTOCOOL + "://" + window.location.hostname + ":"+ process.env.VNC_ENDPOINT_PORT + "/vnc.html?autoconnect=true&?resize=scale&?path=?token=" + uuid, "_blank")
+    },
+    editVm(uuid) {
+      console.log("edit vm with uuid", uuid)
     },
   },
   created() {
