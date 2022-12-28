@@ -53,20 +53,6 @@ import ErrorDialog from 'src/components/ErrorDialog.vue'
 const selected = ref()
 
 const rows = [
-  {
-    uuid: "1",
-    name: 'Windows 10',
-    memory: 2048,
-    vcpus: 6,
-    state: 'Running'
-  },
-  {
-    uuid: "2",
-    name: 'Windows 11',
-    memory: 2048,
-    vcpus: 4,
-    state: 'Running'
-  }
 ]
 
 const columns = [
