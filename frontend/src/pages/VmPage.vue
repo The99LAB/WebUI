@@ -128,6 +128,10 @@ export default {
     this.socket = io(process.env.SOCKETIO_ENDPOINT);
   },
   mounted() {
+    this.socket.emit("vm_results")
+    this.vmresultInterval = setInterval(() => {
+      this.socket.emit("vm_results")
+    }, 1000)
     this.socket.on("vm_results", (msg) => {
       console.log("vm results:", msg)
       this.rows = msg
