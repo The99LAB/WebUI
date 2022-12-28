@@ -82,7 +82,6 @@ export default {
       rows,
       columns,
       selected,
-      val1: false,
     }
   },
   components: {
@@ -132,6 +131,9 @@ export default {
     this.socket.on("vm_results", (msg) => {
       console.log("vm results:", msg)
       this.rows = msg
+    })
+    this.socket.on("connect_error", (msg) => {
+      this.$refs.errorDialog.showAlert("Connection Error", ["Could not connect to the backend server.", msg])
     })
   }
 }
