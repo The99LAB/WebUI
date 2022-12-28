@@ -1,7 +1,5 @@
 <template>
   <q-page padding>
-    <h4>Vm Manager</h4>
-    <q-btn color="primary" label="Get Results" @click="getVmResults" />
     <q-table :rows="rows" :columns="columns" row-key="uuid" separator="none" hide-pagination>
       <template #body="props">
         <q-tr :props="props">
@@ -27,7 +25,6 @@
               {{ props.row.uuid }}
             </div>
             <div>
-
               <q-btn class="q-ma-sm" color="primary" icon="mdi-play" label="Start" @click="startVm(props.row.uuid)" />
               <q-btn class="q-ma-sm" color="primary" icon="mdi-stop" label="Stop" @click="stopVm(props.row.uuid)" />
               <q-btn class="q-ma-sm" color="primary" icon="mdi-bomb" label="Force stop"
@@ -41,7 +38,6 @@
     </q-table>
     <ErrorDialog ref="errorDialog"></ErrorDialog>
   </q-page>
-  
 </template>
 
 <script>
