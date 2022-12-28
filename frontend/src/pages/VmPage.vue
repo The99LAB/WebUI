@@ -1,75 +1,129 @@
 <template>
   <q-page padding>
-    <q-btn color="primary" label="Get Results" @click="getVmResults" />
     <h4>Vm Manager</h4>
-    <q-table :rows="rows" :columns="columns" row-key="name" separator="none" hide-pagination @row-click="rowClick" />
+    <q-btn color="primary" label="Get Results" @click="getVmResults" />
+    <q-table :rows="rows" :columns="columns" row-key="uuid" separator="none" hide-pagination>
+      <template #body="props">
+        <q-tr :props="props">
+          <q-td key="name" :props="props">
+            <q-btn flat round :icon="props.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
+              @click="props.expand = !props.expand" no-caps :label=props.row.name
+              class="text-weight-regular text-body2" />
+          </q-td>
+          <q-td key="state" :props="props" class="text-weight-regular text-body2">
+            {{ props.row.state }}
+          </q-td>
+          <q-td key="memory" :props="props" class="text-weight-regular text-body2">
+            {{ props.row.memory }}
+          </q-td>
+          <q-td key="vcpus" :props="props" class="text-weight-regular text-body2">
+            {{ props.row.vcpus }}
+          </q-td>
+        </q-tr>
 
+        <q-tr v-show="props.expand" :props="props">
+          <q-td colspan="100%">
+            <div>
+              {{ props.row.uuid }}
+            </div>
+            <div>
+
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-play" label="Start" @click="startVm(props.row.uuid)" />
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-stop" label="Stop" @click="stopVm(props.row.uuid)" />
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-bomb" label="Force stop"
+                @click="forceStopVm(props.row.uuid)" />
+              <q-btn  class="q-ma-sm" color="primary" icon="mdi-eye" label="VNC" v-if="props.row.VNC" @click="vncVm(props.row.uuid)"/>
+            </div>
+          </q-td>
+        </q-tr>
+
+      </template>
+    </q-table>
+    <ErrorDialog ref="errorDialog"></ErrorDialog>
   </q-page>
-
+  
 </template>
 
 <script>
+import { ref } from 'vue'
 import io from "socket.io-client";
-const columns = [
-  {
-    name: 'name',
-    required: true,
-    label: 'Name',
-    align: 'left',
-    field: 'name',
-    sortable: true
-  },
-  {
-    name: 'memory',
-    required: true,
-    label: 'Memory',
-    align: 'left',
-    field: 'memory',
-    sortable: true
-  },
-  {
-    name: 'vcpus',
-    required: true,
-    label: 'Cpus',
-    align: 'left',
-    field: 'vcpus',
-    sortable: true
-  },
-  {
-    name: 'state',
-    required: false,
-    label: 'State',
-    align: 'left',
-    field: 'state',
-    sortable: true
-  },
-]
+import { api } from 'src/boot/axios'
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+
+const selected = ref()
 
 const rows = [
   {
+    uuid: "1",
     name: 'Windows 10',
-    uuid: "SOME_UUID",
     memory: 2048,
     vcpus: 6,
-    state: "Running"
+    state: 'Running'
   },
+  {
+    uuid: "2",
+    name: 'Windows 11',
+    memory: 2048,
+    vcpus: 4,
+    state: 'Running'
+  }
 ]
+
+const columns = [
+  { label: 'Name', field: 'name', name: 'name', align: 'left' },
+  { label: 'State', field: 'state', name: 'state', align: 'left' },
+  { label: 'Memory', field: 'memory', name: 'memory', align: 'left' },
+  { label: 'Cpus', field: 'vcpus', name: 'vcpus', align: 'left' }
+]
+
 export default {
   data() {
     return {
+      rows,
       columns,
-      rows
+      selected,
+      val1: false,
     }
+  },
+  components: {
+    ErrorDialog,
   },
   methods: {
     getVmResults() {
       this.socket.emit("vm_results")
     },
-    rowClick(event, row) {
-      // Here you can navigato to where ever you have to
-      // this.$router.push('home')
-      console.log(row);
-    }
+    startVm(uuid) {
+      console.log("starting vm with uuid", uuid)
+      api.post("vm-manager/" + uuid + "/start")
+        .then(response => console.log("resoponse from startvm", response))
+        .catch(error => {
+          this.$refs.errorDialog.showAlert("Error starting VM", ["vm uuid: " + uuid, "Error: " + error])
+        });
+    },
+    stopVm(uuid) {
+      console.log("stopping vm with uuid", uuid)
+      api.post("vm-manager/" + uuid+ "/stop")
+        .then(response => console.log("resoponse from stopvm", response))
+        .catch(error => {
+          this.$refs.errorDialog.showAlert("Error stopping VM", ["vm uuid: " + uuid, "Error: " + error])
+        });
+    },
+    forceStopVm(uuid) {
+      console.log("force stopping vm with uuid", uuid)
+      api.post("vm-manager/" + uuid + "/forcestop")
+        .then(response => console.log("resoponse from forcestopvm", response))
+        .catch(error => {
+          this.$refs.errorDialog.showAlert("Error force stopping VM", ["vm uuid: " + uuid, "Error: " + error])
+        });
+    },
+    vncVm(uuid) {
+      console.log("vnc vm with uuid", uuid)
+      api.post("vm-manager/" + uuid + "/vnc")
+        .then(response => console.log("resoponse from vncvm", response))
+        .catch(error => {
+          console.log("Error vnc vm with uuid", uuid, "error", error);
+        });
+    },
   },
   created() {
     this.socket = io(process.env.SOCKETIO_ENDPOINT);
@@ -77,6 +131,7 @@ export default {
   mounted() {
     this.socket.on("vm_results", (msg) => {
       console.log("vm results:", msg)
+      this.rows = msg
     })
   }
 }

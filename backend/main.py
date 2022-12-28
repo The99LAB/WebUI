@@ -12,15 +12,16 @@ vm_results = [{
     "name": "win10",
     "memory": "4096",
     "vcpus": "8",
-    "state": 'Running'
-
+    "state": 'Running', 
+    "VNC": True
 },
     {
     "uuid": "2",
     "name": "macOS-Ventura",
     "memory": "8192",
     "vcpus": "4",
-    "state": 'Running'
+    "state": 'Running',
+    "VNC": False
 
 }]
 
@@ -46,19 +47,19 @@ def get_vm_results():
     emit("vm_results", vm_results)
 
 
-@app.route('/api/startvm/<uuid>', methods=['POST'])
+@app.route('/api/vm-manager/<uuid>/start', methods=['POST'])
 def startvm(uuid):
     print("request to start vm with uuid: " + uuid)
     return "Succeed"
 
 
-@app.route('/api/stopvm/<uuid>', methods=['POST'])
+@app.route('/api/vm-manager/<uuid>/stop', methods=['POST'])
 def stopvm(uuid):
     print("request to stop vm with uuid: " + uuid)
     return "Succeed"
 
 
-@app.route('/api/forcestopvm/<uuid>', methods=['POST'])
+@app.route('/api/vm-manager/<uuid>/forcestop', methods=['POST'])
 def forcestopvm(uuid):
     print("request to forcestop vm with uuid: " + uuid)
     return "Succeed"
