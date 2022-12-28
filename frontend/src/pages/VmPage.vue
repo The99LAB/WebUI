@@ -70,9 +70,6 @@ export default {
     ErrorDialog,
   },
   methods: {
-    getVmResults() {
-      this.socket.emit("vm_results")
-    },
     startVm(uuid) {
       console.log("starting vm with uuid", uuid)
       api.post("vm-manager/" + uuid + "/start")
