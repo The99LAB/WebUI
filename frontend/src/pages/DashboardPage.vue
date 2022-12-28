@@ -14,12 +14,13 @@
         </q-circular-progress>
       </div>
     </div>
-
+    <ErrorDialog ref="errorDialog"></ErrorDialog>
   </q-page>
 </template>
 
 <script>
 import io from "socket.io-client";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
@@ -29,6 +30,9 @@ export default {
       mem_progress: 0,
       mem_progress_text: ""
     }
+  },
+  components: {
+    ErrorDialog,
   },
   created() {
     this.socket = io(process.env.SOCKETIO_ENDPOINT);
@@ -52,6 +56,9 @@ export default {
     this.socket.on("mem_usage", (msg) => {
       this.mem_progress = msg
       this.mem_progress_text = msg + "%"
+    })
+    this.socket.on("connect_error", (msg) => {
+      this.$refs.errorDialog.showAlert("Connection Error", ["Could not connect to the backend server.", msg])
     })
   },
   beforeUnmount() {
