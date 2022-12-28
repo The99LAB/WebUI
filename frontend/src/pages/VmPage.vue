@@ -25,11 +25,10 @@
               {{ props.row.uuid }}
             </div>
             <div>
-              <q-btn class="q-ma-sm" color="primary" icon="mdi-play" label="Start" @click="startVm(props.row.uuid)" />
-              <q-btn class="q-ma-sm" color="primary" icon="mdi-stop" label="Stop" @click="stopVm(props.row.uuid)" />
-              <q-btn class="q-ma-sm" color="primary" icon="mdi-bomb" label="Force stop"
-                @click="forceStopVm(props.row.uuid)" />
-              <q-btn  class="q-ma-sm" color="primary" icon="mdi-eye" label="VNC" v-if="props.row.VNC" @click="vncVm(props.row.uuid)"/>
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-play" label="Start" v-if="props.row.state != 'Running'" @click="startVm(props.row.uuid)" />
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-stop" label="Stop" v-if="props.row.state == 'Running'" @click="stopVm(props.row.uuid)"  />
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-bomb" label="Force stop" v-if="props.row.state == 'Running'" @click="forceStopVm(props.row.uuid)" />
+              <q-btn  class="q-ma-sm" color="primary" icon="mdi-eye" label="VNC" v-if="props.row.VNC && props.row.state=='Running'" @click="vncVm(props.row.uuid)"/>
             </div>
           </q-td>
         </q-tr>
