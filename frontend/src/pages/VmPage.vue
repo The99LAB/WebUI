@@ -96,11 +96,8 @@ export default {
     },
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid)
-      api.post("vm-manager/" + uuid + "/vnc")
-        .then(response => console.log("resoponse from vncvm", response))
-        .catch(error => {
-          console.log("Error vnc vm with uuid", uuid, "error", error);
-        });
+      // open vnc in new tab
+      window.open(process.env.VNC_ENDPOINT_PROTOCOOL + "://" + window.location.hostname + ":"+ process.env.VNC_ENDPOINT_PORT + "/vnc.html?autoconnect=true&?resize=scale&?path=?token=" + uuid, "_blank")
     },
   },
   created() {

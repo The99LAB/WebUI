@@ -66,6 +66,8 @@ module.exports = configure(function (/* ctx */) {
       env: {
         SOCKETIO_ENDPOINT: "http://127.0.0.1:5000",
         API_ENDPOINT: "http://127.0.0.1:5000/api",
+        VNC_ENDPOINT_PROTOCOOL: "http",
+        VNC_ENDPOINT_PORT: 6080,
       },
       // rawDefine: {}
       // ignorePublicFolder: true,
