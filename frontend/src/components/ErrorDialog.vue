@@ -1,17 +1,14 @@
 <template>
     <q-dialog v-model="alert">
       <q-card>
-        <q-card-section>
+        <q-card-section class="row items-center q-pb-none">
           <div class="text-h6">{{title}}</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
-
         <q-card-section class="q-pt-none" v-for="item in content" :key="item">
             {{item}}
         </q-card-section>
-
-        <q-card-actions allign="right">
-          <q-btn flat label="OK" color="primary" v-close-popup />
-        </q-card-actions>
       </q-card>
     </q-dialog>
 </template>
