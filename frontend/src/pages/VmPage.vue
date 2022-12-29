@@ -1,5 +1,9 @@
 <template>
   <q-page padding>
+    <div class="row">
+      <q-space />
+      <q-btn class="q-ma-sm" color="primary" icon="mdi-plus" label="Create VM" @click="createVm()" />
+    </div>
     <q-table :rows="rows" :columns="columns" row-key="uuid" separator="none" hide-pagination>
       <template #body="props">
         <q-tr :props="props">
