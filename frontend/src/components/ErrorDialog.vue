@@ -24,7 +24,7 @@ export default {
     },
     methods : {
         // Usage: showAlert("Title", ["Content line 1", "Contnent line 2"])
-        showAlert(title, content) {
+        show(title, content) {
             this.title = title
             this.content = content
             this.alert = true
