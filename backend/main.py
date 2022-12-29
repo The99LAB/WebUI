@@ -43,7 +43,6 @@ def get_mem_usage():
 
 @socketio.on('vm_results')
 def get_vm_results():
-    print("get vm results")
     emit("vm_results", vm_results)
 
 
@@ -53,7 +52,6 @@ def startvm(uuid):
     for vm in vm_results:
         if vm['uuid'] == uuid:
             vm['state'] = 'Running'
-
     return "Succeed"
 
 
