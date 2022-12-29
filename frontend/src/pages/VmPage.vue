@@ -37,6 +37,7 @@
       </template>
     </q-table>
     <ErrorDialog ref="errorDialog"></ErrorDialog>
+    <CreateVm ref="createVm"></CreateVm>
   </q-page>
 </template>
 
@@ -45,6 +46,7 @@ import { ref } from 'vue'
 import io from "socket.io-client";
 import { api } from 'src/boot/axios'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
+import CreateVm from 'src/components/CreateVm.vue'
 
 const selected = ref()
 
@@ -68,6 +70,7 @@ export default {
   },
   components: {
     ErrorDialog,
+    CreateVm,
   },
   methods: {
     startVm(uuid) {
@@ -102,6 +105,9 @@ export default {
     editVm(uuid) {
       console.log("edit vm with uuid", uuid)
     },
+    createVm() {
+      this.$refs.createVm.show()
+    }
   },
   created() {
     this.socket = io(process.env.SOCKETIO_ENDPOINT);
