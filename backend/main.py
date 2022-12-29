@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, json
 from flask_socketio import SocketIO, Namespace, emit
 from flask_cors import CORS
 import psutil
@@ -45,6 +45,28 @@ def get_mem_usage():
 def get_vm_results():
     emit("vm_results", vm_results)
 
+
+@app.route('/api/vm-manager/create', methods=['POST'])
+def createvm():
+    print("request to create vm")
+    # get form data
+    name = request.form.get('name')
+    os = request.form.get('os')
+    machine = request.form.get('machine')
+    bios = request.form.get('bios')
+    memory_min = request.form.get('memory_min')
+    memory_min_unit = request.form.get('memory_min_unit')
+    memory_max = request.form.get('memory_max')
+    memory_max_unit = request.form.get('memory_max_unit')
+    disk_size = request.form.get('disk_size')
+    disk_size_unit = request.form.get('disk_size_unit')
+    disk_type = request.form.get('disk_type')
+    disk_bus = request.form.get('disk_bus')
+    cdrom_bus = request.form.get('cdrom_bus')
+    network_source = request.form.get('network_source')
+    network_model = request.form.get('network_model')
+    print(request.form)
+    return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
 
 @app.route('/api/vm-manager/<uuid>/start', methods=['POST'])
 def startvm(uuid):
