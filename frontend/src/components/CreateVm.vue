@@ -13,7 +13,6 @@
                     <q-tab name="disk" label="Disk" />
                     <q-tab name="cdrom" label="CD-ROM" />
                     <q-tab name="network" label="Network" />
-                    <q-tab name="finish" label="Finish" />
                 </q-tabs>
                 <q-separator />
             </q-header>
@@ -83,15 +82,16 @@
                             <q-select label="Network" v-model="network_source" :options="networkSourceOptions" />
                             <q-select label="Model" v-model="network_model" :options="networkModelOptions" />
                         </q-tab-panel>
-                        <q-tab-panel name="finish">
-                            <div class="row">
-                                <q-space/>
-                                <q-btn label="Create" color="primary" @click="createVm" />
-                                <q-space/>
-                            </div>
-                        </q-tab-panel>
                     </q-tab-panels>
                 </q-page>
+                <q-footer reveal bordered>
+                    <q-toolbar>
+                        <q-btn flat label="Back" color="primary" @click="prevTabPanel()" v-if="tab != 'general'" />
+                        <q-space/>
+                        <q-btn flat label="Finish" @click="createVm()" v-if="tab == 'network'" />
+                        <q-btn flat label="Next" @click="nextTabPanel()" v-else />
+                    </q-toolbar>
+                </q-footer>
             </q-page-container>
         </q-layout>
     </q-dialog>
@@ -169,6 +169,28 @@ export default {
                 .catch(error => {
                     this.$refs.errorDialog.show("Error creating VM", [error])
                 })
+        },
+        prevTabPanel(){
+            if (this.tab === "memory") {
+                this.tab = "general"
+            } else if (this.tab === "disk") {
+                this.tab = "memory"
+            } else if (this.tab === "cdrom") {
+                this.tab = "disk"
+            } else if (this.tab === "network") {
+                this.tab = "cdrom"
+            }
+        },
+        nextTabPanel(){
+            if (this.tab === "general") {
+                this.tab = "memory"
+            } else if (this.tab === "memory") {
+                this.tab = "disk"
+            } else if (this.tab === "disk") {
+                this.tab = "cdrom"
+            } else if (this.tab === "cdrom") {
+                this.tab = "network"
+            }
         }
     }
 }
