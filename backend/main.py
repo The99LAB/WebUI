@@ -45,6 +45,15 @@ def get_mem_usage():
 def get_vm_results():
     emit("vm_results", vm_results)
 
+@app.route('/api/host/shutdown', methods=['POST'])
+def shutdown():
+    print("request to shutdown")
+    return ""
+
+@app.route('/api/host/reboot', methods=['POST'])
+def reboot():
+    print("request to reboot")
+    return ""
 
 @app.route('/api/vm-manager/create', methods=['POST'])
 def createvm():

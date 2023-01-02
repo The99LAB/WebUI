@@ -42,19 +42,27 @@
 
     <q-page-container>
       <router-view />
+      <PowerMenu ref="powerMenu"/>
     </q-page-container>
   </q-layout>
 </template>
 
 <script>
 import { defineComponent, ref } from 'vue'
+import PowerMenu from 'src/components/PowerMenu.vue'
 
 export default defineComponent({
   name: 'MainLayout',
 
   components: {
+    PowerMenu,
   },
 
+  methods: {
+    showPowerMenu() {
+      this.$refs.powerMenu.show()
+    }
+  },
   setup() {
     const leftDrawerOpen = ref(false)
 
