@@ -14,7 +14,7 @@
         </q-circular-progress>
       </div>
     </div>
-    <ErrorDialog ref="errorDialog"></ErrorDialog>
+    <ErrorDialog ref="errorDialog"/>
   </q-page>
 </template>
 
