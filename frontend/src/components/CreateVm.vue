@@ -21,7 +21,7 @@
                 <q-page padding>
                     <q-tab-panels v-model="tab">
                         <q-tab-panel name="general">
-                            <q-input label="Name" v-model="general_name" />
+                            <q-input label="Name" v-model="general_name" :rules="[val => val && val.length > 0 || 'Name needs to be at least 1 character long' ]"/>
                             <q-select label="OS" v-model="general_os" :options="osOptions" />
                             <q-select label="Machine" v-model="general_machine" :options="machineOptions" />
                             <q-select label="BIOS" v-model="general_bios" :options="biosOptions" />
