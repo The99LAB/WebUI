@@ -6,6 +6,8 @@
         <q-toolbar-title>
           Server3
         </q-toolbar-title>
+        <q-btn dense flat round icon="power_settings_new" @click="showPowerMenu()"/>
+        <q-btn dense flat round icon="logout" />
       </q-toolbar>
     </q-header>
 
