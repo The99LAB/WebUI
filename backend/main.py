@@ -5,7 +5,7 @@ import psutil
 
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins='http://localhost:9000')
+socketio = SocketIO(app, cors_allowed_origins="*")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 vm_results = [{
     "uuid": "1",
