@@ -80,17 +80,15 @@ export default {
     startVm(uuid) {
       console.log("starting vm with uuid", uuid)
       api.post("vm-manager/" + uuid + "/start")
-        .then(response => console.log("resoponse from startvm", response))
         .catch(error => {
-          this.$refs.errorDialog.showAlert("Error starting VM", ["vm uuid: " + uuid, "Error: " + error])
+          this.$refs.errorDialog.show("Error starting VM", ["vm uuid: " + uuid, "Error: " + error])
         });
     },
     stopVm(uuid) {
       console.log("stopping vm with uuid", uuid)
       api.post("vm-manager/" + uuid+ "/stop")
-        .then(response => console.log("resoponse from stopvm", response))
         .catch(error => {
-          this.$refs.errorDialog.showAlert("Error stopping VM", ["vm uuid: " + uuid, "Error: " + error])
+          this.$refs.errorDialog.show("Error stopping VM", ["vm uuid: " + uuid, "Error: " + error])
         });
     },
     forceStopVm(uuid) {
@@ -98,7 +96,7 @@ export default {
       api.post("vm-manager/" + uuid + "/forcestop")
         .then(response => console.log("resoponse from forcestopvm", response))
         .catch(error => {
-          this.$refs.errorDialog.showAlert("Error force stopping VM", ["vm uuid: " + uuid, "Error: " + error])
+          this.$refs.errorDialog.show("Error force stopping VM", ["vm uuid: " + uuid, "Error: " + error])
         });
     },
     vncVm(uuid) {
