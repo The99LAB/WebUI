@@ -38,17 +38,18 @@ export default {
     this.socket = io(process.env.SOCKETIO_ENDPOINT);
   },
   mounted() {
-    this.socket.emit("cpuoverall_usage")
-    this.socket.emit("mem_usage")
-
-    this.cpuinterval = setInterval(() => {
+    this.socket.on("connect", () => {
       this.socket.emit("cpuoverall_usage")
-    }, 1000)
-
-    this.meminterval = setInterval(() => {
       this.socket.emit("mem_usage")
-    }, 1000)
 
+      this.cpuinterval = setInterval(() => {
+        this.socket.emit("cpuoverall_usage")
+      }, 1000)
+
+      this.meminterval = setInterval(() => {
+        this.socket.emit("mem_usage")
+      }, 1000)
+    })
     this.socket.on("cpuoverall_usage", (msg) => {
       this.cpu_progress = msg
       this.cpu_progress_text = msg + "%"
