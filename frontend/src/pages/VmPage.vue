@@ -115,13 +115,16 @@ export default {
     this.socket = io(process.env.SOCKETIO_ENDPOINT);
   },
   mounted() {
-    this.socket.emit("vm_results")
-    this.vmresultInterval = setInterval(() => {
+    this.socket.on("connect", () => {
       this.socket.emit("vm_results")
-    }, 1000)
+      this.vmresultInterval = setInterval(() => {
+        this.socket.emit("vm_results")
+      }, 1000)
+      
+    })
     this.socket.on("vm_results", (msg) => {
-      console.log("vm results:", msg)
-      this.rows = msg
+        console.log("vm results:", msg)
+        this.rows = msg
     })
     this.socket.on("connect_error", (msg) => {
       this.$refs.errorDialog.show("Connection Error", ["Could not connect to the backend server.", msg])
