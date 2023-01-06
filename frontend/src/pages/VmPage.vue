@@ -129,6 +129,10 @@ export default {
     this.socket.on("connect_error", (msg) => {
       this.$refs.errorDialog.show("Connection Error", ["Could not connect to the backend server.", msg])
     })
+  },
+  beforeUnmount() {
+    clearInterval(this.vmresultInterval)
+    this.socket.disconnect()
   }
 }
 </script>
