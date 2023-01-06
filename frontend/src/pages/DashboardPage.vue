@@ -64,6 +64,7 @@ export default {
   beforeUnmount() {
     clearInterval(this.cpuinterval)
     clearInterval(this.meminterval)
+    this.socket.disconnect()
   },
 }
 </script>
