@@ -40,15 +40,15 @@ export default {
             this.visible = true
         },
         shutdown() {
-            api.post('host/shutdown')
+            api.post('host/power/shutdown')
             .catch((error) => {
-                this.$refs.errorDialog.show("Shutdown error", [error])
+                this.$refs.errorDialog.show("Shutdown error", [error, error.response.data])
             })
         },
         reboot() {
-            api.post('host/reboot')
+            api.post('host/power/reboot')
             .catch((error) => {
-                this.$refs.errorDialog.show("Reboot error", [error])
+                this.$refs.errorDialog.show("Reboot error", [error, error.response.data])
             })
         }
     }

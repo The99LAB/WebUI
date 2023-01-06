@@ -105,20 +105,20 @@ export default {
       window.open(process.env.VNC_ENDPOINT_PROTOCOOL + "://" + window.location.hostname + ":"+ process.env.VNC_ENDPOINT_PORT + "/vnc.html?autoconnect=true&?resize=scale&?path=?token=" + uuid, "_blank")
     },
     editVm(uuid) {
-      console.log("edit vm with uuid", uuid)
+      this.$refs.editVm.show(uuid)
     },
     createVm() {
       this.$refs.createVm.show()
     }
   },
   created() {
-    this.socket = io(process.env.SOCKETIO_ENDPOINT);
+    this.socket = io(process.env.SOCKETIO_ENDPOINT + "/vm-manager");
   },
   mounted() {
     this.socket.on("connect", () => {
-      this.socket.emit("vm_results")
+      this.socket.emit("get_vm_results")
       this.vmresultInterval = setInterval(() => {
-        this.socket.emit("vm_results")
+        this.socket.emit("get_vm_results")
       }, 1000)
       
     })
