@@ -1,10 +1,14 @@
-from flask import Flask, request, json
+from flask import Flask, request, json, render_template
 from flask_socketio import SocketIO, Namespace, emit
 from flask_cors import CORS
 import psutil
-
-app = Flask(__name__)
-CORS(app)
+class CustomFlask(Flask):
+    jinja_options = Flask.jinja_options.copy()
+    jinja_options.update(dict(
+        variable_start_string='%%',
+        variable_end_string='%%',
+    ))
+app = CustomFlask(__name__, static_url_path='')
 socketio = SocketIO(app, cors_allowed_origins="*")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 vm_results = [{
@@ -25,6 +29,9 @@ vm_results = [{
 
 }]
 
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @socketio.on('connect')
 def test_connect(auth):
