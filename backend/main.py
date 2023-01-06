@@ -1,6 +1,5 @@
 from flask import Flask, request, json, render_template
 from flask_socketio import SocketIO, Namespace, emit
-from flask_cors import CORS
 import psutil
 class CustomFlask(Flask):
     jinja_options = Flask.jinja_options.copy()
