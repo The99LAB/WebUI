@@ -4,7 +4,7 @@
       <q-space />
       <q-btn class="q-ma-sm" color="primary" icon="mdi-plus" label="Create VM" @click="createVm()" />
     </div>
-    <q-table :rows="rows" :columns="columns" row-key="uuid" separator="none" hide-pagination>
+    <q-table :rows="rows" :columns="columns" row-key="uuid" separator="none" no-data-label="Failed to get data from backend or no vm's defined" hide-pagination>
       <template #body="props">
         <q-tr :props="props">
           <q-td key="name" :props="props">
