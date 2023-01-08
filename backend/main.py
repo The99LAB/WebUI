@@ -615,32 +615,49 @@ class domainNetworkInterface():
             if idx == int(index):
                 return interface[1]
 
-class generateXml():
-    def __init__(self, form):
-        self.name = form['domainname']
-        self.machinetype = form['machinetype']
-        self.biostype = form['biostype']
-        self.min_mem = form['min-mem']
-        self.max_mem = form['max-mem']
-        self.disk = form['disk']
-        self.disksize = form['vdisksize']
-        self.disksizeunit = form['vdisksizeunit']
-        self.disktype = form['disktype']
-        self.diskbus = form['diskbus']
-        self.diskpool = form['diskpool']
-        self.iso = form['iso']
-        self.isopool = form['isopool']
-        self.isofile = form['isofile']
-        self.network = form['network']
-        self.networkmodel = form['networkmodel']
+class create_vm():
+    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_pool=None, iso=False, iso_pool=None, iso_file=None, network=False, network_source=None, network_model=None):
+        self.name = name
+        self.machine_type = machine_type
+        self.bios_type = bios_type
+        self.mem_min = mem_min
+        self.min_mem_unit = mem_min_unit
+        self.mem_max = mem_max
+        self.max_mem_unit = mem_max_unit
+        self.disk = disk
+        self.disk_size = disk_size
+        self.disk_size_unit = disk_size_unit
+        self.disk_type = disk_type
+        self.disk_bus = disk_bus
+        self.disk_pool = disk_pool
+        self.iso = iso
+        self.iso_pool = iso_pool
+        self.iso_file = iso_file
+        self.network = network
+        self.network_source = network_source
+        self.network_model = network_model        
 
     def win10(self):
-        minmem = int(self.min_mem) * 1024
-        maxmem = int(self.max_mem) * 1024
+        if self.min_mem_unit == "MB":
+            mem_min = int(self.mem_min)
+        elif self.min_mem_unit == "GB":
+            mem_min = int(self.mem_min) * 1024
+        elif self.min_mem_unit == "TB":
+            mem_min = int(self.mem_min) * 1024 * 1024
+        if self.max_mem_unit == "MB":
+            mem_max = int(self.mem_max)
+        elif self.max_mem_unit == "GB":
+            mem_max = int(self.mem_max) * 1024
+        elif self.max_mem_unit == "TB":
+            mem_max = int(self.mem_max) * 1024 * 1024    
+
         ovmfstring = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>"
-        networkstring = f"<interface type='network'><source network='default'/><model type='{self.networkmodel}'/></interface>"
-        if self.iso == "existing":
-            isopath = poolStorage(pooluuid=self.isopool).getVolumePath(poolvolume=self.isofile)
+        
+        if self.network:
+            networkstring = f"<interface type='network'><source network='{self.network_source}'/><model type='{self.network_model}'/></interface>"
+        
+        if self.iso:
+            isopath = poolStorage(pooluuid=self.iso_pool).getVolumePath(poolvolume=self.iso_file)
             createisoxml = f"""<disk type='file' device='cdrom'>
                             <driver name='qemu' type='raw'/>
                             <source file='{isopath}'/>
@@ -649,49 +666,49 @@ class generateXml():
                             "<readonly/>
                             </disk>"""
 
-        if self.disksizeunit == "TB":
-            disksize = int(self.disksize) * 1024 * 1024 * 1024 * 1024
-        elif self.disksizeunit == "GB":
-            disksize = int(self.disksize) * 1024 * 1024 * 1024
-        elif self.disksizeunit == "MB":
-            disksize = int(self.disksize) * 1024 * 1024
-        elif self.disksizeunit == "KB":
-            disksize = int(self.disksize) * 1024
+        if self.disk_size_unit == "TB":
+            disk_size = int(self.disk_size) * 1024 * 1024 * 1024 * 1024
+        elif self.disk_size_unit == "GB":
+            disk_size = int(self.disk_size) * 1024 * 1024 * 1024
+        elif self.disk_size_unit == "MB":
+            disk_size = int(self.disk_size) * 1024 * 1024
+        elif self.disk_size_unit == "KB":
+            disk_size = int(self.disk_size) * 1024
 
-        if self.disk == "new":
-            pool = conn.storagePoolLookupByUUIDString(self.isopool)
-            diskvolumename = f"{self.name}-0.{self.disktype}"
+        if self.disk:
+            pool = conn.storagePoolLookupByUUIDString(self.iso_pool)
+            disk_volume_name = f"{self.name}-0.{self.disk_type}"
             diskxml = f"""<volume>
-            <name>{diskvolumename}</name>
-            <capacity>{disksize}</capacity>
+            <name>{disk_volume_name}</name>
+            <capacity>{disk_size}</capacity>
             <allocation>0</allocation>
             <target>
-                <format type="{self.disktype}"/>
+                <format type="{self.disk_type}"/>
             </target>
             </volume>"""
             pool.createXML(diskxml)
-            diskvolumepath = poolStorage(self.diskpool).getVolumePath(diskvolumename)
+            diskvolumepath = poolStorage(self.disk_pool).getVolumePath(disk_volume_name)
             creatediskxml = f"""<disk type='file' device='disk'>
-                            <driver name='qemu' type='{self.disktype}'/>
+                            <driver name='qemu' type='{self.disk_type}'/>
                             <source file='{diskvolumepath}'/>
-                            <target dev='{"vda" if self.diskbus == "virtio" else "sdb"}' bus='{self.diskbus}'/>
+                            <target dev='{"vda" if self.disk_bus == "virtio" else "sdb"}' bus='{self.diskbus}'/>
                             <boot order='1'/>
                             </disk>"""
             
 
-        xml = f"""<domain type='kvm'>
+        self.xml = f"""<domain type='kvm'>
         <name>{self.name}</name>
         <metadata>
             <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
             <libosinfo:os id="http://microsoft.com/win/10"/>
             </libosinfo:libosinfo>
         </metadata>
-        <memory unit='KiB'>{maxmem}</memory>
-        <currentMemory unit='KiB'>{minmem}</currentMemory>
+        <memory unit='KiB'>{mem_max}</memory>
+        <currentMemory unit='KiB'>{mem_min}</currentMemory>
         <vcpu>2</vcpu>
         <os>
-            <type arch='x86_64' machine='{self.machinetype}'>hvm</type>
-            {ovmfstring if self.biostype == "ovmf" else ""}
+            <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
+            {ovmfstring if self.bios_type == "ovmf" else ""}
         </os>
         <features>
             <acpi/>
@@ -715,13 +732,9 @@ class generateXml():
             </video>
         </devices>
         </domain>"""
-        try:
-            conn.defineXML(xml)
-        except libvirt.libvirtError as e:
-            return f"Error defing domain xml: {e}"
 
-        return "Succeed"
-
+    def create(self):
+        conn.defineXML(self.xml)
 
 # fakevm_results = [{
 #     "uuid": "1",
@@ -762,6 +775,52 @@ class api_socketio(Namespace):
         print("vm_results")
         emit("vm_results", getvmresults())   
 socketio.on_namespace(api_socketio('/api'))
+
+class api_vm_manager(Resource):
+    def post(self, action):
+        if action == "create":
+            name = request.form['name']
+            os = request.form['os']
+            machine_type = request.form['machine_type']
+            bios_type = request.form['bios_type']
+            min_mem = request.form['memory_min']
+            mim_mem_unit = request.form['memory_min_unit']
+            max_mem = request.form['memory_max']
+            max_mem_unit = request.form['memory_max_unit']
+            disk = False
+            disk_size = request.form['disk_size']
+            disk_size_unit = request.form['disk_size_unit']
+            disk_type = request.form['disk_type']
+            disk_bus = request.form['disk_bus']
+            cdrom_bus = request.form['cdrom_bus']
+            network = False
+            network_source = request.form['network_source']
+            network_model = request.form['network_model']
+
+            print("name: " + name)
+            print("os: " + os)
+            print("machine_type: " + machine_type)
+            print("bios_type: " + bios_type)
+            print("min_mem: " + min_mem)
+            print("mim_mem_unit: " + mim_mem_unit)
+            print("max_mem: " + max_mem)
+            print("max_mem_unit: " + max_mem_unit)
+            print("disk: " + str(disk))
+            print("disk_size: " + disk_size)
+            print("disk_size_unit: " + disk_size_unit)
+            print("disk_type: " + disk_type)
+            print("disk_bus: " + disk_bus)
+            print("network: " + str(network))
+            print("network_source: " + network_source)
+            print("network_model: " + network_model)
+
+            vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk, disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, network=network, network_source=network_source, network_model=network_model)
+            # vm.create()
+            return '', 204
+        else: 
+            return 'Action not found', 404
+api.add_resource(api_vm_manager, '/api/vm-manager/<string:action>')            
+
 class api_vm_manager_action(Resource):
     def post(self, vmuuid, action):
         if action == "start":

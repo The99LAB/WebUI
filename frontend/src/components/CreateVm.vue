@@ -76,7 +76,6 @@
                         <q-tab-panel name="cdrom">
                             <q-select label="Pool" v-model="cdrom_pool" :options="cdromPoolOptions" />
                             <q-select label="Path" v-model="cdrom_path" :options="cdromPathOptions" />
-                            <q-select label="Bus" v-model="cdrom_bus" :options="cdromBusOptions" />
                         </q-tab-panel>
                         <q-tab-panel name="network">
                             <q-select label="Network" v-model="network_source" :options="networkSourceOptions" />
@@ -128,8 +127,6 @@ export default {
         disk_type: ref("raw"),
         disk_bus: ref("sata"),
         diskBusOptions: ["sata", "scsi", "virtio", "usb"],
-        cdrom_bus: ref("sata"),
-        cdromBusOptions: ["sata", "scsi", "virtio", "usb"],
         network_source: ref("default"),
         network_sourceOptions: ["default"],
         network_model: ref("virtio"),
@@ -148,8 +145,8 @@ export default {
             const formData = new FormData()
             formData.append("name", this.general_name)
             formData.append("os", this.general_os)
-            formData.append("machine", this.general_machine)
-            formData.append("bios", this.general_bios)
+            formData.append("machine_type", this.general_machine)
+            formData.append("bios_type", this.general_bios)
             formData.append("memory_min", this.memory_minMemory)
             formData.append("memory_min_unit", this.memory_minMemoryUnit)
             formData.append("memory_max", this.memory_maxMemory)
@@ -158,7 +155,8 @@ export default {
             formData.append("disk_size_unit", this.disk_size_unit)
             formData.append("disk_type", this.disk_type)
             formData.append("disk_bus", this.disk_bus)
-            formData.append("cdrom_bus", this.cdrom_bus)
+            formData.append("cdrom_pool", this.cdrom_pool)
+            formData.append("cdrom_path", this.cdrom_path)
             formData.append("network_source", this.network_source)
             formData.append("network_model", this.network_model)
             this.$api.post("/vm-manager/create", formData)
