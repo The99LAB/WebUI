@@ -86,7 +86,7 @@
                 </q-page>
                 <q-footer reveal bordered>
                     <q-toolbar>
-                        <q-btn flat label="Back" color="primary" @click="prevTabPanel()" v-if="tab != 'general'" />
+                        <q-btn flat label="Back" @click="prevTabPanel()" v-if="tab != 'general'" />
                         <q-space/>
                         <q-btn flat label="Finish" @click="createVm()" v-if="tab == 'network'" />
                         <q-btn flat label="Next" @click="nextTabPanel()" v-else />
