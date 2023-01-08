@@ -1,43 +1,23 @@
 # VmManager (quasar-project)
-
 Web UI for managing libvirt based virtual machines
 
 ## Install the dependencies
-
-```bash
-yarn
-# or
-npm install
-```
+`npm install`
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
-
-```bash
-quasar dev
-```
+- Set `SOCKETIO_ENDPOINT` in `quasar.config.js` correctly
+- Set `API_ENDPOINT` in `quasar.config.js` correctly
+- Run `quasar dev`
 
 ### Lint the files
-
-```bash
-yarn lint
-# or
-npm run lint
-```
+`npm run lint`
 
 ### Format the files
-
-```bash
-yarn format
-# or
-npm run format
-```
+`npm run format` 
 
 ### Build the app for production
 
-```bash
-quasar build
-```
-
-### Customize the configuration
-
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
+- Set `PRODUCTION_BACKEND_PORT` in `quasar.config.js` to the port of the backend
+- Run `quasar build`
+- Place files from dist/spa into backend/static except index.html
+- Place index.html into backend/templates

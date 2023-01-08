@@ -2,7 +2,7 @@ from flask import Flask, render_template, jsonify, request, redirect, session
 from flask_cors import CORS, cross_origin
 from flask_restful import reqparse, abort, Api, Resource
 import psutil
-# import libvirt
+import libvirt
 from xml.etree import ElementTree as ET
 from time import sleep
 import re
@@ -11,8 +11,7 @@ import json
 from string import ascii_lowercase
 from flask_socketio import SocketIO, Namespace, emit
 import subprocess
-# import usb.core
-# import pam
+import usb.core
 
 """
 NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijnrombouts/token.list
@@ -723,33 +722,35 @@ class generateXml():
 
         return "Succeed"
 
-fakevm_results = [{
-    "uuid": "1",
-    "name": "win10",
-    "memory": "4096",
-    "vcpus": "8",
-    "state": 'Shutdown', 
-    "VNC": True
-},
-    {
-    "uuid": "2",
-    "name": "macOS-Ventura",
-    "memory": "8192",
-    "vcpus": "4",
-    "state": 'Shutdown',
-    "VNC": False
 
-}]
+# fakevm_results = [{
+#     "uuid": "1",
+#     "name": "win10",
+#     "memory": "4096",
+#     "vcpus": "8",
+#     "state": 'Shutdown', 
+#     "VNC": True
+# },
+#     {
+#     "uuid": "2",
+#     "name": "macOS-Ventura",
+#     "memory": "8192",
+#     "vcpus": "4",
+#     "state": 'Shutdown',
+#     "VNC": False
 
-class vm_manager(Namespace):
-    def on_get_vm_results(self):
-        print("vm_results")
-        emit("vm_results", fakevm_results)
-socketio.on_namespace(vm_manager('/api/vm-manager'))
+# }]
 
-class dashboard(Namespace):
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+class api_socketio(Namespace):
     def on_connect(self):
-        print("Client connected to dashboard namespace")
+        print("Client connected to test namespace\n\n")
+    def on_test(self):
+        print("test")
+        emit("test")
     def on_get_cpu_overall_usage(self):
         print("cpu_overall_usage")
         cpu_overall = psutil.cpu_percent()
@@ -757,34 +758,31 @@ class dashboard(Namespace):
     def on_get_mem_usage(self):
         print("mem_usage")
         emit("mem_usage", psutil.virtual_memory().percent)
-socketio.on_namespace(dashboard('/api/dashboard'))
+    def on_get_vm_results(self):
+        print("vm_results")
+        emit("vm_results", getvmresults())   
+socketio.on_namespace(api_socketio('/api'))
+class api_vm_manager_action(Resource):
+    def post(self, vmuuid, action):
+        if action == "start":
+            for vm in fakevm_results:
+                if vm['uuid'] == vmuuid:
+                    vm['state'] = 'Running'
+                    return '', 204
+        elif action == "stop":
+            for vm in fakevm_results:
+                if vm['uuid'] == vmuuid:
+                    vm['state'] = 'Shutdown'
+                    return '', 204
+        elif action == "forcestop":
+            for vm in fakevm_results:
+                if vm['uuid'] == vmuuid:
+                    vm['state'] = 'Shutdown'
+                    return '', 204
+        else:
+            return 'Action not found', 404           
+api.add_resource(api_vm_manager_action, '/api/vm-manager/<string:vmuuid>/<string:action>')      
 
-
-class vm_manager_hotplug_usb(Namespace):
-    def on_GetRunningDomains(self):
-        emit("RunningDomainsList", getRunningDomains())
-    def on_GetUsbDevicesList(self):
-        emit("UsbDevicesList", UsbDevicesList())
-    def on_ActionUsbDevice(self, msg):
-        domainuuid = msg['domuuid']
-        vendorid = msg['vendorid']
-        productid = msg['productid']
-        action = msg['action']
-        xml = f"<hostdev mode='subsystem' type='usb'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
-        try:
-            domain = conn.lookupByUUIDString(domainuuid)
-        except libvirt.libvirtError as e:
-            emit("errormessage", str(e))
-        try:
-            if action == "attach":
-                domain.attachDevice(xml)
-                emit("message", "Atached device successfully")
-            elif action == "detach":
-                domain.detachDevice(xml)
-                emit("message", "Detached device successfully")
-        except libvirt.libvirtError as e:
-            emit("errormessage", str(e))
-socketio.on_namespace(vm_manager_hotplug_usb('/api/vm-manager/hotplugusb'))
 
 class api_host_power(Resource):
     def post(self, powermsg):
@@ -803,5 +801,5 @@ class api_host_power(Resource):
 api.add_resource(api_host_power, '/api/host/power/<string:powermsg>')
 
 if __name__ == '__main__':
-    # conn = libvirt.open('qemu:///system')
+    conn = libvirt.open('qemu:///system')
     app.run(debug=True, host="0.0.0.0")

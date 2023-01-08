@@ -100,7 +100,6 @@
 
 
 <script>
-import { api } from 'src/boot/axios'
 import { ref } from 'vue'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
 

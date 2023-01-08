@@ -23,7 +23,6 @@
 
 <script>
 import { ref } from 'vue'
-import { api } from 'src/boot/axios'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
@@ -40,13 +39,13 @@ export default {
             this.visible = true
         },
         shutdown() {
-            api.post('host/power/shutdown')
+            this.$api.post('host/power/shutdown')
             .catch((error) => {
                 this.$refs.errorDialog.show("Shutdown error", [error, error.response.data])
             })
         },
         reboot() {
-            api.post('host/power/reboot')
+            this.$api.post('host/power/reboot')
             .catch((error) => {
                 this.$refs.errorDialog.show("Reboot error", [error, error.response.data])
             })

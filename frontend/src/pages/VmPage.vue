@@ -47,8 +47,6 @@
 
 <script>
 import { ref } from 'vue'
-import io from "socket.io-client";
-import { api } from 'src/boot/axios'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
 import CreateVm from 'src/components/CreateVm.vue'
 
@@ -79,24 +77,24 @@ export default {
   methods: {
     startVm(uuid) {
       console.log("starting vm with uuid", uuid)
-      api.post("vm-manager/" + uuid + "/start")
+      this.$api.post("vm-manager/" + uuid + "/start")
         .catch(error => {
-          this.$refs.errorDialog.show("Error starting VM", ["vm uuid: " + uuid, "Error: " + error])
+          this.$refs.errorDialog.show("Error starting VM", ["vm uuid: " + uuid, "Error: " + error.response.data])
         });
     },
     stopVm(uuid) {
       console.log("stopping vm with uuid", uuid)
-      api.post("vm-manager/" + uuid+ "/stop")
+      this.$api.post("vm-manager/" + uuid+ "/stop")
         .catch(error => {
-          this.$refs.errorDialog.show("Error stopping VM", ["vm uuid: " + uuid, "Error: " + error])
+          this.$refs.errorDialog.show("Error stopping VM", ["vm uuid: " + uuid, "Error: " +  error.response.data])
         });
     },
     forceStopVm(uuid) {
       console.log("force stopping vm with uuid", uuid)
-      api.post("vm-manager/" + uuid + "/forcestop")
+      this.$api.post("vm-manager/" + uuid + "/forcestop")
         .then(response => console.log("resoponse from forcestopvm", response))
         .catch(error => {
-          this.$refs.errorDialog.show("Error force stopping VM", ["vm uuid: " + uuid, "Error: " + error])
+          this.$refs.errorDialog.show("Error force stopping VM", ["vm uuid: " + uuid, "Error: " +  error.response.data])
         });
     },
     vncVm(uuid) {
@@ -111,28 +109,18 @@ export default {
       this.$refs.createVm.show()
     }
   },
-  created() {
-    this.socket = io(process.env.SOCKETIO_ENDPOINT + "/vm-manager");
-  },
   mounted() {
-    this.socket.on("connect", () => {
-      this.socket.emit("get_vm_results")
-      this.vmresultInterval = setInterval(() => {
-        this.socket.emit("get_vm_results")
-      }, 1000)
-      
-    })
-    this.socket.on("vm_results", (msg) => {
+    this.$socket.emit("get_vm_results")
+    this.vmresultInterval = setInterval(() => {
+      this.$socket.emit("get_vm_results")
+    }, 1000)
+    this.$socket.on("vm_results", (msg) => {
         console.log("vm results:", msg)
         this.rows = msg
-    })
-    this.socket.on("connect_error", (msg) => {
-      this.$refs.errorDialog.show("Connection Error", ["Could not connect to the backend server.", msg])
     })
   },
   beforeUnmount() {
     clearInterval(this.vmresultInterval)
-    this.socket.disconnect()
   }
 }
 </script>

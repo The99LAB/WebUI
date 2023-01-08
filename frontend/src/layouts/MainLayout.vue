@@ -41,6 +41,7 @@
     <q-page-container>
       <router-view />
       <PowerMenu ref="powerMenu"/>
+      <ErrorDialog ref="errorDialog"/>
     </q-page-container>
   </q-layout>
 </template>
@@ -48,12 +49,14 @@
 <script>
 import { defineComponent, ref } from 'vue'
 import PowerMenu from 'src/components/PowerMenu.vue'
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default defineComponent({
   name: 'MainLayout',
 
   components: {
     PowerMenu,
+    ErrorDialog
   },
 
   methods: {
@@ -70,6 +73,12 @@ export default defineComponent({
         leftDrawerOpen.value = !leftDrawerOpen.value
       }
     }
+  },
+  mounted() {
+    console.log("MainLayout mounted")
+    this.$socket.on("connect_error", (msg) => {
+      this.$refs.errorDialog.show("Connection Error", ["Could not connect to the backend server.", msg])
+    })
   }
 })
 </script>
