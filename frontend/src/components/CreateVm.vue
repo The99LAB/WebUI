@@ -161,7 +161,7 @@ export default {
             formData.append("cdrom_bus", this.cdrom_bus)
             formData.append("network_source", this.network_source)
             formData.append("network_model", this.network_model)
-            api.post("/vm-manager/create", formData)
+            this.$api.post("/vm-manager/create", formData)
                 .then(
                     this.layout = false
                 )
