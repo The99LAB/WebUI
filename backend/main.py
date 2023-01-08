@@ -792,7 +792,8 @@ class api_vm_manager(Resource):
             disk_size_unit = request.form['disk_size_unit']
             disk_type = request.form['disk_type']
             disk_bus = request.form['disk_bus']
-            cdrom_bus = request.form['cdrom_bus']
+            cdrom_pool = request.form['cdrom_pool']
+            cdrom_path = request.form['cdrom_path']
             network = False
             network_source = request.form['network_source']
             network_model = request.form['network_model']
