@@ -68,17 +68,34 @@ def getvmresults():
                 graphics = root.find('./devices/graphics')
                 try:
                     vncport = graphics.get('port')
+                    vnc_state = True
                     try: 
-                        with open("/home/stijnrombouts/token.list", "w") as tokenlist:
+                        with open("/home/stijn/token.list", "w") as tokenlist:
                             tokenlist.write(f"{dom_uuid}: localhost:{vncport}")
                     except Exception:
                         print("Couldn't read the token file") 
                 except Exception:
                     vncport = "none"
+                    vnc_state = False
             else:
                 vncport = "none"
+                vnc_state = False
  
-            result = [dom_name, dom_state, vncport, dom_uuid]
+            # result = [dom_name, dom_state, vncport, dom_uuid]
+            dom_memory_unit = "GB"
+            dom_memory_stat = vmmemory(dom_uuid).current(dom_memory_unit)
+            dom_memory_min = dom_memory_stat[0]
+            dom_memory_max = dom_memory_stat[1]
+            result = {
+                "uuid": dom_uuid,
+                "name": dom_name,
+                "memory_min": dom_memory_min,
+                "memory_max": dom_memory_max,
+                "memory_unit": "GB",
+                "vcpus": 2,
+                "state": dom_state,
+                "VNC": vnc_state,
+            }
             results.append(result)
     else:
         results = None
