@@ -15,11 +15,14 @@
           <q-td key="state" :props="props" class="text-weight-regular text-body2">
             {{ props.row.state }}
           </q-td>
-          <q-td key="memory" :props="props" class="text-weight-regular text-body2">
-            {{ props.row.memory }}
-          </q-td>
           <q-td key="vcpus" :props="props" class="text-weight-regular text-body2">
             {{ props.row.vcpus }}
+          </q-td>
+          <q-td key="memory_min" :props="props" class="text-weight-regular text-body2">
+            {{ props.row.memory_min }} {{ props.row.memory_unit }}
+          </q-td>
+          <q-td key="memory_max" :props="props" class="text-weight-regular text-body2">
+            {{ props.row.memory_max }} {{ props.row.memory_unit }}
           </q-td>
         </q-tr>
 
@@ -100,7 +103,7 @@ export default {
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid)
       // open vnc in new tab
-      window.open(process.env.VNC_ENDPOINT_PROTOCOOL + "://" + window.location.hostname + ":"+ process.env.VNC_ENDPOINT_PORT + "/vnc.html?autoconnect=true&?resize=scale&?path=?token=" + uuid, "_blank")
+      window.open(process.env.VNC_ENDPOINT_HTML + "?autoconnect=true&?resize=scale&?path=?token=" + uuid, "_blank")
     },
     editVm(uuid) {
       this.$refs.editVm.show(uuid)
