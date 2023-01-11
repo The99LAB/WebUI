@@ -746,28 +746,9 @@ class create_vm():
             </video>
         </devices>
         </domain>"""
-
         return self.xml
     def create(self):
         conn.defineXML(self.xml)
-
-# fakevm_results = [{
-#     "uuid": "1",
-#     "name": "win10",
-#     "memory": "4096",
-#     "vcpus": "8",
-#     "state": 'Shutdown', 
-#     "VNC": True
-# },
-#     {
-#     "uuid": "2",
-#     "name": "macOS-Ventura",
-#     "memory": "8192",
-#     "vcpus": "4",
-#     "state": 'Shutdown',
-#     "VNC": False
-
-# }]
 
 @app.route("/")
 def index():
@@ -776,9 +757,6 @@ def index():
 class api_socketio(Namespace):
     def on_connect(self):
         print("Client connected to test namespace\n\n")
-    def on_test(self):
-        print("test")
-        emit("test")
     def on_get_cpu_overall_usage(self):
         print("cpu_overall_usage")
         cpu_overall = psutil.cpu_percent()
