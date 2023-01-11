@@ -809,7 +809,8 @@ class api_vm_manager(Resource):
             print("network_model: " + network_model)
 
             vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk, disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, network=network, network_source=network_source, network_model=network_model)
-            # vm.create()
+            vm.win10()
+            vm.create()
             return '', 204
         else: 
             return 'Action not found', 404
