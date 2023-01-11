@@ -128,12 +128,9 @@ class vmmemory():
         elif unit == "MB":
             maxmem = maxmem / 1024
             minmem = minmem / 1024
-        elif unit == "KB":
-            maxmem = maxmem
-            minmem = minmem   
         else:
             return("Error: Unknown unit for memory size") 
-        return [int(minmem), int(maxmem)]
+        return [float(minmem), float(maxmem)]
 
     def edit(self, minmem, minmemunit, maxmem, maxmemunit):
         maxmem = int(maxmem)
