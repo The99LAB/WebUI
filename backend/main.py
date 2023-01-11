@@ -818,25 +818,16 @@ api.add_resource(api_vm_manager, '/api/vm-manager/<string:action>')
 
 class api_vm_manager_action(Resource):
     def post(self, vmuuid, action):
+        domain = conn.lookupByUUIDString(vmuuid)
         if action == "start":
-            for vm in fakevm_results:
-                if vm['uuid'] == vmuuid:
-                    vm['state'] = 'Running'
-                    return '', 204
+            domain.create()
         elif action == "stop":
-            for vm in fakevm_results:
-                if vm['uuid'] == vmuuid:
-                    vm['state'] = 'Shutdown'
-                    return '', 204
+            domain.shutdown()
         elif action == "forcestop":
-            for vm in fakevm_results:
-                if vm['uuid'] == vmuuid:
-                    vm['state'] = 'Shutdown'
-                    return '', 204
+            domain.destroy()
         else:
             return 'Action not found', 404           
 api.add_resource(api_vm_manager_action, '/api/vm-manager/<string:vmuuid>/<string:action>')      
-
 
 class api_host_power(Resource):
     def post(self, powermsg):
