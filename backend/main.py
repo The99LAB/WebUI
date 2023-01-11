@@ -651,19 +651,19 @@ class create_vm():
         self.network_source = network_source
         self.network_model = network_model        
 
-    def win10(self):
+    def win10(self): # convert unit to kb
         if self.min_mem_unit == "MB":
-            mem_min = int(self.mem_min)
-        elif self.min_mem_unit == "GB":
             mem_min = int(self.mem_min) * 1024
-        elif self.min_mem_unit == "TB":
+        elif self.min_mem_unit == "GB":
             mem_min = int(self.mem_min) * 1024 * 1024
+        elif self.min_mem_unit == "TB":
+            mem_min = int(self.mem_min) * 1024 * 1024 * 1024
         if self.max_mem_unit == "MB":
-            mem_max = int(self.mem_max)
-        elif self.max_mem_unit == "GB":
             mem_max = int(self.mem_max) * 1024
+        elif self.max_mem_unit == "GB":
+            mem_max = int(self.mem_max) * 1024 * 1024
         elif self.max_mem_unit == "TB":
-            mem_max = int(self.mem_max) * 1024 * 1024    
+            mem_max = int(self.mem_max) * 1024 * 1024 * 1024
 
         ovmfstring = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>"
         
@@ -747,6 +747,7 @@ class create_vm():
         </devices>
         </domain>"""
 
+        return self.xml
     def create(self):
         conn.defineXML(self.xml)
 
