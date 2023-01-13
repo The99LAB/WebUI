@@ -8,5 +8,6 @@ updates:
   - package-ecosystem: "npm" # See documentation for possible values
     directory: "/frontend" # Location of package manifests
     open-pull-requests-limit: 15
+    target-branch: "dependabot"
     schedule:
       interval: "daily"
