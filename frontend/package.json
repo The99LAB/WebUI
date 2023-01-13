@@ -13,7 +13,7 @@
   "dependencies": {
     "@quasar/extras": "^1.15.9",
     "axios": "^1.2.2",
-    "quasar": "^2.6.0",
+    "quasar": "^2.11.5",
     "socket.io-client": "^4.5.4",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0"
