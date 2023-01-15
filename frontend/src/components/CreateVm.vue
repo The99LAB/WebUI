@@ -7,7 +7,7 @@
                     <q-btn icon="close" flat round dense v-close-popup />
                 </q-toolbar>
 
-                <q-tabs allign="left" v-model="tab">
+                <q-tabs align="left" v-model="tab">
                     <q-tab name="general" label="General" />
                     <q-tab name="memory" label="Memory" />
                     <q-tab name="disk" label="Disk" />
