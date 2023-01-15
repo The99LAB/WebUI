@@ -13,10 +13,6 @@
 
     <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
       <q-list>
-        <!-- <q-item-label header>
-          Essential Links
-        </q-item-label> -->
-
         <q-item clickable tag="a" to="/dashboard">
           <q-item-section avatar>
             <q-icon name="mdi-monitor-dashboard" />
@@ -27,12 +23,23 @@
             <!-- <q-item-label caption>Caption</q-item-label> -->
           </q-item-section>
         </q-item>
+        <q-item-label header>
+          Virtual Machines
+        </q-item-label>
         <q-item clickable tag="a" to="/vm-manager">
           <q-item-section avatar>
             <q-icon name="mdi-cube" />
           </q-item-section>
           <q-item-section>
             <q-item-label>Vm Manager</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/storage-pools">
+          <q-item-section avatar>
+            <q-icon name="mdi-server" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Storage Pools</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>

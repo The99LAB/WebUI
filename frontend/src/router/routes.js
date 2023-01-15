@@ -6,6 +6,7 @@ const routes = [
       { path: "", redirect: "/dashboard" },
       { path: "dashboard", component: () => import("pages/DashboardPage.vue") },
       { path: "vm-manager", component: () => import("pages/VmPage.vue") },
+      { path: "storage-pools", component: () => import("src/pages/StoragePoolPage.vue") },
     ],
   },
 

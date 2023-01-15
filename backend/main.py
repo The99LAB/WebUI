@@ -829,6 +829,170 @@ class api_vm_manager_action(Resource):
             return 'Action not found', 404           
 api.add_resource(api_vm_manager_action, '/api/vm-manager/<string:vmuuid>/<string:action>')      
 
+class api_storage_pool(Resource):
+    def get(self):
+        storage_pools = []
+        for pool in conn.listAllStoragePools():
+            pool_name = pool.name()
+            pool_uuid = pool.UUIDString()
+            _pool = conn.storagePoolLookupByUUIDString(pool_uuid)
+            pool_info = pool.info()
+            pool_volumes = []
+            if pool.isActive():
+                pool_state = "active"
+                pool_volumes_list = _pool.listVolumes()
+                for volume in pool_volumes_list:
+                    volume_info = _pool.storageVolLookupByName(volume).info()
+                    volume_capacity = round(volume_info[1] / 1024 / 1024 / 1024, 2)
+                    volume_allocation = round(volume_info[2] / 1024 / 1024 / 1024, 2)
+                    _volume = {
+                        "name": volume,
+                        "size": f"{volume_allocation}/{volume_capacity} GB",
+                    }
+                    pool_volumes.append(_volume)
+            else:
+                pool_state = "inactive"
+
+            pool_capacity = str(round(pool_info[1] / 1024 / 1024 / 1024)) + "GB"
+            pool_allocation = str(round(pool_info[2] / 1024 / 1024 / 1024)) + "GB"
+            pool_available = str(round(pool_info[3] / 1024 / 1024 / 1024)) + "GB"
+            pool_autostart_int =  pool.autostart()
+            pool_type_int = pool_info[0]
+            if pool_type_int == libvirt.VIR_STORAGE_VOL_FILE:
+                pool_type = "file"
+            elif pool_type_int == libvirt.VIR_STORAGE_VOL_BLOCK:
+                pool_type = "block"
+            elif pool_type_int == libvirt.VIR_STORAGE_VOL_DIR:
+                pool_type = "dir"
+            elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETWORK:
+                pool_type = "network"
+            elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETDIR:
+                pool_type = "netdir"
+            elif pool_type_int == libvirt.VIR_STORAGE_VOL_PLOOP:
+                pool_type = "ploop"
+            else:
+                pool_type = "unknown"
+            
+            pool_path = ET.fromstring(_pool.XMLDesc(0)).find('target/path').text
+
+            if pool_autostart_int == 1:
+                pool_autostart = True
+            else:
+                pool_autostart = False
+
+            pool_result = {
+                "name": pool_name,
+                "uuid": pool_uuid,
+                "state": pool_state,
+                "type": pool_type,
+                "path": pool_path,
+                "capacity": pool_capacity,
+                "allocation": pool_allocation,
+                "available": pool_available,
+                "autostart": pool_autostart,
+                "volumes": pool_volumes
+            }
+            storage_pools.append(pool_result)
+        # sort storage pools by name
+        storage_pools = sorted(storage_pools, key=lambda k: k['name'])
+        return storage_pools
+    def post(self):
+        pool_name = request.form['name']
+        pool_type = request.form['type']
+        pool_path = request.form['path']
+        if not os.path.exists(pool_path):
+            os.makedirs(pool_path)
+
+        if pool_type == "dir":
+            pool_xml = f"""<pool type='dir'>
+              <name>{pool_name}</name>
+              <target>
+                <path>{pool_path}</path>
+              </target>
+            </pool>"""
+            try:
+                conn.storagePoolDefineXML(pool_xml, 0)
+                pool = conn.storagePoolLookupByName(pool_name)
+                pool.create()
+                pool.setAutostart(1)
+
+                return '', 204
+            except libvirt.libvirtError as e:
+                return str(e), 500
+        else:
+            return 'Pool type not allowed', 400
+api.add_resource(api_storage_pool, '/api/storage-pools')
+
+class api_storage_pool_action(Resource):
+    def post(self, pooluuid, action):
+        try:
+            pool = conn.storagePoolLookupByUUIDString(pooluuid)
+            if action == "start":
+                pool.create()
+            elif action == "stop":
+                print("stopping pool with uuid" + pooluuid + "..." + pool.name()) 
+                pool.destroy()
+            elif action == "toggle-autostart":
+                if pool.autostart() == 1:
+                    pool.setAutostart(0)
+                else:
+                    pool.setAutostart(1)
+            elif action == "delete":
+                print("deleting pool with uuid" + pooluuid + "..." + pool.name())
+                pool.destroy()
+                pool.delete()
+                pool.undefine()
+            else:
+                return 'Action not found', 404
+            return '', 204
+        except libvirt.libvirtError as e:
+            return str(e), 500
+api.add_resource(api_storage_pool_action, '/api/storage-pools/<string:pooluuid>/<string:action>')
+
+class api_storage_pool_volumes(Resource):
+    def delete(self, pooluuid, volumename):
+        print("removing volume with name: " + volumename + "on pool with uuid: " + pooluuid)
+        try:
+            pool = conn.storagePoolLookupByUUIDString(pooluuid)
+            volume = pool.storageVolLookupByName(volumename)
+            volume.delete()
+            return '', 204
+        except libvirt.libvirtError as e:
+            return str(e), 500
+    def post(self, pooluuid, volumename):
+        print("creating volume with name: " + volumename + "on pool with uuid: " + pooluuid)
+        volume_format = request.form['format']
+        volume_size = request.form['size']
+        volume_size_unit = request.form['size_unit']
+        print("volume format: " + volume_format)
+        print("volume size: " + volume_size)
+        print("volume size unit: " + volume_size_unit)
+        try:
+            pool = conn.storagePoolLookupByUUIDString(pooluuid)
+            if volume_size_unit == "TB":
+                volume_size = int(volume_size) * 1024 * 1024 * 1024 * 1024
+            elif volume_size_unit == "GB":
+                volume_size = int(volume_size) * 1024 * 1024 * 1024
+            elif volume_size_unit == "MB":
+                volume_size = int(volume_size) * 1024 * 1024
+            else:
+                return "Error: Unknown disk size unit", 400
+
+            volume_xml = f"""<volume>
+            <name>{volumename}</name>
+            <capacity>{volume_size}</capacity>
+            <allocation>0</allocation>
+            <target>
+                <format type="{volume_format}"/>
+            </target>
+            </volume>"""
+
+            pool.createXML(volume_xml)
+            return '', 204
+        except libvirt.libvirtError as e:
+            return str(e), 500
+api.add_resource(api_storage_pool_volumes, '/api/storage-pools/<string:pooluuid>/volume/<string:volumename>')
+
 class api_host_power(Resource):
     def post(self, powermsg):
         if powermsg == "shutdown":

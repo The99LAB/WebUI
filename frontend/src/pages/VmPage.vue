@@ -28,15 +28,15 @@
 
         <q-tr v-show="props.expand" :props="props">
           <q-td colspan="100%">
-            <div>
+            <!-- <div>
               {{ props.row.uuid }}
-            </div>
+            </div> -->
             <div>
               <q-btn class="q-ma-sm" color="primary" icon="mdi-play" label="Start" v-if="props.row.state != 'Running'" @click="startVm(props.row.uuid)" />
               <q-btn class="q-ma-sm" color="primary" icon="mdi-stop" label="Stop" v-if="props.row.state == 'Running'" @click="stopVm(props.row.uuid)"  />
               <q-btn class="q-ma-sm" color="primary" icon="mdi-bomb" label="Force stop" v-if="props.row.state == 'Running'" @click="forceStopVm(props.row.uuid)" />
               <q-btn  class="q-ma-sm" color="primary" icon="mdi-eye" label="VNC" v-if="props.row.VNC && props.row.state=='Running'" @click="vncVm(props.row.uuid)"/>
-              <q-btn class="q-ma-sm" color="primary" icon="mdi-pencil" label="Edit" v-if="props.row.state == 'Shutdown'" @click="editVm(props.row.uuid)"/>
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-pencil" label="Edit" v-if="props.row.state == 'Shutoff'" @click="editVm(props.row.uuid)"/>
             </div>
           </q-td>
         </q-tr>
@@ -61,8 +61,9 @@ const rows = [
 const columns = [
   { label: 'Name', field: 'name', name: 'name', align: 'left' },
   { label: 'State', field: 'state', name: 'state', align: 'left' },
-  { label: 'Memory', field: 'memory', name: 'memory', align: 'left' },
-  { label: 'Cpus', field: 'vcpus', name: 'vcpus', align: 'left' }
+  { label: 'vCPUs', field: 'vcpus', name: 'vcpus', align: 'left' },
+  { label: 'Memory min', field: 'memory_min', name: 'memory_min', align: 'left' },
+  { label: 'Memory max', field: 'memory_max', name: 'memory_max', align: 'left'}
 ]
 
 export default {
