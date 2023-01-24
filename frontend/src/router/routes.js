@@ -7,6 +7,9 @@ const routes = [
       { path: "dashboard", component: () => import("pages/DashboardPage.vue") },
       { path: "vm-manager", component: () => import("pages/VmPage.vue") },
       { path: "storage-pools", component: () => import("src/pages/StoragePoolPage.vue") },
+      { path: "tools", component: () => import("pages/ToolsPage.vue")},
+      { path: "about", component: () => import("pages/AboutPage.vue") },
+    
     ],
   },
 

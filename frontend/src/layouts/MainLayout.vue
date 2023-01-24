@@ -20,7 +20,6 @@
 
           <q-item-section>
             <q-item-label>Dashboard</q-item-label>
-            <!-- <q-item-label caption>Caption</q-item-label> -->
           </q-item-section>
         </q-item>
         <q-item-label header>
@@ -40,6 +39,25 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>Storage Pools</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item-label header>
+          Host Management
+        </q-item-label>
+        <q-item clickable tag="a" to="/tools">
+          <q-item-section avatar>
+            <q-icon name="mdi-tools" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Tools</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/about">
+          <q-item-section avatar>
+            <q-icon name="mdi-information-outline" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>About</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
