@@ -750,6 +750,23 @@ class create_vm():
     def create(self):
         conn.defineXML(self.xml)
 
+def convertSizeUnit(size:int, from_unit, to_unit):
+    if from_unit == "TB":
+        if to_unit == "GB":
+            return size * 1024
+        elif to_unit == "MB":
+            return size * 1024 * 1024
+        elif to_unit == "KB":
+            return size * 1024 * 1024 * 1024
+    elif from_unit == "GB":
+        if to_unit == "MB":
+            return size * 1024
+        elif to_unit == "KB":
+            return size * 1024 * 1024
+    elif from_unit == "MB":
+        if to_unit == "KB":
+            return size * 1024
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -758,14 +775,14 @@ class api_socketio(Namespace):
     def on_connect(self):
         print("Client connected to test namespace\n\n")
     def on_get_cpu_overall_usage(self):
-        print("cpu_overall_usage")
+        # print("cpu_overall_usage")
         cpu_overall = psutil.cpu_percent()
         emit("cpu_overall_usage", cpu_overall)
     def on_get_mem_usage(self):
-        print("mem_usage")
+        # print("mem_usage")
         emit("mem_usage", psutil.virtual_memory().percent)
     def on_get_vm_results(self):
-        print("vm_results")
+        # print("vm_results")
         emit("vm_results", getvmresults())   
 socketio.on_namespace(api_socketio('/api'))
 
@@ -817,6 +834,25 @@ class api_vm_manager(Resource):
 api.add_resource(api_vm_manager, '/api/vm-manager/<string:action>')            
 
 class api_vm_manager_action(Resource):
+    def get(self, vmuuid, action):
+        domain = conn.lookupByUUIDString(vmuuid)
+        domain_xml = domain.XMLDesc(0)
+        if action == "xml":
+            return domain_xml, 204
+        elif action == "data":
+            print("getting vm data")
+            print("os: " + domain.OSType())
+            
+            data = {
+                "name": domain.name(),
+                "uuid": domain.UUIDString(),
+                "state": domain.state()[0],
+                "memory_max": domain.info()[1],
+                "memory_max_unit": "KB",
+                "memory_min": domain.info()[2],
+                "memory_min_unit": "KB",
+            }
+            return domain.info(), 204
     def post(self, vmuuid, action):
         domain = conn.lookupByUUIDString(vmuuid)
         if action == "start":
@@ -825,9 +861,44 @@ class api_vm_manager_action(Resource):
             domain.shutdown()
         elif action == "forcestop":
             domain.destroy()
-        else:
-            return 'Action not found', 404           
-api.add_resource(api_vm_manager_action, '/api/vm-manager/<string:vmuuid>/<string:action>')      
+        elif action.startswith("edit"):
+            action = action.replace("edit-", "")
+            if action == "memory":
+                memory_min = request.form['memory_min']
+                memory_min_unit = request.form['memory_min_unit']
+                memory_max = request.form['memory_max']
+                memory_max_unit = request.form['memory_max_unit']
+                print("memory_min: " + memory_min)
+                print("memory_min_unit: " + memory_min_unit)
+                print("memory_max: " + memory_max)
+                print("memory_max_unit: " + memory_max_unit)
+
+                memory_min = convertSizeUnit(int(memory_min), memory_min_unit, "KB")
+                memory_max = convertSizeUnit(int(memory_max), memory_max_unit, "KB")
+                print("memory_max: " + str(memory_max))
+                if memory_min > memory_max:
+                    return("Error: minmemory can't be bigger than maxmemory", 400)
+                else:    
+                    vm_xml = domain.XMLDesc(0)
+                    try:
+                        current_min_mem = (re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vm_xml).group())
+                        current_max_mem = (re.search("<memory unit='KiB'>[0-9]+</memory>", vm_xml).group())
+                        try:
+                            output = vm_xml
+                            output = output.replace(current_max_mem, "<memory unit='KiB'>"+ str(memory_max) + "</memory>")
+                            output = output.replace(current_min_mem, "<currentMemory unit='KiB'>"+ str(memory_min) + "</currentMemory>")
+                            try:
+                                conn.defineXML(output)
+                                return '', 204
+                            except libvirt.libvirtError as e:
+                                return str(e), 500
+                        except:
+                            return "failed to replace minmemory and/or maxmemory!", 500    
+                    except:
+                        return "failed to find minmemory and maxmemory in xml!", 500
+            else:
+                return 'Action not found', 404
+api.add_resource(api_vm_manager_action, '/api/vm-manager/<string:vmuuid>/<string:action>')    
 
 class api_storage_pool(Resource):
     def get(self):

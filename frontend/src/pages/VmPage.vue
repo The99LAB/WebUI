@@ -45,6 +45,7 @@
     </q-table>
     <ErrorDialog ref="errorDialog"></ErrorDialog>
     <CreateVm ref="createVm"></CreateVm>
+    <EditVm ref="editVm"></EditVm>
   </q-page>
 </template>
 
@@ -52,6 +53,7 @@
 import { ref } from 'vue'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
 import CreateVm from 'src/components/CreateVm.vue'
+import EditVm from 'src/components/EditVm.vue'
 
 const selected = ref()
 
@@ -77,6 +79,7 @@ export default {
   components: {
     ErrorDialog,
     CreateVm,
+    EditVm
   },
   methods: {
     startVm(uuid) {
@@ -119,7 +122,7 @@ export default {
       this.$socket.emit("get_vm_results")
     }, 1000)
     this.$socket.on("vm_results", (msg) => {
-        console.log("vm results:", msg)
+        // console.log("vm results:", msg)
         this.rows = msg
     })
   },
