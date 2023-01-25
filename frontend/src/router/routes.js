@@ -8,8 +8,8 @@ const routes = [
       { path: "vm-manager", component: () => import("pages/VmPage.vue") },
       { path: "storage-pools", component: () => import("src/pages/StoragePoolPage.vue") },
       { path: "tools", component: () => import("pages/ToolsPage.vue")},
-      { path: "about", component: () => import("pages/AboutPage.vue") },
-    
+      { path: "tools/system-info", component: () => import("pages/SystemInfoPage.vue") },
+      { path: "tools/about", component: () => import("pages/AboutPage.vue") },
     ],
   },
 

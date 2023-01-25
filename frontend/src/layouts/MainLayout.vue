@@ -6,7 +6,7 @@
         <q-toolbar-title>
           Server3
         </q-toolbar-title>
-        <q-btn dense flat round icon="power_settings_new" @click="showPowerMenu()"/>
+        <q-btn dense flat round icon="power_settings_new" @click="showPowerMenu()" />
         <q-btn dense flat round icon="logout" />
       </q-toolbar>
     </q-header>
@@ -44,29 +44,48 @@
         <q-item-label header>
           Host Management
         </q-item-label>
-        <q-item clickable tag="a" to="/tools">
-          <q-item-section avatar>
-            <q-icon name="mdi-tools" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Tools</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/about">
-          <q-item-section avatar>
-            <q-icon name="mdi-information-outline" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>About</q-item-label>
-          </q-item-section>
-        </q-item>
+        <q-expansion-item :content-inset-level="0.2" expand-separator icon="mdi-tools" label="Tools" clickable tag="a"
+          to="/tools">
+          <q-item clickable tag="a" to="/tools/system-info">
+            <q-item-section avatar>
+              <q-icon name="mdi-monitor" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>System Information</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable tag="a" to="/tools/system-devices">
+            <q-item-section avatar>
+              <q-icon name="mdi-harddisk" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>System Devices</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable tag="a" to="/tools/system-logs">
+            <q-item-section avatar>
+              <q-icon name="mdi-text-box-search-outline" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>System Logs</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable tag="a" to="/tools/about">
+            <q-item-section avatar>
+              <q-icon name="mdi-information" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>About</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-expansion-item>
       </q-list>
     </q-drawer>
 
     <q-page-container>
       <router-view />
-      <PowerMenu ref="powerMenu"/>
-      <ErrorDialog ref="errorDialog"/>
+      <PowerMenu ref="powerMenu" />
+      <ErrorDialog ref="errorDialog" />
     </q-page-container>
   </q-layout>
 </template>
