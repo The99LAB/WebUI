@@ -10,6 +10,7 @@ const routes = [
       { path: "tools", component: () => import("pages/ToolsPage.vue")},
       { path: "tools/system-info", component: () => import("pages/SystemInfoPage.vue") },
       { path: "tools/system-devices", component: () => import("pages/SystemDevicesPage.vue") },
+      { path: "tools/system-logs", component: () => import("pages/SystemLogsPage.vue") },
       { path: "tools/about", component: () => import("pages/AboutPage.vue") },
     ],
   },
