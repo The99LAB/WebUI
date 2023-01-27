@@ -17,17 +17,21 @@ import usb.core
 NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijnrombouts/token.list
 """
 
+
 class CustomFlask(Flask):
     jinja_options = Flask.jinja_options.copy()
     jinja_options.update(dict(
         variable_start_string='%%',
         variable_end_string='%%',
     ))
+
+
 app = CustomFlask(__name__, static_url_path='')
 CORS(app, resources={r"*": {"origins": "*"}})
 api = Api(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+
 
 def getvmstate(uuid):
     domain = conn.lookupByUUIDString(uuid)
@@ -50,7 +54,8 @@ def getvmstate(uuid):
         dom_state = 'Pmsuspended'
     else:
         dom_state = 'unknown'
-    return dom_state    
+    return dom_state
+
 
 def getvmresults():
     domains = conn.listAllDomains(0)
@@ -69,18 +74,18 @@ def getvmresults():
                 try:
                     vncport = graphics.get('port')
                     vnc_state = True
-                    try: 
+                    try:
                         with open("/home/stijn/token.list", "w") as tokenlist:
                             tokenlist.write(f"{dom_uuid}: localhost:{vncport}")
                     except Exception:
-                        print("Couldn't read the token file") 
+                        print("Couldn't read the token file")
                 except Exception:
                     vncport = "none"
                     vnc_state = False
             else:
                 vncport = "none"
                 vnc_state = False
- 
+
             # result = [dom_name, dom_state, vncport, dom_uuid]
             dom_memory_unit = "GB"
             dom_memory_stat = vmmemory(dom_uuid).current(dom_memory_unit)
@@ -101,6 +106,7 @@ def getvmresults():
         results = None
     return results
 
+
 def getRunningDomains():
     runningDomains = conn.listAllDomains(1)
     results = []
@@ -111,6 +117,7 @@ def getRunningDomains():
             result = [dom_name, dom_uuid]
             results.append(result)
     return results
+
 
 class vmmemory():
     def __init__(self, uuid):
@@ -129,7 +136,7 @@ class vmmemory():
             maxmem = maxmem / 1024
             minmem = minmem / 1024
         else:
-            return("Error: Unknown unit for memory size") 
+            return ("Error: Unknown unit for memory size")
         return [float(minmem), float(maxmem)]
 
     def edit(self, minmem, minmemunit, maxmem, maxmemunit):
@@ -142,9 +149,9 @@ class vmmemory():
         elif minmemunit == "MB":
             minmem = minmem * 1024
         elif minmemunit == "KB":
-            minmem = minmem   
+            minmem = minmem
         else:
-            return("Error: Unknown unit for minmemory size") 
+            return ("Error: Unknown unit for minmemory size")
 
         if maxmemunit == "TB":
             maxmem = maxmem * 1024 * 1024 * 1024
@@ -155,35 +162,42 @@ class vmmemory():
         elif maxmemunit == "KB":
             maxmem = maxmem
         else:
-            return("Error: Unknown unit for maxmemory size") 
+            return ("Error: Unknown unit for maxmemory size")
 
         if minmem > maxmem:
-            return("Error: minmemory can't be bigger than maxmemory")
+            return ("Error: minmemory can't be bigger than maxmemory")
 
-        else:    
+        else:
             vmXml = self.domain.XMLDesc(0)
             try:
-                currentminmem = (re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vmXml).group())
-                currentmaxmem = (re.search("<memory unit='KiB'>[0-9]+</memory>", vmXml).group())
+                currentminmem = (
+                    re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vmXml).group())
+                currentmaxmem = (
+                    re.search("<memory unit='KiB'>[0-9]+</memory>", vmXml).group())
                 try:
                     output = vmXml
-                    output = output.replace(currentmaxmem, "<memory unit='KiB'>"+ str(maxmem) + "</memory>")
-                    output = output.replace(currentminmem, "<currentMemory unit='KiB'>"+ str(minmem) + "</currentMemory>")
+                    output = output.replace(
+                        currentmaxmem, "<memory unit='KiB'>" + str(maxmem) + "</memory>")
+                    output = output.replace(
+                        currentminmem, "<currentMemory unit='KiB'>" + str(minmem) + "</currentMemory>")
                     try:
                         conn.defineXML(output)
-                        return('Succeed')
+                        return ('Succeed')
                     except libvirt.libvirtError as e:
-                        return(f'Error:{e}')
+                        return (f'Error:{e}')
                 except:
-                    return("failed to replace minmemory and/or maxmemory!")    
+                    return ("failed to replace minmemory and/or maxmemory!")
             except:
-                return("failed to find minmemory and maxmemory in xml!")
+                return ("failed to find minmemory and maxmemory in xml!")
+
 
 class getmemory():
     def __init__(self):
         self.systemmem = psutil.virtual_memory().total
+
     def systemmem(self):
         return self.systemmem
+
     def vmeditsizes(self):
         times = self.systemmem/1024/1024/512
         sizes = []
@@ -193,6 +207,7 @@ class getmemory():
             currentsize = currentsize + 512
         return sizes
 
+
 class cpu():
     def __init__(self, uuid):
         self.domain = conn.lookupByUUIDString(uuid)
@@ -201,7 +216,7 @@ class cpu():
     def get(self):
         maxvcpu = self.domain.vcpusFlags(libvirt.VIR_DOMAIN_VCPU_MAXIMUM)
         currentvcpu = self.domain.vcpusFlags(libvirt.VIR_DOMAIN_AFFECT_CURRENT)
-        #TODO: Get sockets, cores, threads
+        # TODO: Get sockets, cores, threads
 
         root = ET.fromstring(self.vmXml)
         cpu = root.find('./cpu')
@@ -222,14 +237,17 @@ class cpu():
     def set(self, customtopology, currentvcpu, maxvcpu, cpumode, sockets="", cores="", threads=""):
         output = self.vmXml
 
-        cpusfindtring = re.search("(<cpu.*/>|<cpu(.|\n)*</cpu>)", self.vmXml).group()
+        cpusfindtring = re.search(
+            "(<cpu.*/>|<cpu(.|\n)*</cpu>)", self.vmXml).group()
         vcpufindstring = re.search("<vcpu.*</vcpu>", self.vmXml).group()
 
         if currentvcpu != maxvcpu:
             print("not same")
-            output = output.replace(vcpufindstring, f"<vcpu placement='static' current='{currentvcpu}'>{maxvcpu}</vcpu>")
+            output = output.replace(
+                vcpufindstring, f"<vcpu placement='static' current='{currentvcpu}'>{maxvcpu}</vcpu>")
         else:
-            output = output.replace(vcpufindstring, f"<vcpu placement='static'>{maxvcpu}</vcpu>")
+            output = output.replace(
+                vcpufindstring, f"<vcpu placement='static'>{maxvcpu}</vcpu>")
 
         if cpumode == "host-passthrough":
             migratable = "migratable='on'"
@@ -252,13 +270,15 @@ class cpu():
         except libvirt.libvirtError as e:
             return f'Error: {e}'
 
+
 class storage():
     def __init__(self, domain_uuid):
         self.domain_uuid = domain_uuid
         self.domain = conn.lookupByUUIDString(domain_uuid)
         self.vmXml = self.domain.XMLDesc(0)
+
     def get(self):
-        tree=ET.fromstring(self.vmXml)
+        tree = ET.fromstring(self.vmXml)
         disks = tree.findall('./devices/disk')
         disklist = []
         for index, i in enumerate(disks):
@@ -281,23 +301,25 @@ class storage():
                 readonly = False
             disknumber = index
             xml = ET.tostring(i).decode()
-            disk = [disknumber, devicetype, drivertype, busformat, sourcefile, readonly, xml]
+            disk = [disknumber, devicetype, drivertype,
+                    busformat, sourcefile, readonly, xml]
             disklist.append(disk)
         return disklist
 
     def remove(self, disknumber):
-        tree=ET.fromstring(self.vmXml)
+        tree = ET.fromstring(self.vmXml)
         for idx, disk in enumerate(self.get()):
             if idx == int(disknumber):
                 try:
-                    self.domain.detachDeviceFlags(disk[6], libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    self.domain.detachDeviceFlags(
+                        disk[6], libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                     return 'Succeed'
                 except libvirt.libvirtError as e:
                     return f'Error: {e}'
-                break    
+                break
 
     def add_xml(self, targetbus, devicetype, sourcefile, drivertype, readonly="", bootorder=None):
-        tree=ET.fromstring(self.vmXml)
+        tree = ET.fromstring(self.vmXml)
         disks = tree.findall('./devices/disk')
 
         # get last used target bus
@@ -316,7 +338,7 @@ class storage():
         try:
             index = ascii_lowercase.index(LastUsedTargetDev)+1
         except NameError:
-            index=0
+            index = 0
         if targetbus == "sata" or targetbus == "scsi" or targetbus == "usb":
             FreeTargetDev = "sd" + ascii_lowercase[index]
         elif targetbus == "virtio":
@@ -350,15 +372,18 @@ class storage():
         return diskxml
 
     def add(self, targetbus, devicetype, sourcefile, drivertype, readonly="", bootorder=None):
-        diskxml = self.add_xml(targetbus=targetbus, devicetype=devicetype, sourcefile=sourcefile, drivertype=drivertype, readonly=readonly, bootorder=bootorder)
+        diskxml = self.add_xml(targetbus=targetbus, devicetype=devicetype, sourcefile=sourcefile,
+                               drivertype=drivertype, readonly=readonly, bootorder=bootorder)
         try:
-            self.domain.attachDeviceFlags(diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+            self.domain.attachDeviceFlags(
+                diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
             return 'Succeed'
         except libvirt.libvirtError as e:
             return f'Error: {e}'
 
     def createnew(self, pooluuid, disksize, disksizeunit, disktype, diskbus, bootorder=None):
-        volumename = poolStorage(pooluuid).getUnusedVolumeName(self.domain_uuid, disktype)
+        volumename = poolStorage(pooluuid).getUnusedVolumeName(
+            self.domain_uuid, disktype)
         pool = conn.storagePoolLookupByUUIDString(pooluuid)
 
         if disksizeunit == "TB":
@@ -384,31 +409,33 @@ class storage():
         try:
             pool.createXML(diskxml)
         except libvirt.libvirtError as e:
-            return f"Error: Creating volume on pool with uuid: {pooluuid} failed with error: {e}" 
-        
+            return f"Error: Creating volume on pool with uuid: {pooluuid} failed with error: {e}"
+
         volumepath = poolStorage(pooluuid).getVolumePath(volumename)
-        adddisk = storage(self.domain_uuid).add(diskbus, "disk", volumepath, disktype, bootorder=bootorder)
+        adddisk = storage(self.domain_uuid).add(
+            diskbus, "disk", volumepath, disktype, bootorder=bootorder)
         if adddisk != "Succeed":
             return f"Error adding disk: {adddisk}"
         else:
             return "Succeed"
 
+
 class poolStorage():
-    def __init__ (self, pooluuid):
+    def __init__(self, pooluuid):
         self.pooluuid = pooluuid
 
     def getUnusedVolumeName(self, vmuuid, vdisktype):
         domainName = conn.lookupByUUIDString(vmuuid).name()
         volname = f"{domainName}.{vdisktype}"
-        sp = conn.storagePoolLookupByUUIDString(self.pooluuid) 
+        sp = conn.storagePoolLookupByUUIDString(self.pooluuid)
         stgvols = sp.listVolumes()
 
         count = 0
         while True:
             if volname in stgvols:
-                count +=1
+                count += 1
                 volname = f"{domainName}-{count}.{vdisktype}"
-            else: 
+            else:
                 break
         return volname
 
@@ -429,13 +456,14 @@ class poolStorage():
             if pool.isActive() == 1:
                 active = "Yes"
             else:
-                active = "No"        
+                active = "No"
 
             capacity = str(round(info[1] / 1024 / 1024 / 1024)) + "GB"
             allocation = str(round(info[2] / 1024 / 1024 / 1024)) + "GB"
             available = str(round(info[3] / 1024 / 1024 / 1024)) + "GB"
 
-            poolinfo = [name, uuid, autostart, active, capacity, allocation, available]
+            poolinfo = [name, uuid, autostart, active,
+                        capacity, allocation, available]
             poollist.append(poolinfo)
         return poollist
 
@@ -447,6 +475,7 @@ class poolStorage():
         voluempath = key.text
         return voluempath
 
+
 def UsbDevicesList():
     devices = usb.core.find(find_all=True)
     deviceslist = []
@@ -455,10 +484,11 @@ def UsbDevicesList():
         product = device.product
         vendorid = hex(device.idVendor)
         productid = hex(device.idProduct)
-        if vendorid !="0x1d6b":
+        if vendorid != "0x1d6b":
             devicelist = [manufacturer, product, vendorid, productid]
             deviceslist.append(devicelist)
-    return deviceslist      
+    return deviceslist
+
 
 def SystemPciDevices():
     pci_devices = conn.listAllDevices(2)
@@ -485,18 +515,20 @@ def SystemPciDevices():
             try:
                 driver = root.find('./driver/name').text
             except AttributeError:
-                driver = ""    
-            pcidevicesList.append([int(iommuGroup), path, productName, productid, vendorName, vendorid, driver, domain, bus, slot, function])
+                driver = ""
+            pcidevicesList.append([int(iommuGroup), path, productName, productid,
+                                  vendorName, vendorid, driver, domain, bus, slot, function])
         except AttributeError:
             pass
     pcidevicesList.sort()
     return pcidevicesList
 
+
 class DomainPci():
     def __init__(self, vmuuid):
         self.domain = conn.lookupByUUIDString(vmuuid)
         self.vmXml = self.domain.XMLDesc()
-        
+
     def get(self):
         tree = ET.fromstring(self.vmXml)
         pcidevices = []
@@ -524,10 +556,12 @@ class DomainPci():
                         foundSystemPciDevice = True
                         break
                 if foundSystemPciDevice:
-                    pcidevices.append([devicepath, domain, bus, slot, function, deviceProductName, deviceVendorName])
+                    pcidevices.append(
+                        [devicepath, domain, bus, slot, function, deviceProductName, deviceVendorName])
                 else:
-                    pcidevices.append(["Unkonwn", domain, bus, slot, function, "Unkown", "Unknown"])
-    
+                    pcidevices.append(
+                        ["Unkonwn", domain, bus, slot, function, "Unkown", "Unknown"])
+
         return pcidevices
 
     def remove(self, argdomain, argbus, argslot, argfunction):
@@ -546,7 +580,8 @@ class DomainPci():
                     print("MATCH")
                     pcidevicexml = ET.tostring(hostdev).decode()
                     try:
-                        self.domain.detachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        self.domain.detachDeviceFlags(
+                            pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                         return 'Succeed'
                     except libvirt.libvirtError as e:
                         return f'Error: {e}'
@@ -554,10 +589,12 @@ class DomainPci():
     def add(self, argdomain, argbus, argslot, argfunction):
         pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{argdomain}' bus='{argbus}' slot='{argslot}' function='{argfunction}'/></source></hostdev>"
         try:
-            self.domain.attachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+            self.domain.attachDeviceFlags(
+                pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
             return 'Succeed'
         except libvirt.libvirtError as e:
-            return f'Error: {e}'  
+            return f'Error: {e}'
+
 
 class DomainUsb():
     def __init__(self, domuuid):
@@ -586,31 +623,37 @@ class DomainUsb():
                         foundSystemUsbDevice = True
                         break
                 if foundSystemUsbDevice:
-                    usbdevices.append([manufacturer, product, vendorid, productid])
+                    usbdevices.append(
+                        [manufacturer, product, vendorid, productid])
                 else:
-                    usbdevices.append(["Unkonwn", "Unknown", vendorid, productid])
+                    usbdevices.append(
+                        ["Unkonwn", "Unknown", vendorid, productid])
         return usbdevices
 
     def add(self, vendorid, productid):
         xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
         try:
-            self.domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+            self.domain.attachDeviceFlags(
+                xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
             return 'Succeed'
         except libvirt.libvirtError as e:
             return f"Error: {e}"
+
     def remove(self, vendorid, productid):
         xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
         try:
-            self.domain.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+            self.domain.detachDeviceFlags(
+                xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
             return 'Succeed'
         except libvirt.libvirtError as e:
             return f"Error: {e}"
+
 
 class domainNetworkInterface():
     def __init__(self, dom_uuid):
         self.domain = conn.lookupByUUIDString(dom_uuid)
         self.domainxml = self.domain.XMLDesc()
-    
+
     def get(self):
         networkinterfaces = []
         tree = ET.fromstring(self.domainxml)
@@ -621,13 +664,15 @@ class domainNetworkInterface():
                 mac_addr = interface.find("mac").get('address')
                 source_network = interface.find("source").get('network')
                 model = interface.find('model').get("type")
-                networkinterfaces.append([index, xml, mac_addr, source_network, model])
+                networkinterfaces.append(
+                    [index, xml, mac_addr, source_network, model])
         return networkinterfaces
-    
+
     def remove(self, index):
         for idx, interface in enumerate(self.get()):
             if idx == int(index):
                 return interface[1]
+
 
 class create_vm():
     def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_pool=None, iso=False, iso_pool=None, iso_file=None, network=False, network_source=None, network_model=None):
@@ -649,9 +694,9 @@ class create_vm():
         self.iso_file = iso_file
         self.network = network
         self.network_source = network_source
-        self.network_model = network_model        
+        self.network_model = network_model
 
-    def win10(self): # convert unit to kb
+    def win10(self):  # convert unit to kb
         if self.min_mem_unit == "MB":
             mem_min = int(self.mem_min) * 1024
         elif self.min_mem_unit == "GB":
@@ -666,12 +711,13 @@ class create_vm():
             mem_max = int(self.mem_max) * 1024 * 1024 * 1024
 
         ovmfstring = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>"
-        
+
         if self.network:
             networkstring = f"<interface type='network'><source network='{self.network_source}'/><model type='{self.network_model}'/></interface>"
-        
+
         if self.iso:
-            isopath = poolStorage(pooluuid=self.iso_pool).getVolumePath(poolvolume=self.iso_file)
+            isopath = poolStorage(pooluuid=self.iso_pool).getVolumePath(
+                poolvolume=self.iso_file)
             createisoxml = f"""<disk type='file' device='cdrom'>
                             <driver name='qemu' type='raw'/>
                             <source file='{isopath}'/>
@@ -701,14 +747,14 @@ class create_vm():
             </target>
             </volume>"""
             pool.createXML(diskxml)
-            diskvolumepath = poolStorage(self.disk_pool).getVolumePath(disk_volume_name)
+            diskvolumepath = poolStorage(
+                self.disk_pool).getVolumePath(disk_volume_name)
             creatediskxml = f"""<disk type='file' device='disk'>
                             <driver name='qemu' type='{self.disk_type}'/>
                             <source file='{diskvolumepath}'/>
                             <target dev='{"vda" if self.disk_bus == "virtio" else "sdb"}' bus='{self.diskbus}'/>
                             <boot order='1'/>
                             </disk>"""
-            
 
         self.xml = f"""<domain type='kvm'>
         <name>{self.name}</name>
@@ -747,10 +793,12 @@ class create_vm():
         </devices>
         </domain>"""
         return self.xml
+
     def create(self):
         conn.defineXML(self.xml)
 
-def convertSizeUnit(size:int, from_unit, to_unit):
+
+def convertSizeUnit(size: int, from_unit, to_unit):
     if from_unit == "TB":
         if to_unit == "GB":
             return size * 1024
@@ -767,24 +815,32 @@ def convertSizeUnit(size:int, from_unit, to_unit):
         if to_unit == "KB":
             return size * 1024
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 class api_socketio(Namespace):
     def on_connect(self):
         print("Client connected to test namespace\n\n")
+
     def on_get_cpu_overall_usage(self):
         # print("cpu_overall_usage")
         cpu_overall = psutil.cpu_percent()
         emit("cpu_overall_usage", cpu_overall)
+
     def on_get_mem_usage(self):
         # print("mem_usage")
         emit("mem_usage", psutil.virtual_memory().percent)
+
     def on_get_vm_results(self):
         # print("vm_results")
-        emit("vm_results", getvmresults())   
+        emit("vm_results", getvmresults())
+
+
 socketio.on_namespace(api_socketio('/api'))
+
 
 class api_vm_manager(Resource):
     def post(self, action):
@@ -825,13 +881,17 @@ class api_vm_manager(Resource):
             print("network_source: " + network_source)
             print("network_model: " + network_model)
 
-            vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk, disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, network=network, network_source=network_source, network_model=network_model)
+            vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
+                           disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, network=network, network_source=network_source, network_model=network_model)
             vm.win10()
             vm.create()
             return '', 204
-        else: 
+        else:
             return 'Action not found', 404
-api.add_resource(api_vm_manager, '/api/vm-manager/<string:action>')            
+
+
+api.add_resource(api_vm_manager, '/api/vm-manager/<string:action>')
+
 
 class api_vm_manager_action(Resource):
     def get(self, vmuuid, action):
@@ -842,7 +902,7 @@ class api_vm_manager_action(Resource):
         elif action == "data":
             print("getting vm data")
             print("os: " + domain.OSType())
-            
+
             data = {
                 "name": domain.name(),
                 "uuid": domain.UUIDString(),
@@ -853,6 +913,7 @@ class api_vm_manager_action(Resource):
                 "memory_min_unit": "KB",
             }
             return domain.info(), 204
+
     def post(self, vmuuid, action):
         domain = conn.lookupByUUIDString(vmuuid)
         if action == "start":
@@ -873,32 +934,42 @@ class api_vm_manager_action(Resource):
                 print("memory_max: " + memory_max)
                 print("memory_max_unit: " + memory_max_unit)
 
-                memory_min = convertSizeUnit(int(memory_min), memory_min_unit, "KB")
-                memory_max = convertSizeUnit(int(memory_max), memory_max_unit, "KB")
+                memory_min = convertSizeUnit(
+                    int(memory_min), memory_min_unit, "KB")
+                memory_max = convertSizeUnit(
+                    int(memory_max), memory_max_unit, "KB")
                 print("memory_max: " + str(memory_max))
                 if memory_min > memory_max:
-                    return("Error: minmemory can't be bigger than maxmemory", 400)
-                else:    
+                    return ("Error: minmemory can't be bigger than maxmemory", 400)
+                else:
                     vm_xml = domain.XMLDesc(0)
                     try:
-                        current_min_mem = (re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vm_xml).group())
-                        current_max_mem = (re.search("<memory unit='KiB'>[0-9]+</memory>", vm_xml).group())
+                        current_min_mem = (
+                            re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vm_xml).group())
+                        current_max_mem = (
+                            re.search("<memory unit='KiB'>[0-9]+</memory>", vm_xml).group())
                         try:
                             output = vm_xml
-                            output = output.replace(current_max_mem, "<memory unit='KiB'>"+ str(memory_max) + "</memory>")
-                            output = output.replace(current_min_mem, "<currentMemory unit='KiB'>"+ str(memory_min) + "</currentMemory>")
+                            output = output.replace(
+                                current_max_mem, "<memory unit='KiB'>" + str(memory_max) + "</memory>")
+                            output = output.replace(
+                                current_min_mem, "<currentMemory unit='KiB'>" + str(memory_min) + "</currentMemory>")
                             try:
                                 conn.defineXML(output)
                                 return '', 204
                             except libvirt.libvirtError as e:
                                 return str(e), 500
                         except:
-                            return "failed to replace minmemory and/or maxmemory!", 500    
+                            return "failed to replace minmemory and/or maxmemory!", 500
                     except:
                         return "failed to find minmemory and maxmemory in xml!", 500
             else:
                 return 'Action not found', 404
-api.add_resource(api_vm_manager_action, '/api/vm-manager/<string:vmuuid>/<string:action>')    
+
+
+api.add_resource(api_vm_manager_action,
+                 '/api/vm-manager/<string:vmuuid>/<string:action>')
+
 
 class api_storage_pool(Resource):
     def get(self):
@@ -914,8 +985,10 @@ class api_storage_pool(Resource):
                 pool_volumes_list = _pool.listVolumes()
                 for volume in pool_volumes_list:
                     volume_info = _pool.storageVolLookupByName(volume).info()
-                    volume_capacity = round(volume_info[1] / 1024 / 1024 / 1024, 2)
-                    volume_allocation = round(volume_info[2] / 1024 / 1024 / 1024, 2)
+                    volume_capacity = round(
+                        volume_info[1] / 1024 / 1024 / 1024, 2)
+                    volume_allocation = round(
+                        volume_info[2] / 1024 / 1024 / 1024, 2)
                     _volume = {
                         "name": volume,
                         "size": f"{volume_allocation}/{volume_capacity} GB",
@@ -924,10 +997,13 @@ class api_storage_pool(Resource):
             else:
                 pool_state = "inactive"
 
-            pool_capacity = str(round(pool_info[1] / 1024 / 1024 / 1024)) + "GB"
-            pool_allocation = str(round(pool_info[2] / 1024 / 1024 / 1024)) + "GB"
-            pool_available = str(round(pool_info[3] / 1024 / 1024 / 1024)) + "GB"
-            pool_autostart_int =  pool.autostart()
+            pool_capacity = str(
+                round(pool_info[1] / 1024 / 1024 / 1024)) + "GB"
+            pool_allocation = str(
+                round(pool_info[2] / 1024 / 1024 / 1024)) + "GB"
+            pool_available = str(
+                round(pool_info[3] / 1024 / 1024 / 1024)) + "GB"
+            pool_autostart_int = pool.autostart()
             pool_type_int = pool_info[0]
             if pool_type_int == libvirt.VIR_STORAGE_VOL_FILE:
                 pool_type = "file"
@@ -943,8 +1019,9 @@ class api_storage_pool(Resource):
                 pool_type = "ploop"
             else:
                 pool_type = "unknown"
-            
-            pool_path = ET.fromstring(_pool.XMLDesc(0)).find('target/path').text
+
+            pool_path = ET.fromstring(
+                _pool.XMLDesc(0)).find('target/path').text
 
             if pool_autostart_int == 1:
                 pool_autostart = True
@@ -967,6 +1044,7 @@ class api_storage_pool(Resource):
         # sort storage pools by name
         storage_pools = sorted(storage_pools, key=lambda k: k['name'])
         return storage_pools
+
     def post(self):
         pool_name = request.form['name']
         pool_type = request.form['type']
@@ -992,7 +1070,10 @@ class api_storage_pool(Resource):
                 return str(e), 500
         else:
             return 'Pool type not allowed', 400
+
+
 api.add_resource(api_storage_pool, '/api/storage-pools')
+
 
 class api_storage_pool_action(Resource):
     def post(self, pooluuid, action):
@@ -1001,7 +1082,8 @@ class api_storage_pool_action(Resource):
             if action == "start":
                 pool.create()
             elif action == "stop":
-                print("stopping pool with uuid" + pooluuid + "..." + pool.name()) 
+                print("stopping pool with uuid" +
+                      pooluuid + "..." + pool.name())
                 pool.destroy()
             elif action == "toggle-autostart":
                 if pool.autostart() == 1:
@@ -1009,7 +1091,8 @@ class api_storage_pool_action(Resource):
                 else:
                     pool.setAutostart(1)
             elif action == "delete":
-                print("deleting pool with uuid" + pooluuid + "..." + pool.name())
+                print("deleting pool with uuid" +
+                      pooluuid + "..." + pool.name())
                 pool.destroy()
                 pool.delete()
                 pool.undefine()
@@ -1018,11 +1101,16 @@ class api_storage_pool_action(Resource):
             return '', 204
         except libvirt.libvirtError as e:
             return str(e), 500
-api.add_resource(api_storage_pool_action, '/api/storage-pools/<string:pooluuid>/<string:action>')
+
+
+api.add_resource(api_storage_pool_action,
+                 '/api/storage-pools/<string:pooluuid>/<string:action>')
+
 
 class api_storage_pool_volumes(Resource):
     def delete(self, pooluuid, volumename):
-        print("removing volume with name: " + volumename + "on pool with uuid: " + pooluuid)
+        print("removing volume with name: " +
+              volumename + "on pool with uuid: " + pooluuid)
         try:
             pool = conn.storagePoolLookupByUUIDString(pooluuid)
             volume = pool.storageVolLookupByName(volumename)
@@ -1030,8 +1118,10 @@ class api_storage_pool_volumes(Resource):
             return '', 204
         except libvirt.libvirtError as e:
             return str(e), 500
+
     def post(self, pooluuid, volumename):
-        print("creating volume with name: " + volumename + "on pool with uuid: " + pooluuid)
+        print("creating volume with name: " +
+              volumename + "on pool with uuid: " + pooluuid)
         volume_format = request.form['format']
         volume_size = request.form['size']
         volume_size_unit = request.form['size_unit']
@@ -1062,22 +1152,30 @@ class api_storage_pool_volumes(Resource):
             return '', 204
         except libvirt.libvirtError as e:
             return str(e), 500
-api.add_resource(api_storage_pool_volumes, '/api/storage-pools/<string:pooluuid>/volume/<string:volumename>')
+
+
+api.add_resource(api_storage_pool_volumes,
+                 '/api/storage-pools/<string:pooluuid>/volume/<string:volumename>')
+
 
 class api_host_power(Resource):
     def post(self, powermsg):
         if powermsg == "shutdown":
-            shutdown_result = subprocess.run(["shutdown", "-h", "now"], capture_output=True, text=True)
+            shutdown_result = subprocess.run(
+                ["shutdown", "-h", "now"], capture_output=True, text=True)
             if shutdown_result.returncode == 0:
                 return '', 204
             else:
                 return shutdown_result.stdout, 500
         elif powermsg == "reboot":
-            reboot_result = subprocess.run(["reboot"], capture_output=True, text=True)
+            reboot_result = subprocess.run(
+                ["reboot"], capture_output=True, text=True)
             if reboot_result.returncode == 0:
                 return '', 204
             else:
                 return reboot_result.stdout, 500
+
+
 api.add_resource(api_host_power, '/api/host/power/<string:powermsg>')
 
 if __name__ == '__main__':
