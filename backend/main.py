@@ -12,9 +12,11 @@ from string import ascii_lowercase
 from flask_socketio import SocketIO, Namespace, emit
 import subprocess
 import usb.core
+from blkinfo import BlkDiskInfo
+
 
 """
-NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijnrombouts/token.list
+NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijn/token.list
 """
 
 
@@ -516,11 +518,10 @@ def SystemPciDevices():
                 driver = root.find('./driver/name').text
             except AttributeError:
                 driver = ""
-            pcidevicesList.append([int(iommuGroup), path, productName, productid,
-                                  vendorName, vendorid, driver, domain, bus, slot, function])
+            pcidevicesList.append({"iommuGroup": int(iommuGroup), "path": path, "productName": productName, "productid": productid,
+                                  "vendorName": vendorName, "vendorid": vendorid, "driver": driver, "domain": domain, "bus": bus, "slot": slot, "function": function})
         except AttributeError:
             pass
-    pcidevicesList.sort()
     return pcidevicesList
 
 
@@ -800,20 +801,50 @@ class create_vm():
 
 def convertSizeUnit(size: int, from_unit, to_unit):
     if from_unit == "TB":
-        if to_unit == "GB":
-            return size * 1024
-        elif to_unit == "MB":
-            return size * 1024 * 1024
+        if to_unit == "B":
+            return size * 1024 * 1024 * 1024 * 1024
         elif to_unit == "KB":
             return size * 1024 * 1024 * 1024
-    elif from_unit == "GB":
-        if to_unit == "MB":
+        elif to_unit == "MB":
+            return size * 1024 * 1024
+        elif to_unit == "GB":
             return size * 1024
+    elif from_unit == "GB":
+        if to_unit == "B":
+            return size * 1024 * 1024 * 1024
         elif to_unit == "KB":
             return size * 1024 * 1024
-    elif from_unit == "MB":
-        if to_unit == "KB":
+        elif to_unit == "MB":
             return size * 1024
+        elif to_unit == "TB":
+            return size / 1024
+    elif from_unit == "MB":
+        if to_unit == "B":
+            return size * 1024 * 1024
+        elif to_unit == "KB":
+            return size * 1024
+        elif to_unit == "GB":
+            return size / 1024
+        elif to_unit == "TB":
+            return size / 1024 / 1024
+    elif from_unit == "KB":
+        if to_unit == "B":
+            return size * 1024
+        elif to_unit == "MB":
+            return size / 1024
+        elif to_unit == "GB":
+            return size / 1024 / 1024
+        elif to_unit == "TB":
+            return size / 1024 / 1024 / 1024
+    elif from_unit == "B":
+        if to_unit == "KB":
+            return size / 1024
+        elif to_unit == "MB":
+            return size / 1024 / 1024
+        elif to_unit == "GB":
+            return size / 1024 / 1024 / 1024
+        elif to_unit == "TB":
+            return size / 1024 / 1024 / 1024 / 1024
 
 
 @app.route("/")
@@ -1178,6 +1209,24 @@ class api_host_power(Resource):
 
 api.add_resource(api_host_power, '/api/host/power/<string:powermsg>')
 
+
+class api_host_system_devices(Resource):
+    def get(self, devicetype):
+        if devicetype == "pcie":
+            return SystemPciDevices()
+        elif devicetype == "scsi":
+            disk_list = []
+            myblkd = BlkDiskInfo()
+            all_my_disks = myblkd.get_disks()
+
+            for i in all_my_disks:
+                disk_list.append(
+                    {'model': i["model"], 'type': i['type'], 'path': f"/dev/{i['name']}", 'capacity': f'{round(convertSizeUnit(size=int(i["size"]), from_unit="B", to_unit="GB"))} GB'})
+            return disk_list
+
+
+api.add_resource(api_host_system_devices,
+                 '/api/host/system-devices/<string:devicetype>')
 if __name__ == '__main__':
     conn = libvirt.open('qemu:///system')
     app.run(debug=True, host="0.0.0.0")
