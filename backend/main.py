@@ -1210,6 +1210,25 @@ class api_host_power(Resource):
 api.add_resource(api_host_power, '/api/host/power/<string:powermsg>')
 
 
+class api_host_system_info(Resource):
+    def get(self, action):
+        if action == "all":
+            return SystemInfo()
+        elif action == "hostname":
+            return SystemHostname()
+        else:
+            return 'Action not found', 404
+
+    def post(self, action):
+        print("post request, action: " + action)
+        if action == "hostname":
+            print("request to change hostname")
+        return
+
+
+api.add_resource(api_host_system_info, '/api/host/system-info/<string:action>')
+
+
 class api_host_system_devices(Resource):
     def get(self, devicetype):
         if devicetype == "pcie":
@@ -1227,6 +1246,7 @@ class api_host_system_devices(Resource):
 
 api.add_resource(api_host_system_devices,
                  '/api/host/system-devices/<string:devicetype>')
+
 if __name__ == '__main__':
     conn = libvirt.open('qemu:///system')
     app.run(debug=True, host="0.0.0.0")

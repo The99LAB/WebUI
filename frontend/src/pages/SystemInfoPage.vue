@@ -25,11 +25,12 @@
         </div>
       </q-card-section>
     </q-card>
-
+    <editHostName ref="editHostNameDialog" />
   </q-page>
 </template>
 
 <script>
+import editHostName from '../components/EditHostName.vue'
 export default {
   data() {
     return {
@@ -42,10 +43,15 @@ export default {
     }
   },
   components: {
+    editHostName
   },
   methods: {
+    getSystemInfo() {
+      console.log('Getting system info');
+    },
     editHostName() {
       console.log('Editing host name');
+      this.$refs.editHostNameDialog.show()
     }
   },
 }
