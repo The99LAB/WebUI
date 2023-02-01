@@ -1109,6 +1109,27 @@ api.add_resource(api_storage_pool, '/api/storage-pools')
 
 
 class api_storage_pool_action(Resource):
+    def get(self, pooluuid, action):
+        if action == "volumes":
+            pool = conn.storagePoolLookupByUUIDString(pooluuid)
+            pool_volumes = []
+            if pool.isActive():
+                pool_volumes_list = pool.listVolumes()
+                for volume in pool_volumes_list:
+                    volume_info = pool.storageVolLookupByName(volume).info()
+                    volume_capacity = round(
+                        volume_info[1] / 1024 / 1024 / 1024)
+                    volume_allocation = round(
+                        volume_info[2] / 1024 / 1024 / 1024)
+                    volume_xml = ET.fromstring(pool.storageVolLookupByName(volume).XMLDesc(0))
+                    volume_format = volume_xml.find('target/format').get('type')
+                    _volume = {
+                        "name": volume + "." + volume_format,
+                        "capacity": volume_capacity,
+                        "allocation": volume_allocation,
+                    }
+                    pool_volumes.append(_volume)
+            return pool_volumes
     def post(self, pooluuid, action):
         try:
             pool = conn.storagePoolLookupByUUIDString(pooluuid)
@@ -1190,6 +1211,41 @@ class api_storage_pool_volumes(Resource):
 api.add_resource(api_storage_pool_volumes,
                  '/api/storage-pools/<string:pooluuid>/volume/<string:volumename>')
 
+
+class api_networks(Resource):
+    def get(self):
+        # get all networks from libvirt
+        networks = conn.listAllNetworks()
+        # create empty list for networks
+        networks_list = []
+        # loop through networks
+        for network in networks:
+            # get network xml
+            network_xml = ET.fromstring(network.XMLDesc(0))            
+            # get network autostart
+            network_autostart = network.autostart()
+            # get network active
+            network_active = network.isActive()
+            if network_active == 1:
+                network_active = True
+            else:
+                network_active = False
+            # get network persistent
+            network_persistent = network.isPersistent()
+            # create network dict
+            _network = {
+                "uuid": network.UUIDString(),
+                "name": network.name(),
+                "active": network_active,
+                "persistent": network_persistent,
+                "autostart": network_autostart,
+                
+            }
+            # append network dict to networks list
+            networks_list.append(_network)
+        return networks_list
+
+api.add_resource(api_networks, '/api/networks')
 
 class api_host_power(Resource):
     def post(self, powermsg):

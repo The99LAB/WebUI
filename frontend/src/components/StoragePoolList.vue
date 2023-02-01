@@ -1,34 +1,41 @@
 <template>
-    <q-select label="Storage pool" v-model="selectedStoragePool" :options="storagePoolList" />
-
+    <q-select label="Storage pool" v-model="selectedStoragePool" :options="storagePoolList" option-label="name">
+        <template v-slot:option="scope">
+          <q-item v-bind="scope.itemProps">
+            <q-item-section>
+              <q-item-label>{{ scope.opt.name }}</q-item-label>
+              <q-item-label caption>{{ scope.opt.allocation }} / {{ scope.opt.capacity }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </template>
+    </q-select>
 </template>
 
 <script>
-import { ref } from 'vue'
-selectedStoragePool = ref(null)
-storagePoolList = ref(["default", "default2"])
-
 export default {
     data() {
         return {
+            storagePoolList: [],
+            selectedStoragePool: "default",
         }
-    },
-    components: {
-
     },
     methods: {
         updatePoolList() {
             console.log("Updating pool list")
-
-            this.$api.post("/storage-pools", formData)
-                .then(
-            )
+            this.$api.get("/storage-pools")
+                .then(response => {
+                    this.storagePoolList = response.data
+                    this.selectedStoragePool = this.storagePoolList[0]
+                })
                 .catch(error => {
                 })
         },
         getSelectedPool() {
-            return this.selectedStoragePool
+            return this.selectedStoragePool["uuid"]
         }
+    },
+    mounted() {
+        this.updatePoolList()
     }
 }
 </script>

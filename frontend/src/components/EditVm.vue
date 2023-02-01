@@ -69,17 +69,17 @@
                             </div>
                             <div class="row">
                                 <div class="col">
-                                    <q-select label="Pool" v-model="disk_pool" :options="diskPoolOptions" />
+                                    <StoragePoolList ref="disk_pool" />
+                                    <!-- <q-select label="Pool" v-model="disk_pool" :options="diskPoolOptions" /> -->
                                 </div>
                             </div>
                         </q-tab-panel>
                         <q-tab-panel name="cdrom">
-                            <q-select label="Pool" v-model="cdrom_pool" :options="cdromPoolOptions" />
-                            <q-select label="Path" v-model="cdrom_path" :options="cdromPathOptions" />
+                            <StoragePoolAndVolumeList ref="cdrom_pool_path" />
                             <q-select label="Bus" v-model="cdrom_bus" :options="cdromBusOptions" />
                         </q-tab-panel>
                         <q-tab-panel name="network">
-                            <q-select label="Network" v-model="network_source" :options="networkSourceOptions" />
+                            <NetworkList ref="network_source" />
                             <q-select label="Model" v-model="network_model" :options="networkModelOptions" />
                         </q-tab-panel>
                     </q-tab-panels>
@@ -100,6 +100,9 @@
 <script>
 import { ref } from 'vue'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
+import StoragePoolList from 'src/components/StoragePoolList.vue'
+import StoragePoolAndVolumeList from 'src/components/StoragePoolAndVolumeList.vue'
+import NetworkList from 'src/components/NetworkList.vue'
 
 export default {
   data () {
@@ -128,14 +131,15 @@ export default {
         diskBusOptions: ["sata", "scsi", "virtio", "usb"],
         cdrom_bus: ref("sata"),
         cdromBusOptions: ["sata", "scsi", "virtio", "usb"],
-        network_source: ref("default"),
-        network_sourceOptions: ["default"],
         network_model: ref("virtio"),
         networkModelOptions: ["virtio", "e1000", "rtl8139"]
     }
   },
     components: {
-        ErrorDialog
+        ErrorDialog,
+        StoragePoolList,
+        StoragePoolAndVolumeList,
+        NetworkList
     },
     methods: {
         show(uuid) {
@@ -158,6 +162,7 @@ export default {
                 // this.cdrom_bus = response.data.cdrom_bus
                 // this.network_source = response.data.network_source
                 // this.network_model = response.data.network_model
+                this.layout = true
             }).catch(error => {
                 console.log(error)
                 this.$refs.errorDialog.show(error.response.data)
