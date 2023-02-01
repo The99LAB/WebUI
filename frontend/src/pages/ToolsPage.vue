@@ -29,19 +29,6 @@
       </div>
       <div class="col-5 col-md">
         <div class="q-pa-md" align="center">
-          <q-card class="cursor-pointer" @click="this.$router.push('/tools/system-logs')">
-            <q-card-section>
-              <q-icon name="mdi-text-box-search-outline" size="xl" />
-            </q-card-section>
-            <q-separator />
-            <q-card-section class="text-subtitle2  text-center">
-              System Logs
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
-      <div class="col-5 col-md">
-        <div class="q-pa-md" align="center">
           <q-card class="cursor-pointer" @click="this.$router.push('/tools/about')">
             <q-card-section>
               <q-icon name="mdi-information" size="xl" />

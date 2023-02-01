@@ -19,10 +19,6 @@ const routes = [
         path: "tools/system-devices",
         component: () => import("pages/SystemDevicesPage.vue"),
       },
-      {
-        path: "tools/system-logs",
-        component: () => import("pages/SystemLogsPage.vue"),
-      },
       { path: "tools/about", component: () => import("pages/AboutPage.vue") },
     ],
   },

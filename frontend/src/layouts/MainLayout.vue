@@ -62,14 +62,6 @@
               <q-item-label>System Devices</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable tag="a" to="/tools/system-logs">
-            <q-item-section avatar>
-              <q-icon name="mdi-text-box-search-outline" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>System Logs</q-item-label>
-            </q-item-section>
-          </q-item>
           <q-item clickable tag="a" to="/tools/about">
             <q-item-section avatar>
               <q-icon name="mdi-information" />

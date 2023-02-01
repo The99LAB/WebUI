@@ -13,6 +13,8 @@ from flask_socketio import SocketIO, Namespace, emit
 import subprocess
 import usb.core
 from blkinfo import BlkDiskInfo
+import cpuinfo
+import distro
 
 
 """
@@ -1213,17 +1215,49 @@ api.add_resource(api_host_power, '/api/host/power/<string:powermsg>')
 class api_host_system_info(Resource):
     def get(self, action):
         if action == "all":
-            return SystemInfo()
+            board_vendor_process = subprocess.run(
+                ["cat", "/sys/devices/virtual/dmi/id/board_vendor"], capture_output=True, text=True)
+            if board_vendor_process.returncode == 0:
+                board_vendor = board_vendor_process.stdout.replace("\n", "")
+            else:
+                board_vendor = ""
+
+            board_name_process = subprocess.run(
+                ["cat", "/sys/devices/virtual/dmi/id/board_name"], capture_output=True, text=True)
+            if board_name_process.returncode == 0:
+                board_name = board_name_process.stdout.replace("\n", "")
+            else:
+                board_name = ""
+            
+            board_version_process = subprocess.run(
+                ["cat", "/sys/devices/virtual/dmi/id/board_version"], capture_output=True, text=True)
+            if board_version_process.returncode == 0:
+                board_version = board_version_process.stdout.replace("\n", "")
+            else:
+                board_version = ""
+
+            return {
+                "motherboard": board_vendor + " " + board_name + " " + board_version,
+                "processor": cpuinfo.get_cpu_info()['brand_raw'],
+                "memory": f"{round(psutil.virtual_memory().total / (1024.0 ** 3))} GB",
+                "os": distro.name(pretty=True),
+                "hostname": os.uname()[1],
+                "linuxVersion": os.uname()[2],
+            }
         elif action == "hostname":
-            return SystemHostname()
+            return {
+                "hostname": os.uname()[1]
+            }
         else:
             return 'Action not found', 404
 
     def post(self, action):
-        print("post request, action: " + action)
         if action == "hostname":
-            print("request to change hostname")
-        return
+            # print("request to change hostname")
+            # print("new hostname: " + request.form['hostname'])
+            return 'Feature not implemented', 501
+        else:
+            return 'Action not found', 404
 
 
 api.add_resource(api_host_system_info, '/api/host/system-info/<string:action>')
@@ -1242,6 +1276,24 @@ class api_host_system_devices(Resource):
                 disk_list.append(
                     {'model': i["model"], 'type': i['type'], 'path': f"/dev/{i['name']}", 'capacity': f'{round(convertSizeUnit(size=int(i["size"]), from_unit="B", to_unit="GB"))} GB'})
             return disk_list
+        elif devicetype == "usb":
+            device_re = re.compile(b"Bus\s+(?P<bus>\d+)\s+Device\s+(?P<device>\d+).+ID\s(?P<id>\w+:\w+)\s(?P<tag>.+)$", re.I)
+            df = subprocess.check_output("lsusb")
+            devices = []
+            for i in df.split(b'\n'):
+                if i:
+                    info = device_re.match(i)
+                    if info:
+                        dinfo = info.groupdict()
+                        dinfo['path'] = '/dev/bus/usb/%s/%s' % (dinfo.pop('bus').decode('utf-8'), dinfo.pop('device').decode('utf-8'))
+                        dinfo['name'] = dinfo['tag'].decode('utf-8')
+                        dinfo.pop('tag')
+                        dinfo['id'] = dinfo['id'].decode('utf-8')
+                        if not 'Linux Foundation' in dinfo['name']:
+                            devices.append(dinfo)
+            return devices
+        else:
+            return 'Device type not found', 404
 
 
 api.add_resource(api_host_system_devices,
