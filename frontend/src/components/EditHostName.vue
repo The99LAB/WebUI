@@ -38,9 +38,14 @@ export default {
     components: {
     },
     methods: {
-        show() {
+        show(name=null) {
             this.layout = true
-
+            if (name != null){
+                this.hostName = name
+            }
+            else{
+                this.getHostName()
+            }
         },
         getHostName() {
             this.$api.get("/host/system-info/hostname")
@@ -54,7 +59,7 @@ export default {
         editHostName() {
             console.log("Editing Host Name...")
             const formData = new FormData()
-            formData.append("hostname", this.volumeFormat)
+            formData.append("hostname", this.hostName)
             this.$api.post("/host/system-info/hostname", formData)
                 .then(
                     this.layout = false,
@@ -66,7 +71,6 @@ export default {
         },
     },
     mounted() {
-        // this.getHostName()
     }
 }
 </script>
