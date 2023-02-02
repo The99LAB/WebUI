@@ -13,7 +13,7 @@
         <template v-slot:option="scope">
           <q-item v-bind="scope.itemProps">
             <q-item-section>
-              <q-item-label>{{ scope.opt.name }}</q-item-label>
+              <q-item-label>{{ scope.opt.name }}.{{ scope.opt.format }}</q-item-label>
               <q-item-label caption>{{ scope.opt.allocation }} / {{ scope.opt.capacity }} GB</q-item-label>
             </q-item-section>
           </q-item>
@@ -32,7 +32,6 @@ export default {
     },
     methods: {
         updatePoolList() {
-            console.log("Updating pool list")
             this.$api.get("/storage-pools")
                 .then(response => {
                     this.storagePoolList = response.data
@@ -43,7 +42,6 @@ export default {
                 })
         },
         updateVolumesList(){
-            console.log("Updating volumes list")
             this.$api.get("/storage-pools/" + this.selectedStoragePool["uuid"] + "/volumes")
                 .then(response => {
                     console.log("Response: ", response.data)
@@ -56,7 +54,7 @@ export default {
         getSelectedPool() {
             return this.selectedStoragePool["uuid"]
         },
-        getSelectedPath() {
+        getSelectedVolume() {
             return this.selectedVolume["name"]
         }
     },

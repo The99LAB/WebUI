@@ -21,7 +21,6 @@ export default {
     },
     methods: {
         updatePoolList() {
-            console.log("Updating pool list")
             this.$api.get("/storage-pools")
                 .then(response => {
                     this.storagePoolList = response.data

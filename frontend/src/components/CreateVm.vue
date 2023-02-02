@@ -19,15 +19,14 @@
 
             <q-page-container>
                 <q-page padding>
-                    <q-tab-panels v-model="tab">
-                        <q-tab-panel name="general">
+                        <q-tab-panel name="general" v-show="tab == 'general'">
                             <q-input label="Name" v-model="general_name" :rules="[val => val && val.length > 0 || 'Name needs to be at least 1 character long' ]"/>
                             <q-select label="OS" v-model="general_os" :options="osOptions" />
                             <q-select label="Machine" v-model="general_machine" :options="machineOptions" />
                             <q-select label="BIOS" v-model="general_bios" :options="biosOptions" />
                         </q-tab-panel>
 
-                        <q-tab-panel name="memory">
+                        <q-tab-panel name="memory" v-show="tab == 'memory'">
                             <div class="row">
                                 <div class="col">
                                     <q-input label="Memory minimum" v-model="memory_minMemory" type="number" min="1"/>
@@ -48,7 +47,7 @@
                             </div>
                         </q-tab-panel>
 
-                        <q-tab-panel name="disk">
+                        <q-tab-panel name="disk" v-show="tab == 'disk'">
                             <div class="row">
                                 <div class="col">
                                     <q-input label="Disk size" v-model="disk_size" type="number" min="1"/>
@@ -69,26 +68,25 @@
                             </div>
                             <div class="row">
                                 <div class="col">
-                                    <q-select label="Pool" v-model="disk_pool" :options="diskPoolOptions" />
+                                    <StoragePoolList ref="diskPool"/>
                                 </div>
                             </div>
                         </q-tab-panel>
-                        <q-tab-panel name="cdrom">
-                            <q-select label="Pool" v-model="cdrom_pool" :options="cdromPoolOptions" />
-                            <q-select label="Path" v-model="cdrom_path" :options="cdromPathOptions" />
+                        <q-tab-panel name="cdrom" v-show="tab == 'cdrom'">
+                            <StoragePoolAndVolumeList ref="cdromPoolVolume" />
+                            <q-select label="Bus" v-model="cdrom_bus" :options="cdromBusOptions" />
                         </q-tab-panel>
-                        <q-tab-panel name="network">
-                            <q-select label="Network" v-model="network_source" :options="networkSourceOptions" />
+                        <q-tab-panel name="network" v-show="tab == 'network'">
+                            <NetworkList ref="networkSource" />
                             <q-select label="Model" v-model="network_model" :options="networkModelOptions" />
                         </q-tab-panel>
-                    </q-tab-panels>
                 </q-page>
                 <q-footer reveal bordered>
                     <q-toolbar>
-                        <q-btn flat label="Back" @click="prevTabPanel()" v-if="tab != 'general'" />
+                        <q-btn flat icon="mdi-arrow-left" @click="prevTabPanel()" v-if="tab != 'general'" />
                         <q-space/>
                         <q-btn flat label="Finish" @click="createVm()" v-if="tab == 'network'" />
-                        <q-btn flat label="Next" @click="nextTabPanel()" v-else />
+                        <q-btn flat icon="mdi-arrow-right" @click="nextTabPanel()" v-else />
                     </q-toolbar>
                 </q-footer>
             </q-page-container>
@@ -101,6 +99,9 @@
 <script>
 import { ref } from 'vue'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
+import StoragePoolList from 'src/components/StoragePoolList.vue'
+import StoragePoolAndVolumeList from 'src/components/StoragePoolAndVolumeList.vue'
+import NetworkList from 'src/components/NetworkList.vue'
 
 export default {
   data () {
@@ -112,7 +113,7 @@ export default {
         biosOptions: ["ovmf"],
         memoryMinOptions: ["1024", "2048", "4096", "8192", "16384", "32768", "65536"],
         memoryUnitOptions: ["MB", "GB", "TB"],
-        general_name: ref(null),
+        general_name: ref("New Virtual Machine"),
         general_os: ref("Microsoft Windows 11"),
         general_machine: ref("q35"),
         general_bios: ref("ovmf"),
@@ -127,21 +128,42 @@ export default {
         disk_type: ref("raw"),
         disk_bus: ref("sata"),
         diskBusOptions: ["sata", "scsi", "virtio", "usb"],
-        network_source: ref("default"),
-        network_sourceOptions: ["default"],
+        cdrom_bus: ref("sata"),
+        cdromBusOptions: ["sata", "scsi", "virtio", "usb"],
         network_model: ref("virtio"),
         networkModelOptions: ["virtio", "e1000", "rtl8139"]
     }
   },
     components: {
-        ErrorDialog
+        ErrorDialog,
+        StoragePoolList,
+        StoragePoolAndVolumeList,
+        NetworkList
     },
     methods: {
         show() {
             this.layout = true
         },
         createVm() {
-            console.log("Creating VM...")
+            if (this.$refs.diskPool.getSelectedPool() == null) {
+                this.$refs.errorDialog.show("No storage pool selected", ["Please select a storage pool", "Create a storage pool if you don't have one"])
+                return
+            }
+
+            if (this.$refs.cdromPoolVolume.getSelectedPool() == null) {
+                this.$refs.errorDialog.show("Please select a storage pool", ["Please select a storage pool", "Create a storage pool if you don't have one"])
+                return
+            }
+            if (this.$refs.cdromPoolVolume.getSelectedVolume() == null) {
+                this.$refs.errorDialog.show("Please select a storage volume", ["Please select a storage volume", "Create a storage volume if you don't have one"])
+                return
+            }
+            console.log("Selected cdrom volume: " + this.$refs.cdromPoolVolume.getSelectedVolume())
+            if (this.$refs.networkSource.getSelectedNetwork() == null) {
+                this.$refs.errorDialog.show("Please select a network" ["Please select a network", "Create a network if you don't have one"])
+                return
+            }
+
             const formData = new FormData()
             formData.append("name", this.general_name)
             formData.append("os", this.general_os)
@@ -155,9 +177,10 @@ export default {
             formData.append("disk_size_unit", this.disk_size_unit)
             formData.append("disk_type", this.disk_type)
             formData.append("disk_bus", this.disk_bus)
-            formData.append("cdrom_pool", this.cdrom_pool)
-            formData.append("cdrom_path", this.cdrom_path)
-            formData.append("network_source", this.network_source)
+            formData.append("disk_pool", this.$refs.diskPool.getSelectedPool())
+            formData.append("cdrom_pool", this.$refs.cdromPoolVolume.getSelectedPool())
+            formData.append("cdrom_volume", this.$refs.cdromPoolVolume.getSelectedVolume())
+            formData.append("network_source", this.$refs.networkSource.getSelectedNetwork())
             formData.append("network_model", this.network_model)
             this.$api.post("/vm-manager/create", formData)
                 .then(

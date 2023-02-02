@@ -678,7 +678,7 @@ class domainNetworkInterface():
 
 
 class create_vm():
-    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_pool=None, iso=False, iso_pool=None, iso_file=None, network=False, network_source=None, network_model=None):
+    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_pool=None, iso=False, iso_pool=None, iso_volume=None, network=False, network_source=None, network_model=None):
         self.name = name
         self.machine_type = machine_type
         self.bios_type = bios_type
@@ -694,7 +694,7 @@ class create_vm():
         self.disk_pool = disk_pool
         self.iso = iso
         self.iso_pool = iso_pool
-        self.iso_file = iso_file
+        self.iso_volume = iso_volume
         self.network = network
         self.network_source = network_source
         self.network_model = network_model
@@ -720,7 +720,7 @@ class create_vm():
 
         if self.iso:
             isopath = poolStorage(pooluuid=self.iso_pool).getVolumePath(
-                poolvolume=self.iso_file)
+                poolvolume=self.iso_volume)
             createisoxml = f"""<disk type='file' device='cdrom'>
                             <driver name='qemu' type='raw'/>
                             <source file='{isopath}'/>
@@ -739,7 +739,7 @@ class create_vm():
             disk_size = int(self.disk_size) * 1024
 
         if self.disk:
-            pool = conn.storagePoolLookupByUUIDString(self.iso_pool)
+            pool = conn.storagePoolLookupByUUIDString(self.disk_pool)
             disk_volume_name = f"{self.name}-0.{self.disk_type}"
             diskxml = f"""<volume>
             <name>{disk_volume_name}</name>
@@ -755,7 +755,7 @@ class create_vm():
             creatediskxml = f"""<disk type='file' device='disk'>
                             <driver name='qemu' type='{self.disk_type}'/>
                             <source file='{diskvolumepath}'/>
-                            <target dev='{"vda" if self.disk_bus == "virtio" else "sdb"}' bus='{self.diskbus}'/>
+                            <target dev='{"vda" if self.disk_bus == "virtio" else "sdb"}' bus='{self.disk_bus}'/>
                             <boot order='1'/>
                             </disk>"""
 
@@ -886,14 +886,16 @@ class api_vm_manager(Resource):
             mim_mem_unit = request.form['memory_min_unit']
             max_mem = request.form['memory_max']
             max_mem_unit = request.form['memory_max_unit']
-            disk = False
+            disk = True
             disk_size = request.form['disk_size']
             disk_size_unit = request.form['disk_size_unit']
             disk_type = request.form['disk_type']
             disk_bus = request.form['disk_bus']
+            disk_pool = request.form['disk_pool']
+            iso = True
             cdrom_pool = request.form['cdrom_pool']
-            cdrom_path = request.form['cdrom_path']
-            network = False
+            cdrom_volume = request.form['cdrom_volume']
+            network = True
             network_source = request.form['network_source']
             network_model = request.form['network_model']
 
@@ -910,15 +912,22 @@ class api_vm_manager(Resource):
             print("disk_size_unit: " + disk_size_unit)
             print("disk_type: " + disk_type)
             print("disk_bus: " + disk_bus)
+            print("disk_pool: " + disk_pool)
+            print("iso: " + str(iso))
+            print("cdrom_pool: " + cdrom_pool)
+            print("cdrom_volume: " + cdrom_volume)
             print("network: " + str(network))
             print("network_source: " + network_source)
             print("network_model: " + network_model)
 
-            vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
-                           disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, network=network, network_source=network_source, network_model=network_model)
-            vm.win10()
-            vm.create()
-            return '', 204
+            try:
+                vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
+                            disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model)
+                vm.win10()
+                vm.create()
+                return '', 204
+            except Exception as e:
+                return f'{e}', 500
         else:
             return 'Action not found', 404
 
@@ -1124,7 +1133,8 @@ class api_storage_pool_action(Resource):
                     volume_xml = ET.fromstring(pool.storageVolLookupByName(volume).XMLDesc(0))
                     volume_format = volume_xml.find('target/format').get('type')
                     _volume = {
-                        "name": volume + "." + volume_format,
+                        "name": volume,
+                        "format": volume_format,
                         "capacity": volume_capacity,
                         "allocation": volume_allocation,
                     }
