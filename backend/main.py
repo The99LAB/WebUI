@@ -128,7 +128,7 @@ class vmmemory():
     def __init__(self, uuid):
         self.domain = conn.lookupByUUIDString(uuid)
 
-    def current(self, unit):
+    def current(self, unit="GB"):
         maxmem = self.domain.info()[1]
         minmem = self.domain.info()[2]
         if unit == "TB":
@@ -306,22 +306,32 @@ class storage():
                 readonly = False
             disknumber = index
             xml = ET.tostring(i).decode()
-            disk = [disknumber, devicetype, drivertype,
-                    busformat, sourcefile, readonly, xml]
+            disk = {
+                "number": disknumber,
+                "devicetype": devicetype,
+                "drivertype": drivertype,
+                "busformat": busformat,
+                "sourcefile": sourcefile,
+                "readonly": readonly,
+                "xml": xml
+            }
             disklist.append(disk)
         return disklist
 
-    def remove(self, disknumber):
-        tree = ET.fromstring(self.vmXml)
-        for idx, disk in enumerate(self.get()):
-            if idx == int(disknumber):
-                try:
-                    self.domain.detachDeviceFlags(
-                        disk[6], libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return 'Succeed'
-                except libvirt.libvirtError as e:
-                    return f'Error: {e}'
-                break
+    def getxml(self, disknumber):
+        return self.get()[int(disknumber)]["xml"]
+
+    # def remove(self, disknumber):
+    #     # tree = ET.fromstring(self.vmXml)
+    #     for idx, disk in enumerate(self.get()):
+    #         if idx == int(disknumber):
+    #             try:
+    #                 self.domain.detachDeviceFlags(
+    #                     disk[6]["xml"], libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+    #                 return 'Succeed'
+    #             except libvirt.libvirtError as e:
+    #                 return f'Error: {e}'
+    #             break
 
     def add_xml(self, targetbus, devicetype, sourcefile, drivertype, readonly="", bootorder=None):
         tree = ET.fromstring(self.vmXml)
@@ -995,18 +1005,33 @@ class api_vm_manager_action(Resource):
             return domain_xml, 204
         elif action == "data":
             print("getting vm data")
-            print("os: " + domain.OSType())
+            domain_xml = ET.fromstring(domain_xml)
+            # get machine type
+            machine_type = domain_xml.find('os/type').attrib['machine']
+            # get bios type
+            bios_type = domain_xml.find('os/loader').text
+            # get memory
+            meminfo = vmmemory(uuid=vmuuid).current("GB")
+            minmem = meminfo[0]
+            maxmem = meminfo[1]
+            # get disk
+            diskinfo = storage(domain_uuid=vmuuid).get()
 
             data = {
                 "name": domain.name(),
                 "uuid": domain.UUIDString(),
                 "state": domain.state()[0],
-                "memory_max": domain.info()[1],
-                "memory_max_unit": "KB",
-                "memory_min": domain.info()[2],
-                "memory_min_unit": "KB",
+                "machine": machine_type,
+                "bios": bios_type,
+                "memory_max": maxmem,
+                "memory_max_unit": "GB",
+                "memory_min":minmem,
+                "memory_min_unit": "GB",
+                "disks": diskinfo,
             }
-            return domain.info(), 204
+            return data
+        else:
+            return 'Action not found', 404
 
     def post(self, vmuuid, action):
         domain = conn.lookupByUUIDString(vmuuid)
@@ -1077,8 +1102,73 @@ class api_vm_manager_action(Resource):
                             return "failed to replace minmemory and/or maxmemory!", 500
                     except Exception:
                         return "failed to find minmemory and maxmemory in xml!", 500
+            elif action.startswith("disk"):
+                action = action.replace("disk-", "")
+                data = request.get_json()
+                disknumber = data['number']
+                xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
+                xml = ET.fromstring(xml_orig)
+
+                if action == "type":
+                    value = data['value']
+                    orig_value = xml.get('device')
+                    xml.set('device', value)
+                    if orig_value == "cdrom" and value == "disk":
+                        xml.remove(xml.find('readonly'))
+                    xml = ET.tostring(xml).decode()
+                    try:
+                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
+
+                elif action == "driver-type":
+                    value = data['value']
+                    xml.find('driver').set('type', value)
+                    xml = ET.tostring(xml).decode()
+                    try:
+                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
+
+                elif action == "bus":
+                    value = data['value']
+                    xml.find('target').set('bus', value)
+                    xml.remove(xml.find('address'))
+                    xml = ET.tostring(xml).decode()
+                    try:
+                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
+
+                elif action == "source-file":
+                    value = data['value']
+                    orig_value = xml.find('source').get('file')
+                    xml.find('source').set('file', value)
+                    xml = ET.tostring(xml).decode()
+                    try:
+                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
+                elif action == "delete":
+                    try:
+                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
+                else:
+                    return 'Action not found', 404
             else:
                 return 'Action not found', 404
+        else:
+            return 'Action not found', 404
 
 
 api.add_resource(api_vm_manager_action,
