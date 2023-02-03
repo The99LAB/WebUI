@@ -1,7 +1,6 @@
 <template>
-    <q-page>
-        <q-card padding>
-            
+    <q-page padding>
+        <q-card>
             <q-card-section>
                 <div class="text-h6">About</div>
             </q-card-section>
@@ -12,6 +11,3 @@
         </q-card>
     </q-page>
 </template>
-
-<script>
-</script>
