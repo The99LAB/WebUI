@@ -114,7 +114,7 @@ export default {
         memoryMinOptions: ["1024", "2048", "4096", "8192", "16384", "32768", "65536"],
         memoryUnitOptions: ["MB", "GB", "TB"],
         general_name: ref("New Virtual Machine"),
-        general_os: ref("Microsoft Windows 11"),
+        general_os: ref("Microsoft Windows 10"),
         general_machine: ref("q35"),
         general_bios: ref("ovmf"),
         memory_minMemory: ref(1024),
