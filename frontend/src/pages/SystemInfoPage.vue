@@ -32,11 +32,14 @@
       
     </q-card>
     <editHostName ref="editHostNameDialog" @hostname-edit-finished="getSystemInfo()"/>
+    <errorDialog ref="errorDialog"/>
   </q-page>
 </template>
 
 <script>
-import editHostName from '../components/EditHostName.vue'
+import editHostName from 'src/components/EditHostName.vue'
+import errorDialog from 'src/components/ErrorDialog.vue'
+
 import { ref } from 'vue'
 export default {
   data() {
@@ -54,13 +57,12 @@ export default {
     }
   },
   components: {
-    editHostName
+    editHostName,
+    errorDialog
   },
   methods: {
     getSystemInfo() {
-      console.log('Getting system info');
       this.$api.get("/host/system-info/all").then((response) => {
-        console.log("System info: ", response.data)
         this.motherboard = response.data.motherboard
         this.processor = response.data.processor
         this.memory = response.data.memory
@@ -71,11 +73,10 @@ export default {
         this.showData = true
 
       }).catch((error) => {
-        console.log("Error getting system info: ", error.response.data)
+        this.$refs.errorDialog.show("Error getting system info", [error.response.data])
       })
     },
     editHostName() {
-      console.log('Editing host name');
       this.$refs.editHostNameDialog.show(name=this.hostname)
     }
   },
