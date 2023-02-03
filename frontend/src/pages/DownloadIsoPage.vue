@@ -1,6 +1,6 @@
 <template>
-    <q-page>
-        <q-card padding>
+    <q-page padding>
+        <q-card>
             <q-card-section>
                 <div class="text-h6">Download ISO</div>
             </q-card-section>
