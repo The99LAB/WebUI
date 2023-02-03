@@ -158,7 +158,6 @@ export default {
                 this.$refs.errorDialog.show("Please select a storage volume", ["Please select a storage volume", "Create a storage volume if you don't have one"])
                 return
             }
-            console.log("Selected cdrom volume: " + this.$refs.cdromPoolVolume.getSelectedVolume())
             if (this.$refs.networkSource.getSelectedNetwork() == null) {
                 this.$refs.errorDialog.show("Please select a network" ["Please select a network", "Create a network if you don't have one"])
                 return
