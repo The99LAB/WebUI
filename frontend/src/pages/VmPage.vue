@@ -4,7 +4,7 @@
       <q-space />
       <q-btn class="q-ma-sm" color="primary" icon="mdi-plus" label="Create VM" @click="createVm()" />
     </div>
-    <q-table :rows="rows" :columns="columns" row-key="uuid" separator="none" no-data-label="Failed to get data from backend or no vm's defined" hide-pagination>
+    <q-table :loading="vmTableLoading" :rows="rows" :columns="columns" row-key="uuid" separator="none" no-data-label="Failed to get data from backend or no vm's defined" hide-pagination>
       <template #body="props">
         <q-tr :props="props">
           <q-td key="name" :props="props">
@@ -75,6 +75,7 @@ export default {
       rows,
       columns,
       selected,
+      vmTableLoading: ref(true),
     }
   },
   components: {
@@ -129,12 +130,13 @@ export default {
       this.$socket.emit("get_vm_results")
     }, 1000)
     this.$socket.on("vm_results", (msg) => {
-        // console.log("vm results:", msg)
         this.rows = msg
+        this.vmTableLoading = false
     })
   },
   unmounted() {
     this.$socket.off("vm_results")
+    this.vmTableLoading = false
   },
   beforeUnmount() {
     clearInterval(this.vmresultInterval)
