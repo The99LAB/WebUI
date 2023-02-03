@@ -29,6 +29,9 @@ export default {
             this.title = title
             this.content = content
             this.alert = true
+        },
+        hide() {
+            this.alert = false
         }
     }
 }
