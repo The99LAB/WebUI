@@ -4,14 +4,13 @@
             <q-header bordered class="bg-primary text-white" height-hint="98">
                 <q-toolbar>
                     <q-toolbar-title>Edit VM</q-toolbar-title>
-                    <q-btn icon="close" flat round dense v-close-popup />
+                    <q-btn icon="close" flat round dense v-close-popup @click="tab = 'general'"/>
                 </q-toolbar>
 
                 <q-tabs allign="left" v-model="tab">
                     <q-tab name="general" label="General" />
                     <q-tab name="memory" label="Memory" />
                     <q-tab name="disk" label="Disk" />
-                    <q-tab name="cdrom" label="CD-ROM" />
                     <q-tab name="network" label="Network" />
                 </q-tabs>
                 <q-separator />
@@ -22,9 +21,8 @@
                     <q-tab-panels v-model="tab">
                         <q-tab-panel name="general">
                             <q-input label="Name" v-model="general_name" disable />
-                            <q-select label="OS" v-model="general_os" :options="osOptions" disable/>
-                            <q-select label="Machine" v-model="general_machine" :options="machineOptions" disable/>
-                            <q-select label="BIOS" v-model="general_bios" :options="biosOptions" disable/>
+                            <q-select label="Machine" v-model="general_machine" disable/>
+                            <q-select label="BIOS" v-model="general_bios" disable/>
                         </q-tab-panel>
 
                         <q-tab-panel name="memory">
@@ -49,34 +47,51 @@
                         </q-tab-panel>
 
                         <q-tab-panel name="disk">
-                            <div class="row">
-                                <div class="col">
-                                    <q-input label="Disk size" v-model="disk_size" type="number" min="1"/>
+                            <div v-for="disk in diskList" :key="disk">
+                                <q-separator spaced="lg" inset v-if="disk.number!=0"/>
+                                <div class="row">
+                                    <div class="col">
+                                        <q-input label="Disk Number" v-model="disk.number" type="number" min="1" readonly/>
+                                    </div>
                                 </div>
-                                <div class="col-md-auto">
-                                    <q-select v-model="disk_size_unit" :options="diskUnitOptions" />
+
+                                <div class="row">
+                                    <div class="col">
+                                        <q-select label="Device Type" v-model="disk.devicetype" :options="diskTypeOptions" @update:model-value="val => diskChangeType(disk.number, val)" />
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col">
+                                        <q-select label="Driver Type" v-model="disk.drivertype" :options="diskDriverTypeOptions" @update:model-value="val => diskChangeDriverType(disk.number, val)"/>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col">
+                                        <q-select label="Bus Format" v-model="disk.busformat" :options="diskBusOptions" @update:model-value="val => diskChangeBus(disk.number, val)"/>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col">
+                                        <q-input label="Source File" v-model="disk.sourcefile">
+                                            <template v-slot:append>
+                                                <q-btn round dense flat icon="check" @click="diskChangeSourceFile(disk.number, disk.sourcefile)"/>
+                                            </template>
+                                        </q-input>
+                                    </div>
+                                </div>
+                                <q-separator inset vertical />
+                                <div class="row">
+                                    <div class="col">
+                                        <q-toggle label="Read Only" v-model="disk.readonly" disable/>
+                                    </div>
+                                    <div class="col-md-auto">
+                                        <q-btn color="primary" icon="delete"  @click="diskDelete(disk.number)" />
+                                    </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col">
-                                    <q-select label="Disk type" v-model="disk_type" :options="diskTypeOptions" />
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <q-select label="Disk bus" v-model="disk_bus" :options="diskBusOptions" />
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <StoragePoolList ref="disk_pool" />
-                                    <!-- <q-select label="Pool" v-model="disk_pool" :options="diskPoolOptions" /> -->
-                                </div>
-                            </div>
-                        </q-tab-panel>
-                        <q-tab-panel name="cdrom">
-                            <StoragePoolAndVolumeList ref="cdrom_pool_path" />
-                            <q-select label="Bus" v-model="cdrom_bus" :options="cdromBusOptions" />
                         </q-tab-panel>
                         <q-tab-panel name="network">
                             <NetworkList ref="network_source" />
@@ -87,87 +102,76 @@
                 <q-footer reveal bordered class="">
                     <q-toolbar>
                         <q-space/>
-                        <q-btn flat label="Apply" @click="applyEdits()" />
+                        <q-btn flat label="Add" @click="diskAdd()" v-if="tab=='disk'"/>
+                        <q-btn flat label="Apply" @click="applyEdits()" v-if="tab!='disk'"/>
                     </q-toolbar>
                 </q-footer>
             </q-page-container>
         </q-layout>
     </q-dialog>
     <ErrorDialog ref="errorDialog"/>
+    <ConfirmDialog ref="confirmDialog" @confirm-yes="diskDeleteConfirm()"/>
+    <AddDisk ref="addDisk"/>
 </template>
 
 
 <script>
 import { ref } from 'vue'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
-import StoragePoolList from 'src/components/StoragePoolList.vue'
-import StoragePoolAndVolumeList from 'src/components/StoragePoolAndVolumeList.vue'
 import NetworkList from 'src/components/NetworkList.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
+import AddDisk from 'src/components/AddDisk.vue'
 
 export default {
   data () {
     return {
         layout: ref(false),
         tab: ref('general'),
-        osOptions: ["Microsoft Windows 11", "Microsft Windows 10", "Microsoft Windows 7"],
-        machineOptions: ["q35", "i440fx"],
-        biosOptions: ["ovmf"],
+        general_name: null,
+        general_machine: null,
+        general_bios: null,
         memoryMinOptions: ["1024", "2048", "4096", "8192", "16384", "32768", "65536"],
         memoryUnitOptions: ["MB", "GB", "TB"],
-        general_name: ref(null),
-        general_os: ref("Microsoft Windows 11"),
-        general_machine: ref("q35"),
-        general_bios: ref("ovmf"),
-        memory_minMemory: ref(1024),
-        memory_minMemoryUnit: ref("MB"),
-        memory_maxMemory: ref(1024),
-        memory_maxMemoryUnit: ref("MB"),
-        disk_size: ref(10),
-        disk_size_unit: ref("GB"),
+        memory_minMemory: null,
+        memory_minMemoryUnit: ref("GB"),
+        memory_maxMemory: null,
+        memory_maxMemoryUnit: ref("GB"),
         diskUnitOptions: ["MB", "GB", "TB"],
-        diskTypeOptions: ["raw", "qcow2"],
-        disk_type: ref("raw"),
-        disk_bus: ref("sata"),
+        diskDriverTypeOptions: ["raw", "qcow2"],
         diskBusOptions: ["sata", "scsi", "virtio", "usb"],
-        cdrom_bus: ref("sata"),
-        cdromBusOptions: ["sata", "scsi", "virtio", "usb"],
-        network_model: ref("virtio"),
-        networkModelOptions: ["virtio", "e1000", "rtl8139"]
+        diskTypeOptions: ["disk", "cdrom"],
+        diskList: [],
+        diskDeleteNumber: null,
+        network_model: null,
+        networkModelOptions: ["virtio", "e1000", "rtl8139"],
     }
   },
     components: {
         ErrorDialog,
-        StoragePoolList,
-        StoragePoolAndVolumeList,
-        NetworkList
+        NetworkList,
+        ConfirmDialog,
+        AddDisk
     },
     methods: {
         show(uuid) {
-            console.log("Showing edit dialog for VM: " + uuid)
             this.uuid = uuid
-            this.$api.get('/vm-manager/' + uuid + '/data').then(response => {
-                console.log(response.data)
-                // this.general_name = response.data.name
-                // this.general_os = response.data.os
-                // this.general_machine = response.data.machine
-                // this.general_bios = response.data.bios
-                // this.memory_minMemory = response.data.memory_min
-                // this.memory_minMemoryUnit = response.data.memory_min_unit
-                // this.memory_maxMemory = response.data.memory_max
-                // this.memory_maxMemoryUnit = response.data.memory_max_unit
-                // this.disk_size = response.data.disk_size
-                // this.disk_size_unit = response.data.disk_size_unit
-                // this.disk_type = response.data.disk_type
-                // this.disk_bus = response.data.disk_bus
-                // this.cdrom_bus = response.data.cdrom_bus
-                // this.network_source = response.data.network_source
-                // this.network_model = response.data.network_model
+            this.refreshData()
+        },
+        refreshData() {
+            this.$api.get('/vm-manager/' + this.uuid + '/data')
+            .then(response => {
+                this.general_name = response.data.name
+                this.general_machine = response.data.machine
+                this.general_bios = response.data.bios
+                this.memory_minMemory = response.data.memory_min
+                this.memory_minMemoryUnit = response.data.memory_min_unit
+                this.memory_maxMemory = response.data.memory_max
+                this.memory_maxMemoryUnit = response.data.memory_max_unit
+                this.diskList = response.data.disks
                 this.layout = true
             }).catch(error => {
-                console.log(error)
                 this.$refs.errorDialog.show(error.response.data)
             })
-            // this.layout = true
         },
         applyEdits() {
             console.log("Applying edits...")
@@ -188,16 +192,69 @@ export default {
                     this.$refs.errorDialog.show(error.response.data)
                 })
             }
-            else if (this.tab == "disk"){
-                console.log("Disk tab")
-            }
-            else if (this.tab == "cdrom"){
-                console.log("CD-ROM tab")
-            }
             else if (this.tab == "network"){
                 console.log("Network tab")
             }
         },
+        diskChangeType(disknumber, value){
+            this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-type', {
+                number: disknumber,
+                value: value
+            }).then(response => {
+                this.refreshData()
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
+
+        },
+        diskChangeDriverType(disknumber, value){
+            this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-driver-type', {
+                number: disknumber,
+                value: value
+            }).then(response => {
+                this.refreshData()
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
+
+        },
+        diskChangeBus(disknumber, value){
+            this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-bus', {
+                number: disknumber,
+                value: value
+            }).then(response => {
+                this.refreshData()
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
+        },
+        diskChangeSourceFile(disknumber, value){
+            this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-source-file', {
+                number: disknumber,
+                value: value
+            }).then(response => {
+                this.refreshData()
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
+
+        },
+        diskDelete(disknumber){
+            this.$refs.confirmDialog.show("Delete disk", ["Are you sure you want to delete this disk?", "This only removes the disk from the vm, not from the storage pool."])
+            this.diskDeleteNumber = disknumber
+        },
+        diskDeleteConfirm() {
+            this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-delete', {
+                number: this.diskDeleteNumber
+            }).then(response => {
+                this.refreshData()
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
+        },
+        diskAdd(){
+            this.$refs.addDisk.show()
+        }
     },
 }
 </script>
