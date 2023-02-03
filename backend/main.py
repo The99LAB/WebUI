@@ -479,6 +479,13 @@ class poolStorage():
         voluempath = key.text
         return voluempath
 
+    def getVolumeFormat(self, poolvolume):
+        pool = conn.storagePoolLookupByUUIDString(self.pooluuid)
+        definedxml = pool.storageVolLookupByName(poolvolume).XMLDesc()
+        root = ET.fromstring(definedxml)
+        format = root.find('target').find('format').get('type')
+        return format
+
 
 def UsbDevicesList():
     devices = usb.core.find(find_all=True)
@@ -719,8 +726,9 @@ class create_vm():
             networkstring = f"<interface type='network'><source network='{self.network_source}'/><model type='{self.network_model}'/></interface>"
 
         if self.iso:
-            isopath = poolStorage(pooluuid=self.iso_pool).getVolumePath(
-                poolvolume=self.iso_volume)
+            iso = poolStorage(pooluuid=self.iso_pool)
+            isopath = iso.getVolumePath(poolvolume=self.iso_volume)
+
             createisoxml = f"""<disk type='file' device='cdrom'>
                             <driver name='qemu' type='raw'/>
                             <source file='{isopath}'/>
@@ -787,8 +795,8 @@ class create_vm():
         <devices>
             <emulator>/usr/bin/qemu-system-x86_64</emulator>
             {networkstring if self.network == "yes" else ""}
-            {createisoxml if self.iso == "existing" else ""}
-            {creatediskxml if self.disk == "new" else ""}
+            {createisoxml if self.iso else ""}
+            {creatediskxml if self.disk else ""}
             <graphics type='vnc' port='-1'/>
             <video>
             <model type='qxl'/>
@@ -1204,7 +1212,7 @@ class api_storage_pool_volumes(Resource):
                 return "Error: Unknown disk size unit", 400
 
             volume_xml = f"""<volume>
-            <name>{volumename}</name>
+            <name>{volumename}.{volume_format}</name>
             <capacity>{volume_size}</capacity>
             <allocation>0</allocation>
             <target>

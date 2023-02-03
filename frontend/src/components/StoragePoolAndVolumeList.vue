@@ -13,7 +13,7 @@
         <template v-slot:option="scope">
           <q-item v-bind="scope.itemProps">
             <q-item-section>
-              <q-item-label>{{ scope.opt.name }}.{{ scope.opt.format }}</q-item-label>
+              <q-item-label>{{ scope.opt.name }}</q-item-label>
               <q-item-label caption>{{ scope.opt.allocation }} / {{ scope.opt.capacity }} GB</q-item-label>
             </q-item-section>
           </q-item>
