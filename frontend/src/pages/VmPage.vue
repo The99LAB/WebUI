@@ -8,9 +8,9 @@
       <template #body="props">
         <q-tr :props="props">
           <q-td key="name" :props="props">
-            <q-btn flat round :icon="props.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
+            <q-btn flat dense :ripple="false" :icon="props.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
               @click="props.expand = !props.expand" no-caps :label=props.row.name
-              class="text-weight-regular text-body2" />
+              class="text-weight-regular text-body2 disable-focus-helper"/>
           </q-td>
           <q-td key="state" :props="props" class="text-weight-regular text-body2">
             {{ props.row.state }}
@@ -28,9 +28,6 @@
 
         <q-tr v-show="props.expand" :props="props">
           <q-td colspan="100%">
-            <!-- <div>
-              {{ props.row.uuid }}
-            </div> -->
             <div>
               <q-btn class="q-ma-sm" color="primary" icon="mdi-play" label="Start" v-if="props.row.state != 'Running'" @click="startVm(props.row.uuid)" />
               <q-btn class="q-ma-sm" color="primary" icon="mdi-delete" label="Remove"  v-if="props.row.state == 'Shutoff'" @click="removeVm(props.row.uuid)" />
@@ -143,3 +140,11 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.disable-focus-helper {
+  .q-focus-helper{
+    opacity: 0 !important;
+  }
+}
+</style>
