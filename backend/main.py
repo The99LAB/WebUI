@@ -967,11 +967,31 @@ class api_vm_manager_action(Resource):
     def post(self, vmuuid, action):
         domain = conn.lookupByUUIDString(vmuuid)
         if action == "start":
-            domain.create()
+            try:
+                domain.create()
+                return '', 204
+            except Exception as e:
+                return f'{e}', 500
         elif action == "stop":
-            domain.shutdown()
+            try:
+                domain.shutdown()
+                return '', 204
+            except Exception as e:
+                return f'{e}', 500
         elif action == "forcestop":
-            domain.destroy()
+            try:
+                domain.destroy()
+                return '', 204
+            except Exception as e:
+                return f'{e}', 500
+        elif action == "remove":
+            try:
+                # flag 4 = also remove any nvram file
+                domain.undefineFlags(4)
+                return '', 204
+            except Exception as e:
+                return f'{e}', 500
+
         elif action.startswith("edit"):
             action = action.replace("edit-", "")
             if action == "memory":
@@ -1009,9 +1029,9 @@ class api_vm_manager_action(Resource):
                                 return '', 204
                             except libvirt.libvirtError as e:
                                 return str(e), 500
-                        except:
+                        except Exception:
                             return "failed to replace minmemory and/or maxmemory!", 500
-                    except:
+                    except Exception:
                         return "failed to find minmemory and maxmemory in xml!", 500
             else:
                 return 'Action not found', 404

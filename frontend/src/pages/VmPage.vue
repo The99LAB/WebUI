@@ -33,9 +33,10 @@
             </div> -->
             <div>
               <q-btn class="q-ma-sm" color="primary" icon="mdi-play" label="Start" v-if="props.row.state != 'Running'" @click="startVm(props.row.uuid)" />
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-delete" label="Remove"  v-if="props.row.state == 'Shutoff'" @click="removeVm(props.row.uuid)" />
               <q-btn class="q-ma-sm" color="primary" icon="mdi-stop" label="Stop" v-if="props.row.state == 'Running'" @click="stopVm(props.row.uuid)"  />
               <q-btn class="q-ma-sm" color="primary" icon="mdi-bomb" label="Force stop" v-if="props.row.state == 'Running'" @click="forceStopVm(props.row.uuid)" />
-              <q-btn  class="q-ma-sm" color="primary" icon="mdi-eye" label="VNC" v-if="props.row.VNC && props.row.state=='Running'" @click="vncVm(props.row.uuid)"/>
+              <q-btn class="q-ma-sm" color="primary" icon="mdi-eye" label="VNC" v-if="props.row.VNC && props.row.state=='Running'" @click="vncVm(props.row.uuid)"/>
               <q-btn class="q-ma-sm" color="primary" icon="mdi-pencil" label="Edit" v-if="props.row.state == 'Shutoff'" @click="editVm(props.row.uuid)"/>
             </div>
           </q-td>
@@ -99,9 +100,15 @@ export default {
     forceStopVm(uuid) {
       console.log("force stopping vm with uuid", uuid)
       this.$api.post("vm-manager/" + uuid + "/forcestop")
-        .then(response => console.log("resoponse from forcestopvm", response))
         .catch(error => {
           this.$refs.errorDialog.show("Error force stopping VM", ["vm uuid: " + uuid, "Error: " +  error.response.data])
+        });
+    },
+    removeVm(uuid) {
+      console.log("removing vm with uuid", uuid)
+      this.$api.post("vm-manager/" + uuid + "/remove")
+        .catch(error => {
+          this.$refs.errorDialog.show("Error removing VM", ["vm uuid: " + uuid, "Error: " +  error.response.data])
         });
     },
     vncVm(uuid) {
