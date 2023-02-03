@@ -4,7 +4,7 @@
         <q-space />
         <q-btn class="q-ma-sm" color="primary" icon="mdi-plus" label="Create storage pool" @click="createStoragePool()" />
       </div>
-      <q-table :rows="rows" :columns="columns" row-key="uuid" separator="none" no-data-label="Failed to get data from backend or no pools defined" hide-pagination>
+      <q-table :loading="storageTableLoading" :rows="rows" :columns="columns" row-key="uuid" separator="none" no-data-label="Failed to get data from backend or no pools defined" hide-pagination>
         <template #body="props">
           <q-tr :props="props">
             <q-td key="name" :props="props">
@@ -119,6 +119,7 @@
         columns,
         volumeColums,
         selected,
+        storageTableLoading: ref(true),
       }
     },
     components: {
@@ -191,6 +192,7 @@
           }
           // set rows
           this.rows = combinedArray
+          this.storageTableLoading = false
         })
       }, 
       removeVolume(pooluuid, volume){
