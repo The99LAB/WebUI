@@ -47,6 +47,10 @@ export default {
       this.mem_progress_text = msg + "%"
     })
   },
+  unmounted() {
+    this.$socket.off("cpu_overall_usage")
+    this.$socket.off("mem_usage")
+  },
   beforeUnmount() {
     clearInterval(this.cpuinterval)
     clearInterval(this.meminterval)

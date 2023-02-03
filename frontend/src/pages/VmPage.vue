@@ -133,6 +133,9 @@ export default {
         this.rows = msg
     })
   },
+  unmounted() {
+    this.$socket.off("vm_results")
+  },
   beforeUnmount() {
     clearInterval(this.vmresultInterval)
   }
