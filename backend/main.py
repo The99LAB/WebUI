@@ -15,6 +15,7 @@ import usb.core
 from blkinfo import BlkDiskInfo
 import cpuinfo
 import distro
+import requests
 
 
 """
@@ -878,6 +879,42 @@ class api_socketio(Namespace):
     def on_get_vm_results(self):
         # print("vm_results")
         emit("vm_results", getvmresults())
+
+    def on_download_iso(self, message):
+        url = message['url']
+        filename = message['fileName']
+        pool = message['storagePool']
+        # filepath = 
+        # get storage pool path using libvirt api
+        storagePool = conn.storagePoolLookupByUUIDString(pool)
+        poolpath = storagePool.XMLDesc(0).split("<path>")[1].split("</path>")[0]
+        poolName = storagePool.name()
+        filepath = f"{poolpath}/{filename}"
+        print("filepath: ", filepath)
+        print("url: ", url)
+
+        if (os.path.isfile(filepath)):
+            emit("downloadIsoError", f"{filename} already exists in pool {poolName}")
+            return
+
+        try:
+            response = requests.get(url, stream=True)
+            total_size = int(response.headers.get('Content-Length'))
+            chunk_size = 1000
+
+            with open(filepath, 'wb') as f:
+                percentage = 0
+                for index, data in enumerate(response.iter_content(chunk_size)):
+                    prev_percentage = percentage
+                    percentage = round(index * chunk_size / total_size * 100)
+                    if prev_percentage != percentage:
+                        emit("downloadIsoProgress", percentage)
+                        if percentage == 100:
+                            storagePool.refresh(0)
+                            emit("downloadIsoComplete", ["ISO Download Complete", f"ISO File: {filename}", f"Storage Pool: {poolName}"])
+                    f.write(data)
+        except Exception as e:
+            emit("downloadIsoError", f"Error: {e}")
 
 
 socketio.on_namespace(api_socketio('/api'))

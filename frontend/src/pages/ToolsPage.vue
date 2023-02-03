@@ -29,6 +29,19 @@
       </div>
       <div class="col-5 col-md">
         <div class="q-pa-md" align="center">
+          <q-card class="cursor-pointer" @click="this.$router.push('/tools/download-iso')">
+            <q-card-section>
+              <q-icon name="mdi-disc" size="xl" />
+            </q-card-section>
+            <q-separator />
+            <q-card-section class="text-subtitle2  text-center">
+              Download ISO
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+      <div class="col-5 col-md">
+        <div class="q-pa-md" align="center">
           <q-card class="cursor-pointer" @click="this.$router.push('/tools/about')">
             <q-card-section>
               <q-icon name="mdi-information" size="xl" />

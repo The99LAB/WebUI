@@ -44,8 +44,7 @@
         <q-item-label header>
           Host Management
         </q-item-label>
-        <q-expansion-item :content-inset-level="0.2" expand-separator icon="mdi-tools" label="Tools" clickable tag="a"
-          to="/tools">
+        <q-expansion-item :content-inset-level="0.2" expand-separator icon="mdi-tools" label="Tools">
           <q-item clickable tag="a" to="/tools/system-info">
             <q-item-section avatar>
               <q-icon name="mdi-monitor" />
@@ -60,6 +59,14 @@
             </q-item-section>
             <q-item-section>
               <q-item-label>System Devices</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable tag="a" to="/tools/download-iso">
+            <q-item-section avatar>
+              <q-icon name="mdi-disc" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Download ISO</q-item-label>
             </q-item-section>
           </q-item>
           <q-item clickable tag="a" to="/tools/about">

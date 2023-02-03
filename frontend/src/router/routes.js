@@ -19,6 +19,10 @@ const routes = [
         path: "tools/system-devices",
         component: () => import("pages/SystemDevicesPage.vue"),
       },
+      {
+        path: "tools/download-iso",
+        component: () => import("pages/DownloadIsoPage.vue"),
+      },
       { path: "tools/about", component: () => import("pages/AboutPage.vue") },
     ],
   },

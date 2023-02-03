@@ -31,6 +31,9 @@ export default {
         },
         getSelectedPool() {
             return this.selectedStoragePool["uuid"]
+        },
+        getSelectedPoolName() {
+            return this.selectedStoragePool["name"]
         }
     },
     mounted() {
