@@ -1,18 +1,21 @@
 <template>
   <q-page padding>
     <div class="row justify-evenly">
-      <div style="text-align:center;">
+      <div class="text-center" v-show="!loadingVisible">
         <p>CPU</p>
         <q-circular-progress show-value class="text-light-blue q-ma-md" size="150px" color="light-blue"
           :value="cpu_progress">{{ cpu_progress_text }}</q-circular-progress>
       </div>
-      <div style="text-align:center;">
+      <div class="text-center" v-show="!loadingVisible">
         <p>Memory</p>
         <q-circular-progress show-value class="text-light-blue q-ma-md" size="150px" color="light-blue"
           :value="mem_progress"> {{ mem_progress_text }}
         </q-circular-progress>
       </div>
     </div>
+    <q-inner-loading :showing="loadingVisible">
+        <q-spinner-gears size="50px" color="primary" />
+      </q-inner-loading>
   </q-page>
 </template>
 
@@ -23,7 +26,8 @@ export default {
       cpu_progress: 0,
       cpu_progress_text: "",
       mem_progress: 0,
-      mem_progress_text: ""
+      mem_progress_text: "",
+      loadingVisible: true,
     }
   },
   mounted() {
@@ -45,6 +49,9 @@ export default {
     this.$socket.on("mem_usage", (msg) => {
       this.mem_progress = msg
       this.mem_progress_text = msg + "%"
+      if (this.cpu_progress != 0 && this.mem_progress != 0) {
+        this.loadingVisible = false
+      }
     })
   },
   unmounted() {
