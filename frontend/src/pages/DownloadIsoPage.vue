@@ -19,9 +19,6 @@
             </q-card-section>
             <q-card-section>
                 <q-linear-progress rounded v-show="showProgressBar" :value="progress" class="q-mt-md" animation-speed="100" size="25px">
-                    <div class="absolute-full flex flex-center">
-                        <q-badge color="transparent" text-color="primary" :label="(progress * 100).toFixed(0) + '%'" />
-                    </div>
                 </q-linear-progress>
             </q-card-section>
         </q-card>
@@ -55,7 +52,7 @@ export default {
     mounted() {
         console.log("DownloadIsoPage mounted")
         this.$socket.on("downloadIsoError", (msg) => {
-                this.$refs.errorDialog.show("Error Downloading ISO", ["Error: " + msg])
+                this.$refs.errorDialog.show("Error Downloading ISO", [msg])
             })
         this.$socket.on("downloadIsoProgress", (msg) => {
             this.showProgressBar = true

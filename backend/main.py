@@ -881,14 +881,10 @@ class api_socketio(Namespace):
         url = message['url']
         filename = message['fileName']
         pool = message['storagePool']
-        # filepath = 
-        # get storage pool path using libvirt api
         storagePool = conn.storagePoolLookupByUUIDString(pool)
         poolpath = storagePool.XMLDesc(0).split("<path>")[1].split("</path>")[0]
         poolName = storagePool.name()
         filepath = f"{poolpath}/{filename}"
-        print("filepath: ", filepath)
-        print("url: ", url)
 
         if (os.path.isfile(filepath)):
             emit("downloadIsoError", f"{filename} already exists in pool {poolName}")
@@ -896,7 +892,11 @@ class api_socketio(Namespace):
 
         try:
             response = requests.get(url, stream=True)
-            total_size = int(response.headers.get('Content-Length'))
+            try:
+                total_size = int(response.headers.get('Content-Length'))
+            except TypeError as e:
+                emit("downloadIsoError", f"Content-Length not found in response headers. Error: {e}")
+                return
             chunk_size = 1000
 
             with open(filepath, 'wb') as f:
