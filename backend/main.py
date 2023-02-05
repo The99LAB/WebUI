@@ -799,6 +799,7 @@ class create_vm():
             <video>
             <model type='qxl'/>
             </video>
+            <input type='tablet' bus='usb'/>
         </devices>
         </domain>"""
         return self.xml
