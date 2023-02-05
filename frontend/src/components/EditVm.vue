@@ -103,7 +103,7 @@
                     <q-toolbar>
                         <q-space/>
                         <q-btn flat label="Add" @click="diskAdd()" v-if="tab=='disk'"/>
-                        <q-btn flat label="Apply" @click="applyEdits()" v-if="tab!='disk'"/>
+                        <q-btn flat label="Apply" @click="applyEdits()" v-if="tab!='disk' && tab!='general'"/>
                     </q-toolbar>
                 </q-footer>
             </q-page-container>
