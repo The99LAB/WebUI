@@ -44,7 +44,6 @@ export default {
         updateVolumesList(){
             this.$api.get("/storage-pools/" + this.selectedStoragePool["uuid"] + "/volumes")
                 .then(response => {
-                    console.log("Response: ", response.data)
                     this.volumesList = response.data
                     this.selectedVolume = this.volumesList[0]
                 })
@@ -56,6 +55,9 @@ export default {
         },
         getSelectedVolume() {
             return this.selectedVolume["name"]
+        },
+        getSelectedVolumePath() {
+            return this.selectedVolume["path"]
         }
     },
     mounted() {

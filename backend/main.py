@@ -1294,11 +1294,13 @@ class api_storage_pool_action(Resource):
                         volume_info[2] / 1024 / 1024 / 1024)
                     volume_xml = ET.fromstring(pool.storageVolLookupByName(volume).XMLDesc(0))
                     volume_format = volume_xml.find('target/format').get('type')
+                    volume_path = volume_xml.find('target/path').text
                     _volume = {
                         "name": volume,
                         "format": volume_format,
                         "capacity": volume_capacity,
                         "allocation": volume_allocation,
+                        "path": volume_path,
                     }
                     pool_volumes.append(_volume)
             return pool_volumes

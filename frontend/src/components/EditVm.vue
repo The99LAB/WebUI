@@ -77,7 +77,8 @@
                                     <div class="col">
                                         <q-input label="Source File" v-model="disk.sourcefile">
                                             <template v-slot:append>
-                                                <q-btn round dense flat icon="check" @click="diskChangeSourceFile(disk.number, disk.sourcefile)"/>
+                                                <q-btn round dense flat icon="mdi-eye" @click="diskShowSourceFileDialog(disk.number)"/>
+                                                <q-btn round dense flat icon="mdi-check" @click="diskChangeSourceFile(disk.number, disk.sourcefile)"/>
                                             </template>
                                         </q-input>
                                     </div>
@@ -112,6 +113,7 @@
     <ErrorDialog ref="errorDialog"/>
     <ConfirmDialog ref="confirmDialog" @confirm-yes="diskDeleteConfirm()"/>
     <AddDisk ref="addDisk"/>
+    <sourceFileDialog ref="sourceFileDialog" @sourcefile-add-finished="refreshData()"/>
 </template>
 
 
@@ -121,6 +123,7 @@ import ErrorDialog from 'src/components/ErrorDialog.vue'
 import NetworkList from 'src/components/NetworkList.vue'
 import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 import AddDisk from 'src/components/AddDisk.vue'
+import sourceFileDialog from 'src/components/sourceFileDialog.vue'
 
 export default {
   data () {
@@ -150,7 +153,8 @@ export default {
         ErrorDialog,
         NetworkList,
         ConfirmDialog,
-        AddDisk
+        AddDisk,
+        sourceFileDialog
     },
     methods: {
         show(uuid) {
@@ -237,7 +241,9 @@ export default {
             }).catch(error => {
                 this.$refs.errorDialog.show(error.response.data)
             })
-
+        },
+        diskShowSourceFileDialog(disknumber){
+            this.$refs.sourceFileDialog.show(disknumber, this.uuid)
         },
         diskDelete(disknumber){
             this.$refs.confirmDialog.show("Delete disk", ["Are you sure you want to delete this disk?", "This only removes the disk from the vm, not from the storage pool."])
