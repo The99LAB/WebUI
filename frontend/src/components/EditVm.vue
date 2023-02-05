@@ -20,7 +20,11 @@
                 <q-page padding>
                     <q-tab-panels v-model="tab">
                         <q-tab-panel name="general">
-                            <q-input label="Name" v-model="general_name" disable />
+                            <q-input label="Name" v-model="general_name">
+                                <template v-slot:append>
+                                    <q-btn round dense flat icon="mdi-check" @click="generalChangeName(general_name)"/>
+                                </template>
+                            </q-input>
                             <q-select label="Machine" v-model="general_machine" disable/>
                             <q-select label="BIOS" v-model="general_bios" disable/>
                         </q-tab-panel>
@@ -34,7 +38,6 @@
                                     <q-select v-model="memory_minMemoryUnit" :options="memoryUnitOptions" />
                                 </div>
                             </div>
-                            
                             <div class="row">
                                 <div class="col">
                                     <q-input label="Memory maximum" v-model="memory_maxMemory" type="number" min="1"/>
@@ -54,25 +57,21 @@
                                         <q-input label="Disk Number" v-model="disk.number" type="number" min="1" readonly/>
                                     </div>
                                 </div>
-
                                 <div class="row">
                                     <div class="col">
                                         <q-select label="Device Type" v-model="disk.devicetype" :options="diskTypeOptions" @update:model-value="val => diskChangeType(disk.number, val)" />
                                     </div>
                                 </div>
-
                                 <div class="row">
                                     <div class="col">
                                         <q-select label="Driver Type" v-model="disk.drivertype" :options="diskDriverTypeOptions" @update:model-value="val => diskChangeDriverType(disk.number, val)"/>
                                     </div>
                                 </div>
-
                                 <div class="row">
                                     <div class="col">
                                         <q-select label="Bus Format" v-model="disk.busformat" :options="diskBusOptions" @update:model-value="val => diskChangeBus(disk.number, val)"/>
                                     </div>
                                 </div>
-
                                 <div class="row">
                                     <div class="col">
                                         <q-input label="Source File" v-model="disk.sourcefile">
@@ -100,7 +99,7 @@
                         </q-tab-panel>
                     </q-tab-panels>
                 </q-page>
-                <q-footer reveal bordered class="">
+                <q-footer reveal bordered>
                     <q-toolbar>
                         <q-space/>
                         <q-btn flat label="Add" @click="diskAdd()" v-if="tab=='disk'"/>
@@ -199,6 +198,15 @@ export default {
             else if (this.tab == "network"){
                 console.log("Network tab")
             }
+        },
+        generalChangeName(value){
+            this.$api.post('/vm-manager/' + this.uuid + '/edit-general-name', {
+                value: value
+            }).then(response => {
+                this.refreshData()
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
         },
         diskChangeType(disknumber, value){
             this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-type', {

@@ -1063,21 +1063,30 @@ class api_vm_manager_action(Resource):
 
         elif action.startswith("edit"):
             action = action.replace("edit-", "")
-            if action == "memory":
+            if action.startswith("general"):
+                action = action.replace("general-", "")
+                print("editing general", action)
+                value = request.get_json()['value']
+                if action == "name":
+                    xml = ET.fromstring(domain.XMLDesc(0))
+                    xml.find('name').text = value
+                    xml = ET.tostring(xml).decode()
+                    domain.undefine()
+                    domain = conn.defineXML(xml)
+                    return '', 204
+
+
+            # edit-memory
+            elif action == "memory":
                 memory_min = request.form['memory_min']
                 memory_min_unit = request.form['memory_min_unit']
                 memory_max = request.form['memory_max']
                 memory_max_unit = request.form['memory_max_unit']
-                print("memory_min: " + memory_min)
-                print("memory_min_unit: " + memory_min_unit)
-                print("memory_max: " + memory_max)
-                print("memory_max_unit: " + memory_max_unit)
 
                 memory_min = convertSizeUnit(
                     int(memory_min), memory_min_unit, "KB")
                 memory_max = convertSizeUnit(
                     int(memory_max), memory_max_unit, "KB")
-                print("memory_max: " + str(memory_max))
                 if memory_min > memory_max:
                     return ("Error: minmemory can't be bigger than maxmemory", 400)
                 else:
@@ -1102,6 +1111,8 @@ class api_vm_manager_action(Resource):
                             return "failed to replace minmemory and/or maxmemory!", 500
                     except Exception:
                         return "failed to find minmemory and maxmemory in xml!", 500
+            
+            # edit-disk-action
             elif action.startswith("disk"):
                 action = action.replace("disk-", "")
                 data = request.get_json()
