@@ -111,7 +111,7 @@
     </q-dialog>
     <ErrorDialog ref="errorDialog"/>
     <ConfirmDialog ref="confirmDialog" @confirm-yes="diskDeleteConfirm()"/>
-    <AddDisk ref="addDisk"/>
+    <AddDisk ref="addDisk" @disk-add-finished="refreshData()"/>
     <sourceFileDialog ref="sourceFileDialog" @sourcefile-add-finished="refreshData()"/>
 </template>
 
@@ -178,10 +178,6 @@ export default {
         },
         applyEdits() {
             console.log("Applying edits...")
-            if (this.tab == "general"){
-                console.log("General tab")
-            }
-            else if (this.tab == "memory"){
                 console.log("Memory tab")
                 console.log("uuid: " + this.uuid)
                 const formData = new FormData()
@@ -267,7 +263,7 @@ export default {
             })
         },
         diskAdd(){
-            this.$refs.addDisk.show()
+            this.$refs.addDisk.show(this.uuid)
         }
     },
 }

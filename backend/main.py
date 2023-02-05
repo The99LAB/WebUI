@@ -333,7 +333,7 @@ class storage():
     #                 return f'Error: {e}'
     #             break
 
-    def add_xml(self, targetbus, devicetype, sourcefile, drivertype, readonly="", bootorder=None):
+    def add_xml(self, targetbus, devicetype, sourcefile, drivertype, bootorder=None):
         tree = ET.fromstring(self.vmXml)
         disks = tree.findall('./devices/disk')
 
@@ -359,18 +359,6 @@ class storage():
         elif targetbus == "virtio":
             FreeTargetDev = "vd" + ascii_lowercase[index]
 
-        if readonly == "":
-            if devicetype == "cdrom":
-                readonlystate = True
-            else:
-                readonlystate = False
-        elif readonly == "on":
-            readonlystate = True
-        elif readonly == "off":
-            readonlystate = False
-        else:
-            return "Error: unknown readonly state"
-
         # create boot order string
         bootorderstring = ""
         if bootorder != None:
@@ -382,7 +370,6 @@ class storage():
         <source file='{sourcefile}'/>
         <target dev='{FreeTargetDev}' bus='{targetbus}'/>
         {bootorderstring}
-        {"<readonly/>" if readonlystate else ""}
         </disk>"""
         return diskxml
 
@@ -1116,11 +1103,23 @@ class api_vm_manager_action(Resource):
             elif action.startswith("disk"):
                 action = action.replace("disk-", "")
                 data = request.get_json()
-                disknumber = data['number']
-                xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
-                xml = ET.fromstring(xml_orig)
+                if action != "add":
+                    disknumber = data['number']
+                    xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
+                    xml = ET.fromstring(xml_orig)
+                if action == "add":
+                    volume_path = data['volumePath']
+                    device_type = data['deviceType']
+                    disk_driver_type = data['diskDriverType']
+                    disk_bus = data['diskBus']
+                    diskxml = storage(domain_uuid=vmuuid).add_xml(targetbus=disk_bus, devicetype=device_type, sourcefile=volume_path, drivertype=disk_driver_type)
+                    try:
+                        domain.attachDeviceFlags(diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
 
-                if action == "type":
+                elif action == "type":
                     value = data['value']
                     orig_value = xml.get('device')
                     xml.set('device', value)
