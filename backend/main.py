@@ -666,20 +666,25 @@ class domainNetworkInterface():
         networkinterfaces = []
         tree = ET.fromstring(self.domainxml)
         interfaces = tree.findall('./devices/interface')
-        for index, interface in enumerate(interfaces):
+        for number, interface in enumerate(interfaces):
             xml = ET.tostring(interface).decode()
             if interface.get('type') == "network":
                 mac_addr = interface.find("mac").get('address')
-                source_network = interface.find("source").get('network')
+                source_network = conn.networkLookupByUUIDString(interface.find("source").get('network')).name()
                 model = interface.find('model').get("type")
                 networkinterfaces.append(
-                    [index, xml, mac_addr, source_network, model])
+                {
+                    'number': number, 
+                    'xml': xml, 
+                    'mac_addr': mac_addr, 
+                    'source': source_network,
+                    'model': model
+                })
         return networkinterfaces
-
     def remove(self, index):
         for idx, interface in enumerate(self.get()):
             if idx == int(index):
-                return interface[1]
+                return interface['xml']
 
 
 class create_vm():
@@ -1004,7 +1009,7 @@ class api_vm_manager_action(Resource):
             maxmem = meminfo[1]
             # get disk
             diskinfo = storage(domain_uuid=vmuuid).get()
-
+            networks = domainNetworkInterface(dom_uuid=vmuuid).get()
             data = {
                 "name": domain.name(),
                 "uuid": domain.UUIDString(),
@@ -1016,6 +1021,7 @@ class api_vm_manager_action(Resource):
                 "memory_min":minmem,
                 "memory_min_unit": "GB",
                 "disks": diskinfo,
+                "networks": networks,
             }
             return data
         else:
@@ -1110,6 +1116,29 @@ class api_vm_manager_action(Resource):
                         return "failed to find minmemory and maxmemory in xml!", 500
             
             # edit-disk-action
+            elif action.startswith("network"):
+                action = action.replace("network-", "")
+                if action == "add":
+                    source_network = data['sourceNetwork']
+                    model = data['networkModel']
+                    xml = f"<interface type='network'><source network='{source_network}'/><model type='{model}'/></interface>"
+                    try:
+                        domain.attachDeviceFlags(
+                            xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return f"Error: {e}", 500
+
+                elif action == "delete":
+                    index = data['number']
+                    networkxml = domainNetworkInterface(dom_uuid=vmuuid).remove(index)
+                    try:
+                        domain.detachDeviceFlags(networkxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
+                else:
+                    return "Action not found", 404
             elif action.startswith("disk"):
                 action = action.replace("disk-", "")
                 if action != "add":

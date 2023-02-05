@@ -93,10 +93,37 @@
                                     </div>
                                 </div>
                             </div>
+                            <p v-if="diskList.length==0">No disks</p>
                         </q-tab-panel>
                         <q-tab-panel name="network">
-                            <NetworkList ref="network_source" />
-                            <q-select label="Model" v-model="network_model" :options="networkModelOptions" />
+                            <div v-for="network in networkList" :key="network">
+                                <q-separator spaced="lg" inset v-if="network.number!=0"/>
+                                <div class="row">
+                                    <div class="col">
+                                        <q-input label="Interface Number" v-model="network.number" type="number" min="1" readonly>
+                                        <template v-slot:after>
+                                            <q-btn color="primary" icon="delete"  @click="networkDelete(network.number)" />
+                                        </template>
+                                        </q-input>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <q-input label="MAC Address" v-model="network.mac_addr" readonly/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <q-input label="Source" v-model="network.source" readonly/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <q-input label="Model" v-model="network.model" readonly/>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-if="networkList.length==0">No networks</p>
                         </q-tab-panel>
                         <q-tab-panel name="xml">
                             <q-input filled v-model="xml" type="textarea" autogrow/>
@@ -107,26 +134,28 @@
                     <q-toolbar>
                         <q-space/>
                         <q-btn flat label="Add" @click="diskAdd()" v-if="tab=='disk'"/>
-                        <q-btn flat label="Apply" @click="applyEdits()" v-if="tab!='disk' && tab!='general'"/>
+                        <q-btn flat label="Add Network" @click="networkAdd()" v-if="tab=='network'"/>
+                        <q-btn flat label="Apply" @click="applyEdits()" v-if="tab=='memory' || tab=='xml'"/>
                     </q-toolbar>
                 </q-footer>
             </q-page-container>
         </q-layout>
     </q-dialog>
     <ErrorDialog ref="errorDialog"/>
-    <ConfirmDialog ref="confirmDialog" @confirm-yes="diskDeleteConfirm()"/>
+    <ConfirmDialog ref="confirmDialog" @confirm-yes="confirmDialogYes()"/>
     <AddDisk ref="addDisk" @disk-add-finished="refreshData()"/>
     <sourceFileDialog ref="sourceFileDialog" @sourcefile-add-finished="refreshData()"/>
+    <AddNetwork ref="addNetwork" @network-add-finished="refreshData()"/>
 </template>
 
 
 <script>
 import { ref } from 'vue'
 import ErrorDialog from 'src/components/ErrorDialog.vue'
-import NetworkList from 'src/components/NetworkList.vue'
 import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 import AddDisk from 'src/components/AddDisk.vue'
 import sourceFileDialog from 'src/components/sourceFileDialog.vue'
+import AddNetwork from 'src/components/AddNetwork.vue'
 
 export default {
   data () {
@@ -148,17 +177,17 @@ export default {
         diskTypeOptions: ["disk", "cdrom"],
         diskList: [],
         diskDeleteNumber: null,
-        network_model: null,
-        networkModelOptions: ["virtio", "e1000", "rtl8139"],
+        networkList: [],
+        networkDeleteNumber: null,
         xml: null
     }
   },
     components: {
         ErrorDialog,
-        NetworkList,
         ConfirmDialog,
         AddDisk,
-        sourceFileDialog
+        sourceFileDialog,
+        AddNetwork
     },
     methods: {
         show(uuid) {
@@ -176,10 +205,13 @@ export default {
                 this.memory_maxMemory = response.data.memory_max
                 this.memory_maxMemoryUnit = response.data.memory_max_unit
                 this.diskList = response.data.disks
+                this.networkList = response.data.networks
+                console.log("Networks: ", this.networkList)
                 this.layout = true
             }).catch(error => {
                 this.$refs.errorDialog.show(error.response.data)
             })
+
 
             this.$api.get('/vm-manager/' + this.uuid + '/xml')
             .then(response => {
@@ -288,7 +320,32 @@ export default {
         },
         diskAdd(){
             this.$refs.addDisk.show(this.uuid)
-        }
+        },
+        confirmDialogYes(){
+            if (this.tab == "disk"){
+                this.diskDeleteConfirm()
+            }
+            else if (this.tab == "network"){
+                this.networkDeleteConfirm()
+            }
+        },
+        networkAdd(){
+            console.log("Adding network")
+            this.$refs.addNetwork.show(this.uuid)
+        },
+        networkDelete(networknumber){
+            this.$refs.confirmDialog.show("Delete network", ["Are you sure you want to delete this network?", "This only removes the network from the vm, not from the network pool."])
+            this.networkDeleteNumber = networknumber
+        },
+        networkDeleteConfirm() {
+            this.$api.post('/vm-manager/' + this.uuid + '/edit-network-delete', {
+                number: this.networkDeleteNumber
+            }).then(response => {
+                this.refreshData()
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
+        },
     },
 }
 </script>
