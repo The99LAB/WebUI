@@ -2,9 +2,9 @@
   <q-layout view="hHh LpR fFf">
     <q-header class="bg-primary text-white">
       <q-toolbar>
-        <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
+        <q-btn dense flat round icon="menu" @click="leftDrawerOpen = !leftDrawerOpen" />
         <q-toolbar-title>
-          Server3
+          {{ hostname }}
         </q-toolbar-title>
         <q-btn dense flat round icon="power_settings_new" @click="showPowerMenu()" />
         <q-btn dense flat round icon="logout" />
@@ -96,29 +96,32 @@ import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default defineComponent({
   name: 'MainLayout',
-
+  data() {
+    return {
+      leftDrawerOpen: ref(false),
+      hostname: "",
+    }
+  },
   components: {
     PowerMenu,
     ErrorDialog
   },
-
   methods: {
     showPowerMenu() {
       this.$refs.powerMenu.show()
-    }
-  },
-  setup() {
-    const leftDrawerOpen = ref(false)
-
-    return {
-      leftDrawerOpen,
-      toggleLeftDrawer() {
-        leftDrawerOpen.value = !leftDrawerOpen.value
-      }
-    }
+    },
+    getHostName() {
+      this.$api.get("/host/system-info/hostname")
+        .then(response => {
+          this.hostname = response.data.hostname
+        })
+        .catch(error => {
+          this.$refs.errorDialog.show("Error getting hostname", ["Could not get hostname.", error.response.data])
+        })
+    },
   },
   mounted() {
-    console.log("MainLayout mounted")
+    this.getHostName()
     this.$socket.on("connect_error", (msg) => {
       this.$refs.errorDialog.show("Connection Error", ["Could not connect to the backend server.", msg])
       this.$socket.on("connect", () => {
@@ -126,7 +129,6 @@ export default defineComponent({
         this.$socket.off("connect")
       });
     })
-    
   },
   unmounted() {
     this.$socket.off("connect_error")
