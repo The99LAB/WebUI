@@ -1443,38 +1443,23 @@ api.add_resource(api_host_power, '/api/host/power/<string:powermsg>')
 class api_host_system_info(Resource):
     def get(self, action):
         if action == "all":
-            board_vendor_process = subprocess.run(
-                ["cat", "/sys/devices/virtual/dmi/id/board_vendor"], capture_output=True, text=True)
-            if board_vendor_process.returncode == 0:
-                board_vendor = board_vendor_process.stdout.replace("\n", "")
-            else:
-                board_vendor = ""
-
-            board_name_process = subprocess.run(
-                ["cat", "/sys/devices/virtual/dmi/id/board_name"], capture_output=True, text=True)
-            if board_name_process.returncode == 0:
-                board_name = board_name_process.stdout.replace("\n", "")
-            else:
-                board_name = ""
-            
-            board_version_process = subprocess.run(
-                ["cat", "/sys/devices/virtual/dmi/id/board_version"], capture_output=True, text=True)
-            if board_version_process.returncode == 0:
-                board_version = board_version_process.stdout.replace("\n", "")
-            else:
-                board_version = ""
-
+            sysInfo = ET.fromstring(conn.getSysinfo(0))
+            baseboard_manufacturer = sysInfo.find("baseBoard/entry[@name='manufacturer']").text
+            baseboard_product = sysInfo.find("baseBoard/entry[@name='product']").text
+            baseboard_version = sysInfo.find("baseBoard/entry[@name='version']").text
+            processor_version = sysInfo.find("processor/entry[@name='version']").text
+            memory_size = sysInfo.find("memory_device/entry[@name='size']").text
             return {
-                "motherboard": board_vendor + " " + board_name + " " + board_version,
-                "processor": cpuinfo.get_cpu_info()['brand_raw'],
-                "memory": f"{round(psutil.virtual_memory().total / (1024.0 ** 3))} GB",
+                "motherboard": baseboard_manufacturer + " " + baseboard_product + " " + baseboard_version,
+                "processor": processor_version,
+                "memory": memory_size,
                 "os": distro.name(pretty=True),
-                "hostname": os.uname()[1],
+                "hostname": conn.getHostname(),
                 "linuxVersion": os.uname()[2],
             }
         elif action == "hostname":
             return {
-                "hostname": os.uname()[1]
+                "hostname": conn.getHostname()
             }
         else:
             return 'Action not found', 404
