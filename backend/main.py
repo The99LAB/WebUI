@@ -989,7 +989,7 @@ class api_vm_manager_action(Resource):
         domain = conn.lookupByUUIDString(vmuuid)
         domain_xml = domain.XMLDesc(0)
         if action == "xml":
-            return domain_xml, 204
+            return {"xml": domain_xml}
         elif action == "data":
             print("getting vm data")
             domain_xml = ET.fromstring(domain_xml)
@@ -1051,7 +1051,16 @@ class api_vm_manager_action(Resource):
         elif action.startswith("edit"):
             data = request.get_json()
             action = action.replace("edit-", "")
-            if action.startswith("general"):
+            if action == "xml":
+                xml = data['xml']
+                try:
+                    domain.undefineFlags(4)
+                    domain = conn.defineXML(xml)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return f'{e}', 500
+
+            elif action.startswith("general"):
                 action = action.replace("general-", "")
                 value = data['value']
                 if action == "name":

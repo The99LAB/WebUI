@@ -12,6 +12,7 @@
                     <q-tab name="memory" label="Memory" />
                     <q-tab name="disk" label="Disk" />
                     <q-tab name="network" label="Network" />
+                    <q-tab name="xml" label="Xml" />
                 </q-tabs>
                 <q-separator />
             </q-header>
@@ -97,6 +98,9 @@
                             <NetworkList ref="network_source" />
                             <q-select label="Model" v-model="network_model" :options="networkModelOptions" />
                         </q-tab-panel>
+                        <q-tab-panel name="xml">
+                            <q-input filled v-model="xml" type="textarea" autogrow/>
+                        </q-tab-panel>
                     </q-tab-panels>
                 </q-page>
                 <q-footer reveal bordered>
@@ -146,6 +150,7 @@ export default {
         diskDeleteNumber: null,
         network_model: null,
         networkModelOptions: ["virtio", "e1000", "rtl8139"],
+        xml: null
     }
   },
     components: {
@@ -175,6 +180,14 @@ export default {
             }).catch(error => {
                 this.$refs.errorDialog.show(error.response.data)
             })
+
+            this.$api.get('/vm-manager/' + this.uuid + '/xml')
+            .then(response => {
+                this.xml = response.data.xml
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
+
         },
         applyEdits() {
             console.log("Applying edits...")
@@ -194,6 +207,16 @@ export default {
             }
             else if (this.tab == "network"){
                 console.log("Network tab")
+            }
+            else if (this.tab == "xml"){
+                console.log("XML tab")
+                this.$api.post('/vm-manager/' + this.uuid + '/edit-xml', {
+                    xml: this.xml
+                }).then(response => {
+                    this.refreshData()
+                }).catch(error => {
+                    this.$refs.errorDialog.show("Error changing XML", [error.response.data])
+                })
             }
         },
         generalChangeName(value){
