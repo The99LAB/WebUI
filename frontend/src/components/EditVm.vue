@@ -178,17 +178,18 @@ export default {
         },
         applyEdits() {
             console.log("Applying edits...")
+            if (this.tab == "memory"){
                 console.log("Memory tab")
                 console.log("uuid: " + this.uuid)
-                const formData = new FormData()
-                formData.append('memory_min', this.memory_minMemory)
-                formData.append('memory_min_unit', this.memory_minMemoryUnit)
-                formData.append('memory_max', this.memory_maxMemory)
-                formData.append('memory_max_unit', this.memory_maxMemoryUnit)
-                this.$api.post('/vm-manager/' + this.uuid + '/edit-memory', formData).then(response => {
-                    console.log("Memory edit successful response:" + response)
+                this.$api.post('/vm-manager/' + this.uuid + '/edit-memory', {
+                    memory_min: this.memory_minMemory,
+                    memory_min_unit: this.memory_minMemoryUnit,
+                    memory_max: this.memory_maxMemory,
+                    memory_max_unit: this.memory_maxMemoryUnit
+                }).then(response => {
+                    this.refreshData()
                 }).catch(error => {
-                    this.$refs.errorDialog.show(error.response.data)
+                    this.$refs.errorDialog.show("Error changing memory", [error.response.data])
                 })
             }
             else if (this.tab == "network"){

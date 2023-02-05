@@ -1049,11 +1049,11 @@ class api_vm_manager_action(Resource):
                 return f'{e}', 500
 
         elif action.startswith("edit"):
+            data = request.get_json()
             action = action.replace("edit-", "")
             if action.startswith("general"):
                 action = action.replace("general-", "")
-                print("editing general", action)
-                value = request.get_json()['value']
+                value = data['value']
                 if action == "name":
                     xml = ET.fromstring(domain.XMLDesc(0))
                     xml.find('name').text = value
@@ -1065,10 +1065,10 @@ class api_vm_manager_action(Resource):
 
             # edit-memory
             elif action == "memory":
-                memory_min = request.form['memory_min']
-                memory_min_unit = request.form['memory_min_unit']
-                memory_max = request.form['memory_max']
-                memory_max_unit = request.form['memory_max_unit']
+                memory_min = data['memory_min']
+                memory_min_unit = data['memory_min_unit']
+                memory_max = data['memory_max']
+                memory_max_unit = data['memory_max_unit']
 
                 memory_min = convertSizeUnit(
                     int(memory_min), memory_min_unit, "KB")
@@ -1102,7 +1102,6 @@ class api_vm_manager_action(Resource):
             # edit-disk-action
             elif action.startswith("disk"):
                 action = action.replace("disk-", "")
-                data = request.get_json()
                 if action != "add":
                     disknumber = data['number']
                     xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
