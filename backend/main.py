@@ -999,6 +999,12 @@ class api_vm_manager_action(Resource):
         elif action == "data":
             print("getting vm data")
             domain_xml = ET.fromstring(domain_xml)
+            # get vcpus from xml
+            try:
+                current_vcpu = domain_xml.find('vcpu').attrib['current']
+            except KeyError:
+                current_vcpu = domain_xml.find('vcpu').text
+            vcpu = domain_xml.find('vcpu').text
             # get machine type
             machine_type = domain_xml.find('os/type').attrib['machine']
             # get bios type
@@ -1012,6 +1018,8 @@ class api_vm_manager_action(Resource):
             networks = domainNetworkInterface(dom_uuid=vmuuid).get()
             data = {
                 "name": domain.name(),
+                "current_vcpu": current_vcpu,
+                "vcpu": vcpu,
                 "uuid": domain.UUIDString(),
                 "state": domain.state()[0],
                 "machine": machine_type,
@@ -1074,10 +1082,12 @@ class api_vm_manager_action(Resource):
                     xml = ET.fromstring(domain.XMLDesc(0))
                     xml.find('name').text = value
                     xml = ET.tostring(xml).decode()
-                    domain.undefine()
-                    domain = conn.defineXML(xml)
-                    return '', 204
-
+                    try:
+                        domain.undefineFlags(4)
+                        domain = conn.defineXML(xml)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return f'{e}', 500
 
             # edit-memory
             elif action == "memory":

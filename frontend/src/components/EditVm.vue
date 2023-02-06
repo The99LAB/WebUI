@@ -9,6 +9,7 @@
 
                 <q-tabs allign="left" v-model="tab">
                     <q-tab name="general" label="General" />
+                    <q-tab name="cpu" label="CPU" />
                     <q-tab name="memory" label="Memory" />
                     <q-tab name="disk" label="Disk" />
                     <q-tab name="network" label="Network" />
@@ -95,6 +96,22 @@
                             </div>
                             <p v-if="diskList.length==0">No disks</p>
                         </q-tab-panel>
+                        <q-tab-panel name="cpu">
+                            <p>CPU panel</p>
+                            <div class="row">
+                                <div class="col">
+                                    <q-input label="Current vCPU" v-model="currentVcpu" type="number" min="1" readonly/>
+                                </div>
+                                <div class="col">
+                                    <q-input label="vCPU" v-model="vcpu" type="number" min="1"/>
+                                </div>
+                                <div class="col-md-auto">
+                                    <q-btn color="primary" icon="mdi-check" @click="cpuChangeVcpu(vcpu)" />
+                                </div>
+                            </div>
+                            {{ currentVcpu }}
+                            {{ vcpu }}
+                        </q-tab-panel>
                         <q-tab-panel name="network">
                             <div v-for="network in networkList" :key="network">
                                 <q-separator spaced="lg" inset v-if="network.number!=0"/>
@@ -135,7 +152,7 @@
                         <q-space/>
                         <q-btn flat label="Add" @click="diskAdd()" v-if="tab=='disk'"/>
                         <q-btn flat label="Add Network" @click="networkAdd()" v-if="tab=='network'"/>
-                        <q-btn flat label="Apply" @click="applyEdits()" v-if="tab=='memory' || tab=='xml'"/>
+                        <q-btn flat label="Apply" @click="applyEdits()" v-if="tab=='memory' || tab=='xml' || tab=='cpu'"/>
                     </q-toolbar>
                 </q-footer>
             </q-page-container>
@@ -179,6 +196,8 @@ export default {
         diskDeleteNumber: null,
         networkList: [],
         networkDeleteNumber: null,
+        currentVcpu: null,
+        vcpu: null,
         xml: null
     }
   },
@@ -204,6 +223,8 @@ export default {
                 this.memory_minMemoryUnit = response.data.memory_min_unit
                 this.memory_maxMemory = response.data.memory_max
                 this.memory_maxMemoryUnit = response.data.memory_max_unit
+                this.currentVcpu = response.data.current_vcpu
+                this.vcpu = response.data.vcpu
                 this.diskList = response.data.disks
                 this.networkList = response.data.networks
                 console.log("Networks: ", this.networkList)
@@ -236,6 +257,9 @@ export default {
                 }).catch(error => {
                     this.$refs.errorDialog.show("Error changing memory", [error.response.data])
                 })
+            }
+            else if (this.tab == "cpu"){
+                console.log("CPU tab")
             }
             else if (this.tab == "network"){
                 console.log("Network tab")
