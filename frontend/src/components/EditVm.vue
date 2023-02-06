@@ -4,7 +4,7 @@
             <q-header bordered class="bg-primary text-white" height-hint="98">
                 <q-toolbar>
                     <q-toolbar-title>Edit VM</q-toolbar-title>
-                    <q-btn icon="close" flat round dense v-close-popup @click="tab = 'general'"/>
+                    <q-btn icon="close" flat round dense v-close-popup @click="tab = 'general'" />
                 </q-toolbar>
 
                 <q-tabs allign="left" v-model="tab">
@@ -24,17 +24,28 @@
                         <q-tab-panel name="general">
                             <q-input label="Name" v-model="general_name">
                                 <template v-slot:append>
-                                    <q-btn round dense flat icon="mdi-check" @click="generalChangeName(general_name)"/>
+                                    <q-btn round dense flat icon="mdi-check" @click="generalChangeName(general_name)" />
                                 </template>
                             </q-input>
-                            <q-select label="Machine" v-model="general_machine" disable/>
-                            <q-select label="BIOS" v-model="general_bios" disable/>
+                            <q-select label="Machine" v-model="general_machine" disable />
+                            <q-select label="BIOS" v-model="general_bios" disable />
                         </q-tab-panel>
-
+                        <q-tab-panel name="cpu">
+                            <q-input label="Current vCPU" v-model="currentVcpu" type="number" min="1" :max="vcpu"
+                                :rules="[val => val <= vcpu || 'Current vCPU cannot be bigger than vCPU value']" />
+                            <q-input label="vCPU" v-model="vcpu" type="number" min="1" />
+                            <!-- custom topology toggle -->
+                            <q-toggle label="Custom Topology" v-model="customTopology" />
+                            <div v-if="customTopology">
+                                <q-input label="Sockets" v-model="sockets" type="number" min="1" />
+                                <q-input label="Cores" v-model="cores" type="number" min="1" />
+                                <q-input label="Threads" v-model="threads" type="number" min="1" />
+                            </div>
+                        </q-tab-panel>
                         <q-tab-panel name="memory">
                             <div class="row">
                                 <div class="col">
-                                    <q-input label="Memory minimum" v-model="memory_minMemory" type="number" min="1"/>
+                                    <q-input label="Memory minimum" v-model="memory_minMemory" type="number" min="1" />
                                 </div>
                                 <div class="col-md-auto">
                                     <q-select v-model="memory_minMemoryUnit" :options="memoryUnitOptions" />
@@ -42,44 +53,52 @@
                             </div>
                             <div class="row">
                                 <div class="col">
-                                    <q-input label="Memory maximum" v-model="memory_maxMemory" type="number" min="1"/>
+                                    <q-input label="Memory maximum" v-model="memory_maxMemory" type="number" min="1" />
                                 </div>
                                 <div class="col-md-auto">
                                     <q-select v-model="memory_maxMemoryUnit" :options="memoryUnitOptions" />
                                 </div>
-                                <q-space/>
+                                <q-space />
                             </div>
                         </q-tab-panel>
 
                         <q-tab-panel name="disk">
                             <div v-for="disk in diskList" :key="disk">
-                                <q-separator spaced="lg" inset v-if="disk.number!=0"/>
+                                <q-separator spaced="lg" inset v-if="disk.number != 0" />
                                 <div class="row">
                                     <div class="col">
-                                        <q-input label="Disk Number" v-model="disk.number" type="number" min="1" readonly/>
+                                        <q-input label="Disk Number" v-model="disk.number" type="number" min="1"
+                                            readonly />
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col">
-                                        <q-select label="Device Type" v-model="disk.devicetype" :options="diskTypeOptions" @update:model-value="val => diskChangeType(disk.number, val)" />
+                                        <q-select label="Device Type" v-model="disk.devicetype"
+                                            :options="diskTypeOptions"
+                                            @update:model-value="val => diskChangeType(disk.number, val)" />
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col">
-                                        <q-select label="Driver Type" v-model="disk.drivertype" :options="diskDriverTypeOptions" @update:model-value="val => diskChangeDriverType(disk.number, val)"/>
+                                        <q-select label="Driver Type" v-model="disk.drivertype"
+                                            :options="diskDriverTypeOptions"
+                                            @update:model-value="val => diskChangeDriverType(disk.number, val)" />
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col">
-                                        <q-select label="Bus Format" v-model="disk.busformat" :options="diskBusOptions" @update:model-value="val => diskChangeBus(disk.number, val)"/>
+                                        <q-select label="Bus Format" v-model="disk.busformat" :options="diskBusOptions"
+                                            @update:model-value="val => diskChangeBus(disk.number, val)" />
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col">
                                         <q-input label="Source File" v-model="disk.sourcefile">
                                             <template v-slot:append>
-                                                <q-btn round dense flat icon="mdi-eye" @click="diskShowSourceFileDialog(disk.number)"/>
-                                                <q-btn round dense flat icon="mdi-check" @click="diskChangeSourceFile(disk.number, disk.sourcefile)"/>
+                                                <q-btn round dense flat icon="mdi-eye"
+                                                    @click="diskShowSourceFileDialog(disk.number)" />
+                                                <q-btn round dense flat icon="mdi-check"
+                                                    @click="diskChangeSourceFile(disk.number, disk.sourcefile)" />
                                             </template>
                                         </q-input>
                                     </div>
@@ -87,82 +106,69 @@
                                 <q-separator inset vertical />
                                 <div class="row">
                                     <div class="col">
-                                        <q-toggle label="Read Only" v-model="disk.readonly" disable/>
+                                        <q-toggle label="Read Only" v-model="disk.readonly" disable />
                                     </div>
                                     <div class="col-md-auto">
-                                        <q-btn color="primary" icon="delete"  @click="diskDelete(disk.number)" />
+                                        <q-btn color="primary" icon="delete" @click="diskDelete(disk.number)" />
                                     </div>
                                 </div>
                             </div>
-                            <p v-if="diskList.length==0">No disks</p>
-                        </q-tab-panel>
-                        <q-tab-panel name="cpu">
-                            <p>CPU panel</p>
-                            <div class="row">
-                                <div class="col">
-                                    <q-input label="Current vCPU" v-model="currentVcpu" type="number" min="1" readonly/>
-                                </div>
-                                <div class="col">
-                                    <q-input label="vCPU" v-model="vcpu" type="number" min="1"/>
-                                </div>
-                                <div class="col-md-auto">
-                                    <q-btn color="primary" icon="mdi-check" @click="cpuChangeVcpu(vcpu)" />
-                                </div>
-                            </div>
-                            {{ currentVcpu }}
-                            {{ vcpu }}
+                            <p v-if="diskList.length == 0">No disks</p>
                         </q-tab-panel>
                         <q-tab-panel name="network">
                             <div v-for="network in networkList" :key="network">
-                                <q-separator spaced="lg" inset v-if="network.number!=0"/>
+                                <q-separator spaced="lg" inset v-if="network.number != 0" />
                                 <div class="row">
                                     <div class="col">
-                                        <q-input label="Interface Number" v-model="network.number" type="number" min="1" readonly>
-                                        <template v-slot:after>
-                                            <q-btn color="primary" icon="delete"  @click="networkDelete(network.number)" />
-                                        </template>
+                                        <q-input label="Interface Number" v-model="network.number" type="number" min="1"
+                                            readonly>
+                                            <template v-slot:after>
+                                                <q-btn color="primary" icon="delete"
+                                                    @click="networkDelete(network.number)" />
+                                            </template>
                                         </q-input>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col">
-                                        <q-input label="MAC Address" v-model="network.mac_addr" readonly/>
+                                        <q-input label="MAC Address" v-model="network.mac_addr" readonly />
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col">
-                                        <q-input label="Source" v-model="network.source" readonly/>
+                                        <q-input label="Source" v-model="network.source" readonly />
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col">
-                                        <q-input label="Model" v-model="network.model" readonly/>
+                                        <q-input label="Model" v-model="network.model" readonly />
                                     </div>
                                 </div>
                             </div>
-                            <p v-if="networkList.length==0">No networks</p>
+                            <p v-if="networkList.length == 0">No networks</p>
                         </q-tab-panel>
                         <q-tab-panel name="xml">
-                            <q-input filled v-model="xml" type="textarea" autogrow/>
+                            <q-input filled v-model="xml" type="textarea" autogrow />
                         </q-tab-panel>
                     </q-tab-panels>
                 </q-page>
                 <q-footer reveal bordered>
                     <q-toolbar>
-                        <q-space/>
-                        <q-btn flat label="Add" @click="diskAdd()" v-if="tab=='disk'"/>
-                        <q-btn flat label="Add Network" @click="networkAdd()" v-if="tab=='network'"/>
-                        <q-btn flat label="Apply" @click="applyEdits()" v-if="tab=='memory' || tab=='xml' || tab=='cpu'"/>
+                        <q-space />
+                        <q-btn flat label="Add" @click="diskAdd()" v-if="tab == 'disk'" />
+                        <q-btn flat label="Add Network" @click="networkAdd()" v-if="tab == 'network'" />
+                        <q-btn flat label="Apply" @click="applyEdits()"
+                            v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu'" />
                     </q-toolbar>
                 </q-footer>
             </q-page-container>
         </q-layout>
     </q-dialog>
-    <ErrorDialog ref="errorDialog"/>
-    <ConfirmDialog ref="confirmDialog" @confirm-yes="confirmDialogYes()"/>
-    <AddDisk ref="addDisk" @disk-add-finished="refreshData()"/>
-    <sourceFileDialog ref="sourceFileDialog" @sourcefile-add-finished="refreshData()"/>
-    <AddNetwork ref="addNetwork" @network-add-finished="refreshData()"/>
+    <ErrorDialog ref="errorDialog" />
+    <ConfirmDialog ref="confirmDialog" @confirm-yes="confirmDialogYes()" />
+    <AddDisk ref="addDisk" @disk-add-finished="refreshData()" />
+    <sourceFileDialog ref="sourceFileDialog" @sourcefile-add-finished="refreshData()" />
+    <AddNetwork ref="addNetwork" @network-add-finished="refreshData()" />
 </template>
 
 
@@ -175,32 +181,36 @@ import sourceFileDialog from 'src/components/sourceFileDialog.vue'
 import AddNetwork from 'src/components/AddNetwork.vue'
 
 export default {
-  data () {
-    return {
-        layout: ref(false),
-        tab: ref('general'),
-        general_name: null,
-        general_machine: null,
-        general_bios: null,
-        memoryMinOptions: ["1024", "2048", "4096", "8192", "16384", "32768", "65536"],
-        memoryUnitOptions: ["MB", "GB", "TB"],
-        memory_minMemory: null,
-        memory_minMemoryUnit: ref("GB"),
-        memory_maxMemory: null,
-        memory_maxMemoryUnit: ref("GB"),
-        diskUnitOptions: ["MB", "GB", "TB"],
-        diskDriverTypeOptions: ["raw", "qcow2"],
-        diskBusOptions: ["sata", "scsi", "virtio", "usb"],
-        diskTypeOptions: ["disk", "cdrom"],
-        diskList: [],
-        diskDeleteNumber: null,
-        networkList: [],
-        networkDeleteNumber: null,
-        currentVcpu: null,
-        vcpu: null,
-        xml: null
-    }
-  },
+    data() {
+        return {
+            layout: ref(false),
+            tab: ref('general'),
+            general_name: null,
+            general_machine: null,
+            general_bios: null,
+            memoryMinOptions: ["1024", "2048", "4096", "8192", "16384", "32768", "65536"],
+            memoryUnitOptions: ["MB", "GB", "TB"],
+            memory_minMemory: null,
+            memory_minMemoryUnit: ref("GB"),
+            memory_maxMemory: null,
+            memory_maxMemoryUnit: ref("GB"),
+            diskUnitOptions: ["MB", "GB", "TB"],
+            diskDriverTypeOptions: ["raw", "qcow2"],
+            diskBusOptions: ["sata", "scsi", "virtio", "usb"],
+            diskTypeOptions: ["disk", "cdrom"],
+            diskList: [],
+            diskDeleteNumber: null,
+            networkList: [],
+            networkDeleteNumber: null,
+            currentVcpu: null,
+            vcpu: null,
+            customTopology: false,
+            topologySockets: null,
+            topologyCores: null,
+            topologyThreads: null,
+            xml: null
+        }
+    },
     components: {
         ErrorDialog,
         ConfirmDialog,
@@ -215,36 +225,36 @@ export default {
         },
         refreshData() {
             this.$api.get('/vm-manager/' + this.uuid + '/data')
-            .then(response => {
-                this.general_name = response.data.name
-                this.general_machine = response.data.machine
-                this.general_bios = response.data.bios
-                this.memory_minMemory = response.data.memory_min
-                this.memory_minMemoryUnit = response.data.memory_min_unit
-                this.memory_maxMemory = response.data.memory_max
-                this.memory_maxMemoryUnit = response.data.memory_max_unit
-                this.currentVcpu = response.data.current_vcpu
-                this.vcpu = response.data.vcpu
-                this.diskList = response.data.disks
-                this.networkList = response.data.networks
-                console.log("Networks: ", this.networkList)
-                this.layout = true
-            }).catch(error => {
-                this.$refs.errorDialog.show(error.response.data)
-            })
+                .then(response => {
+                    this.general_name = response.data.name
+                    this.general_machine = response.data.machine
+                    this.general_bios = response.data.bios
+                    this.memory_minMemory = response.data.memory_min
+                    this.memory_minMemoryUnit = response.data.memory_min_unit
+                    this.memory_maxMemory = response.data.memory_max
+                    this.memory_maxMemoryUnit = response.data.memory_max_unit
+                    this.currentVcpu = response.data.current_vcpu
+                    this.vcpu = response.data.vcpu
+                    this.diskList = response.data.disks
+                    this.networkList = response.data.networks
+                    console.log("Networks: ", this.networkList)
+                    this.layout = true
+                }).catch(error => {
+                    this.$refs.errorDialog.show(error.response.data)
+                })
 
 
             this.$api.get('/vm-manager/' + this.uuid + '/xml')
-            .then(response => {
-                this.xml = response.data.xml
-            }).catch(error => {
-                this.$refs.errorDialog.show(error.response.data)
-            })
+                .then(response => {
+                    this.xml = response.data.xml
+                }).catch(error => {
+                    this.$refs.errorDialog.show(error.response.data)
+                })
 
         },
         applyEdits() {
             console.log("Applying edits...")
-            if (this.tab == "memory"){
+            if (this.tab == "memory") {
                 console.log("Memory tab")
                 console.log("uuid: " + this.uuid)
                 this.$api.post('/vm-manager/' + this.uuid + '/edit-memory', {
@@ -258,13 +268,13 @@ export default {
                     this.$refs.errorDialog.show("Error changing memory", [error.response.data])
                 })
             }
-            else if (this.tab == "cpu"){
+            else if (this.tab == "cpu") {
                 console.log("CPU tab")
             }
-            else if (this.tab == "network"){
+            else if (this.tab == "network") {
                 console.log("Network tab")
             }
-            else if (this.tab == "xml"){
+            else if (this.tab == "xml") {
                 console.log("XML tab")
                 this.$api.post('/vm-manager/' + this.uuid + '/edit-xml', {
                     xml: this.xml
@@ -275,7 +285,7 @@ export default {
                 })
             }
         },
-        generalChangeName(value){
+        generalChangeName(value) {
             this.$api.post('/vm-manager/' + this.uuid + '/edit-general-name', {
                 value: value
             }).then(response => {
@@ -284,7 +294,7 @@ export default {
                 this.$refs.errorDialog.show(error.response.data)
             })
         },
-        diskChangeType(disknumber, value){
+        diskChangeType(disknumber, value) {
             this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-type', {
                 number: disknumber,
                 value: value
@@ -295,7 +305,7 @@ export default {
             })
 
         },
-        diskChangeDriverType(disknumber, value){
+        diskChangeDriverType(disknumber, value) {
             this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-driver-type', {
                 number: disknumber,
                 value: value
@@ -306,7 +316,7 @@ export default {
             })
 
         },
-        diskChangeBus(disknumber, value){
+        diskChangeBus(disknumber, value) {
             this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-bus', {
                 number: disknumber,
                 value: value
@@ -316,7 +326,7 @@ export default {
                 this.$refs.errorDialog.show(error.response.data)
             })
         },
-        diskChangeSourceFile(disknumber, value){
+        diskChangeSourceFile(disknumber, value) {
             this.$api.post('/vm-manager/' + this.uuid + '/edit-disk-source-file', {
                 number: disknumber,
                 value: value
@@ -326,10 +336,10 @@ export default {
                 this.$refs.errorDialog.show(error.response.data)
             })
         },
-        diskShowSourceFileDialog(disknumber){
+        diskShowSourceFileDialog(disknumber) {
             this.$refs.sourceFileDialog.show(disknumber, this.uuid)
         },
-        diskDelete(disknumber){
+        diskDelete(disknumber) {
             this.$refs.confirmDialog.show("Delete disk", ["Are you sure you want to delete this disk?", "This only removes the disk from the vm, not from the storage pool."])
             this.diskDeleteNumber = disknumber
         },
@@ -342,22 +352,22 @@ export default {
                 this.$refs.errorDialog.show(error.response.data)
             })
         },
-        diskAdd(){
+        diskAdd() {
             this.$refs.addDisk.show(this.uuid)
         },
-        confirmDialogYes(){
-            if (this.tab == "disk"){
+        confirmDialogYes() {
+            if (this.tab == "disk") {
                 this.diskDeleteConfirm()
             }
-            else if (this.tab == "network"){
+            else if (this.tab == "network") {
                 this.networkDeleteConfirm()
             }
         },
-        networkAdd(){
+        networkAdd() {
             console.log("Adding network")
             this.$refs.addNetwork.show(this.uuid)
         },
-        networkDelete(networknumber){
+        networkDelete(networknumber) {
             this.$refs.confirmDialog.show("Delete network", ["Are you sure you want to delete this network?", "This only removes the network from the vm, not from the network pool."])
             this.networkDeleteNumber = networknumber
         },
