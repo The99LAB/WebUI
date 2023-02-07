@@ -1025,6 +1025,12 @@ class api_vm_manager_action(Resource):
             machine_type = domain_xml.find('os/type').attrib['machine']
             # get bios type
             bios_type = domain_xml.find('os/loader').text
+            # get autostart boolean
+            autostart = domain.autostart()
+            if autostart == 1:
+                autostart = True
+            else:
+                autostart = False
             # get memory
             meminfo = vmmemory(uuid=vmuuid).current("GB")
             minmem = meminfo[0]
@@ -1034,6 +1040,7 @@ class api_vm_manager_action(Resource):
             networks = domainNetworkInterface(dom_uuid=vmuuid).get()
             data = {
                 "name": domain.name(),
+                "autostart": autostart,
                 "current_vcpu": current_vcpu,
                 "vcpu": vcpu,
                 "current_vcpu": current_vcpu,
@@ -1107,6 +1114,16 @@ class api_vm_manager_action(Resource):
                     try:
                         domain.undefineFlags(4)
                         domain = conn.defineXML(xml)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return f'{e}', 500
+                elif action == "autostart":
+                    if value == True:
+                        value = 1
+                    else:
+                        value = 0
+                    try:
+                        domain.setAutostart(value)
                         return '', 204
                     except libvirt.libvirtError as e:
                         return f'{e}', 500

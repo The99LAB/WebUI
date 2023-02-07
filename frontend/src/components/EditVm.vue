@@ -29,6 +29,7 @@
                             </q-input>
                             <q-select label="Machine" v-model="general_machine" disable />
                             <q-select label="BIOS" v-model="general_bios" disable />
+                            <q-toggle label="Autostart" v-model="general_autostart" @update:model-value="toggleAutostart"/>
                         </q-tab-panel>
                         <q-tab-panel name="cpu">
                             <q-input label="Current vCPU" v-model="currentVcpu" type="number" min="1" :max="vcpu"
@@ -197,6 +198,7 @@ export default {
             general_name: null,
             general_machine: null,
             general_bios: null,
+            general_autostart: null,
             memoryMinOptions: ["1024", "2048", "4096", "8192", "16384", "32768", "65536"],
             memoryUnitOptions: ["MB", "GB", "TB"],
             memory_minMemory: null,
@@ -239,6 +241,7 @@ export default {
                     this.general_name = response.data.name
                     this.general_machine = response.data.machine
                     this.general_bios = response.data.bios
+                    this.general_autostart = response.data.autostart
                     this.memory_minMemory = response.data.memory_min
                     this.memory_minMemoryUnit = response.data.memory_min_unit
                     this.memory_maxMemory = response.data.memory_max
@@ -413,7 +416,16 @@ export default {
         calculateCpu(){
             this.vcpu = this.topologySockets * this.topologyDies * this.topologyCores * this.topologyThreads
             this.currentVcpu = this.vcpu
-        }
+        },
+        toggleAutostart() {
+            this.$api.post('/vm-manager/' + this.uuid + '/edit-general-autostart', {
+                value: this.general_autostart
+            }).then(response => {
+                this.refreshData()
+            }).catch(error => {
+                this.$refs.errorDialog.show(error.response.data)
+            })
+        },
     },
 }
 </script>
