@@ -1179,8 +1179,10 @@ class api_vm_manager_action(Resource):
                 if action == "add":
                     source_network = data['sourceNetwork']
                     model = data['networkModel']
-                    xml = f"<interface type='network'><source network='{source_network}'/><model type='{model}'/></interface>"
+
                     try:
+                        source_network_name = conn.networkLookupByUUIDString(source_network).name()
+                        xml = f"<interface type='network'><source network='{source_network_name}'/><model type='{model}'/></interface>"
                         domain.attachDeviceFlags(
                             xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                         return '', 204
@@ -1197,6 +1199,7 @@ class api_vm_manager_action(Resource):
                         return str(e), 500
                 else:
                     return "Action not found", 404
+
             elif action.startswith("disk"):
                 action = action.replace("disk-", "")
                 if action != "add":
