@@ -670,7 +670,7 @@ class domainNetworkInterface():
             xml = ET.tostring(interface).decode()
             if interface.get('type') == "network":
                 mac_addr = interface.find("mac").get('address')
-                source_network = conn.networkLookupByUUIDString(interface.find("source").get('network')).name()
+                source_network = conn.networkLookupByName(interface.find("source").get('network')).name()
                 model = interface.find('model').get("type")
                 networkinterfaces.append(
                 {
@@ -1000,11 +1000,27 @@ class api_vm_manager_action(Resource):
             print("getting vm data")
             domain_xml = ET.fromstring(domain_xml)
             # get vcpus from xml
+            vcpu = domain_xml.find('vcpu').text
             try:
                 current_vcpu = domain_xml.find('vcpu').attrib['current']
             except KeyError:
-                current_vcpu = domain_xml.find('vcpu').text
-            vcpu = domain_xml.find('vcpu').text
+                current_vcpu = vcpu
+            
+            topologyelem = domain_xml.find('cpu/topology')
+            if topologyelem is None:
+                custom_topology = False
+                sockets = vcpu
+                dies = 1
+                cores = 1
+                threads = 1
+            else:
+                sockets = topologyelem.attrib['sockets']
+                dies = topologyelem.attrib['dies']
+                cores = topologyelem.attrib['cores']
+                threads = topologyelem.attrib['threads']
+                custom_topology = True
+                
+            
             # get machine type
             machine_type = domain_xml.find('os/type').attrib['machine']
             # get bios type
@@ -1020,6 +1036,12 @@ class api_vm_manager_action(Resource):
                 "name": domain.name(),
                 "current_vcpu": current_vcpu,
                 "vcpu": vcpu,
+                "current_vcpu": current_vcpu,
+                "custom_topology": custom_topology,
+                "topology_sockets": sockets,
+                "topology_dies": dies,
+                "topology_cores": cores,
+                "topology_threads": threads,
                 "uuid": domain.UUIDString(),
                 "state": domain.state()[0],
                 "machine": machine_type,
@@ -1088,6 +1110,32 @@ class api_vm_manager_action(Resource):
                         return '', 204
                     except libvirt.libvirtError as e:
                         return f'{e}', 500
+
+            # edit-cpu
+            elif action == "cpu":
+                vcpu = data['vcpu']
+                current_vcpu = data['current_vcpu']
+                custom_topology = data['custom_topology']
+                sockets = data['topology_sockets']
+                dies = data['topology_dies']
+                cores = data['topology_cores']
+                threads = data['topology_threads']
+                vm_xml = ET.fromstring(domain.XMLDesc(0))
+
+                if custom_topology:
+                    topology = f"sockets='{sockets}' dies='{dies}' cores='{cores}' threads='{threads}'"
+                    vm_xml.find('cpu/topology').attrib = topology
+
+                vm_xml.find('vcpu').text = vcpu
+                if current_vcpu != vcpu:
+                    vm_xml.find('vcpu').attrib['current'] = current_vcpu                
+                vm_xml = ET.tostring(vm_xml).decode()
+                try:
+                    domain.undefineFlags(4)
+                    domain = conn.defineXML(vm_xml)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return f'{e}', 500
 
             # edit-memory
             elif action == "memory":

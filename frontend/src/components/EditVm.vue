@@ -32,14 +32,23 @@
                         </q-tab-panel>
                         <q-tab-panel name="cpu">
                             <q-input label="Current vCPU" v-model="currentVcpu" type="number" min="1" :max="vcpu"
-                                :rules="[val => val <= vcpu || 'Current vCPU cannot be bigger than vCPU value']" />
-                            <q-input label="vCPU" v-model="vcpu" type="number" min="1" />
-                            <!-- custom topology toggle -->
-                            <q-toggle label="Custom Topology" v-model="customTopology" />
+                                :rules="[val => val <= vcpu || 'Current vCPU cannot be bigger than vCPU value']" disable v-if="customTopology"/>
+                            <q-input label="Current vCPU" v-model="currentVcpu" type="number" min="1" :max="vcpu"
+                                :rules="[val => val <= vcpu || 'Current vCPU cannot be bigger than vCPU value']" v-else/>
+                            <q-input label="vCPU" v-model="vcpu" type="number" min="1" disable v-if="customTopology"/>
+                            <q-input label="vCPU" v-model="vcpu" type="number" min="1" @update:model-value="val => topologySockets = val" v-else/>
+                            <q-toggle label="Custom Topology" v-model="customTopology" @update:model-value="calculateCpu"/>
                             <div v-if="customTopology">
-                                <q-input label="Sockets" v-model="sockets" type="number" min="1" />
-                                <q-input label="Cores" v-model="cores" type="number" min="1" />
-                                <q-input label="Threads" v-model="threads" type="number" min="1" />
+                                <q-input label="Sockets" v-model="topologySockets" type="number" min="1" @update:model-value="calculateCpu" />
+                                <q-input label="Dies" v-model="topologyDies" type="number" min="1" @update:model-value="calculateCpu"/>
+                                <q-input label="Cores" v-model="topologyCores" type="number" min="1" @update:model-value="calculateCpu"/>
+                                <q-input label="Threads" v-model="topologyThreads" type="number" min="1" @update:model-value="calculateCpu"/>
+                            </div>
+                            <div v-else>
+                                <q-input label="Sockets" v-model="topologySockets" type="number" min="1" @update:model-value="calculateCpu" disable />
+                                <q-input label="Dies" v-model="topologyDies" type="number" min="1" @update:model-value="calculateCpu" disable/>
+                                <q-input label="Cores" v-model="topologyCores" type="number" min="1" @update:model-value="calculateCpu" disable/>
+                                <q-input label="Threads" v-model="topologyThreads" type="number" min="1" @update:model-value="calculateCpu" disable/>
                             </div>
                         </q-tab-panel>
                         <q-tab-panel name="memory">
@@ -206,6 +215,7 @@ export default {
             vcpu: null,
             customTopology: false,
             topologySockets: null,
+            topologyDies: null,
             topologyCores: null,
             topologyThreads: null,
             xml: null
@@ -235,9 +245,13 @@ export default {
                     this.memory_maxMemoryUnit = response.data.memory_max_unit
                     this.currentVcpu = response.data.current_vcpu
                     this.vcpu = response.data.vcpu
+                    this.customTopology = response.data.custom_topology
+                    this.topologySockets = response.data.topology_sockets
+                    this.topologyDies = response.data.topology_dies
+                    this.topologyCores = response.data.topology_cores
+                    this.topologyThreads = response.data.topology_threads
                     this.diskList = response.data.disks
                     this.networkList = response.data.networks
-                    console.log("Networks: ", this.networkList)
                     this.layout = true
                 }).catch(error => {
                     this.$refs.errorDialog.show(error.response.data)
@@ -269,7 +283,23 @@ export default {
                 })
             }
             else if (this.tab == "cpu") {
-                console.log("CPU tab")
+                if (this.currentVcpu > this.vcpu){
+                    this.$refs.confirmDialog.show("VCPU error", ["Current VCPU is greater than the new VCPU. This is not allowed."])
+                    return
+                }
+                this.$api.post('/vm-manager/' + this.uuid + '/edit-cpu', {
+                    vcpu: this.vcpu,
+                    current_vcpu: this.currentVcpu,
+                    custom_topology: this.customTopology,
+                    topology_sockets: this.topologySockets,
+                    topology_dies: this.topologyDies,
+                    topology_cores: this.topologyCores,
+                    topology_threads: this.topologyThreads
+                }).then(response => {
+                    this.refreshData()
+                }).catch(error => {
+                    this.$refs.errorDialog.show("Error changing CPU", [error.response.data])
+                })
             }
             else if (this.tab == "network") {
                 console.log("Network tab")
@@ -380,6 +410,10 @@ export default {
                 this.$refs.errorDialog.show(error.response.data)
             })
         },
+        calculateCpu(){
+            this.vcpu = this.topologySockets * this.topologyDies * this.topologyCores * this.topologyThreads
+            this.currentVcpu = this.vcpu
+        }
     },
 }
 </script>
