@@ -11,11 +11,8 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: npm install
+        run: npm install && npm install -g @quasar/cli
 
-      - name: Format code
-        working-directory: ./frontend
-        run: npm run format
       - name: Build
         working-directory: ./frontend
         run: quasar build
