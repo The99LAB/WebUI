@@ -336,6 +336,12 @@
               </div>
               <p v-if="networkList.length == 0">No networks</p>
             </q-tab-panel>
+            <q-tab-panel name="graphics">
+              <p>Graphics</p>
+              <q-input label="Graphics type" v-model="graphics_type" :options="graphicsTypeOptions" readonly />
+              <p>Video</p>
+              <q-input label="Video type" v-model="video_type" :options="videoTypeOptions" readonly />
+            </q-tab-panel>
             <q-tab-panel name="xml">
               <q-input filled v-model="xml" type="textarea" autogrow />
             </q-tab-panel>
@@ -418,6 +424,10 @@ export default {
       topologyDies: null,
       topologyCores: null,
       topologyThreads: null,
+      graphicsTypeOptions: ["vnc", "spice"],
+      graphics_type: null,
+      videoTypeOptions: ["cirrus", "qxl", "virtio"],
+      video_type: null,
       xml: null,
     };
   },
@@ -514,8 +524,8 @@ export default {
               error.response.data,
             ]);
           });
-      } else if (this.tab == "network") {
-        console.log("Network tab");
+      } else if (this.tab == "graphics") {
+        console.log("Graphics tab");
       } else if (this.tab == "xml") {
         console.log("XML tab");
         this.$api
