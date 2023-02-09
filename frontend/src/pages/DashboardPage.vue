@@ -3,19 +3,31 @@
     <div class="row justify-evenly">
       <div class="text-center" v-show="!loadingVisible">
         <p>CPU</p>
-        <q-circular-progress show-value class="text-light-blue q-ma-md" size="150px" color="light-blue"
-          :value="cpu_progress">{{ cpu_progress_text }}</q-circular-progress>
+        <q-circular-progress
+          show-value
+          class="text-light-blue q-ma-md"
+          size="150px"
+          color="light-blue"
+          :value="cpu_progress"
+          >{{ cpu_progress_text }}</q-circular-progress
+        >
       </div>
       <div class="text-center" v-show="!loadingVisible">
         <p>Memory</p>
-        <q-circular-progress show-value class="text-light-blue q-ma-md" size="150px" color="light-blue"
-          :value="mem_progress"> {{ mem_progress_text }}
+        <q-circular-progress
+          show-value
+          class="text-light-blue q-ma-md"
+          size="150px"
+          color="light-blue"
+          :value="mem_progress"
+        >
+          {{ mem_progress_text }}
         </q-circular-progress>
       </div>
     </div>
     <q-inner-loading :showing="loadingVisible">
-        <q-spinner-gears size="50px" color="primary" />
-      </q-inner-loading>
+      <q-spinner-gears size="50px" color="primary" />
+    </q-inner-loading>
   </q-page>
 </template>
 
@@ -28,40 +40,39 @@ export default {
       mem_progress: 0,
       mem_progress_text: "",
       loadingVisible: true,
-    }
+    };
   },
   mounted() {
-    this.$socket.emit("get_cpu_overall_usage")
-    this.$socket.emit("get_mem_usage")
+    this.$socket.emit("get_cpu_overall_usage");
+    this.$socket.emit("get_mem_usage");
 
     this.cpuinterval = setInterval(() => {
-      this.$socket.emit("get_cpu_overall_usage")
-    }, 1000)
+      this.$socket.emit("get_cpu_overall_usage");
+    }, 1000);
 
     this.meminterval = setInterval(() => {
-      this.$socket.emit("get_mem_usage")
-    }, 1000)
+      this.$socket.emit("get_mem_usage");
+    }, 1000);
 
     this.$socket.on("cpu_overall_usage", (msg) => {
-      this.cpu_progress = msg
-      this.cpu_progress_text = msg + "%"
-    })
+      this.cpu_progress = msg;
+      this.cpu_progress_text = msg + "%";
+    });
     this.$socket.on("mem_usage", (msg) => {
-      this.mem_progress = msg
-      this.mem_progress_text = msg + "%"
+      this.mem_progress = msg;
+      this.mem_progress_text = msg + "%";
       if (this.cpu_progress != 0 && this.mem_progress != 0) {
-        this.loadingVisible = false
+        this.loadingVisible = false;
       }
-    })
+    });
   },
   unmounted() {
-    this.$socket.off("cpu_overall_usage")
-    this.$socket.off("mem_usage")
+    this.$socket.off("cpu_overall_usage");
+    this.$socket.off("mem_usage");
   },
   beforeUnmount() {
-    clearInterval(this.cpuinterval)
-    clearInterval(this.meminterval)
+    clearInterval(this.cpuinterval);
+    clearInterval(this.meminterval);
   },
-}
+};
 </script>
-

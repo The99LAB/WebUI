@@ -2,11 +2,23 @@
   <q-layout view="hHh LpR fFf">
     <q-header class="bg-primary text-white">
       <q-toolbar>
-        <q-btn dense flat round icon="menu" @click="leftDrawerOpen = !leftDrawerOpen" />
+        <q-btn
+          dense
+          flat
+          round
+          icon="menu"
+          @click="leftDrawerOpen = !leftDrawerOpen"
+        />
         <q-toolbar-title>
           {{ hostname }}
         </q-toolbar-title>
-        <q-btn dense flat round icon="power_settings_new" @click="showPowerMenu()" />
+        <q-btn
+          dense
+          flat
+          round
+          icon="power_settings_new"
+          @click="showPowerMenu()"
+        />
         <q-btn dense flat round icon="logout" />
       </q-toolbar>
     </q-header>
@@ -22,9 +34,7 @@
             <q-item-label>Dashboard</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item-label header>
-          Virtual Machines
-        </q-item-label>
+        <q-item-label header> Virtual Machines </q-item-label>
         <q-item clickable tag="a" to="/vm-manager">
           <q-item-section avatar>
             <q-icon name="mdi-cube" />
@@ -41,10 +51,13 @@
             <q-item-label>Storage Pools</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item-label header>
-          Host Management
-        </q-item-label>
-        <q-expansion-item :content-inset-level="0.2" expand-separator icon="mdi-tools" label="Tools">
+        <q-item-label header> Host Management </q-item-label>
+        <q-expansion-item
+          :content-inset-level="0.2"
+          expand-separator
+          icon="mdi-tools"
+          label="Tools"
+        >
           <q-item clickable tag="a" to="/tools/system-info">
             <q-item-section avatar>
               <q-icon name="mdi-monitor" />
@@ -90,49 +103,56 @@
 </template>
 
 <script>
-import { defineComponent, ref } from 'vue'
-import PowerMenu from 'src/components/PowerMenu.vue'
-import ErrorDialog from 'src/components/ErrorDialog.vue'
+import { defineComponent, ref } from "vue";
+import PowerMenu from "src/components/PowerMenu.vue";
+import ErrorDialog from "src/components/ErrorDialog.vue";
 
 export default defineComponent({
-  name: 'MainLayout',
+  name: "MainLayout",
   data() {
     return {
       leftDrawerOpen: ref(false),
       hostname: "",
-    }
+    };
   },
   components: {
     PowerMenu,
-    ErrorDialog
+    ErrorDialog,
   },
   methods: {
     showPowerMenu() {
-      this.$refs.powerMenu.show()
+      this.$refs.powerMenu.show();
     },
     getHostName() {
-      this.$api.get("/host/system-info/hostname")
-        .then(response => {
-          this.hostname = response.data.hostname
+      this.$api
+        .get("/host/system-info/hostname")
+        .then((response) => {
+          this.hostname = response.data.hostname;
         })
-        .catch(error => {
-          this.$refs.errorDialog.show("Error getting hostname", ["Could not get hostname.", error.response.data])
-        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting hostname", [
+            "Could not get hostname.",
+            error.response.data,
+          ]);
+        });
     },
   },
   mounted() {
-    this.getHostName()
+    this.getHostName();
     this.$socket.on("connect_error", (msg) => {
-      this.$refs.errorDialog.show("Connection Error", ["Could not connect to the backend server.", msg])
+      this.$refs.errorDialog.show("Connection Error", [
+        "Could not connect to the backend server.",
+        msg,
+      ]);
       this.$socket.on("connect", () => {
-        this.$refs.errorDialog.hide()
-        this.$socket.off("connect")
+        this.$refs.errorDialog.hide();
+        this.$socket.off("connect");
       });
-    })
+    });
   },
   unmounted() {
-    this.$socket.off("connect_error")
-    this.$socket.off("connect")
-  }
-})
+    this.$socket.off("connect_error");
+    this.$socket.off("connect");
+  },
+});
 </script>
