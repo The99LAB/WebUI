@@ -1,0 +1,27 @@
+name: Format source code
+on: push
+
+jobs:
+  run:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: cd to frontend
+        run: cd frontend
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Format code
+        run: npm run format
+
+      # - name: Commit changes
+      #   uses: EndBug/add-and-commit@v9
+      #   with:
+      #     author_name: Your Name
+      #     author_email: mail@example.com
+      #     message: 'Your commit message'
+      #     add: '*.js'
