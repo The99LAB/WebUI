@@ -4,7 +4,14 @@
       <q-header bordered class="bg-primary text-white" height-hint="98">
         <q-toolbar>
           <q-toolbar-title>Edit VM</q-toolbar-title>
-          <q-btn icon="close" flat round dense v-close-popup @click="tab = 'general'" />
+          <q-btn
+            icon="close"
+            flat
+            round
+            dense
+            v-close-popup
+            @click="tab = 'general'"
+          />
         </q-toolbar>
 
         <q-tabs allign="left" v-model="tab">
@@ -24,63 +31,168 @@
             <q-tab-panel name="general">
               <q-input label="Name" v-model="general_name">
                 <template v-slot:append>
-                  <q-btn round dense flat icon="mdi-check" @click="generalChangeName(general_name)" />
+                  <q-btn
+                    round
+                    dense
+                    flat
+                    icon="mdi-check"
+                    @click="generalChangeName(general_name)"
+                  />
                 </template>
               </q-input>
               <q-select label="Machine" v-model="general_machine" disable />
               <q-select label="BIOS" v-model="general_bios" disable />
-              <q-toggle label="Autostart" v-model="general_autostart" @update:model-value="toggleAutostart" />
+              <q-toggle
+                label="Autostart"
+                v-model="general_autostart"
+                @update:model-value="toggleAutostart"
+              />
             </q-tab-panel>
             <q-tab-panel name="cpu">
-              <q-input label="Current vCPU" v-model="currentVcpu" type="number" min="1" :max="vcpu" :rules="[
-                (val) =>
-                  val <= vcpu ||
-                  'Current vCPU cannot be bigger than vCPU value',
-              ]" disable v-if="customTopology" />
-              <q-input label="Current vCPU" v-model="currentVcpu" type="number" min="1" :max="vcpu" :rules="[
-                (val) =>
-                  val <= vcpu ||
-                  'Current vCPU cannot be bigger than vCPU value',
-              ]" v-else />
-              <q-input label="vCPU" v-model="vcpu" type="number" min="1" disable v-if="customTopology" />
-              <q-input label="vCPU" v-model="vcpu" type="number" min="1"
-                @update:model-value="(val) => (topologySockets = val)" v-else />
-              <q-toggle label="Custom Topology" v-model="customTopology" @update:model-value="calculateCpu" />
+              <q-input
+                label="Current vCPU"
+                v-model="currentVcpu"
+                type="number"
+                min="1"
+                :max="vcpu"
+                :rules="[
+                  (val) =>
+                    val <= vcpu ||
+                    'Current vCPU cannot be bigger than vCPU value',
+                ]"
+                disable
+                v-if="customTopology"
+              />
+              <q-input
+                label="Current vCPU"
+                v-model="currentVcpu"
+                type="number"
+                min="1"
+                :max="vcpu"
+                :rules="[
+                  (val) =>
+                    val <= vcpu ||
+                    'Current vCPU cannot be bigger than vCPU value',
+                ]"
+                v-else
+              />
+              <q-input
+                label="vCPU"
+                v-model="vcpu"
+                type="number"
+                min="1"
+                disable
+                v-if="customTopology"
+              />
+              <q-input
+                label="vCPU"
+                v-model="vcpu"
+                type="number"
+                min="1"
+                @update:model-value="(val) => (topologySockets = val)"
+                v-else
+              />
+              <q-toggle
+                label="Custom Topology"
+                v-model="customTopology"
+                @update:model-value="calculateCpu"
+              />
               <div v-if="customTopology">
-                <q-input label="Sockets" v-model="topologySockets" type="number" min="1"
-                  @update:model-value="calculateCpu" />
-                <q-input label="Dies" v-model="topologyDies" type="number" min="1" @update:model-value="calculateCpu" />
-                <q-input label="Cores" v-model="topologyCores" type="number" min="1"
-                  @update:model-value="calculateCpu" />
-                <q-input label="Threads" v-model="topologyThreads" type="number" min="1"
-                  @update:model-value="calculateCpu" />
+                <q-input
+                  label="Sockets"
+                  v-model="topologySockets"
+                  type="number"
+                  min="1"
+                  @update:model-value="calculateCpu"
+                />
+                <q-input
+                  label="Dies"
+                  v-model="topologyDies"
+                  type="number"
+                  min="1"
+                  @update:model-value="calculateCpu"
+                />
+                <q-input
+                  label="Cores"
+                  v-model="topologyCores"
+                  type="number"
+                  min="1"
+                  @update:model-value="calculateCpu"
+                />
+                <q-input
+                  label="Threads"
+                  v-model="topologyThreads"
+                  type="number"
+                  min="1"
+                  @update:model-value="calculateCpu"
+                />
               </div>
               <div v-else>
-                <q-input label="Sockets" v-model="topologySockets" type="number" min="1"
-                  @update:model-value="calculateCpu" disable />
-                <q-input label="Dies" v-model="topologyDies" type="number" min="1" @update:model-value="calculateCpu"
-                  disable />
-                <q-input label="Cores" v-model="topologyCores" type="number" min="1" @update:model-value="calculateCpu"
-                  disable />
-                <q-input label="Threads" v-model="topologyThreads" type="number" min="1"
-                  @update:model-value="calculateCpu" disable />
+                <q-input
+                  label="Sockets"
+                  v-model="topologySockets"
+                  type="number"
+                  min="1"
+                  @update:model-value="calculateCpu"
+                  disable
+                />
+                <q-input
+                  label="Dies"
+                  v-model="topologyDies"
+                  type="number"
+                  min="1"
+                  @update:model-value="calculateCpu"
+                  disable
+                />
+                <q-input
+                  label="Cores"
+                  v-model="topologyCores"
+                  type="number"
+                  min="1"
+                  @update:model-value="calculateCpu"
+                  disable
+                />
+                <q-input
+                  label="Threads"
+                  v-model="topologyThreads"
+                  type="number"
+                  min="1"
+                  @update:model-value="calculateCpu"
+                  disable
+                />
               </div>
             </q-tab-panel>
             <q-tab-panel name="memory">
               <div class="row">
                 <div class="col">
-                  <q-input label="Memory minimum" v-model="memory_minMemory" type="number" min="1" />
+                  <q-input
+                    label="Memory minimum"
+                    v-model="memory_minMemory"
+                    type="number"
+                    min="1"
+                  />
                 </div>
                 <div class="col-md-auto">
-                  <q-select v-model="memory_minMemoryUnit" :options="memoryUnitOptions" />
+                  <q-select
+                    v-model="memory_minMemoryUnit"
+                    :options="memoryUnitOptions"
+                  />
                 </div>
               </div>
               <div class="row">
                 <div class="col">
-                  <q-input label="Memory maximum" v-model="memory_maxMemory" type="number" min="1" />
+                  <q-input
+                    label="Memory maximum"
+                    v-model="memory_maxMemory"
+                    type="number"
+                    min="1"
+                  />
                 </div>
                 <div class="col-md-auto">
-                  <q-select v-model="memory_maxMemoryUnit" :options="memoryUnitOptions" />
+                  <q-select
+                    v-model="memory_maxMemoryUnit"
+                    :options="memoryUnitOptions"
+                  />
                 </div>
                 <q-space />
               </div>
@@ -91,40 +203,71 @@
                 <q-separator spaced="lg" inset v-if="disk.number != 0" />
                 <div class="row">
                   <div class="col">
-                    <q-input label="Disk Number" v-model="disk.number" type="number" min="1" readonly />
+                    <q-input
+                      label="Disk Number"
+                      v-model="disk.number"
+                      type="number"
+                      min="1"
+                      readonly
+                    />
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <q-select label="Device Type" v-model="disk.devicetype" :options="diskTypeOptions"
+                    <q-select
+                      label="Device Type"
+                      v-model="disk.devicetype"
+                      :options="diskTypeOptions"
                       @update:model-value="
                         (val) => diskChangeType(disk.number, val)
-                      " />
+                      "
+                    />
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <q-select label="Driver Type" v-model="disk.drivertype" :options="diskDriverTypeOptions"
+                    <q-select
+                      label="Driver Type"
+                      v-model="disk.drivertype"
+                      :options="diskDriverTypeOptions"
                       @update:model-value="
                         (val) => diskChangeDriverType(disk.number, val)
-                      " />
+                      "
+                    />
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <q-select label="Bus Format" v-model="disk.busformat" :options="diskBusOptions" @update:model-value="
-                      (val) => diskChangeBus(disk.number, val)
-                    " />
+                    <q-select
+                      label="Bus Format"
+                      v-model="disk.busformat"
+                      :options="diskBusOptions"
+                      @update:model-value="
+                        (val) => diskChangeBus(disk.number, val)
+                      "
+                    />
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
                     <q-input label="Source File" v-model="disk.sourcefile">
                       <template v-slot:append>
-                        <q-btn round dense flat icon="mdi-eye" @click="diskShowSourceFileDialog(disk.number)" />
-                        <q-btn round dense flat icon="mdi-check" @click="
-                          diskChangeSourceFile(disk.number, disk.sourcefile)
-                        " />
+                        <q-btn
+                          round
+                          dense
+                          flat
+                          icon="mdi-eye"
+                          @click="diskShowSourceFileDialog(disk.number)"
+                        />
+                        <q-btn
+                          round
+                          dense
+                          flat
+                          icon="mdi-check"
+                          @click="
+                            diskChangeSourceFile(disk.number, disk.sourcefile)
+                          "
+                        />
                       </template>
                     </q-input>
                   </div>
@@ -132,10 +275,18 @@
                 <q-separator inset vertical />
                 <div class="row">
                   <div class="col">
-                    <q-toggle label="Read Only" v-model="disk.readonly" disable />
+                    <q-toggle
+                      label="Read Only"
+                      v-model="disk.readonly"
+                      disable
+                    />
                   </div>
                   <div class="col-md-auto">
-                    <q-btn color="primary" icon="delete" @click="diskDelete(disk.number)" />
+                    <q-btn
+                      color="primary"
+                      icon="delete"
+                      @click="diskDelete(disk.number)"
+                    />
                   </div>
                 </div>
               </div>
@@ -146,16 +297,30 @@
                 <q-separator spaced="lg" inset v-if="network.number != 0" />
                 <div class="row">
                   <div class="col">
-                    <q-input label="Interface Number" v-model="network.number" type="number" min="1" readonly>
+                    <q-input
+                      label="Interface Number"
+                      v-model="network.number"
+                      type="number"
+                      min="1"
+                      readonly
+                    >
                       <template v-slot:after>
-                        <q-btn color="primary" icon="delete" @click="networkDelete(network.number)" />
+                        <q-btn
+                          color="primary"
+                          icon="delete"
+                          @click="networkDelete(network.number)"
+                        />
                       </template>
                     </q-input>
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <q-input label="MAC Address" v-model="network.mac_addr" readonly />
+                    <q-input
+                      label="MAC Address"
+                      v-model="network.mac_addr"
+                      readonly
+                    />
                   </div>
                 </div>
                 <div class="row">
@@ -180,8 +345,18 @@
           <q-toolbar>
             <q-space />
             <q-btn flat label="Add" @click="diskAdd()" v-if="tab == 'disk'" />
-            <q-btn flat label="Add Network" @click="networkAdd()" v-if="tab == 'network'" />
-            <q-btn flat label="Apply" @click="applyEdits()" v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu'" />
+            <q-btn
+              flat
+              label="Add Network"
+              @click="networkAdd()"
+              v-if="tab == 'network'"
+            />
+            <q-btn
+              flat
+              label="Apply"
+              @click="applyEdits()"
+              v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu'"
+            />
           </q-toolbar>
         </q-footer>
       </q-page-container>
@@ -190,7 +365,10 @@
   <ErrorDialog ref="errorDialog" />
   <ConfirmDialog ref="confirmDialog" @confirm-yes="confirmDialogYes()" />
   <AddDisk ref="addDisk" @disk-add-finished="refreshData()" />
-  <sourceFileDialog ref="sourceFileDialog" @sourcefile-add-finished="refreshData()" />
+  <sourceFileDialog
+    ref="sourceFileDialog"
+    @sourcefile-add-finished="refreshData()"
+  />
   <AddNetwork ref="addNetwork" @network-add-finished="refreshData()" />
 </template>
 
