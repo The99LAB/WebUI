@@ -20,6 +20,7 @@
           <q-tab name="memory" label="Memory" />
           <q-tab name="disk" label="Disk" />
           <q-tab name="network" label="Network" />
+          <q-tab name="graphics" label="Graphics" />
           <q-tab name="xml" label="Xml" />
         </q-tabs>
         <q-separator />
@@ -338,18 +339,19 @@
             </q-tab-panel>
             <q-tab-panel name="graphics">
               <p>Graphics</p>
-              <q-input
+              <q-select
                 label="Graphics type"
-                v-model="graphics_type"
+                v-if="graphicsType!=null"
+                v-model="graphicsType"
                 :options="graphicsTypeOptions"
-                readonly
               />
+              <q-separator spaced="lg" inset />
               <p>Video</p>
-              <q-input
+              <q-select
                 label="Video type"
-                v-model="video_type"
+                v-if="videoType!=null"
+                v-model="videoType"
                 :options="videoTypeOptions"
-                readonly
               />
             </q-tab-panel>
             <q-tab-panel name="xml">
@@ -371,7 +373,7 @@
               flat
               label="Apply"
               @click="applyEdits()"
-              v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu'"
+              v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu' || tab == 'graphics' || tab == 'video'"
             />
           </q-toolbar>
         </q-footer>
@@ -435,9 +437,9 @@ export default {
       topologyCores: null,
       topologyThreads: null,
       graphicsTypeOptions: ["vnc", "spice"],
-      graphics_type: null,
+      graphicsType: null,
       videoTypeOptions: ["cirrus", "qxl", "virtio"],
-      video_type: null,
+      videoType: null,
       xml: null,
     };
   },
@@ -474,6 +476,8 @@ export default {
           this.topologyThreads = response.data.topology_threads;
           this.diskList = response.data.disks;
           this.networkList = response.data.networks;
+          this.graphicsType = response.data.graphics_type;
+          this.videoType = response.data.video_type;
           this.layout = true;
         })
         .catch((error) => {

@@ -1038,6 +1038,21 @@ class api_vm_manager_action(Resource):
             # get disk
             diskinfo = storage(domain_uuid=vmuuid).get()
             networks = domainNetworkInterface(dom_uuid=vmuuid).get()
+            # get graphics type
+            graphicselem = domain_xml.find('devices/graphics')
+            if graphicselem != None:
+                graphics_type = graphicselem.attrib['type']
+            else:
+                graphics_type = None
+            # get video type
+            videoelem = domain_xml.find('devices/video/model')
+            if videoelem != None:
+                video_type = videoelem.attrib['type']
+            else:
+                video_type = None
+
+            print("graphics: " + str(graphics_type))
+
             data = {
                 "name": domain.name(),
                 "autostart": autostart,
@@ -1059,6 +1074,8 @@ class api_vm_manager_action(Resource):
                 "memory_min_unit": "GB",
                 "disks": diskinfo,
                 "networks": networks,
+                "graphics_type": graphics_type,
+                "video_type": video_type
             }
             return data
         else:
