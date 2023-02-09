@@ -1,0 +1,28 @@
+name: Build
+on: push
+
+jobs:
+  run:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Format code
+        working-directory: ./frontend
+        run: npm run format
+      - name: Build
+        working-directory: ./frontend
+        run: quasar build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Build
+          path: ./frontend/dist/spa
+
