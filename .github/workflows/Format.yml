@@ -9,11 +9,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: cd to frontend
-        run: cd frontend
-
       - name: Install dependencies
-        run: npm install
+        run: cd ./frontend && npm install
 
       - name: Format code
         run: npm run format
