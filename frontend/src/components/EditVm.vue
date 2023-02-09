@@ -338,9 +338,19 @@
             </q-tab-panel>
             <q-tab-panel name="graphics">
               <p>Graphics</p>
-              <q-input label="Graphics type" v-model="graphics_type" :options="graphicsTypeOptions" readonly />
+              <q-input
+                label="Graphics type"
+                v-model="graphics_type"
+                :options="graphicsTypeOptions"
+                readonly
+              />
               <p>Video</p>
-              <q-input label="Video type" v-model="video_type" :options="videoTypeOptions" readonly />
+              <q-input
+                label="Video type"
+                v-model="video_type"
+                :options="videoTypeOptions"
+                readonly
+              />
             </q-tab-panel>
             <q-tab-panel name="xml">
               <q-input filled v-model="xml" type="textarea" autogrow />
