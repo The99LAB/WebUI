@@ -341,7 +341,7 @@
               <p>Graphics</p>
               <q-select
                 label="Graphics type"
-                v-if="graphicsType!=null"
+                v-if="graphicsType != null"
                 v-model="graphicsType"
                 :options="graphicsTypeOptions"
               />
@@ -349,7 +349,7 @@
               <p>Video</p>
               <q-select
                 label="Video type"
-                v-if="videoType!=null"
+                v-if="videoType != null"
                 v-model="videoType"
                 :options="videoTypeOptions"
               />
@@ -373,7 +373,13 @@
               flat
               label="Apply"
               @click="applyEdits()"
-              v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu' || tab == 'graphics' || tab == 'video'"
+              v-if="
+                tab == 'memory' ||
+                tab == 'xml' ||
+                tab == 'cpu' ||
+                tab == 'graphics' ||
+                tab == 'video'
+              "
             />
           </q-toolbar>
         </q-footer>
