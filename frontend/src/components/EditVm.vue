@@ -511,7 +511,9 @@ export default {
           this.layout = true;
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error loading VM data.", [
+            error.response.data,
+          ]);
         });
 
       this.$api
@@ -520,7 +522,9 @@ export default {
           this.xml = response.data.xml;
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error loading VM XML.", [
+            error.response.data,
+          ]);
         });
     },
     applyEdits() {
@@ -595,7 +599,9 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error changing name", [
+            error.response.data,
+          ]);
         });
     },
     diskChangeType(disknumber, value) {
@@ -608,7 +614,9 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error editing disk type", [
+            error.response.data,
+          ]);
         });
     },
     diskChangeDriverType(disknumber, value) {
@@ -621,7 +629,9 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error editing driver type", [
+            error.response.data,
+          ]);
         });
     },
     diskChangeBus(disknumber, value) {
@@ -634,7 +644,7 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error editing bus", [error.response.data]);
         });
     },
     diskChangeSourceFile(disknumber, value) {
@@ -647,7 +657,9 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error editing source file", [
+            error.response.data,
+          ]);
         });
     },
     diskShowSourceFileDialog(disknumber) {
@@ -684,7 +696,9 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error deleting disk", [
+            error.response.data,
+          ]);
         });
     },
     diskAdd() {
@@ -717,7 +731,9 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error deleting network", [
+            error.response.data,
+          ]);
         });
     },
     calculateCpu() {
@@ -737,7 +753,9 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error changing autostart", [
+            error.response.data,
+          ]);
         });
     },
   },
