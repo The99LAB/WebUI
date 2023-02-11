@@ -344,6 +344,7 @@
                 v-if="graphicsType!=null"
                 v-model="graphicsType"
                 :options="graphicsTypeOptions"
+                readonly
               />
               <q-separator spaced="lg" inset />
               <p>Video</p>
@@ -352,6 +353,7 @@
                 v-if="videoType!=null"
                 v-model="videoType"
                 :options="videoTypeOptions"
+                readonly
               />
             </q-tab-panel>
             <q-tab-panel name="xml">
