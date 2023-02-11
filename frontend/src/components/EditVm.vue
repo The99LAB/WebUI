@@ -275,7 +275,12 @@
                 </div>
                 <div class="row">
                   <div class="col">
-                    <q-input label="Boot order" v-model="disk.bootorder" type="number" min="1">
+                    <q-input
+                      label="Boot order"
+                      v-model="disk.bootorder"
+                      type="number"
+                      min="1"
+                    >
                       <template v-slot:append>
                         <q-btn
                           round
@@ -289,7 +294,7 @@
                       </template>
                     </q-input>
                   </div>
-                </div>  
+                </div>
                 <q-separator inset vertical />
                 <div class="row">
                   <div class="col">
@@ -353,7 +358,11 @@
                 </div>
                 <div class="row">
                   <div class="col">
-                    <q-input label="Boot order" v-model="network.bootorder" readonly />
+                    <q-input
+                      label="Boot order"
+                      v-model="network.bootorder"
+                      readonly
+                    />
                   </div>
                 </div>
               </div>
@@ -644,7 +653,9 @@ export default {
           this.refreshData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error editing bus", [error.response.data]);
+          this.$refs.errorDialog.show("Error editing bus", [
+            error.response.data,
+          ]);
         });
     },
     diskChangeSourceFile(disknumber, value) {
