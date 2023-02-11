@@ -289,6 +289,7 @@ class storage():
         for index, i in enumerate(disks):
             devicetype = i.get('device')
             drivertype = i.find('./driver').get('type')
+            bootorder = i.find('boot').get("order")
 
             source = i.find('./source')
             if source != None:
@@ -298,6 +299,7 @@ class storage():
 
             target = i.find('./target')
             busformat = target.get('bus')
+            
 
             readonlyelem = i.find('./readonly')
             if readonlyelem != None:
@@ -313,6 +315,7 @@ class storage():
                 "busformat": busformat,
                 "sourcefile": sourcefile,
                 "readonly": readonly,
+                "bootorder": bootorder,
                 "xml": xml
             }
             disklist.append(disk)
@@ -672,13 +675,15 @@ class domainNetworkInterface():
                 mac_addr = interface.find("mac").get('address')
                 source_network = conn.networkLookupByName(interface.find("source").get('network')).name()
                 model = interface.find('model').get("type")
+                bootorder = interface.find('boot').get("order")
                 networkinterfaces.append(
                 {
                     'number': number, 
                     'xml': xml, 
                     'mac_addr': mac_addr, 
                     'source': source_network,
-                    'model': model
+                    'model': model,
+                    'bootorder': bootorder
                 })
         return networkinterfaces
     def remove(self, index):
@@ -1207,7 +1212,7 @@ class api_vm_manager_action(Resource):
                     except Exception:
                         return "failed to find minmemory and maxmemory in xml!", 500
             
-            # edit-disk-action
+            # edit-network-action
             elif action.startswith("network"):
                 action = action.replace("network-", "")
                 if action == "add":
@@ -1233,7 +1238,8 @@ class api_vm_manager_action(Resource):
                         return str(e), 500
                 else:
                     return "Action not found", 404
-
+            
+            # edit-disk-action
             elif action.startswith("disk"):
                 action = action.replace("disk-", "")
                 if action != "add":
@@ -1300,6 +1306,18 @@ class api_vm_manager_action(Resource):
                         return '', 204
                     except libvirt.libvirtError as e:
                         return str(e), 500
+                
+                elif action == "bootorder":
+                    value = data['value']
+                    xml.find('boot').set('order', value)
+                    xml = ET.tostring(xml).decode()
+                    try:
+                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
+
                 elif action == "delete":
                     try:
                         domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)

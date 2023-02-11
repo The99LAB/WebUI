@@ -273,6 +273,23 @@
                     </q-input>
                   </div>
                 </div>
+                <div class="row">
+                  <div class="col">
+                    <q-input label="Boot order" v-model="disk.bootorder" type="number" min="1">
+                      <template v-slot:append>
+                        <q-btn
+                          round
+                          dense
+                          flat
+                          icon="mdi-check"
+                          @click="
+                            diskChangeBootorder(disk.number, disk.bootorder)
+                          "
+                        />
+                      </template>
+                    </q-input>
+                  </div>
+                </div>  
                 <q-separator inset vertical />
                 <div class="row">
                   <div class="col">
@@ -332,6 +349,11 @@
                 <div class="row">
                   <div class="col">
                     <q-input label="Model" v-model="network.model" readonly />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <q-input label="Boot order" v-model="network.bootorder" readonly />
                   </div>
                 </div>
               </div>
@@ -630,6 +652,21 @@ export default {
     },
     diskShowSourceFileDialog(disknumber) {
       this.$refs.sourceFileDialog.show(disknumber, this.uuid);
+    },
+    diskChangeBootorder(disknumber, value) {
+      this.$api
+        .post("/vm-manager/" + this.uuid + "/edit-disk-bootorder", {
+          number: disknumber,
+          value: value,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error changing bootorder", [
+            error.response.data,
+          ]);
+        });
     },
     diskDelete(disknumber) {
       this.$refs.confirmDialog.show("Delete disk", [
