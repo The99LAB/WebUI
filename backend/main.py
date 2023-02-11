@@ -635,10 +635,20 @@ class DomainUsb():
                         break
                 if foundSystemUsbDevice:
                     usbdevices.append(
-                        [manufacturer, product, vendorid, productid])
+                        {
+                            "manufacturer": manufacturer,
+                            "product": product,
+                            "vendorid": vendorid,
+                            "productid": productid
+                        })
                 else:
                     usbdevices.append(
-                        ["Unkonwn", "Unknown", vendorid, productid])
+                        {
+                            "manufacturer": "Unknown",
+                            "product": "Unknown",
+                            "vendorid": vendorid,
+                            "productid": productid
+                        })
         return usbdevices
 
     def add(self, vendorid, productid):
@@ -1056,7 +1066,7 @@ class api_vm_manager_action(Resource):
             else:
                 video_type = None
 
-            print("graphics: " + str(graphics_type))
+            usbdevices = DomainUsb(domuuid=vmuuid).get
 
             data = {
                 "name": domain.name(),
@@ -1079,6 +1089,7 @@ class api_vm_manager_action(Resource):
                 "memory_min_unit": "GB",
                 "disks": diskinfo,
                 "networks": networks,
+                "usbdevices": usbdevices,
                 "graphics_type": graphics_type,
                 "video_type": video_type
             }

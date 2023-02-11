@@ -21,6 +21,7 @@
           <q-tab name="disk" label="Disk" />
           <q-tab name="network" label="Network" />
           <q-tab name="graphics" label="Graphics" />
+          <q-tab name="passthrough" label="Passthrough" />
           <q-tab name="xml" label="Xml" />
         </q-tabs>
         <q-separator />
@@ -387,6 +388,19 @@
                 readonly
               />
             </q-tab-panel>
+            <q-tab-panel name="passthrough">
+              <p v-if="usbdevicesList.length != 0">USB Devices</p>
+              <p v-else>No USB devices</p>
+              <div v-for="usbdevice in usbdevicesList" :key="usbdevice">
+                <p>{{ usbdevice.manufacturer }}</p>
+              </div>
+
+              <p v-if="pcidevicesList.length != 0">PCI devices</p>
+              <p v-else>No PCI devices</p>
+              <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
+                <p>{{ pcidevice.manufacturer }}</p>
+              </div>
+            </q-tab-panel>
             <q-tab-panel name="xml">
               <q-input filled v-model="xml" type="textarea" autogrow />
             </q-tab-panel>
@@ -401,6 +415,18 @@
               label="Add Network"
               @click="networkAdd()"
               v-if="tab == 'network'"
+            />
+            <q-btn
+              flat
+              label="Add USB Device"
+              @click="usbdeviceAdd()"
+              v-if="tab == 'passthrough'"
+            />
+            <q-btn
+              flat
+              label="Add PCI Device"
+              @click="pcideviceAdd()"
+              v-if="tab == 'passthrough'"
             />
             <q-btn
               flat
@@ -468,6 +494,8 @@ export default {
       diskDeleteNumber: null,
       networkList: [],
       networkDeleteNumber: null,
+      usbdevicesList: [],
+      pcidevicesList: [],
       currentVcpu: null,
       vcpu: null,
       customTopology: false,
@@ -515,6 +543,7 @@ export default {
           this.topologyThreads = response.data.topology_threads;
           this.diskList = response.data.disks;
           this.networkList = response.data.networks;
+          this.usbdevicesList = response.data.usbdevices;
           this.graphicsType = response.data.graphics_type;
           this.videoType = response.data.video_type;
           this.layout = true;
