@@ -289,7 +289,11 @@ class storage():
         for index, i in enumerate(disks):
             devicetype = i.get('device')
             drivertype = i.find('./driver').get('type')
-            bootorder = i.find('boot').get("order")
+            bootorderelem = i.find('boot')
+            if bootorderelem != None:
+                bootorder = bootorderelem.get('order')
+            else:
+                bootorder = None
 
             source = i.find('./source')
             if source != None:
@@ -1320,7 +1324,10 @@ class api_vm_manager_action(Resource):
                 
                 elif action == "bootorder":
                     value = data['value']
-                    xml.find('boot').set('order', value)
+                    bootelem = xml.find('boot')
+                    if bootelem is None:
+                        bootelem = ET.SubElement(xml, 'boot')
+                    bootelem.set('order', value)
                     xml = ET.tostring(xml).decode()
                     try:
                         domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
