@@ -1695,6 +1695,8 @@ class api_host_system_devices(Resource):
                         dinfo['name'] = dinfo['tag'].decode('utf-8')
                         dinfo.pop('tag')
                         dinfo['id'] = dinfo['id'].decode('utf-8')
+                        dinfo['vendorid'] = dinfo['id'].split(':')[0]
+                        dinfo['productid'] = dinfo['id'].split(':')[1]
                         if not 'Linux Foundation' in dinfo['name']:
                             devices.append(dinfo)
             return devices
