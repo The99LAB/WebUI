@@ -6,7 +6,10 @@ const routes = [
       { path: "", redirect: "/dashboard" },
       { path: "dashboard", component: () => import("pages/DashboardPage.vue") },
       { path: "vm-manager", component: () => import("pages/VmPage.vue") },
-      { path: "hotplug-usb", component: () => import("pages/HotplugUsbPage.vue") },
+      {
+        path: "hotplug-usb",
+        component: () => import("pages/HotplugUsbPage.vue"),
+      },
       {
         path: "storage-pools",
         component: () => import("src/pages/StoragePoolPage.vue"),
