@@ -43,7 +43,7 @@
             <q-item-label>Vm Manager</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="hotplug-usb">
+        <q-item clickable tag="a" to="/hotplug-usb">
           <q-item-section avatar>
             <q-icon name="mdi-usb" />
           </q-item-section>
