@@ -1,5 +1,5 @@
 <template>
-<q-select
+  <q-select
     label="USB Device"
     v-model="selectedUsbDevice"
     :options="usbDevicesList"
@@ -18,16 +18,17 @@
 export default {
   data() {
     return {
-        usbDevicesList: [],
-        selectedUsbDevice: null,
+      usbDevicesList: [],
+      selectedUsbDevice: null,
     };
   },
   methods: {
     updateUsbDevices() {
-        this.$api.get("/host/system-devices/usb")
+      this.$api
+        .get("/host/system-devices/usb")
         .then((response) => {
           this.usbDevicesList = response.data;
-          console.log("USB devices list: ", response.data)
+          console.log("USB devices list: ", response.data);
           if (this.usbDevicesList.length > 0) {
             this.selectedUsbDevice = this.usbDevicesList[0];
           }
@@ -37,11 +38,11 @@ export default {
         });
     },
     getSelectedUsbDeviceName() {
-        return this.selectedUsbDevice["name"];
+      return this.selectedUsbDevice["name"];
     },
   },
-    mounted() {
-        this.updateUsbDevices();
-    },
+  mounted() {
+    this.updateUsbDevices();
+  },
 };
 </script>
