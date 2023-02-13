@@ -1138,12 +1138,20 @@ class api_vm_manager_action(Resource):
             action = action.replace("edit-", "")
             if action == "xml":
                 xml = data['xml']
+                origxml = domain.XMLDesc(0)
                 try:
                     domain.undefineFlags(4)
+                except libvirt.libvirtError as e:
+                    return f'{e}', 500
+                try:
                     domain = conn.defineXML(xml)
                     return '', 204
                 except libvirt.libvirtError as e:
-                    return f'{e}', 500
+                    try:
+                        domain = conn.defineXML(origxml)
+                        return f'{e}', 500
+                    except libvirt.libvirtError as e2:
+                        return f'{e2}', 500
 
             elif action.startswith("general"):
                 action = action.replace("general-", "")
