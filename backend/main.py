@@ -689,7 +689,11 @@ class domainNetworkInterface():
                 mac_addr = interface.find("mac").get('address')
                 source_network = conn.networkLookupByName(interface.find("source").get('network')).name()
                 model = interface.find('model').get("type")
-                bootorder = interface.find('boot').get("order")
+                bootorderelem = interface.find('boot')
+                if bootorderelem != None:
+                    bootorder = bootorderelem.get("order")
+                else:
+                    bootorder = None
                 networkinterfaces.append(
                 {
                     'number': number, 
