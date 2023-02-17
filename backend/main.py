@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, redirect, session
+from flask import Flask, render_template, jsonify, request, redirect
 from flask_cors import CORS, cross_origin
 from flask_restful import reqparse, abort, Api, Resource
 import psutil
@@ -16,6 +16,7 @@ from blkinfo import BlkDiskInfo
 import cpuinfo
 import distro
 import requests
+import sys
 
 
 """
@@ -34,7 +35,11 @@ class CustomFlask(Flask):
 app = CustomFlask(__name__, static_url_path='')
 CORS(app, resources={r"*": {"origins": "*"}})
 api = Api(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+if "production" in sys.argv:
+    mode="production"
+else:
+    mode="development"
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode=f"{'threading' if mode == 'development' else 'eventlet'}")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 
@@ -1709,4 +1714,7 @@ api.add_resource(api_host_system_devices,
 
 if __name__ == '__main__':
     conn = libvirt.open('qemu:///system')
-    app.run(debug=True, host="0.0.0.0")
+    if mode == "production":
+        socketio.run(app, host="0.0.0.0", port=80, debug=True)
+    else:
+        app.run(debug=True, host="0.0.0.0")
