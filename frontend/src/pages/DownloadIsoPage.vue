@@ -25,9 +25,13 @@
           class="q-mt-md"
           animation-speed="100"
           size="25px"
-        ><div class="absolute-full flex flex-center">
-        <q-badge color="white" text-color="accent" :label="progress*100" />
-      </div>
+          ><div class="absolute-full flex flex-center">
+            <q-badge
+              color="white"
+              text-color="accent"
+              :label="progress * 100"
+            />
+          </div>
         </q-linear-progress>
       </q-card-section>
     </q-card>
