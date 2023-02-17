@@ -209,7 +209,7 @@ export default {
       // open vnc in new tab
       window.open(
         process.env.VNC_ENDPOINT_HTML +
-          "?autoconnect=true&?resize=scale&?path=?token=" +
+          "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
           uuid,
         "_blank"
       );
