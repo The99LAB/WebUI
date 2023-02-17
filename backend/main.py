@@ -926,6 +926,9 @@ class api_socketio(Namespace):
 
         try:
             response = requests.get(url, stream=True)
+            if response.status_code != 200:
+                emit("downloadIsoError", f"Response code: {response.status_code}")
+                return
             try:
                 total_size = int(response.headers.get('Content-Length'))
             except TypeError as e:
