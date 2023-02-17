@@ -156,6 +156,7 @@
                     hide-no-data
                     hide-bottom
                     hide-pagination
+                    :pagination="volumeTablePagination"
                   />
                 </div>
               </q-tab-panel>
@@ -213,6 +214,10 @@ export default {
       volumeColums,
       selected,
       storageTableLoading: ref(true),
+      volumeTablePagination: {
+        sortBy: "name",
+        rowsPerPage: 0,
+      },
     };
   },
   components: {
