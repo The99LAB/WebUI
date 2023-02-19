@@ -545,10 +545,11 @@ def SystemPciDevices():
 
 
 class DomainPci():
-    def __init__(self, vmuuid):
-        self.domain = conn.lookupByUUIDString(vmuuid)
+    def __init__(self, domuuid):
+        self.domain = conn.lookupByUUIDString(domuuid)
         self.vmXml = self.domain.XMLDesc()
 
+    @property
     def get(self):
         tree = ET.fromstring(self.vmXml)
         pcidevices = []
@@ -575,12 +576,21 @@ class DomainPci():
                     if systempcidomain == domain and systempcibus == bus and systempcislot == slot and systempcifunction == function:
                         foundSystemPciDevice = True
                         break
-                if foundSystemPciDevice:
-                    pcidevices.append(
-                        [devicepath, domain, bus, slot, function, deviceProductName, deviceVendorName])
-                else:
-                    pcidevices.append(
-                        ["Unkonwn", domain, bus, slot, function, "Unkown", "Unknown"])
+
+                if not foundSystemPciDevice:
+                    devicepath = "Unkonwn"
+                    deviceProductName = "Unkown"
+                    deviceVendorName = "Unknown"
+
+                pcidevices.append({
+                    "devicepath": devicepath,
+                    "domain": domain,
+                    "bus": bus,
+                    "slot": slot,
+                    "function": function,
+                    "productName": deviceProductName,
+                    "vendorName": deviceVendorName
+                })
 
         return pcidevices
 
@@ -642,41 +652,26 @@ class DomainUsb():
                     if int(systemusbvendorid, 0) == int(vendorid, 0) and int(systemusbproductid, 0) == int(productid, 0):
                         foundSystemUsbDevice = True
                         break
-                if foundSystemUsbDevice:
-                    usbdevices.append(
-                        {
-                            "manufacturer": manufacturer,
-                            "product": product,
-                            "vendorid": vendorid,
-                            "productid": productid
-                        })
-                else:
-                    usbdevices.append(
-                        {
-                            "manufacturer": "Unknown",
-                            "product": "Unknown",
-                            "vendorid": vendorid,
-                            "productid": productid
-                        })
+                if not foundSystemUsbDevice:
+                    manufacturer = "Unknown"
+                usbdevices.append(
+                {
+                    "manufacturer": manufacturer,
+                    "product": product,
+                    "vendorid": vendorid,
+                    "productid": productid
+                })
         return usbdevices
 
     def add(self, vendorid, productid):
-        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
-        try:
-            self.domain.attachDeviceFlags(
-                xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-            return 'Succeed'
-        except libvirt.libvirtError as e:
-            return f"Error: {e}"
+        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='0x{vendorid}'/><product id='0x{productid}'/></source></hostdev>"
+        self.domain.attachDeviceFlags(
+            xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
     def remove(self, vendorid, productid):
-        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
-        try:
-            self.domain.detachDeviceFlags(
-                xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-            return 'Succeed'
-        except libvirt.libvirtError as e:
-            return f"Error: {e}"
+        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='0x{vendorid}'/><product id='0x{productid}'/></source></hostdev>"
+        self.domain.detachDeviceFlags(
+            xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
 
 class domainNetworkInterface():
@@ -1083,6 +1078,7 @@ class api_vm_manager_action(Resource):
                 video_type = None
 
             usbdevices = DomainUsb(domuuid=vmuuid).get
+            pcidevices = DomainPci(domuuid=vmuuid).get
 
             data = {
                 "name": domain.name(),
@@ -1106,6 +1102,7 @@ class api_vm_manager_action(Resource):
                 "disks": diskinfo,
                 "networks": networks,
                 "usbdevices": usbdevices,
+                "pcidevices": pcidevices,
                 "graphics_type": graphics_type,
                 "video_type": video_type
             }
@@ -1361,6 +1358,27 @@ class api_vm_manager_action(Resource):
                         domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                         return '', 204
                     except libvirt.libvirtError as e:
+                        return str(e), 500
+                else:
+                    return 'Action not found', 404
+            elif action.startswith("usb"):
+                action = action.replace("usb-", "")
+                if action == "add":
+                    print("add usb")
+                    product_id = data['productid']
+                    vendor_id = data['vendorid']
+                    try:
+                        xml = DomainUsb(vmuuid).add(vendorid=vendor_id, productid=product_id)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+                elif action == "delete":
+                    product_id = data['productid']
+                    vendor_id = data['vendorid']
+                    try:
+                        xml = DomainUsb(vmuuid).remove(vendorid=vendor_id, productid=product_id)
+                        return '', 204
+                    except Exception as e:
                         return str(e), 500
                 else:
                     return 'Action not found', 404

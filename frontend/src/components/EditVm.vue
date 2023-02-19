@@ -389,16 +389,17 @@
               />
             </q-tab-panel>
             <q-tab-panel name="passthrough">
-              <p v-if="usbdevicesList.length != 0">USB Devices</p>
-              <p v-else>No USB devices</p>
               <div v-for="usbdevice in usbdevicesList" :key="usbdevice">
-                <p>{{ usbdevice.manufacturer }}</p>
+                <q-input model-value="USB Device" label="Type" readonly />
+                <q-input v-model="usbdevice.manufacturer" label="Vendor" readonly/>
+                <q-input v-model="usbdevice.product" label="Product" readonly/>
+                <q-input v-model="usbdevice.vendorid" label="Vendor Id" readonly/>
+                <q-input v-model="usbdevice.productid" label="Product Id" readonly/>
               </div>
-
-              <p v-if="pcidevicesList.length != 0">PCI devices</p>
-              <p v-else>No PCI devices</p>
+              <q-separator spaced="lg" inset />
               <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
-                <p>{{ pcidevice.manufacturer }}</p>
+                <q-input model-value="PCI Device" label="Type" readonly />
+                <q-input v-model="pcidevice.devicepath" label="Device Path" readonly/>
               </div>
             </q-tab-panel>
             <q-tab-panel name="xml">
@@ -453,6 +454,7 @@
     @sourcefile-add-finished="refreshData()"
   />
   <AddNetwork ref="addNetwork" @network-add-finished="refreshData()" />
+  <AddUsbDevice ref="addUsbDevice" @usb-device-add-finished="refreshData()" />
 </template>
 
 <script>
@@ -462,6 +464,7 @@ import ConfirmDialog from "src/components/ConfirmDialog.vue";
 import AddDisk from "src/components/AddDisk.vue";
 import sourceFileDialog from "src/components/SourceFileDialog.vue";
 import AddNetwork from "src/components/AddNetwork.vue";
+import AddUsbDevice from "src/components/AddUsbDevice.vue";
 
 export default {
   data() {
@@ -516,6 +519,7 @@ export default {
     AddDisk,
     sourceFileDialog,
     AddNetwork,
+    AddUsbDevice,
   },
   methods: {
     show(uuid) {
@@ -544,6 +548,7 @@ export default {
           this.diskList = response.data.disks;
           this.networkList = response.data.networks;
           this.usbdevicesList = response.data.usbdevices;
+          this.pcidevicesList = response.data.pcidevices;
           this.graphicsType = response.data.graphics_type;
           this.videoType = response.data.video_type;
           this.layout = true;
@@ -797,6 +802,9 @@ export default {
             error.response.data,
           ]);
         });
+    },
+    usbdeviceAdd() {
+      this.$refs.addUsbDevice.show(this.uuid);
     },
   },
 };

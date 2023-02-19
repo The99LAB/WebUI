@@ -14,7 +14,10 @@ export default {
   },
   methods: {
     hotplugUsb() {
+      console.log(this.$refs.usbDevicesList.getSelectedUsbDevice()['name']);
       console.log(this.$refs.usbDevicesList.getSelectedUsbDeviceName());
+      console.log(this.$refs.usbDevicesList.getSelectedUsbVendorId());
+      console.log(this.$refs.usbDevicesList.getSelectedUsbProductId());
     },
   },
   mounted() {},
