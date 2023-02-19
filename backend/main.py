@@ -68,6 +68,7 @@ def getvmstate(uuid):
 
 
 def getvmresults():
+    print("getvmresults")
     domains = conn.listAllDomains(0)
     if len(domains) != 0:
         results = []
@@ -75,28 +76,18 @@ def getvmresults():
             dom_name = domain.name()
             dom_uuid = domain.UUIDString()
             dom_state = getvmstate(dom_uuid)
+            vmXml = domain.XMLDesc(0)
+            root = ET.fromstring(vmXml)
+            vcpus = root.find('vcpu').text
 
+            vnc_state = False
             if domain.isActive() == True:
-                # if domain is active > search for VNC port > set token to the correct port
-                vmXml = domain.XMLDesc(0)
-                root = ET.fromstring(vmXml)
                 graphics = root.find('./devices/graphics')
-                try:
-                    vncport = graphics.get('port')
-                    vnc_state = True
-                    try:
-                        with open("/home/stijn/token.list", "w") as tokenlist:
-                            tokenlist.write(f"{dom_uuid}: localhost:{vncport}")
-                    except Exception:
-                        print("Couldn't read the token file")
-                except Exception:
-                    vncport = "none"
-                    vnc_state = False
-            else:
-                vncport = "none"
-                vnc_state = False
+                if graphics != None:
+                    port = graphics.get('port')
+                    if port != None:
+                        vnc_state = True
 
-            # result = [dom_name, dom_state, vncport, dom_uuid]
             dom_memory_unit = "GB"
             dom_memory_stat = vmmemory(dom_uuid).current(dom_memory_unit)
             dom_memory_min = dom_memory_stat[0]
@@ -107,7 +98,7 @@ def getvmresults():
                 "memory_min": dom_memory_min,
                 "memory_max": dom_memory_max,
                 "memory_unit": "GB",
-                "vcpus": 2,
+                "vcpus": vcpus,
                 "state": dom_state,
                 "VNC": vnc_state,
             }
