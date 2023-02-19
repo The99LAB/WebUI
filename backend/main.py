@@ -565,13 +565,13 @@ class DomainPci():
                 function = int(source_address.get('function'), 0)
 
                 for i in SystemPciDevices():
-                    systempcidomain = int(i[7])
-                    systempcibus = int(i[8])
-                    systempcislot = int(i[9])
-                    systempcifunction = int(i[10])
-                    deviceProductName = i[2]
-                    deviceVendorName = i[4]
-                    devicepath = i[1]
+                    systempcidomain = int(i['domain'])
+                    systempcibus = int(i['bus'])
+                    systempcislot = int(i['slot'])
+                    systempcifunction = int(i['function'])
+                    deviceProductName = i['productName']
+                    deviceVendorName = i['vendorName']
+                    devicepath = i['path']
 
                     if systempcidomain == domain and systempcibus == bus and systempcislot == slot and systempcifunction == function:
                         foundSystemPciDevice = True
@@ -1184,22 +1184,34 @@ class api_vm_manager_action(Resource):
 
             # edit-cpu
             elif action == "cpu":
-                vcpu = data['vcpu']
-                current_vcpu = data['current_vcpu']
+                vcpu = str(data['vcpu'])
+                current_vcpu = str(data['current_vcpu'])
                 custom_topology = data['custom_topology']
-                sockets = data['topology_sockets']
-                dies = data['topology_dies']
-                cores = data['topology_cores']
-                threads = data['topology_threads']
+                sockets = str(data['topology_sockets'])
+                dies = str(data['topology_dies'])
+                cores = str(data['topology_cores'])
+                threads = str(data['topology_threads'])
                 vm_xml = ET.fromstring(domain.XMLDesc(0))
 
                 if custom_topology:
-                    topology = f"sockets='{sockets}' dies='{dies}' cores='{cores}' threads='{threads}'"
-                    vm_xml.find('cpu/topology').attrib = topology
-
+                    # new dict for topology
+                    topologyelem = vm_xml.find('cpu/topology')
+                    if topologyelem != None:
+                        topologyelem.set('sockets', sockets)
+                        topologyelem.set('dies', dies)
+                        topologyelem.set('cores', cores)
+                        topologyelem.set('threads', threads)
+                    else:
+                        topologyelem = ET.Element('topology')
+                        topologyelem.set('sockets', sockets)
+                        topologyelem.set('dies', dies)
+                        topologyelem.set('cores', cores)
+                        topologyelem.set('threads', threads)
+                        vm_xml.find('cpu').append(topologyelem)
+                
                 vm_xml.find('vcpu').text = vcpu
                 if current_vcpu != vcpu:
-                    vm_xml.find('vcpu').attrib['current'] = current_vcpu                
+                    vm_xml.find('vcpu').attrib['current'] = current_vcpu 
                 vm_xml = ET.tostring(vm_xml).decode()
                 try:
                     domain.undefineFlags(4)
@@ -1207,6 +1219,7 @@ class api_vm_manager_action(Resource):
                     return '', 204
                 except libvirt.libvirtError as e:
                     return f'{e}', 500
+
 
             # edit-memory
             elif action == "memory":
