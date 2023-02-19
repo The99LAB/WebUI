@@ -29,7 +29,7 @@
             <q-badge
               color="white"
               text-color="accent"
-              :label="progress * 100"
+              :label="Math.round(progress * 100)"
             />
           </div>
         </q-linear-progress>
