@@ -36,18 +36,18 @@ export default {
           this.$refs.errorDialog.show(error.response.data);
         });
     },
-    getSelectedUsbDevice(){
+    getSelectedUsbDevice() {
       return this.selectedUsbDevice;
     },
     getSelectedUsbDeviceName() {
       return this.selectedUsbDevice["name"];
     },
-    getSelectedUsbVendorId(){
+    getSelectedUsbVendorId() {
       return this.selectedUsbDevice["vendorid"];
     },
-    getSelectedUsbProductId(){
+    getSelectedUsbProductId() {
       return this.selectedUsbDevice["productid"];
-    }
+    },
   },
   mounted() {
     this.updateUsbDevices();
