@@ -391,15 +391,31 @@
             <q-tab-panel name="passthrough">
               <div v-for="usbdevice in usbdevicesList" :key="usbdevice">
                 <q-input model-value="USB Device" label="Type" readonly />
-                <q-input v-model="usbdevice.manufacturer" label="Vendor" readonly/>
-                <q-input v-model="usbdevice.product" label="Product" readonly/>
-                <q-input v-model="usbdevice.vendorid" label="Vendor Id" readonly/>
-                <q-input v-model="usbdevice.productid" label="Product Id" readonly/>
+                <q-input
+                  v-model="usbdevice.manufacturer"
+                  label="Vendor"
+                  readonly
+                />
+                <q-input v-model="usbdevice.product" label="Product" readonly />
+                <q-input
+                  v-model="usbdevice.vendorid"
+                  label="Vendor Id"
+                  readonly
+                />
+                <q-input
+                  v-model="usbdevice.productid"
+                  label="Product Id"
+                  readonly
+                />
               </div>
               <q-separator spaced="lg" inset />
               <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
                 <q-input model-value="PCI Device" label="Type" readonly />
-                <q-input v-model="pcidevice.devicepath" label="Device Path" readonly/>
+                <q-input
+                  v-model="pcidevice.devicepath"
+                  label="Device Path"
+                  readonly
+                />
               </div>
             </q-tab-panel>
             <q-tab-panel name="xml">
