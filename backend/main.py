@@ -108,18 +108,6 @@ def getvmresults():
     return results
 
 
-def getRunningDomains():
-    runningDomains = conn.listAllDomains(1)
-    results = []
-    if len(runningDomains) != 0:
-        for domain in runningDomains:
-            dom_name = domain.name()
-            dom_uuid = domain.UUIDString()
-            result = [dom_name, dom_uuid]
-            results.append(result)
-    return results
-
-
 class vmmemory():
     def __init__(self, uuid):
         self.domain = conn.lookupByUUIDString(uuid)
@@ -190,86 +178,6 @@ class vmmemory():
                     return ("failed to replace minmemory and/or maxmemory!")
             except:
                 return ("failed to find minmemory and maxmemory in xml!")
-
-
-class getmemory():
-    def __init__(self):
-        self.systemmem = psutil.virtual_memory().total
-
-    def systemmem(self):
-        return self.systemmem
-
-    def vmeditsizes(self):
-        times = self.systemmem/1024/1024/512
-        sizes = []
-        currentsize = 512
-        for i in range(round(times)):
-            sizes.append(currentsize)
-            currentsize = currentsize + 512
-        return sizes
-
-
-class cpu():
-    def __init__(self, uuid):
-        self.domain = conn.lookupByUUIDString(uuid)
-        self.vmXml = self.domain.XMLDesc(0)
-
-    def get(self):
-        maxvcpu = self.domain.vcpusFlags(libvirt.VIR_DOMAIN_VCPU_MAXIMUM)
-        currentvcpu = self.domain.vcpusFlags(libvirt.VIR_DOMAIN_AFFECT_CURRENT)
-        # TODO: Get sockets, cores, threads
-
-        root = ET.fromstring(self.vmXml)
-        cpu = root.find('./cpu')
-        cpumode = cpu.get('mode')
-
-        topology = cpu.find("./topology")
-        if topology != None:
-            sockets = topology.get('sockets')
-            cores = topology.get('cores')
-            threads = topology.get('threads')
-        else:
-            sockets = maxvcpu
-            cores = 1
-            threads = 1
-
-        return [currentvcpu, maxvcpu, cpumode, sockets, cores, threads]
-
-    def set(self, customtopology, currentvcpu, maxvcpu, cpumode, sockets="", cores="", threads=""):
-        output = self.vmXml
-
-        cpusfindtring = re.search(
-            "(<cpu.*/>|<cpu(.|\n)*</cpu>)", self.vmXml).group()
-        vcpufindstring = re.search("<vcpu.*</vcpu>", self.vmXml).group()
-
-        if currentvcpu != maxvcpu:
-            print("not same")
-            output = output.replace(
-                vcpufindstring, f"<vcpu placement='static' current='{currentvcpu}'>{maxvcpu}</vcpu>")
-        else:
-            output = output.replace(
-                vcpufindstring, f"<vcpu placement='static'>{maxvcpu}</vcpu>")
-
-        if cpumode == "host-passthrough":
-            migratable = "migratable='on'"
-        else:
-            migratable = ""
-
-        if customtopology == True:
-            cpusreplacetring = f"<cpu mode='{cpumode}' check='partial' {migratable}><topology sockets='{sockets}' dies='1' cores='{cores}' threads='{threads}'/></cpu>"
-        elif customtopology == False:
-            cpusreplacetring = f"<cpu mode='{cpumode}' check='partial' {migratable}/>"
-        else:
-            return "Error: costomcputopology is not set correctly!"
-
-        output = output.replace(cpusfindtring, cpusreplacetring)
-
-        try:
-            conn.defineXML(output)
-            return 'Succeed'
-
-        except libvirt.libvirtError as e:
-            return f'Error: {e}'
 
 
 class storage():
