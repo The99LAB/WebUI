@@ -446,6 +446,21 @@
                   label="Product Name"
                   readonly
                 />
+                <q-input
+                  v-if="pcidevice.romfile != ''"
+                  v-model="pcidevice.romfile"
+                  label="Rom File"
+                >
+                  <template v-slot:append>
+                    <q-btn
+                      round
+                      dense
+                      flat
+                      icon="mdi-check"
+                      @click="pcieChangeRomFile(pcidevice.xml, pcidevice.romfile)"
+                    />
+                  </template>
+                </q-input>
                 <q-separator spaced="lg" inset />
               </div>
             </q-tab-panel>
@@ -898,6 +913,20 @@ export default {
             error.response.data,
           ]);
         });
+    },
+    pcieChangeRomFile(xml, romfile) {
+      this.$api.post("/vm-manager/" + this.uuid + "/edit-pcie-romfile", {
+        xml: xml,
+        romfile: romfile,
+      })
+      .then((response) => {
+        this.refreshData();
+      })
+      .catch((error) => {
+        this.$refs.errorDialog.show("Error changing pcie rom file", [
+          error.response.data,
+        ]);
+      });
     },
   },
 };

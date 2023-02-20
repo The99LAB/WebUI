@@ -575,6 +575,10 @@ class DomainPcie():
                 bus = str(hex(int(source_address.get('bus'), 0))).replace('0x', '')
                 slot = str(hex(int(source_address.get('slot'), 0))).replace('0x', '')
                 function = str(hex(int(source_address.get('function'), 0))).replace('0x', '')
+                romelem = hostdev.find('rom')
+                romfile = ""
+                if romelem != None:
+                    romfile = romelem.get('file')
 
                 for i in SystemPcieDevices():
                     systempcidomain = str((i['domain']))
@@ -600,7 +604,8 @@ class DomainPcie():
                     "slot": slot,
                     "function": function,
                     "productName": deviceProductName,
-                    "vendorName": deviceVendorName
+                    "vendorName": deviceVendorName,
+                    "romfile": romfile
                 })
 
         return pcidevices
@@ -612,10 +617,24 @@ class DomainPcie():
                 pcidevicexml = i['xml']
                 self.domain.detachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
-
     def add(self, domain, bus, slot, function):
         pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{domain}' bus='{bus}' slot='{slot}' function='{function}'/></source></hostdev>"
         self.domain.attachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+
+    def romfile(self, xml, romfile):
+        origxml = xml
+        tree = ET.fromstring(xml)
+        rom = tree.find('rom')
+        if rom == None:
+            rom = ET.SubElement(tree, 'rom')
+        rom.set('file', romfile)
+        xml = ET.tostring(tree).decode('utf-8')
+        self.domain.detachDeviceFlags(origxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        # if xml fails to attach, revert to original xml
+        try:
+            self.domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        except libvirt.libvirtError:
+            self.domain.attachDeviceFlags(origxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
 
 class DomainUsb():
@@ -1390,12 +1409,10 @@ class api_vm_manager_action(Resource):
             elif action.startswith("pcie"):
                 action = action.replace("pcie-", "")
                 if action == "add":
-                    print("adding pcie device to vm")
                     domain = "0x" + data['domain']
                     bus = "0x" + data['bus']
                     slot = "0x" + data['slot']
                     function = "0x" + data['function']
-                    print("adding pcie device to vm", domain, bus, slot, function)
                     try:
                         xml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function)
                         return '', 204
@@ -1405,12 +1422,19 @@ class api_vm_manager_action(Resource):
                     domain = data['domain']
                     bus = data['bus']
                     slot = data['slot']
-                    function = data['function']
-                    print("deleting pcie device to vm", domain, bus, slot, function)
-                   
+                    function = data['function']                   
                     DomainPcie(vmuuid).remove(domain=domain, bus=bus, slot=slot, function=function)
                     return '', 204
-
+                elif action == "romfile":
+                    devicexml = data['xml']
+                    romfile = data['romfile']
+                    try:
+                        DomainPcie(vmuuid).romfile(xml=devicexml, romfile=romfile)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+                else:
+                    return 'Action not found', 404
             else:
                 return 'Action not found', 404
         else:
