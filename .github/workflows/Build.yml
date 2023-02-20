@@ -14,12 +14,11 @@ jobs:
         run: npm install && npm install -g @quasar/cli
 
       - name: Build
-        working-directory: ./frontend
-        run: quasar build
+        run: python3 Build.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: Build
-          path: ./frontend/dist/spa
+          name: VmManager-build
+          path: ./backend
 
