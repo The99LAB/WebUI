@@ -488,18 +488,24 @@ class poolStorage():
         return format
 
 
-def UsbDevicesList():
-    devices = usb.core.find(find_all=True)
-    deviceslist = []
-    for device in devices:
-        manufacturer = device.manufacturer
-        product = device.product
-        vendorid = hex(device.idVendor)
-        productid = hex(device.idProduct)
-        if vendorid != "0x1d6b":
-            devicelist = [manufacturer, product, vendorid, productid]
-            deviceslist.append(devicelist)
-    return deviceslist
+def SystemUsbDevicesList():
+    device_re = re.compile(b"Bus\s+(?P<bus>\d+)\s+Device\s+(?P<device>\d+).+ID\s(?P<id>\w+:\w+)\s(?P<tag>.+)$", re.I)
+    df = subprocess.check_output("lsusb")
+    devices = []
+    for i in df.split(b'\n'):
+        if i:
+            info = device_re.match(i)
+            if info:
+                dinfo = info.groupdict()
+                dinfo['path'] = '/dev/bus/usb/%s/%s' % (dinfo.pop('bus').decode('utf-8'), dinfo.pop('device').decode('utf-8'))
+                dinfo['name'] = dinfo['tag'].decode('utf-8')
+                dinfo.pop('tag')
+                dinfo['id'] = dinfo['id'].decode('utf-8')
+                dinfo['vendorid'] = dinfo['id'].split(':')[0]
+                dinfo['productid'] = dinfo['id'].split(':')[1]
+                if not 'Linux Foundation' in dinfo['name']:
+                    devices.append(dinfo)
+    return devices
 
 
 def SystemPciDevices():
@@ -634,33 +640,31 @@ class DomainUsb():
                 vendorid = hostdev.find('source/vendor').get("id")
                 productid = hostdev.find('source/product').get("id")
 
-                for i in UsbDevicesList():
-                    systemusbproductid = i[3]
-                    systemusbvendorid = i[2]
-                    manufacturer = i[0]
-                    product = i[1]
+                for i in SystemUsbDevicesList():
+                    systemusbproductid = "0x"+i['productid']
+                    systemusbvendorid = "0x"+i['vendorid']
+                    systemusbname = i['name']
 
                     if int(systemusbvendorid, 0) == int(vendorid, 0) and int(systemusbproductid, 0) == int(productid, 0):
                         foundSystemUsbDevice = True
                         break
                 if not foundSystemUsbDevice:
-                    manufacturer = "Unknown"
+                    systemusbname = "Unknown"
                 usbdevices.append(
                 {
-                    "manufacturer": manufacturer,
-                    "product": product,
+                    "name": systemusbname,
                     "vendorid": vendorid,
                     "productid": productid
                 })
         return usbdevices
 
     def add(self, vendorid, productid):
-        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='0x{vendorid}'/><product id='0x{productid}'/></source></hostdev>"
+        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
         self.domain.attachDeviceFlags(
             xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
     def remove(self, vendorid, productid):
-        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='0x{vendorid}'/><product id='0x{productid}'/></source></hostdev>"
+        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
         self.domain.detachDeviceFlags(
             xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
@@ -1365,6 +1369,8 @@ class api_vm_manager_action(Resource):
                         return str(e), 500
                 else:
                     return 'Action not found', 404
+                
+            # edit-usb-action
             elif action.startswith("usb"):
                 action = action.replace("usb-", "")
                 if action == "add":
@@ -1372,7 +1378,7 @@ class api_vm_manager_action(Resource):
                     product_id = data['productid']
                     vendor_id = data['vendorid']
                     try:
-                        xml = DomainUsb(vmuuid).add(vendorid=vendor_id, productid=product_id)
+                        xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}")
                         return '', 204
                     except Exception as e:
                         return str(e), 500
@@ -1713,23 +1719,7 @@ class api_host_system_devices(Resource):
                     {'model': i["model"], 'type': i['type'], 'path': f"/dev/{i['name']}", 'capacity': f'{round(convertSizeUnit(size=int(i["size"]), from_unit="B", to_unit="GB"))} GB'})
             return disk_list
         elif devicetype == "usb":
-            device_re = re.compile(b"Bus\s+(?P<bus>\d+)\s+Device\s+(?P<device>\d+).+ID\s(?P<id>\w+:\w+)\s(?P<tag>.+)$", re.I)
-            df = subprocess.check_output("lsusb")
-            devices = []
-            for i in df.split(b'\n'):
-                if i:
-                    info = device_re.match(i)
-                    if info:
-                        dinfo = info.groupdict()
-                        dinfo['path'] = '/dev/bus/usb/%s/%s' % (dinfo.pop('bus').decode('utf-8'), dinfo.pop('device').decode('utf-8'))
-                        dinfo['name'] = dinfo['tag'].decode('utf-8')
-                        dinfo.pop('tag')
-                        dinfo['id'] = dinfo['id'].decode('utf-8')
-                        dinfo['vendorid'] = dinfo['id'].split(':')[0]
-                        dinfo['productid'] = dinfo['id'].split(':')[1]
-                        if not 'Linux Foundation' in dinfo['name']:
-                            devices.append(dinfo)
-            return devices
+            return SystemUsbDevicesList()
         else:
             return 'Device type not found', 404
 
