@@ -457,7 +457,9 @@
                       dense
                       flat
                       icon="mdi-check"
-                      @click="pcieChangeRomFile(pcidevice.xml, pcidevice.romfile)"
+                      @click="
+                        pcieChangeRomFile(pcidevice.xml, pcidevice.romfile)
+                      "
                     />
                   </template>
                 </q-input>
@@ -915,18 +917,19 @@ export default {
         });
     },
     pcieChangeRomFile(xml, romfile) {
-      this.$api.post("/vm-manager/" + this.uuid + "/edit-pcie-romfile", {
-        xml: xml,
-        romfile: romfile,
-      })
-      .then((response) => {
-        this.refreshData();
-      })
-      .catch((error) => {
-        this.$refs.errorDialog.show("Error changing pcie rom file", [
-          error.response.data,
-        ]);
-      });
+      this.$api
+        .post("/vm-manager/" + this.uuid + "/edit-pcie-romfile", {
+          xml: xml,
+          romfile: romfile,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error changing pcie rom file", [
+            error.response.data,
+          ]);
+        });
     },
   },
 };
