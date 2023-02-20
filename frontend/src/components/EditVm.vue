@@ -415,12 +415,22 @@
                 <q-separator spaced="lg" inset />
               </div>
               <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
-                <q-input model-value="PCI Device" label="Type" readonly />
-                <q-input
-                  v-model="pcidevice.devicepath"
-                  label="Device Path"
-                  readonly
-                />
+                <q-input model-value="PCI Device" label="Type" readonly >
+                  <template v-slot:after>
+                    <q-btn
+                      color="primary"
+                      icon="delete"
+                      @click="
+                        pciedeviceDelete(
+                          pcidevice.domain,
+                          pcidevice.bus,
+                          pcidevice.slot,
+                          pcidevice.function
+                        )
+                      "
+                    />
+                  </template>
+                </q-input>
                 <q-input
                   v-model="pcidevice.devicepath"
                   label="Device Path"
@@ -463,7 +473,7 @@
             <q-btn
               flat
               label="Add PCI Device"
-              @click="pcideviceAdd()"
+              @click="pciedeviceAdd()"
               v-if="tab == 'passthrough'"
             />
             <q-btn
@@ -492,6 +502,11 @@
   />
   <AddNetwork ref="addNetwork" @network-add-finished="refreshData()" />
   <AddUsbDevice ref="addUsbDevice" @usb-device-add-finished="refreshData()" />
+  <AddPcieDevice
+    ref="addPcieDevice"
+    @pcie-device-add-finished="refreshData()"
+  />
+
 </template>
 
 <script>
@@ -502,6 +517,7 @@ import AddDisk from "src/components/AddDisk.vue";
 import sourceFileDialog from "src/components/SourceFileDialog.vue";
 import AddNetwork from "src/components/AddNetwork.vue";
 import AddUsbDevice from "src/components/AddUsbDevice.vue";
+import AddPcieDevice from "src/components/AddPcieDevice.vue";
 
 export default {
   data() {
@@ -557,6 +573,7 @@ export default {
     sourceFileDialog,
     AddNetwork,
     AddUsbDevice,
+    AddPcieDevice,
   },
   methods: {
     show(uuid) {
@@ -857,6 +874,28 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting usb device", [
+            error.response.data,
+          ]);
+        });
+    },
+    pciedeviceAdd() {
+      this.$refs.addPcieDevice.show(this.uuid);
+    },
+    pciedeviceDelete(device_domain, device_bus, device_slot, device_function) {
+      console.log("Deleting pcie device");
+      console.log(device_domain, device_bus, device_slot, device_function);
+      this.$api
+        .post("/vm-manager/" + this.uuid + "/edit-pcie-delete", {
+          domain: device_domain,
+          bus: device_bus,
+          slot: device_slot,
+          function: device_function,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting pcie device", [
             error.response.data,
           ]);
         });

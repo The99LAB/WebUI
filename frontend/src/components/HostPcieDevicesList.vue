@@ -45,7 +45,7 @@ export default {
         });
     },
     getSelectedPciDevice() {
-      return this.selectedPciDevice;
+        return this.selectedPciDevice;
     },
   },
   mounted() {

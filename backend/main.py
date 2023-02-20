@@ -508,7 +508,7 @@ def SystemUsbDevicesList():
     return devices
 
 
-def SystemPciDevices():
+def SystemPcieDevices():
     pci_devices = conn.listAllDevices(2)
     pcidevicesList = []
     for device in pci_devices:
@@ -555,7 +555,7 @@ def SystemPciDevices():
     return pcidevicesList
 
 
-class DomainPci():
+class DomainPcie():
     def __init__(self, domuuid):
         self.domain = conn.lookupByUUIDString(domuuid)
         self.vmXml = self.domain.XMLDesc()
@@ -569,13 +569,14 @@ class DomainPci():
             foundSystemPciDevice = False
             hostdevtype = hostdev.get('type')
             if hostdevtype == 'pci':
+                xml = ET.tostring(hostdev).decode('utf-8')
                 source_address = hostdev.find('source/address')
                 domain = str(hex(int(source_address.get('domain'), 0))).replace('0x', '')
                 bus = str(hex(int(source_address.get('bus'), 0))).replace('0x', '')
                 slot = str(hex(int(source_address.get('slot'), 0))).replace('0x', '')
                 function = str(hex(int(source_address.get('function'), 0))).replace('0x', '')
 
-                for i in SystemPciDevices():
+                for i in SystemPcieDevices():
                     systempcidomain = str((i['domain']))
                     systempcibus = str((i['bus']))
                     systempcislot = str((i['slot']))
@@ -591,8 +592,8 @@ class DomainPci():
                     devicepath = "Unkonwn"
                     deviceProductName = "Unkown"
                     deviceVendorName = "Unknown"
-
                 pcidevices.append({
+                    "xml": xml,
                     "devicepath": devicepath,
                     "domain": domain,
                     "bus": bus,
@@ -604,36 +605,17 @@ class DomainPci():
 
         return pcidevices
 
-    def remove(self, argdomain, argbus, argslot, argfunction):
-        tree = ET.fromstring(self.vmXml)
-        hostdevs = tree.findall('./devices/hostdev')
-        for hostdev in hostdevs:
-            hostdevtype = hostdev.get('type')
-            if hostdevtype == 'pci':
-                source_address = hostdev.find('source/address')
-                xmldomain = int(source_address.get('domain'), 0)
-                xmlbus = int(source_address.get('bus'), 0)
-                xmlslot = int(source_address.get('slot'), 0)
-                xmlfunction = int(source_address.get('function'), 0)
+    def remove(self, domain, bus, slot, function):
+        domainpciedevices = self.get
+        for i in domainpciedevices:
+            if i['domain'] == domain and i['bus'] == bus and i['slot'] == slot and i['function'] == function:
+                pcidevicexml = i['xml']
+                self.domain.detachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
-                if xmldomain == argdomain and xmlbus == argbus and xmlslot == argslot and xmlfunction == argfunction:
-                    print("MATCH")
-                    pcidevicexml = ET.tostring(hostdev).decode()
-                    try:
-                        self.domain.detachDeviceFlags(
-                            pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return 'Succeed'
-                    except libvirt.libvirtError as e:
-                        return f'Error: {e}'
 
-    def add(self, argdomain, argbus, argslot, argfunction):
-        pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{argdomain}' bus='{argbus}' slot='{argslot}' function='{argfunction}'/></source></hostdev>"
-        try:
-            self.domain.attachDeviceFlags(
-                pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-            return 'Succeed'
-        except libvirt.libvirtError as e:
-            return f'Error: {e}'
+    def add(self, domain, bus, slot, function):
+        pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{domain}' bus='{bus}' slot='{slot}' function='{function}'/></source></hostdev>"
+        self.domain.attachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
 
 class DomainUsb():
@@ -1086,7 +1068,7 @@ class api_vm_manager_action(Resource):
                 video_type = None
 
             usbdevices = DomainUsb(domuuid=vmuuid).get
-            pcidevices = DomainPci(domuuid=vmuuid).get
+            pcidevices = DomainPcie(domuuid=vmuuid).get
 
             data = {
                 "name": domain.name(),
@@ -1405,6 +1387,30 @@ class api_vm_manager_action(Resource):
                         return str(e), 500
                 else:
                     return 'Action not found', 404
+            elif action.startswith("pcie"):
+                action = action.replace("pcie-", "")
+                if action == "add":
+                    print("adding pcie device to vm")
+                    domain = "0x" + data['domain']
+                    bus = "0x" + data['bus']
+                    slot = "0x" + data['slot']
+                    function = "0x" + data['function']
+                    print("adding pcie device to vm", domain, bus, slot, function)
+                    try:
+                        xml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+                elif action == "delete":
+                    domain = data['domain']
+                    bus = data['bus']
+                    slot = data['slot']
+                    function = data['function']
+                    print("deleting pcie device to vm", domain, bus, slot, function)
+                   
+                    DomainPcie(vmuuid).remove(domain=domain, bus=bus, slot=slot, function=function)
+                    return '', 204
+
             else:
                 return 'Action not found', 404
         else:
@@ -1721,7 +1727,7 @@ api.add_resource(api_host_system_info, '/api/host/system-info/<string:action>')
 class api_host_system_devices(Resource):
     def get(self, devicetype):
         if devicetype == "pcie":
-            return SystemPciDevices()
+            return SystemPcieDevices()
         elif devicetype == "scsi":
             disk_list = []
             myblkd = BlkDiskInfo()
