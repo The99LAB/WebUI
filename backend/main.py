@@ -508,7 +508,7 @@ def SystemUsbDevicesList():
     return devices
 
 
-def SystemPcieDevices():
+def HostPcieDevices():
     pci_devices = conn.listAllDevices(2)
     pcidevicesList = []
     for device in pci_devices:
@@ -582,7 +582,7 @@ class DomainPcie():
                 if romelem != None:
                     romfile = romelem.get('file')
 
-                for i in SystemPcieDevices():
+                for i in HostPcieDevices():
                     systempcidomain = str((i['domain']))
                     systempcibus = str((i['bus']))
                     systempcislot = str((i['slot']))
@@ -1753,7 +1753,7 @@ api.add_resource(api_host_system_info, '/api/host/system-info/<string:action>')
 class api_host_system_devices(Resource):
     def get(self, devicetype):
         if devicetype == "pcie":
-            return SystemPcieDevices()
+            return HostPcieDevices()
         elif devicetype == "scsi":
             disk_list = []
             myblkd = BlkDiskInfo()
