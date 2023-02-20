@@ -390,20 +390,18 @@
             </q-tab-panel>
             <q-tab-panel name="passthrough">
               <div v-for="usbdevice in usbdevicesList" :key="usbdevice">
-                <q-input model-value="USB Device" label="Type" readonly >
-                      <template v-slot:after>
-                        <q-btn
-                          color="primary"
-                          icon="delete"
-                          @click="usbdeviceDelete(usbdevice.productid, usbdevice.vendorid)"
-                        />
-                      </template>
-                    </q-input>
-                <q-input
-                  v-model="usbdevice.name"
-                  label="Name"
-                  readonly
-                />
+                <q-input model-value="USB Device" label="Type" readonly>
+                  <template v-slot:after>
+                    <q-btn
+                      color="primary"
+                      icon="delete"
+                      @click="
+                        usbdeviceDelete(usbdevice.productid, usbdevice.vendorid)
+                      "
+                    />
+                  </template>
+                </q-input>
+                <q-input v-model="usbdevice.name" label="Name" readonly />
                 <q-input
                   v-model="usbdevice.vendorid"
                   label="Vendor Id"
@@ -845,7 +843,7 @@ export default {
     usbdeviceAdd() {
       this.$refs.addUsbDevice.show(this.uuid);
     },
-    usbdeviceDelete(productid, vendorid){
+    usbdeviceDelete(productid, vendorid) {
       console.log("Deleting usb device");
       console.log(productid);
       console.log(vendorid);
@@ -862,7 +860,7 @@ export default {
             error.response.data,
           ]);
         });
-    }
+    },
   },
 };
 </script>
