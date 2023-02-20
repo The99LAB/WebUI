@@ -520,6 +520,8 @@ def SystemPciDevices():
             productid = product.get('id')
             productName = product.text
             if productName == None:
+                productName = "Unknown"
+            if productName == None:
                 productName = ""
             vendor = root.find('./capability/vendor')
             vendorid = vendor.get('id')
@@ -545,7 +547,8 @@ def SystemPciDevices():
                 "domain": domain, 
                 "bus": bus, 
                 "slot": slot, 
-                "function": function
+                "function": function,
+                "label": f"{path} {productName}"
             })
         except AttributeError:
             pass
