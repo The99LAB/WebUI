@@ -552,6 +552,8 @@ def SystemPcieDevices():
             })
         except AttributeError:
             pass
+    # sort by path
+    pcidevicesList = sorted(pcidevicesList, key=lambda k: k['path'])
     return pcidevicesList
 
 
