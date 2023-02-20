@@ -39,7 +39,9 @@ export default {
           }
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting USB devices list", [error]);
+          this.$refs.errorDialog.show("Error getting USB devices list", [
+            error,
+          ]);
         });
     },
     getSelectedUsbDevice() {

@@ -1,55 +1,55 @@
 <template>
-    <q-select
-      label="PCI Device"
-      v-model="selectedPciDevice"
-      :options="pciDevicesList"
-      option-label="label"
-    >
-        <template v-slot:option="scope">
-            <q-item v-bind="scope.itemProps">
-            <q-item-section>
-                <q-item-label>{{ scope.opt.label }}</q-item-label>
-            </q-item-section>
-            </q-item>
-        </template>
-    </q-select>
-    <ErrorDialog ref="errorDialog" />
+  <q-select
+    label="PCI Device"
+    v-model="selectedPciDevice"
+    :options="pciDevicesList"
+    option-label="label"
+  >
+    <template v-slot:option="scope">
+      <q-item v-bind="scope.itemProps">
+        <q-item-section>
+          <q-item-label>{{ scope.opt.label }}</q-item-label>
+        </q-item-section>
+      </q-item>
+    </template>
+  </q-select>
+  <ErrorDialog ref="errorDialog" />
 </template>
 <script>
-import ErrorDialog from 'src/components/ErrorDialog.vue';
+import ErrorDialog from "src/components/ErrorDialog.vue";
 
 export default {
-data() {
+  data() {
     return {
-    pciDevicesList: [],
-    selectedPciDevice: null,
+      pciDevicesList: [],
+      selectedPciDevice: null,
     };
-},
-components: {
+  },
+  components: {
     ErrorDialog,
-},
-methods: {
+  },
+  methods: {
     updatePciDevices() {
-    this.$api
+      this.$api
         .get("/host/system-devices/pcie")
         .then((response) => {
-        this.pciDevicesList = response.data;
-        if (this.pciDevicesList.length > 0) {
+          this.pciDevicesList = response.data;
+          if (this.pciDevicesList.length > 0) {
             this.selectedPciDevice = this.pciDevicesList[0];
-        }
+          }
         })
         .catch((error) => {
-        this.$refs.errorDialog.show("Error getting PCI devices list", [
+          this.$refs.errorDialog.show("Error getting PCI devices list", [
             error,
-        ]);
+          ]);
         });
     },
     getSelectedPciDevice() {
-    return this.selectedPciDevice;
+      return this.selectedPciDevice;
     },
-},
-mounted() {
+  },
+  mounted() {
     this.updatePciDevices();
-},
+  },
 };
 </script>
