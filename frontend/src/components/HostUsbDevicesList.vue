@@ -13,14 +13,20 @@
       </q-item>
     </template>
   </q-select>
+  <ErrorDialog ref="errorDialog" />
 </template>
 <script>
+import ErrorDialog from "src/components/ErrorDialog.vue";
+
 export default {
   data() {
     return {
       usbDevicesList: [],
       selectedUsbDevice: null,
     };
+  },
+  components: {
+    ErrorDialog,
   },
   methods: {
     updateUsbDevices() {
@@ -33,7 +39,7 @@ export default {
           }
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show("Error getting USB devices list", [error]);
         });
     },
     getSelectedUsbDevice() {
