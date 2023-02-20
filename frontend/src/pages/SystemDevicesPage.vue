@@ -44,6 +44,22 @@
               <p>{{ props.row.path }}</p>
             </div>
             <div class="row q-ma-sm text-body2">
+              <p class="text-weight-bold q-mr-sm">Domain:</p>
+              <p>{{ props.row.domain }}</p>
+            </div>
+            <div class="row q-ma-sm text-body2">
+              <p class="text-weight-bold q-mr-sm">Bus:</p>
+              <p>{{ props.row.bus }}</p>
+            </div>
+            <div class="row q-ma-sm text-body2">
+              <p class="text-weight-bold q-mr-sm">Slot:</p>
+              <p>{{ props.row.slot }}</p>
+            </div>
+            <div class="row q-ma-sm text-body2">
+              <p class="text-weight-bold q-mr-sm">Function:</p>
+              <p>{{ props.row.function }}</p>
+            </div>
+            <div class="row q-ma-sm text-body2">
               <p class="text-weight-bold q-mr-sm">Vendor ID:</p>
               <p>{{ props.row.vendorid }}</p>
             </div>

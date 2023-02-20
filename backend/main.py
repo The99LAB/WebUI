@@ -526,16 +526,27 @@ def SystemPciDevices():
             vendorName = vendor.text
             iommuGroup = root.find('./capability/iommuGroup').get('number')
             capability = root.find('./capability')
-            domain = capability.find('domain').text
-            bus = capability.find('bus').text
-            slot = capability.find('slot').text
-            function = capability.find('function').text
+            domain =  str(hex(int(capability.find('domain').text))).replace('0x', '')
+            bus = str(hex(int(capability.find('bus').text))).replace('0x', '')
+            slot =  str(hex(int(capability.find('slot').text))).replace('0x', '')
+            function =  str(hex(int(capability.find('function').text))).replace('0x', '')
             try:
                 driver = root.find('./driver/name').text
             except AttributeError:
                 driver = ""
-            pcidevicesList.append({"iommuGroup": int(iommuGroup), "path": path, "productName": productName, "productid": productid,
-                                  "vendorName": vendorName, "vendorid": vendorid, "driver": driver, "domain": domain, "bus": bus, "slot": slot, "function": function})
+            pcidevicesList.append({
+                "iommuGroup": int(iommuGroup), 
+                "path": path,
+                "productName": productName, 
+                "productid": productid,
+                "vendorName": vendorName, 
+                "vendorid": vendorid, 
+                "driver": driver, 
+                "domain": domain, 
+                "bus": bus, 
+                "slot": slot, 
+                "function": function
+            })
         except AttributeError:
             pass
     return pcidevicesList
@@ -556,20 +567,19 @@ class DomainPci():
             hostdevtype = hostdev.get('type')
             if hostdevtype == 'pci':
                 source_address = hostdev.find('source/address')
-                domain = int(source_address.get('domain'), 0)
-                bus = int(source_address.get('bus'), 0)
-                slot = int(source_address.get('slot'), 0)
-                function = int(source_address.get('function'), 0)
+                domain = str(hex(int(source_address.get('domain'), 0))).replace('0x', '')
+                bus = str(hex(int(source_address.get('bus'), 0))).replace('0x', '')
+                slot = str(hex(int(source_address.get('slot'), 0))).replace('0x', '')
+                function = str(hex(int(source_address.get('function'), 0))).replace('0x', '')
 
                 for i in SystemPciDevices():
-                    systempcidomain = int(i['domain'])
-                    systempcibus = int(i['bus'])
-                    systempcislot = int(i['slot'])
-                    systempcifunction = int(i['function'])
+                    systempcidomain = str((i['domain']))
+                    systempcibus = str((i['bus']))
+                    systempcislot = str((i['slot']))
+                    systempcifunction = str((i['function']))
                     deviceProductName = i['productName']
                     deviceVendorName = i['vendorName']
                     devicepath = i['path']
-
                     if systempcidomain == domain and systempcibus == bus and systempcislot == slot and systempcifunction == function:
                         foundSystemPciDevice = True
                         break
