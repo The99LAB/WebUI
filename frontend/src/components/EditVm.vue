@@ -415,7 +415,7 @@
                 <q-separator spaced="lg" inset />
               </div>
               <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
-                <q-input model-value="PCI Device" label="Type" readonly >
+                <q-input model-value="PCI Device" label="Type" readonly>
                   <template v-slot:after>
                     <q-btn
                       color="primary"
@@ -506,7 +506,6 @@
     ref="addPcieDevice"
     @pcie-device-add-finished="refreshData()"
   />
-
 </template>
 
 <script>

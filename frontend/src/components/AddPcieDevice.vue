@@ -43,10 +43,12 @@ export default {
     addPcieDevice() {
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-pcie-add", {
-          domain: this.$refs.hostPcieDevicesList.getSelectedPciDevice()['domain'],
-          bus: this.$refs.hostPcieDevicesList.getSelectedPciDevice()['bus'],
-          slot: this.$refs.hostPcieDevicesList.getSelectedPciDevice()['slot'],
-          function: this.$refs.hostPcieDevicesList.getSelectedPciDevice()['function'],
+          domain:
+            this.$refs.hostPcieDevicesList.getSelectedPciDevice()["domain"],
+          bus: this.$refs.hostPcieDevicesList.getSelectedPciDevice()["bus"],
+          slot: this.$refs.hostPcieDevicesList.getSelectedPciDevice()["slot"],
+          function:
+            this.$refs.hostPcieDevicesList.getSelectedPciDevice()["function"],
         })
         .then((response) => {
           this.$emit("pcie-device-add-finished");
@@ -55,7 +57,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error", [
             "Failed to add PCIe device.",
-            error.response.data
+            error.response.data,
           ]);
         });
     },
