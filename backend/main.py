@@ -542,14 +542,14 @@ class DomainPcie():
     def romfile(self, xml, romfile):
         origxml = xml
         tree = ET.fromstring(xml)
-        rom = tree.find('rom')
+        rom_elem = tree.find('rom')
         if romfile == "":
-            if rom != None:
-                tree.remove(rom)
+            if rom_elem != None:
+                rom_elem.attrib.pop('file')
         else:
-            if rom == None:
-                rom = ET.SubElement(tree, 'rom')
-            rom.set('file', romfile)
+            if rom_elem == None:
+                rom_elem = ET.SubElement(tree, 'rom')
+            rom_elem.set('file', romfile)
 
         xml = ET.tostring(tree).decode('utf-8')
         self.domain.detachDeviceFlags(origxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
