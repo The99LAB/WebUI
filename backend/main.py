@@ -744,7 +744,7 @@ class create_vm():
             {creatediskxml if self.disk else ""}
             <graphics type='vnc' port='-1'/>
             <video>
-            <model type='qxl'/>
+            <model type='virtio'/>
             </video>
             <input type='tablet' bus='usb'/>
         </devices>
