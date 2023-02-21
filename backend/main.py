@@ -957,6 +957,8 @@ class api_vm_manager_action(Resource):
         elif action == "data":
             print("getting vm data")
             domain_xml = ET.fromstring(domain_xml)
+            # get cpu model from xml
+            cpu_model = domain_xml.find('cpu').get('mode')
             # get vcpus from xml
             vcpu = domain_xml.find('vcpu').text
             try:
@@ -1016,6 +1018,7 @@ class api_vm_manager_action(Resource):
                 "name": domain.name(),
                 "autostart": autostart,
                 "current_vcpu": current_vcpu,
+                "cpu_model": cpu_model,
                 "vcpu": vcpu,
                 "current_vcpu": current_vcpu,
                 "custom_topology": custom_topology,
@@ -1116,6 +1119,7 @@ class api_vm_manager_action(Resource):
 
             # edit-cpu
             elif action == "cpu":
+                model = data['cpu_model']
                 vcpu = str(data['vcpu'])
                 current_vcpu = str(data['current_vcpu'])
                 custom_topology = data['custom_topology']
@@ -1124,6 +1128,13 @@ class api_vm_manager_action(Resource):
                 cores = str(data['topology_cores'])
                 threads = str(data['topology_threads'])
                 vm_xml = ET.fromstring(domain.XMLDesc(0))
+                # set cpu model
+                cpu_elem  = vm_xml.find('cpu')
+                cpu_elem.set('mode', model)
+                # remove migratable from cpu element
+                if cpu_elem.attrib.get('migratable') != None:
+                    cpu_elem.attrib.pop('migratable')
+                
 
                 if custom_topology:
                     # new dict for topology

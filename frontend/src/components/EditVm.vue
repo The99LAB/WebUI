@@ -51,6 +51,13 @@
               />
             </q-tab-panel>
             <q-tab-panel name="cpu">
+              <!-- cpu model -->
+              <q-select
+                label="CPU Model"
+                v-model="cpu_model"
+                :options="cpuModelOptions"
+                @update:model-value="calculateCpu"
+              />
               <q-input
                 label="Current vCPU"
                 v-model="currentVcpu"
@@ -575,6 +582,8 @@ export default {
       networkDeleteNumber: null,
       usbdevicesList: [],
       pcidevicesList: [],
+      cpuModelOptions: ["host-model", "host-passthrough"],
+      cpu_model: null,
       currentVcpu: null,
       vcpu: null,
       customTopology: false,
@@ -616,6 +625,7 @@ export default {
           this.memory_maxMemory = response.data.memory_max;
           this.memory_maxMemoryUnit = response.data.memory_max_unit;
           this.currentVcpu = response.data.current_vcpu;
+          this.cpu_model = response.data.cpu_model;
           this.vcpu = response.data.vcpu;
           this.customTopology = response.data.custom_topology;
           this.topologySockets = response.data.topology_sockets;
@@ -677,6 +687,7 @@ export default {
         this.$api
           .post("/vm-manager/" + this.uuid + "/edit-cpu", {
             vcpu: this.vcpu,
+            cpu_model: this.cpu_model,
             current_vcpu: this.currentVcpu,
             custom_topology: this.customTopology,
             topology_sockets: this.topologySockets,
