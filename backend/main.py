@@ -35,12 +35,12 @@ class CustomFlask(Flask):
 app = CustomFlask(__name__, static_url_path='')
 CORS(app, resources={r"*": {"origins": "*"}})
 api = Api(app)
-if "production" in sys.argv:
-    mode="production"
-else:
-    mode="development"
+mode = "production"
+if __name__ == '__main__':
+    mode = "development"
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode=f"{'threading' if mode == 'development' else 'eventlet'}")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+conn = libvirt.open('qemu:///system')
 
 
 def getvmstate(uuid):
@@ -1681,8 +1681,4 @@ api.add_resource(api_host_system_devices,
                  '/api/host/system-devices/<string:devicetype>')
 
 if __name__ == '__main__':
-    conn = libvirt.open('qemu:///system')
-    if mode == "production":
-        socketio.run(app, host="0.0.0.0", port=80, debug=True)
-    else:
-        app.run(debug=True, host="0.0.0.0")
+    app.run(debug=True, host="0.0.0.0")
