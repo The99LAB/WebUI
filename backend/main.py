@@ -487,8 +487,10 @@ class DomainPcie():
                 function = str(hex(int(source_address.get('function'), 0))).replace('0x', '')
                 romelem = hostdev.find('rom')
                 romfile = ""
+                customRomFile = False
                 if romelem != None:
                     romfile = romelem.get('file')
+                    customRomFile = True
 
                 for i in HostPcieDevices():
                     systempcidomain = str((i['domain']))
@@ -515,6 +517,7 @@ class DomainPcie():
                     "function": function,
                     "productName": deviceProductName,
                     "vendorName": deviceVendorName,
+                    "customRomFile": customRomFile,
                     "romfile": romfile
                 })
 
@@ -527,17 +530,27 @@ class DomainPcie():
                 pcidevicexml = i['xml']
                 self.domain.detachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
-    def add(self, domain, bus, slot, function):
-        pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{domain}' bus='{bus}' slot='{slot}' function='{function}'/></source></hostdev>"
+    def add(self, domain, bus, slot, function, romfile=None):
+        print("inside add", romfile)
+        if romfile == None:
+            pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{domain}' bus='{bus}' slot='{slot}' function='{function}'/></source></hostdev>"
+        else:
+            pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{domain}' bus='{bus}' slot='{slot}' function='{function}'/></source>/><rom file='{romfile}'/></hostdev>"
+
         self.domain.attachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
     def romfile(self, xml, romfile):
         origxml = xml
         tree = ET.fromstring(xml)
         rom = tree.find('rom')
-        if rom == None:
-            rom = ET.SubElement(tree, 'rom')
-        rom.set('file', romfile)
+        if romfile == "":
+            if rom != None:
+                tree.remove(rom)
+        else:
+            if rom == None:
+                rom = ET.SubElement(tree, 'rom')
+            rom.set('file', romfile)
+
         xml = ET.tostring(tree).decode('utf-8')
         self.domain.detachDeviceFlags(origxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
         # if xml fails to attach, revert to original xml
@@ -1316,6 +1329,8 @@ class api_vm_manager_action(Resource):
                         return str(e), 500
                 else:
                     return 'Action not found', 404
+            
+            # edit-pcie-action
             elif action.startswith("pcie"):
                 action = action.replace("pcie-", "")
                 if action == "add":
@@ -1323,8 +1338,13 @@ class api_vm_manager_action(Resource):
                     bus = "0x" + data['bus']
                     slot = "0x" + data['slot']
                     function = "0x" + data['function']
+                    custom_rom_file = data['customRomFile']
+                    rom_file = data['romFile']
                     try:
-                        xml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function)
+                        if custom_rom_file:
+                            devicexml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function, romfile=rom_file)
+                        else:
+                            xml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function)
                         return '', 204
                     except Exception as e:
                         return str(e), 500

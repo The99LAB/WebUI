@@ -9,6 +9,13 @@
       <q-separator spaced="lg" inset />
       <q-card-section class="q-pt-none q-px-xl">
         <HostPcieDevicesList ref="hostPcieDevicesList" />
+        <q-toggle v-model="customRomFile" label="Custom ROM file" left-label/>
+        <q-input
+          v-if="customRomFile"
+          v-model="romFile"
+          label="ROM file"
+          :rules="[val => !!val || 'ROM file is required']"
+        />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Finish" @click="addPcieDevice()" />
@@ -28,6 +35,8 @@ export default {
     return {
       visible: ref(false),
       uuid: null,
+      customRomFile: false,
+      romFile: "",
     };
   },
   emits: ["pcie-device-add-finished"],
@@ -49,6 +58,8 @@ export default {
           slot: this.$refs.hostPcieDevicesList.getSelectedPciDevice()["slot"],
           function:
             this.$refs.hostPcieDevicesList.getSelectedPciDevice()["function"],
+          customRomFile: this.customRomFile,
+          romFile: this.romFile,
         })
         .then((response) => {
           this.$emit("pcie-device-add-finished");

@@ -446,8 +446,9 @@
                   label="Product Name"
                   readonly
                 />
+                <q-toggle v-model="pcidevice.customRomFile" label="Rom File" @update:model-value="(val) => pcieToggleRomFile(val, pcidevice.xml)"/>
                 <q-input
-                  v-if="pcidevice.romfile != ''"
+                  v-if="pcidevice.customRomFile"
                   v-model="pcidevice.romfile"
                   label="Rom File"
                 >
@@ -931,6 +932,11 @@ export default {
           ]);
         });
     },
+    pcieToggleRomFile(value, xml){
+      if (value == false){
+        this.pcieChangeRomFile(xml, "");
+      }
+    }
   },
 };
 </script>
