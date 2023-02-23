@@ -34,7 +34,7 @@ export default {
         .get("/host/system-devices/usb")
         .then((response) => {
           this.usbDevicesList = response.data;
-          if (this.usbDevicesList.length > 0) {
+          if (this.usbDevicesList.length > 0 && this.selectedUsbDevice == null) {
             this.selectedUsbDevice = this.usbDevicesList[0];
           }
         })
@@ -48,12 +48,21 @@ export default {
       return this.selectedUsbDevice;
     },
     getSelectedUsbDeviceName() {
+      if (this.selectedUsbDevice == null) {
+        return null;
+      }
       return this.selectedUsbDevice["name"];
     },
     getSelectedUsbVendorId() {
+      if (this.selectedUsbDevice == null) {
+        return null;
+      }
       return this.selectedUsbDevice["vendorid"];
     },
     getSelectedUsbProductId() {
+      if (this.selectedUsbDevice == null) {
+        return null;
+      }
       return this.selectedUsbDevice["productid"];
     },
   },

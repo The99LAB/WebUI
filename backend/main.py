@@ -595,15 +595,23 @@ class DomainUsb():
                 })
         return usbdevices
 
-    def add(self, vendorid, productid):
+    def add(self, vendorid, productid, hotplug=False):
         xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
-        self.domain.attachDeviceFlags(
-            xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        if hotplug:
+            self.domain.attachDeviceFlags(
+                xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)
+        else:
+            self.domain.attachDeviceFlags(
+                xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
-    def remove(self, vendorid, productid):
+    def remove(self, vendorid, productid, hotplug=False):
         xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
-        self.domain.detachDeviceFlags(
-            xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        if hotplug:
+            self.domain.detachDeviceFlags(
+                xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)
+        else:
+            self.domain.detachDeviceFlags(
+                xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
 
 class domainNetworkInterface():
@@ -882,6 +890,26 @@ socketio.on_namespace(api_socketio('/api'))
 
 
 class api_vm_manager(Resource):
+    def get(self, action):
+        if action == "running":
+            domainList = []
+            for domain in conn.listAllDomains():
+                if domain.isActive():
+                    domainList.append({
+                        "name": domain.name(),
+                        "uuid": domain.UUIDString(),
+                    })
+            return domainList
+        elif action == "all":
+            domainList = []
+            for domain in conn.listAllDomains():
+                domainList.append({
+                    "name": domain.name(),
+                    "uuid": domain.UUIDString(),
+                })
+            return domainList
+        else:
+            return {"error": "Invalid action"}
     def post(self, action):
         if action == "create":
             name = request.form['name']
@@ -1317,7 +1345,31 @@ class api_vm_manager_action(Resource):
                         return str(e), 500
                 else:
                     return 'Action not found', 404
-                
+
+            # edit-usbhotplug-action
+            elif action.startswith("usbhotplug"):
+                action = action.replace("usbhotplug-", "")
+                if action == "add":
+                    product_id = data['productid']
+                    vendor_id = data['vendorid']
+                    print("add usb hotplug", product_id, vendor_id)
+                    try:
+                        xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+                elif action == "delete":
+                    product_id = data['productid']
+                    vendor_id = data['vendorid']
+                    print("delete usb hotplug", product_id, vendor_id)
+                    try:
+                        xml = DomainUsb(vmuuid).remove(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+                else:
+                    return 'Action not found', 404
+
             # edit-usb-action
             elif action.startswith("usb"):
                 action = action.replace("usb-", "")
@@ -1340,7 +1392,7 @@ class api_vm_manager_action(Resource):
                         return str(e), 500
                 else:
                     return 'Action not found', 404
-            
+ 
             # edit-pcie-action
             elif action.startswith("pcie"):
                 action = action.replace("pcie-", "")
