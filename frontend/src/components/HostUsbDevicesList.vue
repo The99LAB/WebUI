@@ -34,7 +34,10 @@ export default {
         .get("/host/system-devices/usb")
         .then((response) => {
           this.usbDevicesList = response.data;
-          if (this.usbDevicesList.length > 0 && this.selectedUsbDevice == null) {
+          if (
+            this.usbDevicesList.length > 0 &&
+            this.selectedUsbDevice == null
+          ) {
             this.selectedUsbDevice = this.usbDevicesList[0];
           }
         })
