@@ -658,10 +658,7 @@ export default {
         });
     },
     applyEdits() {
-      console.log("Applying edits...");
       if (this.tab == "memory") {
-        console.log("Memory tab");
-        console.log("uuid: " + this.uuid);
         this.$api
           .post("/vm-manager/" + this.uuid + "/edit-memory", {
             memory_min: this.memory_minMemory,
@@ -706,7 +703,6 @@ export default {
       } else if (this.tab == "graphics") {
         console.log("Graphics tab");
       } else if (this.tab == "xml") {
-        console.log("XML tab");
         this.$api
           .post("/vm-manager/" + this.uuid + "/edit-xml", {
             xml: this.xml,
@@ -845,7 +841,6 @@ export default {
       }
     },
     networkAdd() {
-      console.log("Adding network");
       this.$refs.addNetwork.show(this.uuid);
     },
     networkDelete(networknumber) {
@@ -895,9 +890,6 @@ export default {
       this.$refs.addUsbDevice.show(this.uuid);
     },
     usbdeviceDelete(productid, vendorid) {
-      console.log("Deleting usb device");
-      console.log(productid);
-      console.log(vendorid);
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-usb-delete", {
           productid: productid,
@@ -916,8 +908,6 @@ export default {
       this.$refs.addPcieDevice.show(this.uuid);
     },
     pciedeviceDelete(device_domain, device_bus, device_slot, device_function) {
-      console.log("Deleting pcie device");
-      console.log(device_domain, device_bus, device_slot, device_function);
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-pcie-delete", {
           domain: device_domain,
