@@ -33,5 +33,21 @@ export default route(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
 
+  // check if user is logged in
+  Router.beforeEach((to, from, next) => {
+    var token = localStorage.getItem("jwt-token");
+    if (token == "" || token == null || token == undefined) {
+      if (to.path == "/login") {
+        next();
+      }
+      else {
+        next("/login");
+      }
+    }
+    else{
+      next();
+    }
+  });
+
   return Router;
 });

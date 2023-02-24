@@ -14,7 +14,15 @@ if (process.env.NODE_ENV === "development") {
     "/api";
 }
 
-const socket = io(SOCKETIO_ENDPOINT);
+const socket = io(SOCKETIO_ENDPOINT, {
+  transportOptions: {
+    polling: {
+      extraHeaders: {
+        Authorization: "Bearer " + localStorage.getItem("jwt-token"),
+      }
+    }
+  },
+});
 
 export default boot(({ app }) => {
   app.config.globalProperties.$socket = socket;

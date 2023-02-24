@@ -67,7 +67,6 @@ export default {
     },
   },
   mounted() {
-    console.log("DownloadIsoPage mounted");
     this.$socket.on("downloadIsoError", (msg) => {
       this.$refs.errorDialog.show("Error Downloading ISO", [msg]);
     });
@@ -82,7 +81,6 @@ export default {
     });
   },
   unmounted() {
-    console.log("DownloadIsoPage unmounted");
     this.$socket.off("downloadIsoError");
     this.$socket.off("downloadIsoProgress");
     this.$socket.off("downloadIsoComplete");

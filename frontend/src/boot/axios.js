@@ -22,6 +22,30 @@ if (process.env.NODE_ENV === "development") {
 
 const api = axios.create({ baseURL: API_ENDPOINT });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("jwt-token");
+  if (token) {
+    config.headers["Authorization"] = "Bearer " + token;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response.status === 401) {
+      localStorage.removeItem("jwt-token");
+
+      // if current page is not login page, reload page, which will redirect to login page
+      if (!window.location.href.endsWith("/login")) {
+        window.location.reload();
+      }
+      
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default boot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
 

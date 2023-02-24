@@ -1,13 +1,11 @@
-from flask import Flask, render_template, jsonify, request, redirect
-from flask_cors import CORS, cross_origin
-from flask_restful import reqparse, abort, Api, Resource
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
+from flask_restful import Api, Resource
 import psutil
 import libvirt
 from xml.etree import ElementTree as ET
-from time import sleep
 import re
 import os
-import json
 from string import ascii_lowercase
 from flask_socketio import SocketIO, Namespace, emit
 import subprocess
@@ -16,7 +14,8 @@ from blkinfo import BlkDiskInfo
 import cpuinfo
 import distro
 import requests
-import sys
+from flask_jwt_extended import create_access_token, jwt_required, JWTManager
+import pam
 
 
 """
@@ -40,8 +39,25 @@ if __name__ == '__main__':
     mode = "development"
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode=f"{'threading' if mode == 'development' else 'eventlet'}")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+jwt = JWTManager(app)
 conn = libvirt.open('qemu:///system')
 
+@app.route('/api/login', methods=['POST'])
+def login_user():
+    username = request.json['username']
+    password = request.json['password']
+
+    # if username and/or password are not in the request, return 400
+    if not username:
+        return "Missing username parameter", 400
+    if not password:
+        return "Missing password parameter", 400
+
+    if pam.authenticate(username=username, password=password):
+        access_token = create_access_token(identity=username)
+        return jsonify(access_token=access_token)
+    else:
+        return "Incorrect password and/or username!", 401
 
 def getvmstate(uuid):
     domain = conn.lookupByUUIDString(uuid)
@@ -68,7 +84,6 @@ def getvmstate(uuid):
 
 
 def getvmresults():
-    print("getvmresults")
     domains = conn.listAllDomains(0)
     if len(domains) != 0:
         results = []
@@ -830,22 +845,27 @@ def index():
 
 
 class api_socketio(Namespace):
+    @jwt_required()
     def on_connect(self):
         print("Client connected to test namespace\n\n")
 
+    @jwt_required()
     def on_get_cpu_overall_usage(self):
         # print("cpu_overall_usage")
         cpu_overall = psutil.cpu_percent()
         emit("cpu_overall_usage", cpu_overall)
 
+    @jwt_required()
     def on_get_mem_usage(self):
         # print("mem_usage")
         emit("mem_usage", psutil.virtual_memory().percent)
 
+    @jwt_required()
     def on_get_vm_results(self):
         # print("vm_results")
         emit("vm_results", getvmresults())
 
+    @jwt_required()
     def on_download_iso(self, message):
         url = message['url']
         filename = message['fileName']
@@ -890,6 +910,7 @@ socketio.on_namespace(api_socketio('/api'))
 
 
 class api_vm_manager(Resource):
+    @jwt_required()
     def get(self, action):
         if action == "running":
             domainList = []
@@ -910,6 +931,8 @@ class api_vm_manager(Resource):
             return domainList
         else:
             return {"error": "Invalid action"}
+    
+    @jwt_required()
     def post(self, action):
         if action == "create":
             name = request.form['name']
@@ -977,6 +1000,7 @@ api.add_resource(api_vm_manager, '/api/vm-manager/<string:action>')
 
 
 class api_vm_manager_action(Resource):
+    @jwt_required()
     def get(self, vmuuid, action):
         domain = conn.lookupByUUIDString(vmuuid)
         domain_xml = domain.XMLDesc(0)
@@ -1073,6 +1097,7 @@ class api_vm_manager_action(Resource):
         else:
             return 'Action not found', 404
 
+    @jwt_required()
     def post(self, vmuuid, action):
         domain = conn.lookupByUUIDString(vmuuid)
         if action == "start":
@@ -1439,6 +1464,7 @@ api.add_resource(api_vm_manager_action,
 
 
 class api_storage_pool(Resource):
+    @jwt_required()
     def get(self):
         storage_pools = []
         for pool in conn.listAllStoragePools():
@@ -1512,6 +1538,7 @@ class api_storage_pool(Resource):
         storage_pools = sorted(storage_pools, key=lambda k: k['name'])
         return storage_pools
 
+    @jwt_required()
     def post(self):
         pool_name = request.form['name']
         pool_type = request.form['type']
@@ -1543,6 +1570,7 @@ api.add_resource(api_storage_pool, '/api/storage-pools')
 
 
 class api_storage_pool_action(Resource):
+    @jwt_required()
     def get(self, pooluuid, action):
         if action == "volumes":
             pool = conn.storagePoolLookupByUUIDString(pooluuid)
@@ -1567,6 +1595,8 @@ class api_storage_pool_action(Resource):
                     }
                     pool_volumes.append(_volume)
             return pool_volumes
+        
+    @jwt_required()
     def post(self, pooluuid, action):
         try:
             pool = conn.storagePoolLookupByUUIDString(pooluuid)
@@ -1599,6 +1629,7 @@ api.add_resource(api_storage_pool_action,
 
 
 class api_storage_pool_volumes(Resource):
+    @jwt_required()
     def delete(self, pooluuid, volumename):
         print("removing volume with name: " +
               volumename + "on pool with uuid: " + pooluuid)
@@ -1610,6 +1641,7 @@ class api_storage_pool_volumes(Resource):
         except libvirt.libvirtError as e:
             return str(e), 500
 
+    @jwt_required()
     def post(self, pooluuid, volumename):
         print("creating volume with name: " +
               volumename + "on pool with uuid: " + pooluuid)
@@ -1650,6 +1682,7 @@ api.add_resource(api_storage_pool_volumes,
 
 
 class api_networks(Resource):
+    @jwt_required()
     def get(self):
         # get all networks from libvirt
         networks = conn.listAllNetworks()
@@ -1685,6 +1718,7 @@ class api_networks(Resource):
 api.add_resource(api_networks, '/api/networks')
 
 class api_host_power(Resource):
+    @jwt_required()
     def post(self, powermsg):
         if powermsg == "shutdown":
             shutdown_result = subprocess.run(
@@ -1706,6 +1740,7 @@ api.add_resource(api_host_power, '/api/host/power/<string:powermsg>')
 
 
 class api_host_system_info(Resource):
+    @jwt_required()
     def get(self, action):
         if action == "all":
             sysInfo = ET.fromstring(conn.getSysinfo(0))
@@ -1728,7 +1763,8 @@ class api_host_system_info(Resource):
             }
         else:
             return 'Action not found', 404
-
+    
+    @jwt_required()
     def post(self, action):
         if action == "hostname":
             # print("request to change hostname")
@@ -1737,11 +1773,11 @@ class api_host_system_info(Resource):
         else:
             return 'Action not found', 404
 
-
 api.add_resource(api_host_system_info, '/api/host/system-info/<string:action>')
 
 
 class api_host_system_devices(Resource):
+    @jwt_required()
     def get(self, devicetype):
         if devicetype == "pcie":
             return HostPcieDevices()
