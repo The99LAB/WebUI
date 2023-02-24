@@ -151,20 +151,6 @@ export default defineComponent({
   },
   mounted() {
     this.getHostName();
-    this.$socket.on("connect_error", (msg) => {
-      this.$refs.errorDialog.show("Connection Error", [
-        "Could not connect to the backend server.",
-        msg,
-      ]);
-      this.$socket.on("connect", () => {
-        this.$refs.errorDialog.hide();
-        this.$socket.off("connect");
-      });
-    });
-  },
-  unmounted() {
-    this.$socket.off("connect_error");
-    this.$socket.off("connect");
   },
 });
 </script>

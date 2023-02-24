@@ -1775,6 +1775,16 @@ class api_host_system_info(Resource):
 
 api.add_resource(api_host_system_info, '/api/host/system-info/<string:action>')
 
+class api_host_state(Resource):
+    @jwt_required()
+    def get(self, action):
+        if action == "dashboard":
+            return {
+                "cpuOverall": psutil.cpu_percent(),
+                "memory": psutil.virtual_memory().percent
+            }
+
+api.add_resource(api_host_state, '/api/host/state/<string:action>')
 
 class api_host_system_devices(Resource):
     @jwt_required()

@@ -42,37 +42,41 @@ export default {
       loadingVisible: true,
     };
   },
+  methods: {
+    get_data(){
+      this.$api
+        .get("/host/state/dashboard")
+        .then((response) => {
+          this.cpu_progress = response.data.cpuOverall;
+          this.cpu_progress_text = response.data.cpuOverall + "%";
+          this.mem_progress = response.data.memory;
+          this.mem_progress_text = response.data.memory + "%";
+          this.loadingVisible = false;
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting dashboard data", [error])
+        });
+    }
+  },
   mounted() {
-    this.$socket.emit("get_cpu_overall_usage");
-    this.$socket.emit("get_mem_usage");
-
+    this.get_data();
+    
     this.cpuinterval = setInterval(() => {
-      this.$socket.emit("get_cpu_overall_usage");
+      this.get_data();
     }, 1000);
 
-    this.meminterval = setInterval(() => {
-      this.$socket.emit("get_mem_usage");
-    }, 1000);
-
-    this.$socket.on("cpu_overall_usage", (msg) => {
-      this.cpu_progress = msg;
-      this.cpu_progress_text = msg + "%";
-    });
-    this.$socket.on("mem_usage", (msg) => {
-      this.mem_progress = msg;
-      this.mem_progress_text = msg + "%";
-      if (this.cpu_progress != 0 && this.mem_progress != 0) {
-        this.loadingVisible = false;
-      }
-    });
+    // this.meminterval = setInterval(() => {
+    //   if (this.socket.connected){
+    //     this.$socket.emit("get_mem_usage");
+    //   }
+    // }, 1000);
   },
   unmounted() {
-    this.$socket.off("cpu_overall_usage");
-    this.$socket.off("mem_usage");
+
   },
   beforeUnmount() {
-    clearInterval(this.cpuinterval);
-    clearInterval(this.meminterval);
+    // clearInterval(this.cpuinterval);
+    // clearInterval(this.meminterval);
   },
 };
 </script>
