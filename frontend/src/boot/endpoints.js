@@ -19,8 +19,8 @@ const socket = io(SOCKETIO_ENDPOINT, {
     polling: {
       extraHeaders: {
         Authorization: "Bearer " + localStorage.getItem("jwt-token"),
-      }
-    }
+      },
+    },
   },
 });
 

@@ -39,12 +39,10 @@ export default route(function (/* { store, ssrContext } */) {
     if (token == "" || token == null || token == undefined) {
       if (to.path == "/login") {
         next();
-      }
-      else {
+      } else {
         next("/login");
       }
-    }
-    else{
+    } else {
       next();
     }
   });

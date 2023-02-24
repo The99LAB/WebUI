@@ -19,7 +19,7 @@
           icon="power_settings_new"
           @click="showPowerMenu()"
         />
-        <q-btn dense flat round icon="logout" @click="logout()"/>
+        <q-btn dense flat round icon="logout" @click="logout()" />
       </q-toolbar>
     </q-header>
 
@@ -145,8 +145,8 @@ export default defineComponent({
         });
     },
     logout() {
-      localStorage.setItem("jwt-token", "")
-      this.$router.push({ path: '/login' })
+      localStorage.setItem("jwt-token", "");
+      this.$router.push({ path: "/login" });
     },
   },
   mounted() {

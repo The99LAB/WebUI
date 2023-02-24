@@ -40,7 +40,6 @@ api.interceptors.response.use(
       if (!window.location.href.endsWith("/login")) {
         window.location.reload();
       }
-      
     }
     return Promise.reject(error);
   }
