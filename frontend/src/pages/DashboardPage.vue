@@ -43,7 +43,7 @@ export default {
     };
   },
   methods: {
-    get_data(){
+    get_data() {
       this.$api
         .get("/host/state/dashboard")
         .then((response) => {
@@ -54,13 +54,13 @@ export default {
           this.loadingVisible = false;
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting dashboard data", [error])
+          this.$refs.errorDialog.show("Error getting dashboard data", [error]);
         });
-    }
+    },
   },
   mounted() {
     this.get_data();
-    
+
     this.cpuinterval = setInterval(() => {
       this.get_data();
     }, 1000);
@@ -71,9 +71,7 @@ export default {
     //   }
     // }, 1000);
   },
-  unmounted() {
-
-  },
+  unmounted() {},
   beforeUnmount() {
     // clearInterval(this.cpuinterval);
     // clearInterval(this.meminterval);
