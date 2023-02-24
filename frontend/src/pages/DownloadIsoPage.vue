@@ -43,6 +43,7 @@
 import StoragePoolList from "src/components/StoragePoolList.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import { ref } from "vue";
+import io from "socket.io-client";
 
 export default {
   data() {
@@ -65,6 +66,17 @@ export default {
         storagePool: this.$refs.storagePool.getSelectedPool(),
       });
     },
+  },
+  created(){
+    this.socket = io(this.$SOCKETIO_ENDPOINT, {
+      transportOptions: {
+        polling: {
+          extraHeaders: {
+            Authorization: "Bearer " + localStorage.getItem("jwt-token"),
+          },
+        },
+      },
+    });
   },
   mounted() {
     this.$socket.on("downloadIsoError", (msg) => {

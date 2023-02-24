@@ -220,19 +220,29 @@ export default {
     createVm() {
       this.$refs.createVm.show();
     },
+    getData() {
+      this.$api.
+      get("vm-manager/all")
+      .then((response) => {
+        this.rows = response.data;
+        this.vmTableLoading = false;
+      })
+      .catch((error) => {
+        this.$refs.errorDialog.show("Error getting VMs", [
+          "Error: " + error,
+        ]);
+      });
+
+    }
   },
   mounted() {
-    this.$socket.emit("get_vm_results");
+    this.getData();
     this.vmresultInterval = setInterval(() => {
-      this.$socket.emit("get_vm_results");
+      this.getData();
     }, 1000);
-    this.$socket.on("vm_results", (msg) => {
-      this.rows = msg;
-      this.vmTableLoading = false;
-    });
+    
   },
   unmounted() {
-    this.$socket.off("vm_results");
     this.vmTableLoading = false;
   },
   beforeUnmount() {

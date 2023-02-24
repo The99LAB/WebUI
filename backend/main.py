@@ -922,13 +922,7 @@ class api_vm_manager(Resource):
                     })
             return domainList
         elif action == "all":
-            domainList = []
-            for domain in conn.listAllDomains():
-                domainList.append({
-                    "name": domain.name(),
-                    "uuid": domain.UUIDString(),
-                })
-            return domainList
+            return getvmresults()
         else:
             return {"error": "Invalid action"}
     

@@ -60,21 +60,13 @@ export default {
   },
   mounted() {
     this.get_data();
-
-    this.cpuinterval = setInterval(() => {
+    this.dataInterval = setInterval(() => {
       this.get_data();
     }, 1000);
 
-    // this.meminterval = setInterval(() => {
-    //   if (this.socket.connected){
-    //     this.$socket.emit("get_mem_usage");
-    //   }
-    // }, 1000);
   },
-  unmounted() {},
   beforeUnmount() {
-    // clearInterval(this.cpuinterval);
-    // clearInterval(this.meminterval);
+    clearInterval(this.dataInterval);
   },
 };
 </script>
