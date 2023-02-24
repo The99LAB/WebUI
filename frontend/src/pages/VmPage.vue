@@ -221,26 +221,22 @@ export default {
       this.$refs.createVm.show();
     },
     getData() {
-      this.$api.
-      get("vm-manager/all")
-      .then((response) => {
-        this.rows = response.data;
-        this.vmTableLoading = false;
-      })
-      .catch((error) => {
-        this.$refs.errorDialog.show("Error getting VMs", [
-          "Error: " + error,
-        ]);
-      });
-
-    }
+      this.$api
+        .get("vm-manager/all")
+        .then((response) => {
+          this.rows = response.data;
+          this.vmTableLoading = false;
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting VMs", ["Error: " + error]);
+        });
+    },
   },
   mounted() {
     this.getData();
     this.vmresultInterval = setInterval(() => {
       this.getData();
     }, 1000);
-    
   },
   unmounted() {
     this.vmTableLoading = false;

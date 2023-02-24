@@ -63,7 +63,6 @@ export default {
     this.dataInterval = setInterval(() => {
       this.get_data();
     }, 1000);
-
   },
   beforeUnmount() {
     clearInterval(this.dataInterval);

@@ -67,7 +67,7 @@ export default {
       });
     },
   },
-  created(){
+  created() {
     this.socket = io(this.$SOCKETIO_ENDPOINT, {
       transportOptions: {
         polling: {
