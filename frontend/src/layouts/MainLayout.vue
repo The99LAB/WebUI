@@ -151,6 +151,6 @@ export default defineComponent({
   },
   created() {
     this.getHostName();
-  }
+  },
 });
 </script>
