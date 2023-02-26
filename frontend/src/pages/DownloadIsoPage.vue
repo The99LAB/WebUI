@@ -79,23 +79,24 @@ export default {
     });
   },
   mounted() {
-    this.$socket.on("downloadIsoError", (msg) => {
+    this.socket.on("downloadIsoError", (msg) => {
       this.$refs.errorDialog.show("Error Downloading ISO", [msg]);
     });
-    this.$socket.on("downloadIsoProgress", (msg) => {
+    this.socket.on("downloadIsoProgress", (msg) => {
       this.showProgressBar = true;
       this.progress = msg / 100;
     });
-    this.$socket.on("downloadIsoComplete", (msg) => {
+    this.socket.on("downloadIsoComplete", (msg) => {
       this.showProgressBar = false;
       this.progress = 0;
       this.$refs.errorDialog.show("ISO Download Complete", msg);
     });
   },
   unmounted() {
-    this.$socket.off("downloadIsoError");
-    this.$socket.off("downloadIsoProgress");
-    this.$socket.off("downloadIsoComplete");
+    this.socket.off("downloadIsoError");
+    this.socket.off("downloadIsoProgress");
+    this.socket.off("downloadIsoComplete");
+    this.socket.disconnect();
   },
 };
 </script>
