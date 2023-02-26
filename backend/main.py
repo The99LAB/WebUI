@@ -847,23 +847,7 @@ def index():
 class api_socketio(Namespace):
     @jwt_required()
     def on_connect(self):
-        print("Client connected to test namespace\n\n")
-
-    @jwt_required()
-    def on_get_cpu_overall_usage(self):
-        # print("cpu_overall_usage")
-        cpu_overall = psutil.cpu_percent()
-        emit("cpu_overall_usage", cpu_overall)
-
-    @jwt_required()
-    def on_get_mem_usage(self):
-        # print("mem_usage")
-        emit("mem_usage", psutil.virtual_memory().percent)
-
-    @jwt_required()
-    def on_get_vm_results(self):
-        # print("vm_results")
-        emit("vm_results", getvmresults())
+        print("Client connected to socketio\n\n")
 
     @jwt_required()
     def on_download_iso(self, message):

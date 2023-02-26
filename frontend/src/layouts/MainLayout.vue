@@ -149,8 +149,8 @@ export default defineComponent({
       this.$router.push({ path: "/login" });
     },
   },
-  mounted() {
+  created() {
     this.getHostName();
-  },
+  }
 });
 </script>
