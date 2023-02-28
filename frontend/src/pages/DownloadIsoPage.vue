@@ -60,7 +60,7 @@ export default {
   },
   methods: {
     downloadIso() {
-      this.$socket.emit("download_iso", {
+      this.socket.emit("download_iso", {
         url: this.url,
         fileName: this.fileName,
         storagePool: this.$refs.storagePool.getSelectedPool(),
