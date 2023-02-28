@@ -32,6 +32,8 @@
 </template>
 
 <script>
+import io from "socket.io-client";
+
 export default {
   data() {
     return {
@@ -42,27 +44,32 @@ export default {
       loadingVisible: true,
     };
   },
-  methods: {
-    get_data() {
-      this.$api
-        .get("/host/state/dashboard")
-        .then((response) => {
-          this.cpu_progress = response.data.cpuOverall;
-          this.cpu_progress_text = response.data.cpuOverall + "%";
-          this.mem_progress = response.data.memory;
-          this.mem_progress_text = response.data.memory + "%";
-          this.loadingVisible = false;
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error getting dashboard data", [error]);
-        });
-    },
+  created() {
+    this.socket = io(this.$SOCKETIO_ENDPOINT, {
+      transportOptions: {
+        polling: {
+          extraHeaders: {
+            Authorization: "Bearer " + localStorage.getItem("jwt-token"),
+          },
+        },
+      },
+    });
+    
   },
   mounted() {
-    this.get_data();
+    this.socket.emit("dashboard_data");
     this.dataInterval = setInterval(() => {
-      this.get_data();
+      this.socket.emit("dashboard_data");
     }, 1000);
+    this.socket.on("cpu_overall", (data) => {
+      this.cpu_progress = data;
+      this.cpu_progress_text = data + "%";
+    });
+    this.socket.on("mem_overall", (data) => {
+      this.mem_progress = data;
+      this.mem_progress_text = data + "%";
+      this.loadingVisible = false;
+    });
   },
   beforeUnmount() {
     clearInterval(this.dataInterval);

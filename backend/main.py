@@ -849,6 +849,10 @@ class api_socketio(Namespace):
     def on_connect(self):
         print("Client connected to socketio\n\n")
 
+    def on_dashboard_data(self):
+        emit("cpu_overall", psutil.cpu_percent())
+        emit("mem_overall", psutil.virtual_memory().percent)
+
     @jwt_required()
     def on_download_iso(self, message):
         url = message['url']
@@ -1753,16 +1757,6 @@ class api_host_system_info(Resource):
 
 api.add_resource(api_host_system_info, '/api/host/system-info/<string:action>')
 
-class api_host_state(Resource):
-    @jwt_required()
-    def get(self, action):
-        if action == "dashboard":
-            return {
-                "cpuOverall": psutil.cpu_percent(),
-                "memory": psutil.virtual_memory().percent
-            }
-
-api.add_resource(api_host_state, '/api/host/state/<string:action>')
 
 class api_host_system_devices(Resource):
     @jwt_required()
