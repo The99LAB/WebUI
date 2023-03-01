@@ -130,6 +130,7 @@ import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";
+import io from "socket.io-client";
 
 const selected = ref();
 
@@ -220,22 +221,26 @@ export default {
     createVm() {
       this.$refs.createVm.show();
     },
-    getData() {
-      this.$api
-        .get("vm-manager/all")
-        .then((response) => {
-          this.rows = response.data;
-          this.vmTableLoading = false;
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error getting VMs", ["Error: " + error]);
-        });
-    },
+  },
+  created() {
+    this.socket = io(this.$SOCKETIO_ENDPOINT, {
+      transportOptions: {
+        polling: {
+          extraHeaders: {
+            Authorization: "Bearer " + localStorage.getItem("jwt-token"),
+          },
+        },
+      },
+    });
   },
   mounted() {
-    this.getData();
+    this.socket.emit("vmdata");
+    this.socket.on("vmdata", (data) => {
+      this.rows = data;
+      this.vmTableLoading = false;
+    });
     this.vmresultInterval = setInterval(() => {
-      this.getData();
+      this.socket.emit("vmdata")
     }, 1000);
   },
   unmounted() {
@@ -243,6 +248,7 @@ export default {
   },
   beforeUnmount() {
     clearInterval(this.vmresultInterval);
+    this.socket.disconnect();
   },
 };
 </script>

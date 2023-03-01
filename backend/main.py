@@ -849,6 +849,13 @@ class api_socketio(Namespace):
     def on_connect(self):
         print("Client connected to socketio\n\n")
 
+    @jwt_required()
+    def on_vmdata(self):
+        print("getting vm data")
+        
+        emit("vmdata", getvmresults())
+
+    @jwt_required()
     def on_dashboard_data(self):
         emit("cpu_overall", psutil.cpu_percent())
         emit("mem_overall", psutil.virtual_memory().percent)
