@@ -73,6 +73,7 @@ export default {
   },
   beforeUnmount() {
     clearInterval(this.dataInterval);
+    this.socket.disconnect();
   },
 };
 </script>
