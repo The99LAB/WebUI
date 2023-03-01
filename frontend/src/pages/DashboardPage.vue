@@ -54,7 +54,6 @@ export default {
         },
       },
     });
-    
   },
   mounted() {
     this.socket.emit("dashboard_data");
