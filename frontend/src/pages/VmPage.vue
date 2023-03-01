@@ -240,7 +240,7 @@ export default {
       this.vmTableLoading = false;
     });
     this.vmresultInterval = setInterval(() => {
-      this.socket.emit("vmdata")
+      this.socket.emit("vmdata");
     }, 1000);
   },
   unmounted() {
