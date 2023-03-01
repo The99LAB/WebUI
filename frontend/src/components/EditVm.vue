@@ -808,7 +808,7 @@ export default {
           ]);
         });
     },
-    diskChangeSourceDev(disknumber, value){
+    diskChangeSourceDev(disknumber, value) {
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-source-dev", {
           number: disknumber,
