@@ -8,7 +8,12 @@
       </q-card-section>
       <q-separator spaced="lg" inset />
       <q-card-section class="q-pt-none q-px-xl">
-        <StoragePoolAndVolumeList ref="storagePoolVolumeList" />
+        <q-select
+          v-model="diskType"
+          :options="diskTypeOptions"
+          label="Disk Type"
+        />
+        <StoragePoolAndVolumeList ref="storagePoolVolumeList" v-if="diskType == 'file'"/>
         <q-select
           v-model="deviceType"
           :options="deviceTypeOptions"
@@ -18,6 +23,11 @@
           v-model="diskDriverType"
           :options="diskDriverTypeOptions"
           label="Driver Type"
+        />
+        <q-input
+          v-model="sourceDevice"
+          label="Source Device"
+          v-if="diskType == 'block'"
         />
         <q-select
           v-model="diskBus"
@@ -42,6 +52,9 @@ export default {
   data() {
     return {
       alert: ref(false),
+      diskTypeOptions: ["file", "block"],
+      diskType: "file",
+      sourceDevice: "/dev/sda",
       pool: null,
       volumePath: null,
       deviceTypeOptions: ["disk", "cdrom"],
@@ -64,8 +77,10 @@ export default {
       console.log("UUID: " + this.uuid);
     },
     addDisk() {
-      this.volumePath =
-        this.$refs.storagePoolVolumeList.getSelectedVolumePath();
+      this.volumePath = null;
+      if (this.diskType == "file"){
+        this.volumePath = this.$refs.storagePoolVolumeList.getSelectedVolumePath();
+      }
 
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-add", {
@@ -73,6 +88,8 @@ export default {
           deviceType: this.deviceType,
           diskDriverType: this.diskDriverType,
           diskBus: this.diskBus,
+          sourceDevice: this.sourceDevice,
+          diskType: this.diskType,
         })
         .then((response) => {
           this.$emit("disk-add-finished");

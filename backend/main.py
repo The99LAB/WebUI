@@ -263,7 +263,7 @@ class storage():
     #                 return f'Error: {e}'
     #             break
 
-    def add_xml(self, targetbus, devicetype, sourcefile, drivertype, bootorder=None):
+    def add_xml(self, disktype, targetbus, devicetype, drivertype, sourcefile=None, sourcedev=None, bootorder=None):
         tree = ET.fromstring(self.vmXml)
         disks = tree.findall('./devices/disk')
 
@@ -294,10 +294,19 @@ class storage():
         if bootorder != None:
             bootorderstring = f"<boot order='{str(bootorder)}'/>"
 
+        source_file_string = ""
+        source_dev_string = ""
+        if disktype == "file":
+            source_file_string = f"<source file='{sourcefile}'/>"
+        elif disktype == "block":
+            source_dev_string = f"<source dev='{sourcedev}'/>"
+        else:
+            return
         # add the disk to xml
-        diskxml = f"""<disk type='file' device='{devicetype}'>
+        diskxml = f"""<disk type='{disktype}' device='{devicetype}'>
         <driver name='qemu' type='{drivertype}'/>
-        <source file='{sourcefile}'/>
+        {source_file_string if disktype == "file" else ''}
+        {source_dev_string if disktype == "block" else ''}
         <target dev='{FreeTargetDev}' bus='{targetbus}'/>
         {bootorderstring}
         </disk>"""
@@ -1281,11 +1290,14 @@ class api_vm_manager_action(Resource):
                     xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
                     xml = ET.fromstring(xml_orig)
                 if action == "add":
+                    
                     volume_path = data['volumePath']
                     device_type = data['deviceType']
                     disk_driver_type = data['diskDriverType']
                     disk_bus = data['diskBus']
-                    diskxml = storage(domain_uuid=vmuuid).add_xml(targetbus=disk_bus, devicetype=device_type, sourcefile=volume_path, drivertype=disk_driver_type)
+                    disk_type = data['diskType']
+                    source_device = data['sourceDevice']
+                    diskxml = storage(domain_uuid=vmuuid).add_xml(disktype=disk_type, targetbus=disk_bus, devicetype=device_type, sourcefile=volume_path, sourcedev=source_device, drivertype=disk_driver_type)
                     try:
                         domain.attachDeviceFlags(diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                         return '', 204
