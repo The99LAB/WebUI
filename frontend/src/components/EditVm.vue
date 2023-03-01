@@ -257,7 +257,7 @@
                     />
                   </div>
                 </div>
-                <div class="row">
+                <div class="row" v-if="disk.sourcefile != null">
                   <div class="col">
                     <q-input label="Source File" v-model="disk.sourcefile">
                       <template v-slot:append>
@@ -275,6 +275,23 @@
                           icon="mdi-check"
                           @click="
                             diskChangeSourceFile(disk.number, disk.sourcefile)
+                          "
+                        />
+                      </template>
+                    </q-input>
+                  </div>
+                </div>
+                <div class="row" v-if="disk.sourcedev != null">
+                  <div class="col">
+                    <q-input label="Source Device" v-model="disk.sourcedev">
+                      <template v-slot:append>
+                        <q-btn
+                          round
+                          dense
+                          flat
+                          icon="mdi-check"
+                          @click="
+                            diskChangeSourceDev(disk.number, disk.sourcedev)
                           "
                         />
                       </template>
@@ -787,6 +804,21 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error editing source file", [
+            error.response.data,
+          ]);
+        });
+    },
+    diskChangeSourceDev(disknumber, value){
+      this.$api
+        .post("/vm-manager/" + this.uuid + "/edit-disk-source-dev", {
+          number: disknumber,
+          value: value,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error editing source device", [
             error.response.data,
           ]);
         });

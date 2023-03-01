@@ -206,6 +206,7 @@ class storage():
         disks = tree.findall('./devices/disk')
         disklist = []
         for index, i in enumerate(disks):
+            disktype = i.get('type')
             devicetype = i.get('device')
             drivertype = i.find('./driver').get('type')
             bootorderelem = i.find('boot')
@@ -215,10 +216,11 @@ class storage():
                 bootorder = None
 
             source = i.find('./source')
+            sourcefile = None
+            sourcedev = None
             if source != None:
                 sourcefile = source.get('file')
-            else:
-                sourcefile = "Not set"
+                sourcedev = source.get('dev')
 
             target = i.find('./target')
             busformat = target.get('bus')
@@ -233,10 +235,12 @@ class storage():
             xml = ET.tostring(i).decode()
             disk = {
                 "number": disknumber,
+                "type": disktype,
                 "devicetype": devicetype,
                 "drivertype": drivertype,
                 "busformat": busformat,
                 "sourcefile": sourcefile,
+                "sourcedev": sourcedev,
                 "readonly": readonly,
                 "bootorder": bootorder,
                 "xml": xml
@@ -1327,7 +1331,6 @@ class api_vm_manager_action(Resource):
 
                 elif action == "source-file":
                     value = data['value']
-                    orig_value = xml.find('source').get('file')
                     xml.find('source').set('file', value)
                     xml = ET.tostring(xml).decode()
                     try:
@@ -1337,6 +1340,17 @@ class api_vm_manager_action(Resource):
                     except libvirt.libvirtError as e:
                         return str(e), 500
                 
+                elif action == "source-dev":
+                    value = data['value']
+                    xml.find('source').set('dev', value)
+                    xml = ET.tostring(xml).decode()
+                    try:
+                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                        return '', 204
+                    except libvirt.libvirtError as e:
+                        return str(e), 500
+
                 elif action == "bootorder":
                     value = data['value']
                     bootelem = xml.find('boot')
