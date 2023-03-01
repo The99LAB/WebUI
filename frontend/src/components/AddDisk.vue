@@ -13,7 +13,10 @@
           :options="diskTypeOptions"
           label="Disk Type"
         />
-        <StoragePoolAndVolumeList ref="storagePoolVolumeList" v-if="diskType == 'file'"/>
+        <StoragePoolAndVolumeList
+          ref="storagePoolVolumeList"
+          v-if="diskType == 'file'"
+        />
         <q-select
           v-model="deviceType"
           :options="deviceTypeOptions"
@@ -78,8 +81,9 @@ export default {
     },
     addDisk() {
       this.volumePath = null;
-      if (this.diskType == "file"){
-        this.volumePath = this.$refs.storagePoolVolumeList.getSelectedVolumePath();
+      if (this.diskType == "file") {
+        this.volumePath =
+          this.$refs.storagePoolVolumeList.getSelectedVolumePath();
       }
 
       this.$api
