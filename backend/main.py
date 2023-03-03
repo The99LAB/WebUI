@@ -672,6 +672,7 @@ class domainNetworkInterface():
                     'bootorder': bootorder
                 })
         return networkinterfaces
+
     def remove(self, index):
         for idx, interface in enumerate(self.get()):
             if idx == int(index):
@@ -851,6 +852,94 @@ def convertSizeUnit(size: int, from_unit, to_unit):
         elif to_unit == "TB":
             return size / 1024 / 1024 / 1024 / 1024
 
+class DomainGraphics:
+    def __init__(self, domuuid):
+        self.domain = conn.lookupByUUIDString(domuuid)
+        self.xml = ET.fromstring(self.domain.XMLDesc(0))
+
+    @property
+    def get(self):
+        graphicsDevices = []
+        for index, i in enumerate(self.xml.findall("devices/graphics")):
+            graphics_type = i.attrib["type"]
+            graphicsDevices.append(
+            {
+                "index": index, 
+                "type": graphics_type, 
+            })
+        return graphicsDevices
+
+    def remove(self, index):
+        original_domain_xml = self.domain.XMLDesc(0)
+        graphics_element = self.xml.find(f"devices/graphics/[{index+1}]")
+
+        # remove all elements from graphics element
+        for i in graphics_element:
+            graphics_element.remove(i)
+
+        # remove all attributes from graphics element
+        graphics_element.attrib.clear()
+
+        # remove graphics element
+        self.xml.find("devices").remove(graphics_element)
+
+        # remove graphics element
+        newxml = ET.tostring(self.xml).decode("utf-8")
+        
+        # define new xml
+        self.domain.undefineFlags(4)
+        try:
+            self.domain = conn.defineXML(newxml)
+        except libvirt.libvirtError as e:
+            self.domain = conn.defineXML(original_domain_xml)
+
+
+
+
+
+class DomainVideo:
+    def __init__(self, domuuid):
+        self.domain = conn.lookupByUUIDString(domuuid)
+        self.xml = ET.fromstring(self.domain.XMLDesc(0))
+    
+    @property
+    def get(self):
+        videoDevices = []
+        for index, i in enumerate(self.xml.findall("devices/video")):
+            xml = ET.tostring(i).decode("utf-8")
+            model_type = i.find("model").attrib["type"]
+            videoDevices.append(
+            {
+                "index": index, 
+                "type": model_type, 
+                "xml": xml
+            })
+        return videoDevices
+    
+    def remove(self, index):
+        original_domain_xml = self.domain.XMLDesc(0)
+        video_element = self.xml.find(f"devices/video/[{index+1}]")
+
+        # remove all elements from video element
+        for i in video_element:
+            video_element.remove(i)
+
+        # remove all attributes from video element
+        video_element.attrib.clear()
+
+        # remove video element
+        self.xml.find("devices").remove(video_element)
+
+        # remove video element
+        newxml = ET.tostring(self.xml).decode("utf-8")
+        
+        # define new xml
+        self.domain.undefineFlags(4)
+        try:
+            self.domain = conn.defineXML(newxml)
+        except libvirt.libvirtError as e:
+            self.domain = conn.defineXML(original_domain_xml)
+    
 
 @app.route("/")
 def index():
@@ -1052,19 +1141,12 @@ class api_vm_manager_action(Resource):
             # get disk
             diskinfo = storage(domain_uuid=vmuuid).get()
             networks = domainNetworkInterface(dom_uuid=vmuuid).get()
-            # get graphics type
-            graphicselem = domain_xml.find('devices/graphics')
-            if graphicselem != None:
-                graphics_type = graphicselem.attrib['type']
-            else:
-                graphics_type = None
-            # get video type
-            videoelem = domain_xml.find('devices/video/model')
-            if videoelem != None:
-                video_type = videoelem.attrib['type']
-            else:
-                video_type = None
 
+            # graphics tab            
+            graphicsdevices = DomainGraphics(domuuid=vmuuid).get
+            videodevices = DomainVideo(domuuid=vmuuid).get
+
+            # passthrough devices
             usbdevices = DomainUsb(domuuid=vmuuid).get
             pcidevices = DomainPcie(domuuid=vmuuid).get
 
@@ -1092,8 +1174,8 @@ class api_vm_manager_action(Resource):
                 "networks": networks,
                 "usbdevices": usbdevices,
                 "pcidevices": pcidevices,
-                "graphics_type": graphics_type,
-                "video_type": video_type
+                "graphicsdevices": graphicsdevices,
+                "videodevices": videodevices
             }
             return data
         else:
@@ -1463,6 +1545,32 @@ class api_vm_manager_action(Resource):
                     romfile = data['romfile']
                     try:
                         DomainPcie(vmuuid).romfile(xml=devicexml, romfile=romfile)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+                else:
+                    return 'Action not found', 404
+
+            # edit-graphics-action
+            elif action.startswith("graphics"):
+                action = action.replace("graphics-", "")
+                if action == "delete":
+                    index = data['index']
+                    # try:
+                    xml = DomainGraphics(vmuuid).remove(index=index)
+                    #     return '', 204
+                    # except Exception as e:
+                    #     return str(e), 500
+                else:
+                    return 'Action not found', 404
+
+            # edit-video-action
+            elif action.startswith("video"):
+                action = action.replace("video-", "")
+                if action == "delete":
+                    index = data['index']
+                    try:
+                        xml = DomainVideo(vmuuid).remove(index=index)
                         return '', 204
                     except Exception as e:
                         return str(e), 500

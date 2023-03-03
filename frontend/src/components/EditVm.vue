@@ -394,23 +394,24 @@
               <p v-if="networkList.length == 0">No networks</p>
             </q-tab-panel>
             <q-tab-panel name="graphics">
-              <p>Graphics</p>
-              <q-select
-                label="Graphics type"
-                v-if="graphicsType != null"
-                v-model="graphicsType"
-                :options="graphicsTypeOptions"
-                readonly
-              />
-              <q-separator spaced="lg" inset />
-              <p>Video</p>
-              <q-select
-                label="Video type"
-                v-if="videoType != null"
-                v-model="videoType"
-                :options="videoTypeOptions"
-                readonly
-              />
+              <div v-for="graphicsdevice in graphicsdevicesList" :key="graphicsdevice">
+                <q-separator spaced="lg" inset v-if="graphicsdevice.index != 0" />
+                <q-input label="Device Type" model-value="Graphics" readonly >
+                  <template v-slot:after>
+                    <q-btn icon="delete" round dense flat @click="graphicsDelete(graphicsdevice.index)"/>
+                  </template>
+                </q-input>
+                <q-input label="Graphics Type" v-model="graphicsdevice.type" readonly/>
+              </div>
+              <div v-for="videodevice in videodevicesList" :key="videodevice">
+                <q-separator spaced="lg" inset />
+                <q-input label="Device Type" model-value="Video" readonly >
+                  <template v-slot:after v-if="videodevicesList.length > 1">
+                    <q-btn icon="mdi-delete" round dense flat @click="videoDelete(videodevice.index)"/>
+                  </template>
+                </q-input>
+                <q-input label="Video Type" v-model="videodevice.type" readonly/>
+              </div>
             </q-tab-panel>
             <q-tab-panel name="passthrough">
               <div v-for="usbdevice in usbdevicesList" :key="usbdevice">
@@ -526,14 +527,24 @@
             />
             <q-btn
               flat
+              label="Add Graphics"
+              @click="graphicsAdd()"
+              v-if="tab == 'graphics'"
+            />
+            <q-btn
+              flat
+              label="Add Video"
+              @click="videoAdd()"
+              v-if="tab == 'graphics'"
+            />
+            <q-btn
+              flat
               label="Apply"
               @click="applyEdits()"
               v-if="
                 tab == 'memory' ||
                 tab == 'xml' ||
-                tab == 'cpu' ||
-                tab == 'graphics' ||
-                tab == 'video'
+                tab == 'cpu'
               "
             />
           </q-toolbar>
@@ -608,10 +619,8 @@ export default {
       topologyDies: null,
       topologyCores: null,
       topologyThreads: null,
-      graphicsTypeOptions: ["vnc", "spice"],
-      graphicsType: null,
-      videoTypeOptions: ["cirrus", "qxl", "virtio"],
-      videoType: null,
+      graphicsdevicesList: [],
+      videodevicesList: [],
       xml: null,
     };
   },
@@ -653,8 +662,8 @@ export default {
           this.networkList = response.data.networks;
           this.usbdevicesList = response.data.usbdevices;
           this.pcidevicesList = response.data.pcidevices;
-          this.graphicsType = response.data.graphics_type;
-          this.videoType = response.data.video_type;
+          this.graphicsdevicesList = response.data.graphicsdevices;
+          this.videodevicesList = response.data.videodevices;
           this.layout = true;
         })
         .catch((error) => {
@@ -717,8 +726,6 @@ export default {
               error.response.data,
             ]);
           });
-      } else if (this.tab == "graphics") {
-        console.log("Graphics tab");
       } else if (this.tab == "xml") {
         this.$api
           .post("/vm-manager/" + this.uuid + "/edit-xml", {
@@ -976,6 +983,34 @@ export default {
         this.pcieChangeRomFile(xml, "");
       }
     },
+    graphicsDelete(index){
+      this.$api
+        .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
+          index: index,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting graphics", [
+            error.response.data,
+          ]);
+        });
+    },
+    videoDelete(index){
+      this.$api
+        .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
+          index: index,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting video", [
+            error.response.data,
+          ]);
+        });
+    },   
   },
 };
 </script>
