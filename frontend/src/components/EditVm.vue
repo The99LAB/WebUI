@@ -394,23 +394,50 @@
               <p v-if="networkList.length == 0">No networks</p>
             </q-tab-panel>
             <q-tab-panel name="graphics">
-              <div v-for="graphicsdevice in graphicsdevicesList" :key="graphicsdevice">
-                <q-separator spaced="lg" inset v-if="graphicsdevice.index != 0" />
-                <q-input label="Device Type" model-value="Graphics" readonly >
+              <div
+                v-for="graphicsdevice in graphicsdevicesList"
+                :key="graphicsdevice"
+              >
+                <q-separator
+                  spaced="lg"
+                  inset
+                  v-if="graphicsdevice.index != 0"
+                />
+                <q-input label="Device Type" model-value="Graphics" readonly>
                   <template v-slot:after>
-                    <q-btn icon="delete" round dense flat @click="graphicsDelete(graphicsdevice.index)"/>
+                    <q-btn
+                      icon="delete"
+                      round
+                      dense
+                      flat
+                      @click="graphicsDelete(graphicsdevice.index)"
+                    />
                   </template>
                 </q-input>
-                <q-input label="Graphics Type" v-model="graphicsdevice.type" readonly/>
+                <q-input
+                  label="Graphics Type"
+                  v-model="graphicsdevice.type"
+                  readonly
+                />
               </div>
               <div v-for="videodevice in videodevicesList" :key="videodevice">
                 <q-separator spaced="lg" inset />
-                <q-input label="Device Type" model-value="Video" readonly >
+                <q-input label="Device Type" model-value="Video" readonly>
                   <template v-slot:after v-if="videodevicesList.length > 1">
-                    <q-btn icon="mdi-delete" round dense flat @click="videoDelete(videodevice.index)"/>
+                    <q-btn
+                      icon="mdi-delete"
+                      round
+                      dense
+                      flat
+                      @click="videoDelete(videodevice.index)"
+                    />
                   </template>
                 </q-input>
-                <q-input label="Video Type" v-model="videodevice.type" readonly/>
+                <q-input
+                  label="Video Type"
+                  v-model="videodevice.type"
+                  readonly
+                />
               </div>
             </q-tab-panel>
             <q-tab-panel name="passthrough">
@@ -541,11 +568,7 @@
               flat
               label="Apply"
               @click="applyEdits()"
-              v-if="
-                tab == 'memory' ||
-                tab == 'xml' ||
-                tab == 'cpu'
-              "
+              v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu'"
             />
           </q-toolbar>
         </q-footer>
@@ -983,7 +1006,7 @@ export default {
         this.pcieChangeRomFile(xml, "");
       }
     },
-    graphicsDelete(index){
+    graphicsDelete(index) {
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
           index: index,
@@ -997,7 +1020,7 @@ export default {
           ]);
         });
     },
-    videoDelete(index){
+    videoDelete(index) {
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
           index: index,
@@ -1010,7 +1033,7 @@ export default {
             error.response.data,
           ]);
         });
-    },   
+    },
   },
 };
 </script>
