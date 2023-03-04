@@ -869,6 +869,19 @@ class DomainGraphics:
             })
         return graphicsDevices
 
+    def add(self, graphics_type):
+        original_domain_xml = self.domain.XMLDesc(0)
+        graphics_element = ET.Element("graphics")
+        graphics_element.attrib["type"] = graphics_type
+        self.xml.find("devices").append(graphics_element)
+        newxml = ET.tostring(self.xml).decode("utf-8")
+        self.domain.undefineFlags(4)
+        try:
+            self.domain = conn.defineXML(newxml)
+        except libvirt.libvirtError as e:
+            self.domain = conn.defineXML(original_domain_xml)
+            raise e
+
     def remove(self, index):
         original_domain_xml = self.domain.XMLDesc(0)
         graphics_element = self.xml.find(f"devices/graphics/[{index+1}]")
@@ -892,9 +905,7 @@ class DomainGraphics:
             self.domain = conn.defineXML(newxml)
         except libvirt.libvirtError as e:
             self.domain = conn.defineXML(original_domain_xml)
-
-
-
+            raise e
 
 
 class DomainVideo:
@@ -915,6 +926,21 @@ class DomainVideo:
                 "xml": xml
             })
         return videoDevices
+    
+    def add(self, model_type):
+        original_domain_xml = self.domain.XMLDesc(0)
+        video_element = ET.Element("video")
+        video_model_element = ET.Element("model")
+        video_model_element.attrib["type"] = model_type
+        video_element.append(video_model_element)
+        self.xml.find("devices").append(video_element)
+        newxml = ET.tostring(self.xml).decode("utf-8")
+        self.domain.undefineFlags(4)
+        try:
+            self.domain = conn.defineXML(newxml)
+        except libvirt.libvirtError as e:
+            self.domain = conn.defineXML(original_domain_xml)
+            raise e
     
     def remove(self, index):
         original_domain_xml = self.domain.XMLDesc(0)
@@ -939,6 +965,7 @@ class DomainVideo:
             self.domain = conn.defineXML(newxml)
         except libvirt.libvirtError as e:
             self.domain = conn.defineXML(original_domain_xml)
+            raise e
     
 
 @app.route("/")
@@ -1554,20 +1581,36 @@ class api_vm_manager_action(Resource):
             # edit-graphics-action
             elif action.startswith("graphics"):
                 action = action.replace("graphics-", "")
-                if action == "delete":
+                if action == "add":
+                    graphics_type = data['type']
+                    try:
+                        DomainGraphics(vmuuid).add(graphics_type=graphics_type)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+
+                elif action == "delete":
                     index = data['index']
-                    # try:
-                    xml = DomainGraphics(vmuuid).remove(index=index)
-                    #     return '', 204
-                    # except Exception as e:
-                    #     return str(e), 500
+                    try:
+                        xml = DomainGraphics(vmuuid).remove(index=index)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
                 else:
                     return 'Action not found', 404
 
             # edit-video-action
             elif action.startswith("video"):
                 action = action.replace("video-", "")
-                if action == "delete":
+                if action == "add":
+                    model_type = data['type'].lower()
+                    try:
+                        DomainVideo(vmuuid).add(model_type=model_type)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+
+                elif action == "delete":
                     index = data['index']
                     try:
                         xml = DomainVideo(vmuuid).remove(index=index)

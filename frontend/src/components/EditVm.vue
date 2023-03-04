@@ -421,9 +421,9 @@
                 />
               </div>
               <div v-for="videodevice in videodevicesList" :key="videodevice">
-                <q-separator spaced="lg" inset />
+                <q-separator spaced="lg" inset v-if="graphicsdevicesList.length > 0 && videodevice.index >= 0"/>
                 <q-input label="Device Type" model-value="Video" readonly>
-                  <template v-slot:after v-if="videodevicesList.length > 1">
+                  <template v-slot:after v-if="graphicsdevicesList.length < 1 || videodevicesList.length > 1">
                     <q-btn
                       icon="mdi-delete"
                       round
@@ -588,6 +588,8 @@
     ref="addPcieDevice"
     @pcie-device-add-finished="refreshData()"
   />
+  <AddGraphics ref="addGraphics" @graphics-add-finished="refreshData()" />
+  <AddVideo ref="addVideo" @video-add-finished="refreshData()" />
 </template>
 
 <script>
@@ -599,6 +601,8 @@ import sourceFileDialog from "src/components/SourceFileDialog.vue";
 import AddNetwork from "src/components/AddNetwork.vue";
 import AddUsbDevice from "src/components/AddUsbDevice.vue";
 import AddPcieDevice from "src/components/AddPcieDevice.vue";
+import AddGraphics from "src/components/AddGraphics.vue";
+import AddVideo from "src/components/AddVideo.vue";
 
 export default {
   data() {
@@ -655,6 +659,8 @@ export default {
     AddNetwork,
     AddUsbDevice,
     AddPcieDevice,
+    AddGraphics,
+    AddVideo,
   },
   methods: {
     show(uuid) {
@@ -1006,7 +1012,10 @@ export default {
         this.pcieChangeRomFile(xml, "");
       }
     },
-    graphicsDelete(index) {
+    graphicsAdd() {
+      this.$refs.addGraphics.show(this.uuid);
+    },
+    graphicsDelete(index){
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
           index: index,
@@ -1020,7 +1029,10 @@ export default {
           ]);
         });
     },
-    videoDelete(index) {
+    videoAdd() {
+      this.$refs.addVideo.show(this.uuid);
+    },
+    videoDelete(index){
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
           index: index,
