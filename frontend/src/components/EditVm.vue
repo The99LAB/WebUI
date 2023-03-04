@@ -421,9 +421,21 @@
                 />
               </div>
               <div v-for="videodevice in videodevicesList" :key="videodevice">
-                <q-separator spaced="lg" inset v-if="graphicsdevicesList.length > 0 && videodevice.index >= 0"/>
+                <q-separator
+                  spaced="lg"
+                  inset
+                  v-if="
+                    graphicsdevicesList.length > 0 && videodevice.index >= 0
+                  "
+                />
                 <q-input label="Device Type" model-value="Video" readonly>
-                  <template v-slot:after v-if="graphicsdevicesList.length < 1 || videodevicesList.length > 1">
+                  <template
+                    v-slot:after
+                    v-if="
+                      graphicsdevicesList.length < 1 ||
+                      videodevicesList.length > 1
+                    "
+                  >
                     <q-btn
                       icon="mdi-delete"
                       round
@@ -1015,7 +1027,7 @@ export default {
     graphicsAdd() {
       this.$refs.addGraphics.show(this.uuid);
     },
-    graphicsDelete(index){
+    graphicsDelete(index) {
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
           index: index,
@@ -1032,7 +1044,7 @@ export default {
     videoAdd() {
       this.$refs.addVideo.show(this.uuid);
     },
-    videoDelete(index){
+    videoDelete(index) {
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
           index: index,
