@@ -59,6 +59,13 @@ def login_user():
     else:
         return "Incorrect password and/or username!", 401
 
+@app.route('/api/no-auth/<string:action>', methods=['GET'])
+def noauth(action):
+    if action == "hostname":
+        return {
+            "hostname": conn.getHostname()
+        }
+
 def getvmstate(uuid):
     domain = conn.lookupByUUIDString(uuid)
     state, reason = domain.state()
