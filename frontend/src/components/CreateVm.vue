@@ -283,7 +283,9 @@ export default {
         .post("/vm-manager/create", formData)
         .then((this.layout = false))
         .catch((error) => {
-          this.$refs.errorDialog.show("Error creating VM", [error.response.data]);
+          this.$refs.errorDialog.show("Error creating VM", [
+            error.response.data,
+          ]);
         });
     },
     prevTabPanel() {
