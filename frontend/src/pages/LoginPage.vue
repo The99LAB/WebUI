@@ -14,6 +14,7 @@
           <q-card-section>
             <div class="q-px-sm q-pt-xl">
               <q-input
+                name="username"
                 square
                 clearable
                 v-model="username"
@@ -25,6 +26,7 @@
                 </template>
               </q-input>
               <q-input
+                name="password"
                 square
                 clearable
                 v-model="password"

@@ -9,6 +9,9 @@ import routes from "./routes";
 import jwtDecode from "jwt-decode";
 
 function isTokenExpired(token) {
+  if (token == null || token == undefined || token == "") {
+    return true;
+  }
   const decoded = jwtDecode(token);
   const currentTime = Date.now() / 1000;
   return decoded.exp < currentTime;
@@ -44,9 +47,9 @@ export default route(function (/* { store, ssrContext } */) {
   Router.beforeEach((to, from, next) => {
     var token = localStorage.getItem("jwt-token");
     const tokenIsExpired = isTokenExpired(token);
-    console.log("tokenIsExpired: ", tokenIsExpired);
 
     if (token == "" || token == null || token == undefined || tokenIsExpired) {
+      localStorage.removeItem("jwt-token");
       if (to.path == "/login") {
         next();
       } else {
