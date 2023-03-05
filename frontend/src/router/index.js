@@ -6,12 +6,12 @@ import {
   createWebHashHistory,
 } from "vue-router";
 import routes from "./routes";
-import jwtDecode from 'jwt-decode'
+import jwtDecode from "jwt-decode";
 
 function isTokenExpired(token) {
-  const decoded = jwtDecode(token)
-  const currentTime = Date.now() / 1000
-  return decoded.exp < currentTime
+  const decoded = jwtDecode(token);
+  const currentTime = Date.now() / 1000;
+  return decoded.exp < currentTime;
 }
 
 /*
@@ -43,8 +43,8 @@ export default route(function (/* { store, ssrContext } */) {
   // check if user is logged in
   Router.beforeEach((to, from, next) => {
     var token = localStorage.getItem("jwt-token");
-    const tokenIsExpired = isTokenExpired(token)
-    console.log("tokenIsExpired: ", tokenIsExpired)
+    const tokenIsExpired = isTokenExpired(token);
+    console.log("tokenIsExpired: ", tokenIsExpired);
 
     if (token == "" || token == null || token == undefined || tokenIsExpired) {
       if (to.path == "/login") {
