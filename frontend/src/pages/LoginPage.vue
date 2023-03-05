@@ -7,7 +7,9 @@
       >
         <q-card square class="shadow-24" style="width: 400px; height: 540px">
           <q-card-section class="bg-primary">
-            <h5 class="text-white text-center q-my-md">{{hostname}} - Login</h5>
+            <h5 class="text-white text-center q-my-md">
+              {{ hostname }} - Login
+            </h5>
           </q-card-section>
           <q-card-section>
             <div class="q-px-sm q-pt-xl">
@@ -88,6 +90,6 @@ export default {
     this.$api.get("/no-auth/hostname").then((response) => {
       this.hostname = response.data.hostname;
     });
-  }
+  },
 };
 </script>
