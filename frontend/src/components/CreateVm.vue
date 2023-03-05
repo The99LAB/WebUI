@@ -171,12 +171,13 @@ export default {
       layout: ref(false),
       tab: ref("general"),
       osOptions: [
-        "Microsoft Windows 11",
         "Microsft Windows 10",
+        "Microsoft Windows 8.1",
+        "Microsoft Windows 8",
         "Microsoft Windows 7",
       ],
       machineOptions: ["q35", "i440fx"],
-      biosOptions: ["ovmf"],
+      biosOptions: ["ovmf", "BIOS"],
       memoryMinOptions: [
         "1024",
         "2048",
@@ -282,7 +283,7 @@ export default {
         .post("/vm-manager/create", formData)
         .then((this.layout = false))
         .catch((error) => {
-          this.$refs.errorDialog.show("Error creating VM", [error]);
+          this.$refs.errorDialog.show("Error creating VM", [error.response.data]);
         });
     },
     prevTabPanel() {

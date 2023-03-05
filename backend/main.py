@@ -691,10 +691,10 @@ class create_vm():
         self.name = name
         self.machine_type = machine_type
         self.bios_type = bios_type
-        self.mem_min = mem_min
         self.min_mem_unit = mem_min_unit
-        self.mem_max = mem_max
         self.max_mem_unit = mem_max_unit
+        self.mem_min = convertSizeUnit(int(mem_min), mem_min_unit, "KB")
+        self.mem_max = convertSizeUnit(int(mem_max), mem_max_unit, "KB")
         self.disk = disk
         self.disk_size = disk_size
         self.disk_size_unit = disk_size_unit
@@ -708,20 +708,7 @@ class create_vm():
         self.network_source = network_source
         self.network_model = network_model
 
-    def win10(self):  # convert unit to kb
-        if self.min_mem_unit == "MB":
-            mem_min = int(self.mem_min) * 1024
-        elif self.min_mem_unit == "GB":
-            mem_min = int(self.mem_min) * 1024 * 1024
-        elif self.min_mem_unit == "TB":
-            mem_min = int(self.mem_min) * 1024 * 1024 * 1024
-        if self.max_mem_unit == "MB":
-            mem_max = int(self.mem_max) * 1024
-        elif self.max_mem_unit == "GB":
-            mem_max = int(self.mem_max) * 1024 * 1024
-        elif self.max_mem_unit == "TB":
-            mem_max = int(self.mem_max) * 1024 * 1024 * 1024
-
+    def windows(self, version):
         ovmfstring = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>"
 
         if self.network:
@@ -773,11 +760,11 @@ class create_vm():
         <name>{self.name}</name>
         <metadata>
             <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
-            <libosinfo:os id="http://microsoft.com/win/10"/>
+            <libosinfo:os id="http://microsoft.com/win/{version}"/>
             </libosinfo:libosinfo>
         </metadata>
-        <memory unit='KiB'>{mem_max}</memory>
-        <currentMemory unit='KiB'>{mem_min}</currentMemory>
+        <memory unit='KiB'>{self.mem_max}</memory>
+        <currentMemory unit='KiB'>{self.mem_min}</currentMemory>
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
@@ -1105,12 +1092,14 @@ class api_vm_manager(Resource):
             try:
                 vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
                             disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model)
-                # if os == "Microsoft Windows 11":
-                #     vm.win11()
                 if os == "Microsoft Windows 10":
-                    vm.win10()
-                # elif os == "Microsoft Windows 7":
-                #     vm.win7()
+                    vm.windows(version="10")
+                elif os == "Microsoft Windows 8.1":
+                    vm.windows(version="8.1")
+                elif os == "Microsoft Windows 8":
+                    vm.windows(version="8")
+                elif os == "Microsoft Windows 7":
+                    vm.windows(version="7")
                 else:
                     return 'OS not supported', 404
                 vm.create()
@@ -1132,7 +1121,6 @@ class api_vm_manager_action(Resource):
         if action == "xml":
             return {"xml": domain_xml}
         elif action == "data":
-            print("getting vm data")
             domain_xml = ET.fromstring(domain_xml)
             # get cpu model from xml
             cpu_model = domain_xml.find('cpu').get('mode')
@@ -1161,7 +1149,11 @@ class api_vm_manager_action(Resource):
             # get machine type
             machine_type = domain_xml.find('os/type').attrib['machine']
             # get bios type
-            bios_type = domain_xml.find('os/loader').text
+            os_loader_elem = domain_xml.find('os/loader')
+            bios_type = "BIOS"
+            if os_loader_elem != None:
+                bios_type = os_loader_elem.text
+
             # get autostart boolean
             autostart = domain.autostart()
             if autostart == 1:
