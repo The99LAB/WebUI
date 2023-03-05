@@ -28,12 +28,19 @@
                 square
                 clearable
                 v-model="password"
-                type="password"
+                :type="isPwd ? 'password' : 'text'"
                 label="Password"
                 @update:model-value="authError = ''"
               >
                 <template v-slot:prepend>
                   <q-icon name="mdi-lock" />
+                </template>
+                <template v-slot:append>
+                  <q-icon
+                    :name="isPwd ? 'visibility_off' : 'visibility'"
+                    class="cursor-pointer"
+                    @click="isPwd = !isPwd"
+                  />
                 </template>
               </q-input>
               <q-separator spaced inset dark />
@@ -59,9 +66,12 @@
   </q-layout>
 </template>
 <script>
+import { ref } from 'vue'
+
 export default {
   data() {
     return {
+      isPwd: ref(true),
       username: "",
       password: "",
       authError: "",
