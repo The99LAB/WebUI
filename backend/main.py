@@ -707,35 +707,27 @@ class create_vm():
         self.network = network
         self.network_source = network_source
         self.network_model = network_model
-
-    def windows(self, version):
-        ovmfstring = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>"
-
+        self.ovmfpath = "/usr/share/OVMF/OVMF_CODE_4M.fd"
+        self.networkstring = ""
         if self.network:
-            networkstring = f"<interface type='network'><source network='{self.network_source}'/><model type='{self.network_model}'/></interface>"
-
+            self.networkstring = f"<interface type='network'><source network='{conn.networkLookupByUUIDString(self.network_source).name()}'/><model type='{self.network_model}'/></interface>"
+        
+        self.createisoxml = ""
         if self.iso:
             iso = poolStorage(pooluuid=self.iso_pool)
             isopath = iso.getVolumePath(poolvolume=self.iso_volume)
 
-            createisoxml = f"""<disk type='file' device='cdrom'>
+            self.createisoxml = f"""<disk type='file' device='cdrom'>
                             <driver name='qemu' type='raw'/>
                             <source file='{isopath}'/>
                             <target dev='sda' bus='sata'/>
                             <boot order='2'/>
                             "<readonly/>
                             </disk>"""
-
-        if self.disk_size_unit == "TB":
-            disk_size = int(self.disk_size) * 1024 * 1024 * 1024 * 1024
-        elif self.disk_size_unit == "GB":
-            disk_size = int(self.disk_size) * 1024 * 1024 * 1024
-        elif self.disk_size_unit == "MB":
-            disk_size = int(self.disk_size) * 1024 * 1024
-        elif self.disk_size_unit == "KB":
-            disk_size = int(self.disk_size) * 1024
-
+        
+        self.creatediskxml = ""
         if self.disk:
+            disk_size = convertSizeUnit(int(disk_size), self.disk_size_unit, "B")
             pool = conn.storagePoolLookupByUUIDString(self.disk_pool)
             disk_volume_name = f"{self.name}-0.{self.disk_type}"
             diskxml = f"""<volume>
@@ -749,13 +741,15 @@ class create_vm():
             pool.createXML(diskxml)
             diskvolumepath = poolStorage(
                 self.disk_pool).getVolumePath(disk_volume_name)
-            creatediskxml = f"""<disk type='file' device='disk'>
+            self.creatediskxml = f"""<disk type='file' device='disk'>
                             <driver name='qemu' type='{self.disk_type}'/>
                             <source file='{diskvolumepath}'/>
                             <target dev='{"vda" if self.disk_bus == "virtio" else "sdb"}' bus='{self.disk_bus}'/>
                             <boot order='1'/>
                             </disk>"""
 
+    def windows(self, version):
+        ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmfpath}</loader>"
         self.xml = f"""<domain type='kvm'>
         <name>{self.name}</name>
         <metadata>
@@ -783,15 +777,73 @@ class create_vm():
         <cpu mode='host-model' check='partial'/>
         <devices>
             <emulator>/usr/bin/qemu-system-x86_64</emulator>
-            {networkstring if self.network == "yes" else ""}
-            {createisoxml if self.iso else ""}
-            {creatediskxml if self.disk else ""}
+            {self.networkstring}
+            {self.createisoxml}
+            {self.creatediskxml}
             <graphics type='vnc' port='-1'/>
             <video>
             <model type='virtio'/>
             </video>
             <input type='tablet' bus='usb'/>
         </devices>
+        </domain>"""
+        return self.xml
+
+    def macos(self, version):
+        self.xml = f"""<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+        <name>{self.name}</name>
+        <memory unit='KiB'>{self.mem_max}</memory>
+        <currentMemory unit='KiB'>{self.mem_min}</currentMemory>
+        <vcpu>2</vcpu>
+        <os>
+            <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
+            <loader readonly='yes' type='pflash'>{self.ovmfpath}</loader>
+        </os>
+        <features>
+            <acpi/>
+            <apic/>
+        </features>
+        <cpu mode='host-passthrough' check='none' migratable='on'>
+            <topology sockets='1' dies='1' cores='2' threads='1'/>
+            <cache mode='passthrough'/>
+        </cpu>
+        <clock offset='localtime'>
+            <timer name='rtc' tickpolicy='catchup'/>
+            <timer name='pit' tickpolicy='delay'/>
+            <timer name='hpet' present='no'/>
+            <timer name='tsc' present='yes' mode='native'/>
+        </clock>
+        <devices>
+            <emulator>/usr/bin/qemu-system-x86_64</emulator>
+            {self.networkstring}
+            {self.createisoxml}
+            {self.creatediskxml}
+            <serial type='pty'>
+                <target type='isa-serial' port='0'>
+                    <model name='isa-serial'/>
+                </target>
+            </serial>
+            <console type='pty'>
+                <target type='serial' port='0'/>
+            </console>
+            <channel type='unix'>
+                <target type='virtio' name='org.qemu.guest_agent.0'/>
+            </channel>
+            <graphics type='vnc' port='-1'/>
+            <video>
+                <model type='virtio'/>
+            </video>
+            <input type='tablet' bus='usb'/>
+            <memballoon model='none'/>
+        </devices>
+        <qemu:commandline>
+        <qemu:arg value='-global'/>
+        <qemu:arg value='ICH9-LPC.acpi-pci-hotplug-with-bridge-support=off'/>
+        <qemu:arg value='-device'/>
+        <qemu:arg value='isa-applesmc,osk=ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc'/>
+        <qemu:arg value='-cpu'/>
+        {"<qemu:arg value='Cascadelake-Server,vendor=GenuineIntel'/>" if float(version) >= 13 else "<qemu:arg value='host,vendor=GenuineIntel'/>"}
+    </qemu:commandline>
         </domain>"""
         return self.xml
 
@@ -1100,6 +1152,15 @@ class api_vm_manager(Resource):
                     vm.windows(version="8")
                 elif os == "Microsoft Windows 7":
                     vm.windows(version="7")
+                elif os == "macOS 10.15 Catalina":
+                    vm.macos(version="10.15")
+                elif os == "macOS 11 Big Sur":
+                    print("macOS 11 Big Sur")
+                    print(vm.macos(version="11"))
+                elif os == "macOS 12 Monterey":
+                    vm.macos(version="12")
+                elif os == "macOS 13 Ventura":
+                    vm.macos(version="13")                
                 else:
                     return 'OS not supported', 404
                 vm.create()
