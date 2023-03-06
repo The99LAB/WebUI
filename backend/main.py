@@ -831,7 +831,7 @@ class create_vm():
             </channel>
             <graphics type='vnc' port='-1'/>
             <video>
-                <model type='virtio'/>
+                <model type='vga' vram='65536' heads='1' primary='yes'/>
             </video>
             <input type='tablet' bus='usb'/>
             <memballoon model='none'/>
