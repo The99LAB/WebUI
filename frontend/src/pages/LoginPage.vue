@@ -70,7 +70,7 @@
 </template>
 <script>
 import { ref } from "vue";
-import ErrorDialog from "/src/components/ErrorDialog.vue"
+import ErrorDialog from "/src/components/ErrorDialog.vue";
 
 export default {
   data() {
@@ -104,13 +104,16 @@ export default {
     },
   },
   created() {
-    this.$api.get("/no-auth/hostname")
-    .then((response) => {
-      this.hostname = response.data.hostname;
-    })
-    .catch((error) => {
-      this.$refs.errorDialog.show("Error connecting to backend", ["Couln't get hostname from backend. Please check if the backend is running and the API is reachable."]);
-    });
+    this.$api
+      .get("/no-auth/hostname")
+      .then((response) => {
+        this.hostname = response.data.hostname;
+      })
+      .catch((error) => {
+        this.$refs.errorDialog.show("Error connecting to backend", [
+          "Couln't get hostname from backend. Please check if the backend is running and the API is reachable.",
+        ]);
+      });
   },
 };
 </script>
