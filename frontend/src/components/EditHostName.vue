@@ -66,10 +66,9 @@ export default {
         .post("/host/system-info/hostname", formData)
         .then((this.layout = false), this.$emit("hostname-edit-finished"))
         .catch((error) => {
-          this.$refs.errorDialog.show(
-            "Error editing hostname",
-            [error.response.data]
-          );
+          this.$refs.errorDialog.show("Error editing hostname", [
+            error.response.data,
+          ]);
         });
     },
   },

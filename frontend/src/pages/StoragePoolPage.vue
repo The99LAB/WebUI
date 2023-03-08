@@ -250,61 +250,63 @@ export default {
         });
       }
       // get data from server
-      this.$api.get("/storage-pools").then((response) => {
-        var array2 = response.data;
-        if (array2.length === 0) {
-          this.rows = [];
-          this.storageTableLoading = false;
-          return;
-        }
-        var storagePoolNames2 = [];
-        for (let i = 0; i < array2.length; i++) {
-          storagePoolNames2.push(array2[i].name);
-        }
-        // if array1 is empty, just use array2
-        if (array1.length === 0) {
+      this.$api
+        .get("/storage-pools")
+        .then((response) => {
+          var array2 = response.data;
+          if (array2.length === 0) {
+            this.rows = [];
+            this.storageTableLoading = false;
+            return;
+          }
+          var storagePoolNames2 = [];
           for (let i = 0; i < array2.length; i++) {
-            array2[i].tab = "overview";
+            storagePoolNames2.push(array2[i].name);
           }
-          this.rows = array2;
-          return;
-        }
-        // merge arrays
-        var combinedArray = _.merge(array1, array2);
-        // remove deleted by comparing storagePoolNames1 and storagePoolNames2
-        for (let i = 0; i < storagePoolNames1.length; i++) {
-          if (!storagePoolNames2.includes(storagePoolNames1[i])) {
-            combinedArray.splice(i, 1);
+          // if array1 is empty, just use array2
+          if (array1.length === 0) {
+            for (let i = 0; i < array2.length; i++) {
+              array2[i].tab = "overview";
+            }
+            this.rows = array2;
+            return;
           }
-        }
+          // merge arrays
+          var combinedArray = _.merge(array1, array2);
+          // remove deleted by comparing storagePoolNames1 and storagePoolNames2
+          for (let i = 0; i < storagePoolNames1.length; i++) {
+            if (!storagePoolNames2.includes(storagePoolNames1[i])) {
+              combinedArray.splice(i, 1);
+            }
+          }
 
-        // add expand and uuid to combined array
-        for (let i = 0; i < combinedArray.length; i++) {
-          // put expand and tab and expand varibles from array1SpecialData (client) into combinedArray (server)
-          for (let j = 0; j < array1SpecialData.length; j++) {
-            if (combinedArray[i].uuid === array1SpecialData[j].uuid) {
-              combinedArray[i].expand = array1SpecialData[j].expand;
-              combinedArray[i].tab = array1SpecialData[j].tab;
+          // add expand and uuid to combined array
+          for (let i = 0; i < combinedArray.length; i++) {
+            // put expand and tab and expand varibles from array1SpecialData (client) into combinedArray (server)
+            for (let j = 0; j < array1SpecialData.length; j++) {
+              if (combinedArray[i].uuid === array1SpecialData[j].uuid) {
+                combinedArray[i].expand = array1SpecialData[j].expand;
+                combinedArray[i].tab = array1SpecialData[j].tab;
+              }
+            }
+            // make sure tab isn't undefined
+            if (combinedArray[i].tab === undefined) {
+              combinedArray[i].tab = "overview";
+            }
+            // put volumes from array2 (server) into combinedArray (client)
+            for (let j = 0; j < array2.length; j++) {
+              if (combinedArray[i].uuid === array2[j].uuid) {
+                combinedArray[i].volumes = array2[j].volumes;
+              }
             }
           }
-          // make sure tab isn't undefined
-          if (combinedArray[i].tab === undefined) {
-            combinedArray[i].tab = "overview";
-          }
-          // put volumes from array2 (server) into combinedArray (client)
-          for (let j = 0; j < array2.length; j++) {
-            if (combinedArray[i].uuid === array2[j].uuid) {
-              combinedArray[i].volumes = array2[j].volumes;
-            }
-          }
-        }
-        // set rows
-        this.rows = combinedArray;
-        this.storageTableLoading = false;
-      })
-      .catch((error) => {
-        this.$refs.errorDialog.show("Error getting storage pools.", [error]);
-      });
+          // set rows
+          this.rows = combinedArray;
+          this.storageTableLoading = false;
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting storage pools.", [error]);
+        });
     },
     removeVolume(pooluuid, volume) {
       //console.log("pooluuid:", pooluuid)
