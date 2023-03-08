@@ -252,6 +252,11 @@ export default {
       // get data from server
       this.$api.get("/storage-pools").then((response) => {
         var array2 = response.data;
+        if (array2.length === 0) {
+          this.rows = [];
+          this.storageTableLoading = false;
+          return;
+        }
         var storagePoolNames2 = [];
         for (let i = 0; i < array2.length; i++) {
           storagePoolNames2.push(array2[i].name);
@@ -296,6 +301,9 @@ export default {
         // set rows
         this.rows = combinedArray;
         this.storageTableLoading = false;
+      })
+      .catch((error) => {
+        this.$refs.errorDialog.show("Error getting storage pools.", [error]);
       });
     },
     removeVolume(pooluuid, volume) {
