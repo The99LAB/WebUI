@@ -30,6 +30,9 @@ class CustomFlask(Flask):
         variable_end_string='%%',
     ))
 
+#### Setting variables ####
+ovmf_path = "/usr/share/OVMF/OVMF_CODE.fd"
+qemu_path = "/usr/bin/qemu-system-x86_64"
 
 app = CustomFlask(__name__, static_url_path='')
 CORS(app, resources={r"*": {"origins": "*"}})
@@ -707,7 +710,6 @@ class create_vm():
         self.network = network
         self.network_source = network_source
         self.network_model = network_model
-        self.ovmfpath = "/usr/share/OVMF/OVMF_CODE_4M.fd"
         self.networkstring = ""
         if self.network:
             self.networkstring = f"<interface type='network'><source network='{conn.networkLookupByUUIDString(self.network_source).name()}'/><model type='{self.network_model}'/></interface>"
@@ -749,7 +751,7 @@ class create_vm():
                             </disk>"""
 
     def windows(self, version):
-        ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmfpath}</loader>"
+        ovmfstring = f"<loader readonly='yes' type='pflash'>{ovmf_path}</loader>"
         self.xml = f"""<domain type='kvm'>
         <name>{self.name}</name>
         <metadata>
@@ -776,7 +778,7 @@ class create_vm():
         </features>
         <cpu mode='host-model' check='partial'/>
         <devices>
-            <emulator>/usr/bin/qemu-system-x86_64</emulator>
+            <emulator>{qemu_path}</emulator>
             {self.networkstring}
             {self.createisoxml}
             {self.creatediskxml}
@@ -797,7 +799,7 @@ class create_vm():
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
-            <loader readonly='yes' type='pflash'>{self.ovmfpath}</loader>
+            <loader readonly='yes' type='pflash'>{ovmf_path}</loader>
         </os>
         <features>
             <acpi/>
@@ -814,7 +816,7 @@ class create_vm():
             <timer name='tsc' present='yes' mode='native'/>
         </clock>
         <devices>
-            <emulator>/usr/bin/qemu-system-x86_64</emulator>
+            <emulator>{qemu_path}</emulator>
             {self.networkstring}
             {self.createisoxml}
             {self.creatediskxml}
