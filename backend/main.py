@@ -40,7 +40,7 @@ api = Api(app)
 mode = "production"
 if __name__ == '__main__':
     mode = "development"
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode=f"{'threading' if mode == 'development' else 'eventlet'}")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode=f"{'threading' if mode == 'development' else 'gevent'}")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 jwt = JWTManager(app)
 conn = libvirt.open('qemu:///system')
