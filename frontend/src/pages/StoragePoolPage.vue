@@ -99,11 +99,11 @@
                   <q-btn
                     class="q-mr-sm"
                     color="primary"
-                    icon="mdi-play"
+                    :icon="props.row.autostart ? 'mdi-stop' : 'mdi-play'"
                     :label="
                       props.row.autostart
-                        ? 'Enable autostart'
-                        : 'Disable autostart'
+                        ? 'Disable autostart'
+                        : 'Enable autostart'
                     "
                     @click="toggleAutostartStoragePool(props.row.uuid)"
                   />
