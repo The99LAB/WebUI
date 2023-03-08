@@ -65,9 +65,9 @@ module.exports = configure(function (/* ctx */) {
       // publicPath: '/',
       // analyze: true,
       env: {
-        SOCKETIO_ENDPOINT: "http://192.168.0.240:5000/api",
-        API_ENDPOINT: "http://192.168.0.240:5000/api",
-        VNC_ENDPOINT_HTML: "http://192.168.0.240:6080/vnc.html",
+        SOCKETIO_ENDPOINT: "http://192.168.0.37:5000/api",
+        API_ENDPOINT: "http://192.168.0.37:5000/api",
+        VNC_ENDPOINT_HTML: "http://192.168.0.37:6080/vnc.html",
         PRODUCTION_BACKEND_PORT: 80,
       },
       // rawDefine: {}
