@@ -95,7 +95,7 @@ export default {
         });
     },
     editHostName() {
-      this.$refs.editHostNameDialog.show(hostname = this.hostname);
+      this.$refs.editHostNameDialog.show(name=this.hostname);
     },
   },
   mounted() {

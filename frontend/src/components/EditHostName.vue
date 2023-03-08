@@ -40,12 +40,11 @@ export default {
     errorDialog,
   },
   emits: ["hostname-edit-finished"],
-  components: {},
   methods: {
-    show(hostname = null) {
+    show(name = null) {
       this.layout = true;
-      if (hostname != null) {
-        this.hostName = hostname;
+      if (name != null) {
+        this.hostName = name;
       } else {
         this.getHostName();
       }
@@ -61,7 +60,6 @@ export default {
         });
     },
     editHostName() {
-      console.log("Editing Host Name...");
       const formData = new FormData();
       formData.append("hostname", this.hostName);
       this.$api
