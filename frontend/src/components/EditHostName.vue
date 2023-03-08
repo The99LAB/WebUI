@@ -22,10 +22,12 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <errorDialog ref="errorDialog" />
 </template>
 
 <script>
 import { ref } from "vue";
+import errorDialog from "src/components/ErrorDialog.vue";
 
 export default {
   data() {
@@ -34,13 +36,16 @@ export default {
       layout: ref(false),
     };
   },
+  components: {
+    errorDialog,
+  },
   emits: ["hostname-edit-finished"],
   components: {},
   methods: {
-    show(name = null) {
+    show(hostname = null) {
       this.layout = true;
-      if (name != null) {
-        this.hostName = name;
+      if (hostname != null) {
+        this.hostName = hostname;
       } else {
         this.getHostName();
       }
@@ -63,7 +68,10 @@ export default {
         .post("/host/system-info/hostname", formData)
         .then((this.layout = false), this.$emit("hostname-edit-finished"))
         .catch((error) => {
-          console.log("Error editing hostname: " + error.response.data);
+          this.$refs.errorDialog.show(
+            "Error editing hostname",
+            [error.response.data]
+          );
         });
     },
   },
