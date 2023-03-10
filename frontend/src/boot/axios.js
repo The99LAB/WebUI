@@ -67,4 +67,4 @@ export default boot(({ app }) => {
   app.config.globalProperties.$vncEndpoint = VNC_ENDPOINT;
 });
 
-export { api, VNC_ENDPOINT};
+export { api, VNC_ENDPOINT };
