@@ -8,8 +8,10 @@ import axios from "axios";
 // "export default () => {}" function below (which runs individually
 // for each client)
 var API_ENDPOINT = "";
+var VNC_ENDPOINT = "";
 if (process.env.NODE_ENV === "development") {
   API_ENDPOINT = process.env.API_ENDPOINT;
+  VNC_ENDPOINT = process.env.VNC_ENDPOINT_DEV;
 } else if (process.env.NODE_ENV === "production") {
   API_ENDPOINT =
     window.location.protocol +
@@ -18,6 +20,13 @@ if (process.env.NODE_ENV === "development") {
     ":" +
     process.env.PRODUCTION_BACKEND_PORT +
     "/api";
+  VNC_ENDPOINT =
+    window.location.protocol +
+    "//" +
+    window.location.hostname +
+    ":" +
+    process.env.VNC_PORT_PROD +
+    "/vnc.html";
 }
 
 const api = axios.create({ baseURL: API_ENDPOINT });
@@ -55,6 +64,7 @@ export default boot(({ app }) => {
   app.config.globalProperties.$api = api;
   // ^ ^ ^ this will allow you to use this.$api (for Vue Options API form)
   //       so you can easily perform requests against your app's API
+  app.config.globalProperties.$vncEndpoint = VNC_ENDPOINT;
 });
 
-export { api };
+export { api, VNC_ENDPOINT };
