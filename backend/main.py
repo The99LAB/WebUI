@@ -235,6 +235,7 @@ class storage():
 
             target = i.find('./target')
             busformat = target.get('bus')
+            targetdev = target.get('dev')
             
 
             readonlyelem = i.find('./readonly')
@@ -252,6 +253,7 @@ class storage():
                 "busformat": busformat,
                 "sourcefile": sourcefile,
                 "sourcedev": sourcedev,
+                "targetdev": targetdev,
                 "readonly": readonly,
                 "bootorder": bootorder,
                 "xml": xml
@@ -1184,6 +1186,11 @@ class api_vm_manager_action(Resource):
         domain_xml = domain.XMLDesc(0)
         if action == "xml":
             return {"xml": domain_xml}
+        elif action == "disk-data":
+            try:
+                return storage(domain_uuid=vmuuid).get()
+            except Exception as e:
+                return {"error": f"{e}"}
         elif action == "data":
             domain_xml = ET.fromstring(domain_xml)
             # get cpu model from xml

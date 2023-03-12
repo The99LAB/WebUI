@@ -1,14 +1,15 @@
 <template>
   <q-page padding>
-    <!-- <div class="row">
+    <div class="row">
       <q-space />
       <q-btn
         class="q-ma-sm"
         color="primary"
         icon="mdi-plus"
         label="Create config"
+        @click="openCreateConfigDialog"
       />
-    </div> -->
+    </div>
     <q-table
       :loading="backupConfigTableLoading"
       :rows="backupConfigRows"
@@ -130,6 +131,34 @@
             </q-card-section>
         </q-card>
     </q-dialog>
+    <q-dialog v-model="createConfigDialogShow">
+        <q-card>
+            <q-card-section class="row items-center q-pb-none">
+                <div class="text-h6">Create config</div>
+                <q-space />
+                <q-btn icon="close" flat round dense v-close-popup />
+            </q-card-section>
+            <q-separator spaced="lg" inset />
+            <q-card-section class="q-pt-none">
+                <VmListAll ref="createConfigDialogVmList" @vm-selected="(selectedVm) => getDomainDisks(selectedVm['uuid'])"/>
+                <q-input v-model="createConfigDestination" type="text" label="Destination" />
+                <!-- autoShutdown toggle -->
+                <q-toggle v-model="createConfigAutoShutdown" label="Auto shutdown" />
+                <!-- createConfigDisks q-select, can select multiple -->
+                <q-select
+                    v-model="createConfigDisks"
+                    :options="createConfigDisksOptions"
+                    label="Disks"
+                    multiple
+                    filled
+                />
+
+            </q-card-section>
+            <q-card-actions align="right">
+                <q-btn flat label="Create" @click="createConfig()" />
+            </q-card-actions>
+        </q-card>
+    </q-dialog>
     <ErrorDialog ref="errorDialog"></ErrorDialog>
   </q-page>
 </template>
@@ -137,6 +166,7 @@
 <script>
 import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
+import VmListAll from "src/components/VmListAll.vue";
 
 const backupConfigRows = [];
 
@@ -159,10 +189,16 @@ export default {
       backupConfigTableLoading: ref(true),
       backupLogDialogShow: ref(false),
       backupLog: ref(""),
+      createConfigDialogShow: ref(false),
+      createConfigDestination: ref("/path/to/backup/dir"),
+      createConfigAutoShutdown: ref(false),
+      createConfigDisksOptions: ref([]),
+      createConfigDisks: ref([]),
     };
   },
   components: {
     ErrorDialog,
+    VmListAll,
   },
   methods: {
     getData(){
@@ -237,7 +273,6 @@ export default {
     },
     showBackupLog(config, backup){
         const backupname = backup[0]['name']
-
         this.$api.post("/backup-manager/" + config + "/" + backupname + "/log")
             .then((response) => {
                 this.backupLog = response.data
@@ -246,6 +281,58 @@ export default {
             .catch((error) => {
                 this.$refs.errorDialog.show("Error getting backup log", [
                     "Could not get backup log.",
+                    error.response.data,
+                ]);
+            }
+        );
+    },
+    createConfig(){
+        const vm = this.$refs.createConfigDialogVmList.getSelectedVm()['name']
+        const destination = this.createConfigDestination
+        const autoShutdown = this.createConfigAutoShutdown
+        console.log(vm, destination, autoShutdown)
+        console.log(this.createConfigDisks)
+        // this.$api.post("/backup-manager/config/create", {
+        //     vm: vm,
+        //     destination: destination,
+        //     autoShutdown: autoShutdown,
+        // })
+        //     .then((response) => {
+        //         console.log(response.data)
+        //         this.createConfigDialogShow = false
+        //     })
+        //     .catch((error) => {
+        //         this.$refs.errorDialog.show("Error creating config", [
+        //             "Could not create config.",
+        //             error.response.data,
+        //         ]);
+        //     }
+        // );
+
+    },
+    openCreateConfigDialog(){
+        this.createConfigDialogShow = true
+    },
+    getDomainDisks(vmuuid){
+        console.log("getDomainDisks", vmuuid)
+        this.$api.get("/vm-manager/" + vmuuid + "/disk-data")
+            .then((response) => {
+                if (response.data.length > 0){
+                    // for loop
+                    this.createConfigDisksOptions = []
+                    for (let i = 0; i < response.data.length; i++) {
+                        const disk = response.data[i];
+                        this.createConfigDisksOptions.push({
+                            label: disk['sourcefile'],
+                            value: disk['targetdev'],
+                        })
+                    }
+                }
+                console.log(response.data)
+            })
+            .catch((error) => {
+                this.$refs.errorDialog.show("Error getting disks", [
+                    "Could not get disks.",
                     error.response.data,
                 ]);
             }
