@@ -59,6 +59,15 @@
             <q-item-label>Storage Pools</q-item-label>
           </q-item-section>
         </q-item>
+        <!-- backup manager -->
+        <q-item clickable tag="a" to="/backup-manager">
+          <q-item-section avatar>
+            <q-icon name="mdi-backup-restore" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Backup Manager</q-item-label>
+          </q-item-section>
+        </q-item>
         <q-item-label header> Host Management </q-item-label>
         <q-expansion-item
           :content-inset-level="0.2"

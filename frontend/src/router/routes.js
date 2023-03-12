@@ -15,6 +15,10 @@ const routes = [
         path: "storage-pools",
         component: () => import("src/pages/StoragePoolPage.vue"),
       },
+      {
+        path: "backup-manager",
+        component: () => import("pages/BackupManagerPage.vue"),
+      },
       { path: "tools", component: () => import("pages/ToolsPage.vue") },
       {
         path: "tools/system-info",
