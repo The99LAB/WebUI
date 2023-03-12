@@ -208,7 +208,7 @@ export default {
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid);
       // open vnc in new tab
-      console.log("vnc endpoint", this.$vncEndpoint)
+      console.log("vnc endpoint", this.$vncEndpoint);
       window.open(
         this.$vncEndpoint +
           "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
