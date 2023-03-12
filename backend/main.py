@@ -17,7 +17,7 @@ import requests
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager
 import pam
 import LibvirtKVMBackup
-import threading
+import logging
 
 """
 NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijn/token.list
@@ -1933,7 +1933,12 @@ api.add_resource(api_backups_configs, '/api/backup-manager/configs')
 
 class api_backup_action(Resource):
     def post(self, config, backup, action):
-        if action == "restore":
+        if action == "log":
+            try:
+                return LibvirtKVMBackup.configManager(config).backupLog(backup)
+            except LibvirtKVMBackup.configError as e:
+                return str(e), 500
+        elif action == "restore":
             try:
                 LibvirtKVMBackup.restore(config, backup)
                 return '', 204
@@ -1959,9 +1964,11 @@ class api_backup_config_action(Resource):
             except LibvirtKVMBackup.configError as e:
                 return str(e), 500
         elif action == "create-backup":
-            print("creating backup for config: " + config)
-            threading.Thread(target=LibvirtKVMBackup.backup, args=(config,)).start()
-            return "Backup started"
+            try:
+                LibvirtKVMBackup.backup(config)
+                return '', 204
+            except LibvirtKVMBackup.configError as e:
+                return str(e), 500
         else:
             return "action not found", 404
         
@@ -2086,4 +2093,6 @@ api.add_resource(api_host_system_devices,
                  '/api/host/system-devices/<string:devicetype>')
 
 if __name__ == '__main__':
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.setLevel(logging.CRITICAL)
     app.run(debug=True, host="0.0.0.0")

@@ -75,7 +75,10 @@
                 </div>
               </q-tab-panel>
               <q-tab-panel name="backups">
-                <div class="row">
+                <div class="row" v-if="
+                      props.row.selectedBackup !== undefined &&
+                      props.row.selectedBackup.length
+                    ">
                   <q-space />
                     <q-btn
                         class="q-ma-sm"
@@ -93,6 +96,8 @@
                       deleteBackup(props.row.config, props.row.selectedBackup)
                     "
                   />
+                  <!-- show log -->
+                  <q-btn class="q-ma-sm" color="primary" icon="mdi-file" label="Show log" @click="showBackupLog(props.row.config, props.row.selectedBackup)"/>
                 </div>
                 <div class="q-pa-md">
                   <q-table
@@ -112,6 +117,19 @@
         </q-tr>
       </template>
     </q-table>
+    <q-dialog v-model="backupLogDialogShow">
+        <q-card>
+            <q-card-section class="row items-center q-pb-none">
+                <div class="text-h6">Backup log</div>
+                <q-space />
+                <q-btn icon="close" flat round dense v-close-popup />
+            </q-card-section>
+            <q-separator spaced="lg" inset />
+            <q-card-section class="q-pt-none" v-for="item in backupLog" :key="item">
+                {{ item }}
+            </q-card-section>
+        </q-card>
+    </q-dialog>
     <ErrorDialog ref="errorDialog"></ErrorDialog>
   </q-page>
 </template>
@@ -139,6 +157,8 @@ export default {
       backupConfigColumns,
       backupColumns,
       backupConfigTableLoading: ref(true),
+      backupLogDialogShow: ref(false),
+      backupLog: ref(""),
     };
   },
   components: {
@@ -214,7 +234,23 @@ export default {
                 ]);
             }
         );
-    }
+    },
+    showBackupLog(config, backup){
+        const backupname = backup[0]['name']
+
+        this.$api.post("/backup-manager/" + config + "/" + backupname + "/log")
+            .then((response) => {
+                this.backupLog = response.data
+                this.backupLogDialogShow = true
+            })
+            .catch((error) => {
+                this.$refs.errorDialog.show("Error getting backup log", [
+                    "Could not get backup log.",
+                    error.response.data,
+                ]);
+            }
+        );
+    },
   },
   mounted() {
     this.getData();
