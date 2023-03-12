@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <div class="row">
+    <!-- <div class="row">
       <q-space />
       <q-btn
         class="q-ma-sm"
@@ -8,11 +8,11 @@
         icon="mdi-plus"
         label="Create config"
       />
-    </div>
+    </div> -->
     <q-table
-      :loading="backupTableLoading"
-      :rows="rows"
-      :columns="columns"
+      :loading="backupConfigTableLoading"
+      :rows="backupConfigRows"
+      :columns="backupConfigColumns"
       row-key="config"
       separator="none"
       no-data-label="Failed to get data from backend or no configs defined"
@@ -36,7 +36,7 @@
             :props="props"
             class="text-weight-regular text-body2"
           >
-            {{ props.row.backups }}
+            {{ props.row.backupCount }}
           </q-td>
         </q-tr>
 
@@ -45,24 +45,66 @@
             <div class="row">
               <q-tabs v-model="props.row.tab">
                 <q-tab name="overview" label="Overview" />
-                <!-- <q-tab name="backups" label="Backups" /> -->
+                <q-tab name="backups" label="Backups" />
               </q-tabs>
             </div>
             <q-tab-panels v-model="props.row.tab">
               <q-tab-panel name="overview">
                 <div class="row q-ma-sm">
-                  <q-btn
-                    class="q-mr-sm"
-                    color="primary"
-                    icon="mdi-delete"
-                    label="Delete"
-                  />
+                    <q-btn
+                        class="q-mr-sm"
+                        color="primary"
+                        icon="mdi-delete"
+                        label="Delete config"
+                        @click="deleteConfig(props.row.config)"
+                    />
+                    <q-btn
+                        class="q-mr-sm"
+                        color="primary"
+                        icon="mdi-backup-restore"
+                        label="Create backup"
+                        @click="createBackup(props.row.config)"
+                    />
                 </div>
+
                 <div class="row q-ma-sm">
                   <p class="text-body2 text-weight-bold q-mr-sm">
                     Destination:
                   </p>
                   <p class="text-body2">{{ props.row.destination }}</p>
+                </div>
+              </q-tab-panel>
+              <q-tab-panel name="backups">
+                <div class="row">
+                  <q-space />
+                    <q-btn
+                        class="q-ma-sm"
+                        color="primary"
+                        icon="mdi-restore"
+                        label="Restore backup"
+                        @click="restoreBackup(props.row.config, props.row.selectedBackup)"
+                    />
+                  <q-btn
+                    class="q-ma-sm"
+                    color="primary"
+                    icon="mdi-delete"
+                    label="Delete backup"
+                    @click="
+                      deleteBackup(props.row.config, props.row.selectedBackup)
+                    "
+                  />
+                </div>
+                <div class="q-pa-md">
+                  <q-table
+                    :rows="props.row.backups"
+                    :columns="backupColumns"
+                    row-key="name"
+                    selection="single"
+                    v-model:selected="props.row.selectedBackup"
+                    hide-no-data
+                    hide-bottom
+                    hide-pagination
+                  />
                 </div>
               </q-tab-panel>
             </q-tab-panels>
@@ -78,35 +120,104 @@
 import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 
-const rows = [
-  {
-    config: "Arch",
-    backups: "0",
-    destination: "/mnt/KVMBackups",
-    tab: "overview",
-  },
-];
+const backupConfigRows = [];
 
-const columns = [
+const backupConfigColumns = [
   { label: "Config", field: "config", name: "config", align: "left" },
   { label: "Backups", field: "backups", name: "backups", align: "left" },
+];
+
+const backupColumns = [
+  { label: "Name", field: "name", name: "name", align: "left" },
+  { label: "Size", field: "size", name: "size", align: "left" }
 ];
 
 export default {
   data() {
     return {
-      rows,
-      columns,
-      backupTableLoading: ref(false),
-      backupTablePagination: {
-        sortBy: "name",
-        rowsPerPage: 0,
-      },
+      backupConfigRows,
+      backupConfigColumns,
+      backupColumns,
+      backupConfigTableLoading: ref(true),
     };
   },
   components: {
     ErrorDialog,
   },
-  methods: {},
+  methods: {
+    getData(){
+        this.$api
+            .get("/backup-manager/configs")
+            .then((response) => {
+                this.backupConfigRows = response.data;
+                console.log(response.data)
+                this.backupConfigTableLoading = false;
+            })
+            .catch((error) => {
+                this.$refs.errorDialog.show("Error getting backup configs", [
+                    "Could not get backup configs.",
+                    error.response.data,
+                ]);
+            });
+
+    },
+    createBackup(config){
+        this.$api.post("/backup-manager/config/" + config + "/create-backup")
+            .then((response) => {
+                console.log(response.data)
+            })
+            .catch((error) => {
+                this.$refs.errorDialog.show("Error creating backup", [
+                    "Could not create backup.",
+                    error.response.data,
+                ]);
+            }
+        );
+    },
+    deleteBackup(config, backup){
+        const backupname = backup[0]['name']
+        this.$api.post("/backup-manager/" + config + "/" + backupname + "/delete")
+            .then((response) => {
+                console.log(response.data)
+            })
+            .catch((error) => {
+                this.$refs.errorDialog.show("Error deleting backup", [
+                    "Could not delete backup.",
+                    error.response.data,
+                ]);
+            }
+        );
+    },
+    restoreBackup(config, backup){
+        const backupname = backup[0]['name']
+        this.$api.post("/backup-manager/" + config + "/" + backupname + "/restore")
+            .then((response) => {
+                console.log(response.data)
+            })
+            .catch((error) => {
+                this.$refs.errorDialog.show("Error restoring backup", [
+                    "Could not restore backup.",
+                    error.response.data,
+                ]);
+            }
+        );
+    },
+    deleteConfig(config){
+        this.$api.post("/backup-manager/config/" + config + "/delete")
+            .then((response) => {
+                console.log("response", response.data)
+            })
+            .catch((error) => {
+                this.$refs.errorDialog.show("Error deleting config", [
+                    "Could not delete config.",
+                    error.response.data,
+                ]);
+            }
+        );
+    }
+  },
+  mounted() {
+    this.getData();
+  },
 };
 </script>

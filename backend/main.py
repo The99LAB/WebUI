@@ -16,7 +16,8 @@ import distro
 import requests
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager
 import pam
-
+import LibvirtKVMBackup
+import threading
 
 """
 NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijn/token.list
@@ -1908,6 +1909,63 @@ class api_storage_pool_volumes(Resource):
 api.add_resource(api_storage_pool_volumes,
                  '/api/storage-pools/<string:pooluuid>/volume/<string:volumename>')
 
+class api_backups_configs(Resource):
+    def get(self):
+        configs = []
+        for config in LibvirtKVMBackup.configManager.list():
+            backups = LibvirtKVMBackup.configManager(config).listBackups()
+            backup_count = len(backups)
+            destination = LibvirtKVMBackup.configManager(config).data()['Destination']
+            # convert item size in backups to GB
+            for backup in backups:
+                backup['size'] = str(round(convertSizeUnit(backup['size'], "B", "GB"))) + " GB"
+                
+            configs.append({
+                "config": config, 
+                "backupCount": backup_count,
+                "destination": destination,
+                "backups": backups,
+                "tab": "overview"
+            })
+        return configs
+
+api.add_resource(api_backups_configs, '/api/backup-manager/configs')
+
+class api_backup_action(Resource):
+    def post(self, config, backup, action):
+        if action == "restore":
+            try:
+                LibvirtKVMBackup.restore(config, backup)
+                return '', 204
+            except LibvirtKVMBackup.configError as e:
+                return str(e), 500
+        elif action == "delete":
+            try:
+                LibvirtKVMBackup.configManager(config).backupDelete(backup)
+                return '', 204
+            except LibvirtKVMBackup.configError as e:
+                return str(e), 500
+        else:
+            return "action not found", 404
+
+api.add_resource(api_backup_action, '/api/backup-manager/<string:config>/<string:backup>/<string:action>')
+
+class api_backup_config_action(Resource):
+    def post(self, config, action):
+        if action == "delete":
+            try:
+                LibvirtKVMBackup.configManager(config).delete()
+                return '', 204
+            except LibvirtKVMBackup.configError as e:
+                return str(e), 500
+        elif action == "create-backup":
+            print("creating backup for config: " + config)
+            threading.Thread(target=LibvirtKVMBackup.backup, args=(config,)).start()
+            return "Backup started"
+        else:
+            return "action not found", 404
+        
+api.add_resource(api_backup_config_action, '/api/backup-manager/config/<string:config>/<string:action>')
 
 class api_networks(Resource):
     @jwt_required()
