@@ -52,20 +52,20 @@
             <q-tab-panels v-model="props.row.tab">
               <q-tab-panel name="overview">
                 <div class="row q-ma-sm">
-                    <q-btn
-                        class="q-mr-sm"
-                        color="primary"
-                        icon="mdi-delete"
-                        label="Delete config"
-                        @click="deleteConfig(props.row.config)"
-                    />
-                    <q-btn
-                        class="q-mr-sm"
-                        color="primary"
-                        icon="mdi-backup-restore"
-                        label="Create backup"
-                        @click="createBackup(props.row.config)"
-                    />
+                  <q-btn
+                    class="q-mr-sm"
+                    color="primary"
+                    icon="mdi-delete"
+                    label="Delete config"
+                    @click="deleteConfig(props.row.config)"
+                  />
+                  <q-btn
+                    class="q-mr-sm"
+                    color="primary"
+                    icon="mdi-backup-restore"
+                    label="Create backup"
+                    @click="createBackup(props.row.config)"
+                  />
                 </div>
 
                 <div class="row q-ma-sm">
@@ -76,18 +76,23 @@
                 </div>
               </q-tab-panel>
               <q-tab-panel name="backups">
-                <div class="row" v-if="
-                      props.row.selectedBackup !== undefined &&
-                      props.row.selectedBackup.length
-                    ">
+                <div
+                  class="row"
+                  v-if="
+                    props.row.selectedBackup !== undefined &&
+                    props.row.selectedBackup.length
+                  "
+                >
                   <q-space />
-                    <q-btn
-                        class="q-ma-sm"
-                        color="primary"
-                        icon="mdi-restore"
-                        label="Restore backup"
-                        @click="restoreBackup(props.row.config, props.row.selectedBackup)"
-                    />
+                  <q-btn
+                    class="q-ma-sm"
+                    color="primary"
+                    icon="mdi-restore"
+                    label="Restore backup"
+                    @click="
+                      restoreBackup(props.row.config, props.row.selectedBackup)
+                    "
+                  />
                   <q-btn
                     class="q-ma-sm"
                     color="primary"
@@ -98,7 +103,15 @@
                     "
                   />
                   <!-- show log -->
-                  <q-btn class="q-ma-sm" color="primary" icon="mdi-file" label="Show log" @click="showBackupLog(props.row.config, props.row.selectedBackup)"/>
+                  <q-btn
+                    class="q-ma-sm"
+                    color="primary"
+                    icon="mdi-file"
+                    label="Show log"
+                    @click="
+                      showBackupLog(props.row.config, props.row.selectedBackup)
+                    "
+                  />
                 </div>
                 <div class="q-pa-md">
                   <q-table
@@ -119,45 +132,51 @@
       </template>
     </q-table>
     <q-dialog v-model="backupLogDialogShow">
-        <q-card>
-            <q-card-section class="row items-center q-pb-none">
-                <div class="text-h6">Backup log</div>
-                <q-space />
-                <q-btn icon="close" flat round dense v-close-popup />
-            </q-card-section>
-            <q-separator spaced="lg" inset />
-            <q-card-section class="q-pt-none" v-for="item in backupLog" :key="item">
-                {{ item }}
-            </q-card-section>
-        </q-card>
+      <q-card>
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">Backup log</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-separator spaced="lg" inset />
+        <q-card-section class="q-pt-none" v-for="item in backupLog" :key="item">
+          {{ item }}
+        </q-card-section>
+      </q-card>
     </q-dialog>
     <q-dialog v-model="createConfigDialogShow">
-        <q-card>
-            <q-card-section class="row items-center q-pb-none">
-                <div class="text-h6">Create config</div>
-                <q-space />
-                <q-btn icon="close" flat round dense v-close-popup />
-            </q-card-section>
-            <q-separator spaced="lg" inset />
-            <q-card-section class="q-pt-none">
-                <VmListAll ref="createConfigDialogVmList" @vm-selected="(selectedVm) => getDomainDisks(selectedVm['uuid'])"/>
-                <q-input v-model="createConfigDestination" type="text" label="Destination" />
-                <!-- autoShutdown toggle -->
-                <q-toggle v-model="createConfigAutoShutdown" label="Auto shutdown" />
-                <!-- createConfigDisks q-select, can select multiple -->
-                <q-select
-                    v-model="createConfigDisks"
-                    :options="createConfigDisksOptions"
-                    label="Disks"
-                    multiple
-                    filled
-                />
-
-            </q-card-section>
-            <q-card-actions align="right">
-                <q-btn flat label="Create" @click="createConfig()" />
-            </q-card-actions>
-        </q-card>
+      <q-card>
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">Create config</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-separator spaced="lg" inset />
+        <q-card-section class="q-pt-none">
+          <VmListAll
+            ref="createConfigDialogVmList"
+            @vm-selected="(selectedVm) => getDomainDisks(selectedVm['uuid'])"
+          />
+          <q-input
+            v-model="createConfigDestination"
+            type="text"
+            label="Destination"
+          />
+          <!-- autoShutdown toggle -->
+          <q-toggle v-model="createConfigAutoShutdown" label="Auto shutdown" />
+          <!-- createConfigDisks q-select, can select multiple -->
+          <q-select
+            v-model="createConfigDisks"
+            :options="createConfigDisksOptions"
+            label="Disks"
+            multiple
+            filled
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Create" @click="createConfig()" />
+        </q-card-actions>
+      </q-card>
     </q-dialog>
     <ErrorDialog ref="errorDialog"></ErrorDialog>
   </q-page>
@@ -177,7 +196,7 @@ const backupConfigColumns = [
 
 const backupColumns = [
   { label: "Name", field: "name", name: "name", align: "left" },
-  { label: "Size", field: "size", name: "size", align: "left" }
+  { label: "Size", field: "size", name: "size", align: "left" },
 ];
 
 export default {
@@ -201,142 +220,140 @@ export default {
     VmListAll,
   },
   methods: {
-    getData(){
-        this.$api
-            .get("/backup-manager/configs")
-            .then((response) => {
-                this.backupConfigRows = response.data;
-                console.log(response.data)
-                this.backupConfigTableLoading = false;
-            })
-            .catch((error) => {
-                this.$refs.errorDialog.show("Error getting backup configs", [
-                    "Could not get backup configs.",
-                    error.response.data,
-                ]);
-            });
-
+    getData() {
+      this.$api
+        .get("/backup-manager/configs")
+        .then((response) => {
+          this.backupConfigRows = response.data;
+          console.log(response.data);
+          this.backupConfigTableLoading = false;
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting backup configs", [
+            "Could not get backup configs.",
+            error.response.data,
+          ]);
+        });
     },
-    createBackup(config){
-        this.$api.post("/backup-manager/config/" + config + "/create-backup")
-            .then((response) => {
-                console.log(response.data)
-            })
-            .catch((error) => {
-                this.$refs.errorDialog.show("Error creating backup", [
-                    "Could not create backup.",
-                    error.response.data,
-                ]);
+    createBackup(config) {
+      this.$api
+        .post("/backup-manager/config/" + config + "/create-backup")
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error creating backup", [
+            "Could not create backup.",
+            error.response.data,
+          ]);
+        });
+    },
+    deleteBackup(config, backup) {
+      const backupname = backup[0]["name"];
+      this.$api
+        .post("/backup-manager/" + config + "/" + backupname + "/delete")
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting backup", [
+            "Could not delete backup.",
+            error.response.data,
+          ]);
+        });
+    },
+    restoreBackup(config, backup) {
+      const backupname = backup[0]["name"];
+      this.$api
+        .post("/backup-manager/" + config + "/" + backupname + "/restore")
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error restoring backup", [
+            "Could not restore backup.",
+            error.response.data,
+          ]);
+        });
+    },
+    deleteConfig(config) {
+      this.$api
+        .post("/backup-manager/config/" + config + "/delete")
+        .then((response) => {
+          console.log("response", response.data);
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting config", [
+            "Could not delete config.",
+            error.response.data,
+          ]);
+        });
+    },
+    showBackupLog(config, backup) {
+      const backupname = backup[0]["name"];
+      this.$api
+        .post("/backup-manager/" + config + "/" + backupname + "/log")
+        .then((response) => {
+          this.backupLog = response.data;
+          this.backupLogDialogShow = true;
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting backup log", [
+            "Could not get backup log.",
+            error.response.data,
+          ]);
+        });
+    },
+    createConfig() {
+      const vm = this.$refs.createConfigDialogVmList.getSelectedVm()["name"];
+      const destination = this.createConfigDestination;
+      const autoShutdown = this.createConfigAutoShutdown;
+      console.log(vm, destination, autoShutdown);
+      console.log(this.createConfigDisks);
+      // this.$api.post("/backup-manager/config/create", {
+      //     vm: vm,
+      //     destination: destination,
+      //     autoShutdown: autoShutdown,
+      // })
+      //     .then((response) => {
+      //         console.log(response.data)
+      //         this.createConfigDialogShow = false
+      //     })
+      //     .catch((error) => {
+      //         this.$refs.errorDialog.show("Error creating config", [
+      //             "Could not create config.",
+      //             error.response.data,
+      //         ]);
+      //     }
+      // );
+    },
+    openCreateConfigDialog() {
+      this.createConfigDialogShow = true;
+    },
+    getDomainDisks(vmuuid) {
+      console.log("getDomainDisks", vmuuid);
+      this.$api
+        .get("/vm-manager/" + vmuuid + "/disk-data")
+        .then((response) => {
+          if (response.data.length > 0) {
+            // for loop
+            this.createConfigDisksOptions = [];
+            for (let i = 0; i < response.data.length; i++) {
+              const disk = response.data[i];
+              this.createConfigDisksOptions.push({
+                label: disk["sourcefile"],
+                value: disk["targetdev"],
+              });
             }
-        );
-    },
-    deleteBackup(config, backup){
-        const backupname = backup[0]['name']
-        this.$api.post("/backup-manager/" + config + "/" + backupname + "/delete")
-            .then((response) => {
-                console.log(response.data)
-            })
-            .catch((error) => {
-                this.$refs.errorDialog.show("Error deleting backup", [
-                    "Could not delete backup.",
-                    error.response.data,
-                ]);
-            }
-        );
-    },
-    restoreBackup(config, backup){
-        const backupname = backup[0]['name']
-        this.$api.post("/backup-manager/" + config + "/" + backupname + "/restore")
-            .then((response) => {
-                console.log(response.data)
-            })
-            .catch((error) => {
-                this.$refs.errorDialog.show("Error restoring backup", [
-                    "Could not restore backup.",
-                    error.response.data,
-                ]);
-            }
-        );
-    },
-    deleteConfig(config){
-        this.$api.post("/backup-manager/config/" + config + "/delete")
-            .then((response) => {
-                console.log("response", response.data)
-            })
-            .catch((error) => {
-                this.$refs.errorDialog.show("Error deleting config", [
-                    "Could not delete config.",
-                    error.response.data,
-                ]);
-            }
-        );
-    },
-    showBackupLog(config, backup){
-        const backupname = backup[0]['name']
-        this.$api.post("/backup-manager/" + config + "/" + backupname + "/log")
-            .then((response) => {
-                this.backupLog = response.data
-                this.backupLogDialogShow = true
-            })
-            .catch((error) => {
-                this.$refs.errorDialog.show("Error getting backup log", [
-                    "Could not get backup log.",
-                    error.response.data,
-                ]);
-            }
-        );
-    },
-    createConfig(){
-        const vm = this.$refs.createConfigDialogVmList.getSelectedVm()['name']
-        const destination = this.createConfigDestination
-        const autoShutdown = this.createConfigAutoShutdown
-        console.log(vm, destination, autoShutdown)
-        console.log(this.createConfigDisks)
-        // this.$api.post("/backup-manager/config/create", {
-        //     vm: vm,
-        //     destination: destination,
-        //     autoShutdown: autoShutdown,
-        // })
-        //     .then((response) => {
-        //         console.log(response.data)
-        //         this.createConfigDialogShow = false
-        //     })
-        //     .catch((error) => {
-        //         this.$refs.errorDialog.show("Error creating config", [
-        //             "Could not create config.",
-        //             error.response.data,
-        //         ]);
-        //     }
-        // );
-
-    },
-    openCreateConfigDialog(){
-        this.createConfigDialogShow = true
-    },
-    getDomainDisks(vmuuid){
-        console.log("getDomainDisks", vmuuid)
-        this.$api.get("/vm-manager/" + vmuuid + "/disk-data")
-            .then((response) => {
-                if (response.data.length > 0){
-                    // for loop
-                    this.createConfigDisksOptions = []
-                    for (let i = 0; i < response.data.length; i++) {
-                        const disk = response.data[i];
-                        this.createConfigDisksOptions.push({
-                            label: disk['sourcefile'],
-                            value: disk['targetdev'],
-                        })
-                    }
-                }
-                console.log(response.data)
-            })
-            .catch((error) => {
-                this.$refs.errorDialog.show("Error getting disks", [
-                    "Could not get disks.",
-                    error.response.data,
-                ]);
-            }
-        );
+          }
+          console.log(response.data);
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting disks", [
+            "Could not get disks.",
+            error.response.data,
+          ]);
+        });
     },
   },
   mounted() {
