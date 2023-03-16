@@ -1922,7 +1922,10 @@ class api_backups_configs(Resource):
         for config in LibvirtKVMBackup.configManager.list():
             backups = LibvirtKVMBackup.configManager(config).listBackups()
             backup_count = len(backups)
-            destination = LibvirtKVMBackup.configManager(config).data()['Destination']
+            backup_config_data = LibvirtKVMBackup.configManager(config).data()
+            backup_destination = backup_config_data['Destination']
+            backup_auto_shutdown = backup_config_data['AutoShutdown']
+            backup_disks = backup_config_data['Disks']
             # convert item size in backups to GB
             for backup in backups:
                 backup['size'] = str(round(convertSizeUnit(backup['size'], "B", "GB"))) + " GB"
@@ -1930,7 +1933,9 @@ class api_backups_configs(Resource):
             configs.append({
                 "config": config, 
                 "backupCount": backup_count,
-                "destination": destination,
+                "destination": backup_destination,
+                "autoShutdown": backup_auto_shutdown,
+                "disks": backup_disks,
                 "backups": backups,
                 "tab": "overview"
             })

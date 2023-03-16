@@ -74,6 +74,20 @@
                   </p>
                   <p class="text-body2">{{ props.row.destination }}</p>
                 </div>
+                <div class="row q-ma-sm">
+                  <p class="text-body2 text-weight-bold q-mr-sm">
+                    Auto shutdown:
+                  </p>
+                  <p class="text-body2">
+                    {{ props.row.autoShutdown ? "Yes" : "No" }}
+                  </p>
+                </div>
+                <div class="row q-ma-sm">
+                  <p class="text-body2 text-weight-bold q-mr-sm">Disks:</p>
+                  <p class="text-body2">
+                    {{ props.row.disks.join(", ") }}
+                  </p>
+                </div>
               </q-tab-panel>
               <q-tab-panel name="backups">
                 <div
