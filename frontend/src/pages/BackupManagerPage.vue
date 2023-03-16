@@ -337,6 +337,7 @@ export default {
         .then((response) => {
           if (response.data.length > 0) {
             // for loop
+            this.createConfigDisks = [];
             this.createConfigDisksOptions = [];
             for (let i = 0; i < response.data.length; i++) {
               const disk = response.data[i];
