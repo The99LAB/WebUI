@@ -1935,6 +1935,27 @@ class api_backups_configs(Resource):
                 "tab": "overview"
             })
         return configs
+    def post(self): # create new config
+        data = request.get_json()
+        try:
+            config_name = data['configName']
+            vm_name = data['vmName']
+            destination = data['destination']
+            auto_shutdown = data['autoShutdown']
+            disks = data['disks']
+        except KeyError:
+            return "Error: Missing required data", 400
+        try:
+            config_data = {
+                'DomainName': vm_name, 
+                'Disks': disks, 
+                'Destination': destination, 
+                'AutoShutdown': auto_shutdown
+            }
+            LibvirtKVMBackup.configManager(config_name).create(config_data)
+            return '', 204
+        except LibvirtKVMBackup.configError as e:
+            return str(e), 500
 
 api.add_resource(api_backups_configs, '/api/backup-manager/configs')
 

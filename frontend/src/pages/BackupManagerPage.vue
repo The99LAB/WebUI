@@ -153,6 +153,7 @@
         </q-card-section>
         <q-separator spaced="lg" inset />
         <q-card-section class="q-pt-none">
+          <q-input v-model="createConfigName" type="text" label="Name" />
           <VmListAll
             ref="createConfigDialogVmList"
             @vm-selected="(selectedVm) => getDomainDisks(selectedVm['uuid'])"
@@ -209,6 +210,7 @@ export default {
       backupLogDialogShow: ref(false),
       backupLog: ref(""),
       createConfigDialogShow: ref(false),
+      createConfigName: ref("NewConfig"),
       createConfigDestination: ref("/path/to/backup/dir"),
       createConfigAutoShutdown: ref(false),
       createConfigDisksOptions: ref([]),
@@ -225,7 +227,6 @@ export default {
         .get("/backup-manager/configs")
         .then((response) => {
           this.backupConfigRows = response.data;
-          console.log(response.data);
           this.backupConfigTableLoading = false;
         })
         .catch((error) => {
@@ -238,9 +239,6 @@ export default {
     createBackup(config) {
       this.$api
         .post("/backup-manager/config/" + config + "/create-backup")
-        .then((response) => {
-          console.log(response.data);
-        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating backup", [
             "Could not create backup.",
@@ -252,9 +250,6 @@ export default {
       const backupname = backup[0]["name"];
       this.$api
         .post("/backup-manager/" + config + "/" + backupname + "/delete")
-        .then((response) => {
-          console.log(response.data);
-        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting backup", [
             "Could not delete backup.",
@@ -266,9 +261,6 @@ export default {
       const backupname = backup[0]["name"];
       this.$api
         .post("/backup-manager/" + config + "/" + backupname + "/restore")
-        .then((response) => {
-          console.log(response.data);
-        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error restoring backup", [
             "Could not restore backup.",
@@ -279,9 +271,6 @@ export default {
     deleteConfig(config) {
       this.$api
         .post("/backup-manager/config/" + config + "/delete")
-        .then((response) => {
-          console.log("response", response.data);
-        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting config", [
             "Could not delete config.",
@@ -308,35 +297,34 @@ export default {
       const vm = this.$refs.createConfigDialogVmList.getSelectedVm()["name"];
       const destination = this.createConfigDestination;
       const autoShutdown = this.createConfigAutoShutdown;
-      console.log(vm, destination, autoShutdown);
-      console.log(this.createConfigDisks);
-      // this.$api.post("/backup-manager/config/create", {
-      //     vm: vm,
-      //     destination: destination,
-      //     autoShutdown: autoShutdown,
-      // })
-      //     .then((response) => {
-      //         console.log(response.data)
-      //         this.createConfigDialogShow = false
-      //     })
-      //     .catch((error) => {
-      //         this.$refs.errorDialog.show("Error creating config", [
-      //             "Could not create config.",
-      //             error.response.data,
-      //         ]);
-      //     }
-      // );
+      const disks = this.createConfigDisks.map((disk) => disk.value);
+      console.log(destination)
+      this.$api.post("/backup-manager/configs", {
+        configName: this.createConfigName,
+        vmName: vm,
+        destination: destination,
+        autoShutdown: autoShutdown,
+        disks: disks,
+        })
+        .then((response) => {
+            console.log(response.data)
+            this.createConfigDialogShow = false
+        })
+        .catch((error) => {
+            this.$refs.errorDialog.show("Error creating config", [
+                "Could not create config.",
+                error.response.data,
+            ]);
+        });
     },
     openCreateConfigDialog() {
       this.createConfigDialogShow = true;
     },
     getDomainDisks(vmuuid) {
-      console.log("getDomainDisks", vmuuid);
       this.$api
         .get("/vm-manager/" + vmuuid + "/disk-data")
         .then((response) => {
           if (response.data.length > 0) {
-            // for loop
             this.createConfigDisks = [];
             this.createConfigDisksOptions = [];
             for (let i = 0; i < response.data.length; i++) {
@@ -347,7 +335,6 @@ export default {
               });
             }
           }
-          console.log(response.data);
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting disks", [
