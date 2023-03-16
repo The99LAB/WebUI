@@ -298,23 +298,24 @@ export default {
       const destination = this.createConfigDestination;
       const autoShutdown = this.createConfigAutoShutdown;
       const disks = this.createConfigDisks.map((disk) => disk.value);
-      console.log(destination)
-      this.$api.post("/backup-manager/configs", {
-        configName: this.createConfigName,
-        vmName: vm,
-        destination: destination,
-        autoShutdown: autoShutdown,
-        disks: disks,
+      console.log(destination);
+      this.$api
+        .post("/backup-manager/configs", {
+          configName: this.createConfigName,
+          vmName: vm,
+          destination: destination,
+          autoShutdown: autoShutdown,
+          disks: disks,
         })
         .then((response) => {
-            console.log(response.data)
-            this.createConfigDialogShow = false
+          console.log(response.data);
+          this.createConfigDialogShow = false;
         })
         .catch((error) => {
-            this.$refs.errorDialog.show("Error creating config", [
-                "Could not create config.",
-                error.response.data,
-            ]);
+          this.$refs.errorDialog.show("Error creating config", [
+            "Could not create config.",
+            error.response.data,
+          ]);
         });
     },
     openCreateConfigDialog() {
