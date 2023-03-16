@@ -145,7 +145,7 @@
       </q-card>
     </q-dialog>
     <q-dialog v-model="createConfigDialogShow">
-      <q-card>
+      <q-card style="min-width: 50vw">
         <q-card-section class="row items-center q-pb-none">
           <div class="text-h6">Create config</div>
           <q-space />
