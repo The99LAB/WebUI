@@ -33,6 +33,13 @@
             />
           </q-td>
           <q-td
+            key="lastResult"
+            :props="props"
+            class="text-weight-regular text-body2"
+          >
+            {{ props.row.lastResult }}
+          </q-td>
+          <q-td
             key="backups"
             :props="props"
             class="text-weight-regular text-body2"
@@ -206,11 +213,13 @@ const backupConfigRows = [];
 
 const backupConfigColumns = [
   { label: "Config", field: "config", name: "config", align: "left" },
+  { label: "Last result", field: "lastResult", name: "lastResult", align: "left" },
   { label: "Backups", field: "backups", name: "backups", align: "left" },
 ];
 
 const backupColumns = [
   { label: "Name", field: "name", name: "name", align: "left" },
+  { label: "Status", field: "status", name: "status", align: "left" },
   { label: "Size", field: "size", name: "size", align: "left" },
 ];
 

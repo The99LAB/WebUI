@@ -1926,12 +1926,20 @@ class api_backups_configs(Resource):
             backup_destination = backup_config_data['Destination']
             backup_auto_shutdown = backup_config_data['AutoShutdown']
             backup_disks = backup_config_data['Disks']
-            # convert item size in backups to GB
+            
+            # sort backups by latest first
+            backups.sort(key=lambda x: x['name'], reverse=True)
+            # convert item size in backups to GG
             for backup in backups:
                 backup['size'] = str(round(convertSizeUnit(backup['size'], "B", "GB"))) + " GB"
+
+            backup_last_result = None
+            if backup_count > 0:
+                backup_last_result = backups[0]['status']
                 
             configs.append({
-                "config": config, 
+                "config": config,
+                "lastResult": backup_last_result,
                 "backupCount": backup_count,
                 "destination": backup_destination,
                 "autoShutdown": backup_auto_shutdown,
