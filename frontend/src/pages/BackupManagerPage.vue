@@ -213,7 +213,12 @@ const backupConfigRows = [];
 
 const backupConfigColumns = [
   { label: "Config", field: "config", name: "config", align: "left" },
-  { label: "Last result", field: "lastResult", name: "lastResult", align: "left" },
+  {
+    label: "Last result",
+    field: "lastResult",
+    name: "lastResult",
+    align: "left",
+  },
   { label: "Backups", field: "backups", name: "backups", align: "left" },
 ];
 
