@@ -1075,6 +1075,18 @@ class DomainSound:
             self.domain = conn.defineXML(original_domain_xml)
             raise e
 
+def getGuestMachineTypes():
+    capabilities = conn.getCapabilities()
+    root = ET.fromstring(capabilities)
+    machine_types = []
+    for arch in root.findall('.//arch[@name="x86_64"]'):
+        for machine in arch.findall('machine'):
+            machine_types.append(machine.text)
+    # filter to only pc-i440fx and pc-q35
+    machine_types = [x for x in machine_types if x.startswith('pc-i440fx') or x.startswith('pc-q35')]
+    machine_types.sort()
+    return machine_types
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -2172,6 +2184,8 @@ class api_host_system_info(Resource):
             return {
                 "hostname": conn.getHostname()
             }
+        elif action == "guest-machine-types":
+            return getGuestMachineTypes()
         else:
             return 'Action not found', 404
     

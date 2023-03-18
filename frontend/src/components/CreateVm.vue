@@ -180,7 +180,7 @@ export default {
         "macOS 12 Monterey",
         "macOS 13 Ventura",
       ],
-      machineOptions: ["q35", "i440fx"],
+      machineOptions: [],
       biosOptions: ["ovmf", "BIOS"],
       memoryMinOptions: [
         "1024",
@@ -194,7 +194,7 @@ export default {
       memoryUnitOptions: ["MB", "GB", "TB"],
       general_name: ref("New Virtual Machine"),
       general_os: ref("Microsoft Windows 10"),
-      general_machine: ref("q35"),
+      general_machine: ref(),
       general_bios: ref("ovmf"),
       memory_minMemory: ref(1024),
       memory_minMemoryUnit: ref("MB"),
@@ -222,6 +222,20 @@ export default {
   methods: {
     show() {
       this.layout = true;
+      this.getMachineTypes();
+    },
+    getMachineTypes() {
+      this.$api
+        .get("/host/system-info/guest-machine-types")
+        .then((response) => {
+          this.machineOptions = response.data;
+          this.general_machine =  this.machineOptions[this.machineOptions.length - 1];
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Failed to get machine types", [
+            error.response.data,
+          ]);
+        });
     },
     createVm() {
       if (this.$refs.diskPool.getSelectedPool() == null) {
