@@ -454,11 +454,7 @@
             </q-tab-panel>
             <q-tab-panel name="sound">
               <div v-for="sounddevice in sounddevicesList" :key="sounddevice">
-                <q-separator
-                  spaced="lg"
-                  inset
-                  v-if="sounddevice.index != 0"
-                />
+                <q-separator spaced="lg" inset v-if="sounddevice.index != 0" />
                 <q-input label="Device Type" model-value="Sound" readonly>
                   <template v-slot:after>
                     <q-btn
