@@ -21,6 +21,7 @@
           <q-tab name="disk" label="Disk" />
           <q-tab name="network" label="Network" />
           <q-tab name="graphics" label="Graphics" />
+          <q-tab name="sound" label="Sound" />
           <q-tab name="passthrough" label="Passthrough" />
           <q-tab name="xml" label="Xml" />
         </q-tabs>
@@ -51,7 +52,6 @@
               />
             </q-tab-panel>
             <q-tab-panel name="cpu">
-              <!-- cpu model -->
               <q-select
                 label="CPU Model"
                 v-model="cpu_model"
@@ -452,6 +452,31 @@
                 />
               </div>
             </q-tab-panel>
+            <q-tab-panel name="sound">
+              <div v-for="sounddevice in sounddevicesList" :key="sounddevice">
+                <q-separator
+                  spaced="lg"
+                  inset
+                  v-if="sounddevice.index != 0"
+                />
+                <q-input label="Device Type" model-value="Sound" readonly>
+                  <template v-slot:after>
+                    <q-btn
+                      icon="delete"
+                      round
+                      dense
+                      flat
+                      @click="soundDelete(sounddevice.index)"
+                    />
+                  </template>
+                </q-input>
+                <q-input
+                  label="Sound model"
+                  v-model="sounddevice.model"
+                  readonly
+                />
+              </div>
+            </q-tab-panel>
             <q-tab-panel name="passthrough">
               <div v-for="usbdevice in usbdevicesList" :key="usbdevice">
                 <q-input model-value="USB Device" label="Type" readonly>
@@ -572,6 +597,12 @@
             />
             <q-btn
               flat
+              label="Add Sound"
+              @click="soundAdd()"
+              v-if="tab == 'sound'"
+            />
+            <q-btn
+              flat
               label="Add Video"
               @click="videoAdd()"
               v-if="tab == 'graphics'"
@@ -647,6 +678,7 @@ export default {
       diskDeleteNumber: null,
       networkList: [],
       networkDeleteNumber: null,
+      sounddevicesList: [],
       usbdevicesList: [],
       pcidevicesList: [],
       cpuModelOptions: ["host-model", "host-passthrough"],
@@ -705,6 +737,7 @@ export default {
           this.pcidevicesList = response.data.pcidevices;
           this.graphicsdevicesList = response.data.graphicsdevices;
           this.videodevicesList = response.data.videodevices;
+          this.sounddevicesList = response.data.sounddevices;
           this.layout = true;
         })
         .catch((error) => {
@@ -1057,6 +1090,23 @@ export default {
             error.response.data,
           ]);
         });
+    },
+    soundDelete(index) {
+      this.$api
+        .post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
+          index: index,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting sound", [
+            error.response.data,
+          ]);
+        });
+    },
+    soundAdd() {
+      this.$refs.addSound.show(this.uuid);
     },
   },
 };

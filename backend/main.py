@@ -1017,7 +1017,63 @@ class DomainVideo:
         except libvirt.libvirtError as e:
             self.domain = conn.defineXML(original_domain_xml)
             raise e
+        
+class DomainSound:
+    def __init__(self, domuuid):
+        self.domain = conn.lookupByUUIDString(domuuid)
+        self.xml = ET.fromstring(self.domain.XMLDesc(0))
     
+    @property
+    def get(self):
+        soundDevices = []
+        for index, i in enumerate(self.xml.findall("devices/sound")):
+            xml = ET.tostring(i).decode("utf-8")
+            model_type = i.get("model")
+            soundDevices.append(
+            {
+                "index": index, 
+                "model": model_type, 
+                "xml": xml
+            })
+        return soundDevices
+    
+    def add(self, model_type):
+        original_domain_xml = self.domain.XMLDesc(0)
+        sound_element = ET.Element("sound")
+        sound_element.attrib["model"] = model_type
+        self.xml.find("devices").append(sound_element)
+        newxml = ET.tostring(self.xml).decode("utf-8")
+        self.domain.undefineFlags(4)
+        try:
+            self.domain = conn.defineXML(newxml)
+        except libvirt.libvirtError as e:
+            self.domain = conn.defineXML(original_domain_xml)
+            raise e
+    
+    def remove(self, index):
+        original_domain_xml = self.domain.XMLDesc(0)
+        sound_element = self.xml.find(f"devices/sound/[{index+1}]")
+
+        # remove all elements from sound element
+        for i in sound_element:
+            sound_element.remove(i)
+
+        # remove all attributes from sound element
+        sound_element.attrib.clear()
+
+        # remove sound element
+        self.xml.find("devices").remove(sound_element)
+
+        # remove sound element
+        newxml = ET.tostring(self.xml).decode("utf-8")
+        
+        # define new xml
+        self.domain.undefineFlags(4)
+        try:
+            self.domain = conn.defineXML(newxml)
+        except libvirt.libvirtError as e:
+            self.domain = conn.defineXML(original_domain_xml)
+            raise e
 
 @app.route("/")
 def index():
@@ -1243,6 +1299,9 @@ class api_vm_manager_action(Resource):
             graphicsdevices = DomainGraphics(domuuid=vmuuid).get
             videodevices = DomainVideo(domuuid=vmuuid).get
 
+            # sound tab
+            sounddevices = DomainSound(domuuid=vmuuid).get
+
             # passthrough devices
             usbdevices = DomainUsb(domuuid=vmuuid).get
             pcidevices = DomainPcie(domuuid=vmuuid).get
@@ -1269,6 +1328,7 @@ class api_vm_manager_action(Resource):
                 "memory_min_unit": "GB",
                 "disks": diskinfo,
                 "networks": networks,
+                "sounddevices": sounddevices,
                 "usbdevices": usbdevices,
                 "pcidevices": pcidevices,
                 "graphicsdevices": graphicsdevices,
@@ -1689,6 +1749,16 @@ class api_vm_manager_action(Resource):
                         return str(e), 500
                 else:
                     return 'Action not found', 404
+            elif action.startswith("sound"):
+                action = action.replace("sound-", "")
+                if action == "delete":
+                    index = data['index']
+                    print("delete sound", index)
+                    try:
+                        DomainSound(vmuuid).remove(index=index)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
             else:
                 return 'Action not found', 404
         else:
