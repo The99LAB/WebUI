@@ -633,6 +633,7 @@
   />
   <AddGraphics ref="addGraphics" @graphics-add-finished="refreshData()" />
   <AddVideo ref="addVideo" @video-add-finished="refreshData()" />
+  <AddSound ref="addSound" @sound-add-finished="refreshData()" />
 </template>
 
 <script>
@@ -646,6 +647,7 @@ import AddUsbDevice from "src/components/AddUsbDevice.vue";
 import AddPcieDevice from "src/components/AddPcieDevice.vue";
 import AddGraphics from "src/components/AddGraphics.vue";
 import AddVideo from "src/components/AddVideo.vue";
+import AddSound from "src/components/AddSound.vue";
 
 export default {
   data() {
@@ -705,6 +707,7 @@ export default {
     AddPcieDevice,
     AddGraphics,
     AddVideo,
+    AddSound,
   },
   methods: {
     show(uuid) {

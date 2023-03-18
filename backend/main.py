@@ -1028,19 +1028,19 @@ class DomainSound:
         soundDevices = []
         for index, i in enumerate(self.xml.findall("devices/sound")):
             xml = ET.tostring(i).decode("utf-8")
-            model_type = i.get("model")
+            model = i.get("model")
             soundDevices.append(
             {
                 "index": index, 
-                "model": model_type, 
+                "model": model, 
                 "xml": xml
             })
         return soundDevices
     
-    def add(self, model_type):
+    def add(self, model):
         original_domain_xml = self.domain.XMLDesc(0)
         sound_element = ET.Element("sound")
-        sound_element.attrib["model"] = model_type
+        sound_element.attrib["model"] = model
         self.xml.find("devices").append(sound_element)
         newxml = ET.tostring(self.xml).decode("utf-8")
         self.domain.undefineFlags(4)
@@ -1751,9 +1751,16 @@ class api_vm_manager_action(Resource):
                     return 'Action not found', 404
             elif action.startswith("sound"):
                 action = action.replace("sound-", "")
-                if action == "delete":
+                if action == "add":
+                    model = data['model']
+                    try:
+                        DomainSound(vmuuid).add(model=model)
+                        return '', 204
+                    except Exception as e:
+                        return str(e), 500
+
+                elif action == "delete":
                     index = data['index']
-                    print("delete sound", index)
                     try:
                         DomainSound(vmuuid).remove(index=index)
                         return '', 204
