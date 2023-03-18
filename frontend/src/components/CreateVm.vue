@@ -229,7 +229,8 @@ export default {
         .get("/host/system-info/guest-machine-types")
         .then((response) => {
           this.machineOptions = response.data;
-          this.general_machine =  this.machineOptions[this.machineOptions.length - 1];
+          this.general_machine =
+            this.machineOptions[this.machineOptions.length - 1];
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Failed to get machine types", [
