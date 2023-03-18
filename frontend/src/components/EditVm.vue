@@ -1,5 +1,5 @@
 <template>
-  <q-dialog v-model="layout">
+  <q-dialog v-model="layout" maximized>
     <q-layout view="hHh lpR fFf" container class="bg-white">
       <q-header bordered class="bg-primary text-white" height-hint="98">
         <q-toolbar>
