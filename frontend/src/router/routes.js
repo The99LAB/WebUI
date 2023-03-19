@@ -33,6 +33,7 @@ const routes = [
         component: () => import("pages/DownloadIsoPage.vue"),
       },
       { path: "tools/about", component: () => import("pages/AboutPage.vue") },
+      { path: "settings", component: () => import("pages/SettingsPage.vue") },
     ],
   },
   // Always leave this as last one,
