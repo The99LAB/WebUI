@@ -1091,8 +1091,8 @@ def getGuestMachineTypes():
 
 class settings:
     def __init__(self):
-        db = sqlite3.connect('database.db')
-        self.db_c = db.cursor()
+        self.db = sqlite3.connect('database.db')
+        self.db_c = self.db.cursor()
 
     def getAll(self):
         self.db_c.execute('''
@@ -1115,7 +1115,13 @@ class settings:
             settingsData[name] = value
 
         return settingsData
-    
+
+    def set(self, name, value):
+        self.db_c.execute('''
+        UPDATE settings SET value = ? WHERE name = ?
+        ''', (value, name))
+        self.db.commit()
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -2257,7 +2263,14 @@ class api_host_settings(Resource):
     @jwt_required()
     def get(self):
         return settings().getAll()
-
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        setting = data['setting']
+        value = data['value']
+        print("changing setting: " + setting + " to " + value)
+        settings().set(setting, value)
+        return '', 204
 api.add_resource(api_host_settings, '/api/host/settings')
 
 if __name__ == '__main__':

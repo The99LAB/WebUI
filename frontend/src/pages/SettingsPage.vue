@@ -2,18 +2,21 @@
   <q-page padding>
     <p class="text-h6">Settings</p>
     <p class="text-subtitle2">OVMF Paths</p>
-    <div v-for="ovmfPath in ovmfPaths" :key="ovmfPath" class="row">
+    <!-- Replace with table? -->
+    <div v-for="ovmf_path in ovmf_paths" :key="ovmf_path" class="row">
       <div class="col">
-        <p>{{ ovmfPath.name }}</p>
+        <p>{{ ovmf_path.name }}</p>
       </div>
       <div class="col">
-        <p>{{ ovmfPath.path }}</p>
+        <p>{{ ovmf_path.path }}</p>
       </div>
     </div>
     <div class="row">
       <q-btn color="primary" icon="mdi-plus" label="Add" />
       <q-separator spaced vertical dark />
       <q-btn color="primary" icon="mdi-check" label="Apply" />
+      <q-separator spaced vertical dark />
+      <q-btn color="primary" icon="mdi-delete" label="Remove" />
     </div>
     <q-separator spaced="xl" />
     <p class="text-subtitle2">NOVNC settings</p>
@@ -30,6 +33,7 @@
               flat
               icon="mdi-check"
               title="Apply"
+              @click="changeSetting('novnc_path', novnc_path)"
             />
           </template>
         </q-input>
@@ -40,7 +44,7 @@
         <p>Port</p>
       </div>
       <div class="col">
-        <q-input v-model="novnc_port" >
+        <q-input v-model="novnc_port" type="number">
           <template v-slot:append>
             <q-btn
               round
@@ -48,6 +52,7 @@
               flat
               icon="mdi-check"
               title="Apply"
+              @click="changeSetting('novnc_port', novnc_port)"
             /> 
           </template>
         </q-input>
@@ -58,7 +63,10 @@
         <p>Protocool</p>
       </div>
       <div class="col">
-        <q-input v-model="novnc_protocool" >
+        <q-select
+          v-model="novnc_protocool"
+          :options="protocool_options"
+          label="Protocool">
           <template v-slot:append>
             <q-btn
               round
@@ -66,9 +74,10 @@
               flat
               icon="mdi-check"
               title="Apply"
+              @click="changeSetting('novnc_protocool', novnc_protocool)"
             />
           </template>
-        </q-input>
+        </q-select>
       </div>
     </div>
     <q-separator spaced="xl" />
@@ -78,7 +87,7 @@
         <p>Path</p>
       </div>
       <div class="col">
-        <q-input v-model="qemupath"> 
+        <q-input v-model="qemu_path"> 
           <template v-slot:append>
             <q-btn
               round
@@ -86,39 +95,57 @@
               flat
               icon="mdi-check"
               title="Apply"
+              @click="changeSetting('qemu_path', qemu_path)"
             />
           </template>
         </q-input>
       </div>
     </div>
   </q-page>
+  <ErrorDialog ref="errorDialog" />
 </template>
-
 <script>
 import { ref } from "vue";
+import ErrorDialog from "src/components/ErrorDialog.vue";
 
 export default {
   data() {
     return {
-      ovmfPaths: ref(null),
+      ovmf_paths: ref(null),
       novnc_path: ref(null),
       novnc_port: ref(null),
       novnc_protocool: ref(null),
-      qemupath: ref(null),
+      qemu_path: ref(null),
+      protocool_options: ["http", "https"],
     };
+  },
+  components: {
+    ErrorDialog,
   },
   methods: {
     getData(){
       this.$api.get("/host/settings")
       .then((response) => {
-        this.ovmfPaths = response.data.OVMF_paths
+        this.ovmf_paths = response.data.ovmf_paths
         this.novnc_path = response.data.novnc_path
         this.novnc_port = response.data.novnc_port
         this.novnc_protocool = response.data.novnc_protocool
-        this.qemupath = response.data.QEMU_path
+        this.qemu_path = response.data.qemu_path
       })
       .catch((error) => {
-        console.log(error)
+        this.$refs.errorDialog.show("Error getting settings", [error.response.data]);
+      });
+    },
+    changeSetting(setting, value){
+      this.$api.post("/host/settings", {
+        setting: setting,
+        value: value
+      })
+      .then((response) => {
+        this.getData()
+      })
+      .catch((error) => {
+        this.$refs.errorDialog.show("Error changing setting", [error.response.data]);
       });
     }
   },
