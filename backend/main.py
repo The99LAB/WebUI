@@ -18,6 +18,8 @@ from flask_jwt_extended import create_access_token, jwt_required, JWTManager
 import pam
 import LibvirtKVMBackup
 import logging
+import sqlite3
+import json
 
 """
 NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijn/token.list
@@ -1087,6 +1089,33 @@ def getGuestMachineTypes():
     machine_types.sort()
     return machine_types
 
+class settings:
+    def __init__(self):
+        db = sqlite3.connect('database.db')
+        self.db_c = db.cursor()
+
+    def getAll(self):
+        self.db_c.execute('''
+        SELECT * FROM settings
+        ''')
+        rows = self.db_c.fetchall()
+
+        settingsData = {}
+
+        for row in rows:
+            name = row[1]
+            try:
+                value_database = json.loads(row[2])
+                if isinstance(value_database, list):
+                    value = value_database
+                else:
+                    value = row[2]
+            except json.JSONDecodeError:
+                value = row[2]
+            settingsData[name] = value
+
+        return settingsData
+    
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -2223,6 +2252,13 @@ class api_host_system_devices(Resource):
 
 api.add_resource(api_host_system_devices,
                  '/api/host/system-devices/<string:devicetype>')
+
+class api_host_settings(Resource):
+    @jwt_required()
+    def get(self):
+        return settings().getAll()
+
+api.add_resource(api_host_settings, '/api/host/settings')
 
 if __name__ == '__main__':
     werkzeug_logger = logging.getLogger('werkzeug')
