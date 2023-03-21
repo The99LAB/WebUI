@@ -25,7 +25,7 @@
         <p>Path</p>
       </div>
       <div class="col">
-        <q-input v-model="novnc_path" >
+        <q-input v-model="novnc_path">
           <template v-slot:append>
             <q-btn
               round
@@ -37,7 +37,7 @@
             />
           </template>
         </q-input>
-      </div> 
+      </div>
     </div>
     <div class="row">
       <div class="col">
@@ -53,7 +53,7 @@
               icon="mdi-check"
               title="Apply"
               @click="changeSetting('novnc_port', novnc_port)"
-            /> 
+            />
           </template>
         </q-input>
       </div>
@@ -66,7 +66,8 @@
         <q-select
           v-model="novnc_protocool"
           :options="protocool_options"
-          label="Protocool">
+          label="Protocool"
+        >
           <template v-slot:append>
             <q-btn
               round
@@ -87,7 +88,7 @@
         <p>Path</p>
       </div>
       <div class="col">
-        <q-input v-model="qemu_path"> 
+        <q-input v-model="qemu_path">
           <template v-slot:append>
             <q-btn
               round
@@ -123,34 +124,40 @@ export default {
     ErrorDialog,
   },
   methods: {
-    getData(){
-      this.$api.get("/host/settings")
-      .then((response) => {
-        this.ovmf_paths = response.data.ovmf_paths
-        this.novnc_path = response.data.novnc_path
-        this.novnc_port = response.data.novnc_port
-        this.novnc_protocool = response.data.novnc_protocool
-        this.qemu_path = response.data.qemu_path
-      })
-      .catch((error) => {
-        this.$refs.errorDialog.show("Error getting settings", [error.response.data]);
-      });
+    getData() {
+      this.$api
+        .get("/host/settings")
+        .then((response) => {
+          this.ovmf_paths = response.data.ovmf_paths;
+          this.novnc_path = response.data.novnc_path;
+          this.novnc_port = response.data.novnc_port;
+          this.novnc_protocool = response.data.novnc_protocool;
+          this.qemu_path = response.data.qemu_path;
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting settings", [
+            error.response.data,
+          ]);
+        });
     },
-    changeSetting(setting, value){
-      this.$api.post("/host/settings", {
-        setting: setting,
-        value: value
-      })
-      .then((response) => {
-        this.getData()
-      })
-      .catch((error) => {
-        this.$refs.errorDialog.show("Error changing setting", [error.response.data]);
-      });
-    }
+    changeSetting(setting, value) {
+      this.$api
+        .post("/host/settings", {
+          setting: setting,
+          value: value,
+        })
+        .then((response) => {
+          this.getData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error changing setting", [
+            error.response.data,
+          ]);
+        });
+    },
   },
   mounted() {
-    this.getData()
-  }
+    this.getData();
+  },
 };
 </script>
