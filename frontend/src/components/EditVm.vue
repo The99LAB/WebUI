@@ -338,7 +338,6 @@
                   </div>
                 </div>
               </div>
-              <p v-if="diskList.length == 0">No disks</p>
             </q-tab-panel>
             <q-tab-panel name="network">
               <div v-for="network in networkList" :key="network">
@@ -391,7 +390,6 @@
                   </div>
                 </div>
               </div>
-              <p v-if="networkList.length == 0">No networks</p>
             </q-tab-panel>
             <q-tab-panel name="graphics">
               <div

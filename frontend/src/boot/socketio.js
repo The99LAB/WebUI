@@ -2,7 +2,7 @@ import { boot } from "quasar/wrappers";
 
 var SOCKETIO_ENDPOINT = "";
 if (process.env.NODE_ENV === "development") {
-  SOCKETIO_ENDPOINT = process.env.SOCKETIO_ENDPOINT;
+  SOCKETIO_ENDPOINT = process.env.SOCKETIO_ENDPOINT_DEV;
 } else if (process.env.NODE_ENV === "production") {
   SOCKETIO_ENDPOINT =
     window.location.protocol +

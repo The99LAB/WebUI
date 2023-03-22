@@ -161,6 +161,10 @@ export default {
       columns,
       selected,
       vmTableLoading: ref(true),
+      novnc_port: null,
+      novnc_protocool: null,
+      novnc_path: null,
+      novnc_ip: null,
     };
   },
   components: {
@@ -205,15 +209,27 @@ export default {
         ]);
       });
     },
+    getVncSettings() {
+      this.$api.get("/host/settings/vnc").then((response) => {
+        this.novnc_port = response.data.port;
+        this.novnc_protocool = response.data.protocool;
+        this.novnc_path = response.data.path;
+        this.novnc_ip = response.data.ip;
+      });
+    },
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid);
-      // open vnc in new tab
-      window.open(
-        this.$vncEndpoint +
-          "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
-          uuid,
-        "_blank"
-      );
+      const novnc_url =
+        this.novnc_protocool +
+        "://" +
+        this.novnc_ip +
+        ":" +
+        this.novnc_port +
+        "/" +
+        this.novnc_path +
+        "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
+        uuid;
+      window.open(novnc_url, "_blank");
     },
     editVm(uuid) {
       this.$refs.editVm.show(uuid);
@@ -235,6 +251,7 @@ export default {
   },
   mounted() {
     this.socket.emit("vmdata");
+    this.getVncSettings();
     this.socket.on("vmdata", (data) => {
       this.rows = data;
       this.vmTableLoading = false;

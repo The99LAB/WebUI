@@ -59,7 +59,6 @@
             <q-item-label>Storage Pools</q-item-label>
           </q-item-section>
         </q-item>
-        <!-- backup manager -->
         <q-item clickable tag="a" to="/backup-manager">
           <q-item-section avatar>
             <q-icon name="mdi-backup-restore" />
@@ -108,6 +107,14 @@
             </q-item-section>
           </q-item>
         </q-expansion-item>
+        <q-item clickable tag="a" to="/settings">
+          <q-item-section avatar>
+            <q-icon name="mdi-cog" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Settings</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 
