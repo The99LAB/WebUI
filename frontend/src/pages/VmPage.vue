@@ -219,7 +219,16 @@ export default {
     },
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid);
-      const novnc_url = this.novnc_protocool + "://" + this.novnc_ip + ":" + this.novnc_port + "/" + this.novnc_path + "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" + uuid;
+      const novnc_url =
+        this.novnc_protocool +
+        "://" +
+        this.novnc_ip +
+        ":" +
+        this.novnc_port +
+        "/" +
+        this.novnc_path +
+        "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
+        uuid;
       window.open(novnc_url, "_blank");
     },
     editVm(uuid) {
@@ -242,7 +251,7 @@ export default {
   },
   mounted() {
     this.socket.emit("vmdata");
-    this.getVncSettings()
+    this.getVncSettings();
     this.socket.on("vmdata", (data) => {
       this.rows = data;
       this.vmTableLoading = false;

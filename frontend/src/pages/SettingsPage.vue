@@ -4,7 +4,13 @@
     <p class="text-subtitle2">General settings</p>
     <div class="row">
       <q-space />
-      <q-btn color="primary" label="Edit" icon="mdi-pencil" :disable="selected_setting.length == 0" @click="editSetting"/>
+      <q-btn
+        color="primary"
+        label="Edit"
+        icon="mdi-pencil"
+        :disable="selected_setting.length == 0"
+        @click="editSetting"
+      />
     </div>
     <div class="q-pa-md">
       <q-table
@@ -19,7 +25,13 @@
     <p class="text-subtitle2">OVMF Paths</p>
     <div class="row">
       <q-space />
-      <q-btn color="primary" label="Edit" icon="mdi-pencil" :disable="selected_ovmf_path.length == 0" @click="editOvmfPath"/>
+      <q-btn
+        color="primary"
+        label="Edit"
+        icon="mdi-pencil"
+        :disable="selected_ovmf_path.length == 0"
+        @click="editOvmfPath"
+      />
     </div>
     <div class="q-pa-md">
       <q-table
@@ -32,22 +44,36 @@
     </div>
   </q-page>
   <q-dialog v-model="editSettingDialogShow">
-      <q-card style="min-width: 50vw">
-        <q-card-section class="row items-center q-pb-none">
-          <div class="text-h6">Edit setting</div>
-          <q-space />
-          <q-btn icon="close" flat round dense v-close-popup />
-        </q-card-section>
-        <q-separator spaced="lg" inset />
-        <q-card-section class="q-pt-none">
-          <p>Target: {{ this.editSettingDialogTarget }}</p>
-          <q-input v-model="editSettingDialogValue" type="text" :label="this.editSettingDialogName" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Edit" @click="editSettingDialogSave(this.editSettingDialogTarget, this.editSettingDialogName, this.editSettingDialogValue)"/>
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <q-card style="min-width: 50vw">
+      <q-card-section class="row items-center q-pb-none">
+        <div class="text-h6">Edit setting</div>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup />
+      </q-card-section>
+      <q-separator spaced="lg" inset />
+      <q-card-section class="q-pt-none">
+        <p>Target: {{ this.editSettingDialogTarget }}</p>
+        <q-input
+          v-model="editSettingDialogValue"
+          type="text"
+          :label="this.editSettingDialogName"
+        />
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn
+          flat
+          label="Edit"
+          @click="
+            editSettingDialogSave(
+              this.editSettingDialogTarget,
+              this.editSettingDialogName,
+              this.editSettingDialogValue
+            )
+          "
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
   <ErrorDialog ref="errorDialog" />
 </template>
 <script>
@@ -153,7 +179,7 @@ export default {
     },
 
     changeSetting(setting, value) {
-      console.log("changeSetting", setting, value)
+      console.log("changeSetting", setting, value);
       this.$api
         .post("/host/settings/edit", {
           setting: setting,
@@ -169,8 +195,8 @@ export default {
         });
     },
 
-    changeOvmfPath(name, value){
-      console.log("changeOvmfPath", name, value)
+    changeOvmfPath(name, value) {
+      console.log("changeOvmfPath", name, value);
       this.$api
         .post("/vm-manager/settings", {
           name: name,
@@ -189,10 +215,9 @@ export default {
     editSettingDialogSave(target, name, value) {
       if (target == "general") {
         this.changeSetting(name, value);
-      }
-      else if (target == "ovmf paths") {
+      } else if (target == "ovmf paths") {
         this.changeOvmfPath(name, value);
-      }      
+      }
       this.editSettingDialogShow = false;
     },
   },
