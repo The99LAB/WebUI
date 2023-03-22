@@ -31,7 +31,6 @@ export default {
         .get("/networks")
         .then((response) => {
           this.networkList = response.data;
-          console.log("Network list: ", response.data);
           this.selectedNetwork = this.networkList[0];
         })
         .catch((error) => {});

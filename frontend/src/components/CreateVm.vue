@@ -40,6 +40,16 @@
               v-model="general_bios"
               :options="biosOptions"
             />
+            <q-select label="OVMF" v-model="general_ovmf" option-label="name" :options="ovmfOptions" v-if="general_bios == 'ovmf'">
+              <template v-slot:option="scope">
+                <q-item v-bind="scope.itemProps">
+                  <q-item-section>
+                    <q-item-label>{{ scope.opt.name }}</q-item-label>
+                    <q-item-label caption>Path: {{ scope.opt.path }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
           </q-tab-panel>
 
           <q-tab-panel name="memory" v-show="tab == 'memory'">
@@ -196,6 +206,8 @@ export default {
       general_os: ref("Microsoft Windows 10"),
       general_machine: ref(),
       general_bios: ref("ovmf"),
+      general_ovmf: ref(),
+      ovmfOptions: [],
       memory_minMemory: ref(1024),
       memory_minMemoryUnit: ref("MB"),
       memory_maxMemory: ref(1024),
@@ -223,6 +235,7 @@ export default {
     show() {
       this.layout = true;
       this.getMachineTypes();
+      this.getOvmf();
     },
     getMachineTypes() {
       this.$api
@@ -237,6 +250,12 @@ export default {
             error.response.data,
           ]);
         });
+    },
+    getOvmf() {
+      this.$api.get("/vm-manager/settings").then((response) => {
+        this.ovmfOptions = response.data;
+        this.general_ovmf = this.ovmfOptions[0];
+      });
     },
     createVm() {
       if (this.$refs.diskPool.getSelectedPool() == null) {
@@ -276,6 +295,7 @@ export default {
       formData.append("os", this.general_os);
       formData.append("machine_type", this.general_machine);
       formData.append("bios_type", this.general_bios);
+      formData.append("ovmf_name", this.general_ovmf.name);
       formData.append("memory_min", this.memory_minMemory);
       formData.append("memory_min_unit", this.memory_minMemoryUnit);
       formData.append("memory_max", this.memory_maxMemory);

@@ -33,10 +33,6 @@ class CustomFlask(Flask):
         variable_end_string='%%',
     ))
 
-#### Setting variables ####
-ovmf_path = "/usr/share/OVMF/OVMF_CODE.fd"
-qemu_path = "/usr/bin/qemu-system-x86_64"
-
 app = CustomFlask(__name__, static_url_path='')
 CORS(app, resources={r"*": {"origins": "*"}})
 api = Api(app)
@@ -695,7 +691,7 @@ class domainNetworkInterface():
 
 
 class create_vm():
-    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_pool=None, iso=False, iso_pool=None, iso_volume=None, network=False, network_source=None, network_model=None):
+    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_pool=None, iso=False, iso_pool=None, iso_volume=None, network=False, network_source=None, network_model=None, ovmf_name=None):
         self.name = name
         self.machine_type = machine_type
         self.bios_type = bios_type
@@ -715,6 +711,8 @@ class create_vm():
         self.network = network
         self.network_source = network_source
         self.network_model = network_model
+        self.ovmf_path = settings_ovmfpaths().get(ovmf_name)
+        self.qemu_path = settings().get("qemu path")
         self.networkstring = ""
         if self.network:
             self.networkstring = f"<interface type='network'><source network='{conn.networkLookupByUUIDString(self.network_source).name()}'/><model type='{self.network_model}'/></interface>"
@@ -756,7 +754,7 @@ class create_vm():
                             </disk>"""
 
     def windows(self, version):
-        ovmfstring = f"<loader readonly='yes' type='pflash'>{ovmf_path}</loader>"
+        ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
         self.xml = f"""<domain type='kvm'>
         <name>{self.name}</name>
         <metadata>
@@ -783,7 +781,7 @@ class create_vm():
         </features>
         <cpu mode='host-model' check='partial'/>
         <devices>
-            <emulator>{qemu_path}</emulator>
+            <emulator>{self.qemu_path}</emulator>
             {self.networkstring}
             {self.createisoxml}
             {self.creatediskxml}
@@ -804,7 +802,7 @@ class create_vm():
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
-            <loader readonly='yes' type='pflash'>{ovmf_path}</loader>
+            <loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>
         </os>
         <features>
             <acpi/>
@@ -821,7 +819,7 @@ class create_vm():
             <timer name='tsc' present='yes' mode='native'/>
         </clock>
         <devices>
-            <emulator>{qemu_path}</emulator>
+            <emulator>{self.qemu_path}</emulator>
             {self.networkstring}
             {self.createisoxml}
             {self.creatediskxml}
@@ -1100,28 +1098,72 @@ class settings:
         ''')
         rows = self.db_c.fetchall()
 
-        settingsData = {}
+        settingsData = []
 
         for row in rows:
             name = row[1]
-            try:
-                value_database = json.loads(row[2])
-                if isinstance(value_database, list):
-                    value = value_database
-                else:
-                    value = row[2]
-            except json.JSONDecodeError:
-                value = row[2]
-            settingsData[name] = value
+            value = row[2]
+            settingsData.append(
+            {
+                "name": name,
+                "value": value
+            })
 
         return settingsData
+    
+    # get value of setting by setting name
+    def get(self, name):
+        self.db_c.execute('''
+        SELECT * FROM settings WHERE name = ?
+        ''', (name,))
+        row = self.db_c.fetchone()
 
+        return row[2]
+    
     def set(self, name, value):
         self.db_c.execute('''
         UPDATE settings SET value = ? WHERE name = ?
         ''', (value, name))
         self.db.commit()
 
+class settings_ovmfpaths:
+    def __init__(self):
+        self.db = sqlite3.connect('database.db')
+        self.db_c = self.db.cursor()
+
+    def getAll(self):
+        self.db_c.execute('''
+        SELECT * FROM settings_ovmfpaths
+        ''')
+        rows = self.db_c.fetchall()
+
+        settingsData = []
+
+        for row in rows:
+            name = row[1]
+            path = row[2]
+            settingsData.append(
+            {
+                "name": name,
+                "path": path
+            })
+
+        return settingsData
+
+    # get path of ovmf by name
+    def get(self, name):
+        self.db_c.execute('''
+        SELECT * FROM settings_ovmfpaths WHERE name = ?
+        ''', (name,))
+        row = self.db_c.fetchone()
+
+        return row[2]
+    
+    def set(self, name, path):
+        self.db_c.execute('''
+        UPDATE settings_ovmfpaths SET path = ? WHERE name = ?
+        ''', (path, name))
+        self.db.commit()
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -1186,7 +1228,6 @@ class api_socketio(Namespace):
 
 socketio.on_namespace(api_socketio('/api'))
 
-
 class api_vm_manager(Resource):
     @jwt_required()
     def get(self, action):
@@ -1211,6 +1252,10 @@ class api_vm_manager(Resource):
             os = request.form['os']
             machine_type = request.form['machine_type']
             bios_type = request.form['bios_type']
+            ovmf_name = None
+            if bios_type == "ovmf":
+                ovmf_name = request.form['ovmf_name']
+                print("ovmf_name: " + ovmf_name)
             min_mem = request.form['memory_min']
             mim_mem_unit = request.form['memory_min_unit']
             max_mem = request.form['memory_max']
@@ -1251,7 +1296,7 @@ class api_vm_manager(Resource):
 
             try:
                 vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
-                            disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model)
+                            disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model, ovmf_name=ovmf_name)
                 if os == "Microsoft Windows 10":
                     vm.windows(version="10")
                 elif os == "Microsoft Windows 8.1":
@@ -2261,17 +2306,42 @@ api.add_resource(api_host_system_devices,
 
 class api_host_settings(Resource):
     @jwt_required()
+    def get(self, action):
+        if action == "all":
+            return settings().getAll()
+        elif action == "vnc":
+            vnc_settings = { 
+                "port": settings().get("novnc port"), 
+                "protocool": settings().get("novnc protocool"), 
+                "path": settings().get("novnc path"),
+                "ip": settings().get("novnc ip")
+            }
+            return vnc_settings
+        else:
+            return 'Action not found', 404
+    @jwt_required()
+    def post(self, action):
+        if action == "edit":
+            data = request.get_json()
+            setting = data['setting']
+            value = data['value']
+            settings().set(setting, value)
+            return '', 204
+api.add_resource(api_host_settings, '/api/host/settings/<string:action>')
+
+class api_vm_manager_settings(Resource):
+    @jwt_required()
     def get(self):
-        return settings().getAll()
+        return settings_ovmfpaths().getAll()
     @jwt_required()
     def post(self):
         data = request.get_json()
-        setting = data['setting']
-        value = data['value']
-        print("changing setting: " + setting + " to " + value)
-        settings().set(setting, value)
+        name = data['name']
+        path = data['path']
+        settings_ovmfpaths().set(name, path)
         return '', 204
-api.add_resource(api_host_settings, '/api/host/settings')
+
+api.add_resource(api_vm_manager_settings, '/api/vm-manager/settings')
 
 if __name__ == '__main__':
     werkzeug_logger = logging.getLogger('werkzeug')
