@@ -40,12 +40,20 @@
               v-model="general_bios"
               :options="biosOptions"
             />
-            <q-select label="OVMF" v-model="general_ovmf" option-label="name" :options="ovmfOptions" v-if="general_bios == 'ovmf'">
+            <q-select
+              label="OVMF"
+              v-model="general_ovmf"
+              option-label="name"
+              :options="ovmfOptions"
+              v-if="general_bios == 'ovmf'"
+            >
               <template v-slot:option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section>
                     <q-item-label>{{ scope.opt.name }}</q-item-label>
-                    <q-item-label caption>Path: {{ scope.opt.path }}</q-item-label>
+                    <q-item-label caption
+                      >Path: {{ scope.opt.path }}</q-item-label
+                    >
                   </q-item-section>
                 </q-item>
               </template>
