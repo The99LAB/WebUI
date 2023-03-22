@@ -1435,8 +1435,14 @@ class api_vm_manager_action(Resource):
         domain = conn.lookupByUUIDString(vmuuid)
         if action == "start":
             try:
-                domain.create()
-                return '', 204
+                if domain.state()[0] == libvirt.VIR_DOMAIN_SHUTOFF:
+                    domain.create()
+                    return '', 204
+                elif domain.state()[0] == libvirt.VIR_DOMAIN_PMSUSPENDED:
+                    domain.pMWakeup()
+                    return '', 204
+                else:
+                    return "Domain is in an invalid state", 400
             except Exception as e:
                 return f'{e}', 500
         elif action == "stop":
