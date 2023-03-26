@@ -208,6 +208,7 @@
 import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import VmListAll from "src/components/VmListAll.vue";
+import _ from "lodash";
 
 const backupConfigRows = [];
 
@@ -251,17 +252,104 @@ export default {
   },
   methods: {
     getData() {
+      var array1 = this.backupConfigRows;
+      var backupConfigNames1 = [];
+      for (let i = 0; i < array1.length; i++) {
+        backupConfigNames1.push(array1[i].config);
+      }
+      var array1SpecialData = [];
+      for (let i = 0; i < array1.length; i++) {
+        var expand = array1[i].expand;
+        const config = array1[i].config;
+        const lastResult = array1[i].lastResult;
+        const backupCount = array1[i].backupCount;
+        const destination = array1[i].destination;
+        const autoShutdown = array1[i].autoShutdown;
+        const disks = array1[i].disks;
+        const backups = array1[i].backups;
+        const tab = array1[i].tab;
+        if (expand === undefined) {
+          expand = false;
+        }
+
+        array1SpecialData.push({
+          expand: expand,
+          config: config,
+          lastResult: lastResult,
+          backupCount: backupCount,
+          destination: destination,
+          autoShutdown: autoShutdown,
+          disks: disks,
+          backups: backups,
+          tab: tab,
+        });
+      }
       this.$api
         .get("/backup-manager/configs")
         .then((response) => {
-          this.backupConfigRows = response.data;
+          var array2 = response.data;
+          if (array2.length === 0) {
+            this.backupConfigRows = [];
+            this.backupConfigTableLoading = false;
+            return;
+          }
+          var backupConfigNames2 = [];
+          for (let i = 0; i < array2.length; i++) {
+            backupConfigNames2.push(array2[i].config);
+          }
+          // if array1 is empty, just use array2
+          if (array1.length === 0) {
+            for (let i = 0; i < array2.length; i++) {
+              array2[i].tab = "overview";
+            }
+            this.backupConfigRows = array2;
+            this.backupConfigTableLoading = false;
+            return;
+          }
+          // merge arrays
+          var combinedArray = _.merge(array1, array2);
+          // remove deleted by comparing backupConfigNames1 and backupConfigNames2
+          for (let i = 0; i < backupConfigNames1.length; i++) {
+            if (!backupConfigNames2.includes(backupConfigNames1[i])) {
+              combinedArray.splice(i, 1);
+            }
+          }
+
+          // add expand and uuid to combined array
+          for (let i = 0; i < combinedArray.length; i++) {
+            // put expand and tab and expand varibles from array1SpecialData (client) into combinedArray (server)
+            for (let j = 0; j < array1SpecialData.length; j++) {
+              if (combinedArray[i].config === array1SpecialData[j].config) {
+                combinedArray[i].expand = array1SpecialData[j].expand;
+                combinedArray[i].tab = array1SpecialData[j].tab;
+              }
+            }
+            // make sure tab isn't undefined
+            if (combinedArray[i].tab === undefined) {
+              combinedArray[i].tab = "overview";
+            }
+            // put volumes from array2 (server) into combinedArray (client)
+            for (let j = 0; j < array2.length; j++) {
+              if (combinedArray[i].config === array2[j].config) {
+                combinedArray[i].backups = array2[j].backups;
+              }
+            }
+          }
+          // set rows
+          this.backupConfigRows = combinedArray;
           this.backupConfigTableLoading = false;
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting backup configs", [
-            "Could not get backup configs.",
-            error.response.data,
-          ]);
+          if (error.response == undefined){
+            this.$refs.errorDialog.show("Error getting backup configs", [
+              "Could not get backup configs.",
+            ]);
+          } else {
+            this.$refs.errorDialog.show("Error getting backup configs", [
+              "Could not get backup configs.",
+              error.response.data,
+            ]);
+          }
         });
     },
     createBackup(config) {
@@ -375,6 +463,7 @@ export default {
   },
   mounted() {
     this.getData();
+    this.getDataInterval = setInterval(this.getData, 1000);
   },
 };
 </script>

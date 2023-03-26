@@ -2120,7 +2120,6 @@ class api_backups_configs(Resource):
                 "autoShutdown": backup_auto_shutdown,
                 "disks": backup_disks,
                 "backups": backups,
-                "tab": "overview"
             })
         return configs
     def post(self): # create new config
