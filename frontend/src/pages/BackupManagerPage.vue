@@ -340,7 +340,7 @@ export default {
           this.backupConfigTableLoading = false;
         })
         .catch((error) => {
-          if (error.response == undefined){
+          if (error.response == undefined) {
             this.$refs.errorDialog.show("Error getting backup configs", [
               "Could not get backup configs.",
             ]);
