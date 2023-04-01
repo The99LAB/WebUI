@@ -1,5 +1,12 @@
 name: Build
-on: push
+# on push all branches and release
+on:
+  push:
+    branches:
+      - '*'
+  release:
+    types:
+      - published
 
 jobs:
   run:
