@@ -20,3 +20,6 @@ shutil.move('frontend/dist/spa/index.html', 'backend/templates')
 # move files inside dist.spa to backend/static
 for file in os.listdir('frontend/dist/spa'):
     shutil.move('frontend/dist/spa/' + file, 'backend/static')
+
+# zip backend folder
+shutil.make_archive('VmManager-build', 'zip', 'backend')
