@@ -12,3 +12,4 @@ flask-jwt-extended
 python-pam
 gevent
 gunicorn
+LibvirtKVMBackup

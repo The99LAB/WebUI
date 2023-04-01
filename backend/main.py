@@ -2252,9 +2252,14 @@ class api_host_system_info(Resource):
     def get(self, action):
         if action == "all":
             sysInfo = ET.fromstring(conn.getSysinfo(0))
-            baseboard_manufacturer = sysInfo.find("baseBoard/entry[@name='manufacturer']").text
-            baseboard_product = sysInfo.find("baseBoard/entry[@name='product']").text
-            baseboard_version = sysInfo.find("baseBoard/entry[@name='version']").text
+            # if baseboard exists in sysinfo
+            baseboard_manufacturer = "Unknown"
+            baseboard_product = ""
+            baseboard_version = ""
+            if sysInfo.find("baseBoard") is not None:
+                baseboard_manufacturer = sysInfo.find("baseBoard/entry[@name='manufacturer']").text
+                baseboard_product = sysInfo.find("baseBoard/entry[@name='product']").text
+                baseboard_version = sysInfo.find("baseBoard/entry[@name='version']").text
             processor_version = sysInfo.find("processor/entry[@name='version']").text
             memory_size = sysInfo.find("memory_device/entry[@name='size']").text
             return {
