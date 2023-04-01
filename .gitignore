@@ -1,3 +1,4 @@
 backend/static
 backend/templates
 backend/libvirt.py
+.vscode/sftp.json
