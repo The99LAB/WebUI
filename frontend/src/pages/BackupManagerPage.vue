@@ -159,7 +159,7 @@
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
-        <q-separator spaced="lg" inset />
+        <q-separator color="transparent" spaced="lg" inset />
         <q-card-section class="q-pt-none" v-for="item in backupLog" :key="item">
           {{ item }}
         </q-card-section>
@@ -172,7 +172,7 @@
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
-        <q-separator spaced="lg" inset />
+        <q-separator color="transparent" spaced="lg" inset />
         <q-card-section class="q-pt-none">
           <q-input v-model="createConfigName" type="text" label="Name" />
           <VmListAll

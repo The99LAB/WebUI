@@ -71,7 +71,7 @@
         </q-tr>
       </template>
     </q-table>
-    <q-separator spaced="lg" inset />
+    <q-separator color="transparent" spaced="lg" inset />
     <q-table
       :loading="scsiTableLoading"
       title="SCSI Devices"
@@ -81,7 +81,7 @@
       separator="none"
       :pagination="scsiTablePaginationOptions"
     />
-    <q-separator spaced="lg" inset />
+    <q-separator color="transparent" spaced="lg" inset />
     <q-table
       :loading="usbTableLoading"
       title="USB Devices"

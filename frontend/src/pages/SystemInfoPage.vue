@@ -9,7 +9,7 @@
           System Information
         </div>
       </q-card-section>
-      <q-separator dark inset />
+      <q-separator color="transparent" dark inset />
       <q-card-section>
         <div class="row justify-center text-body2" v-show="showData">
           <div class="col text-right q-mr-sm text-weight-bold">

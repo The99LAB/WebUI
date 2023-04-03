@@ -21,7 +21,7 @@
         v-model:selected="selected_setting"
       />
     </div>
-    <q-separator spaced="xl" />
+    <q-separator color="transparent" spaced="xl" />
     <p class="text-subtitle2">OVMF Paths</p>
     <div class="row">
       <q-space />
@@ -32,7 +32,7 @@
         :disable="selected_ovmf_path.length == 0"
         @click="editOvmfPath"
       />
-      <q-separator spaced vertical dark />
+      <q-separator color="transparent" spaced vertical dark />
       <q-btn
         color="primary"
         label="Remove"
@@ -40,7 +40,7 @@
         :disable="selected_ovmf_path.length == 0"
         @click="removeOvmfPath(selected_ovmf_path[0].name)"
       />
-      <q-separator spaced vertical dark />
+      <q-separator color="transparent" spaced vertical dark />
       <q-btn
         color="primary"
         label="Add"
@@ -65,7 +65,7 @@
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
-      <q-separator spaced="lg" inset />
+      <q-separator color="transparent" spaced="lg" inset />
       <q-card-section class="q-pt-none">
         <p>Target: {{ this.editSettingDialogTarget }}</p>
         <q-input
@@ -96,7 +96,7 @@
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
-      <q-separator spaced="lg" inset />
+      <q-separator color="transparent" spaced="lg" inset />
       <q-card-section class="q-pt-none">
         <q-input
           v-model="addOvmfPathDialogName"

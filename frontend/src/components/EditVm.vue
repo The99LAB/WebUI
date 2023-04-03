@@ -1,7 +1,7 @@
 <template>
   <q-dialog v-model="layout" maximized>
-    <q-layout view="hHh lpR fFf" container class="bg-white">
-      <q-header bordered class="bg-primary text-white" height-hint="98">
+    <q-layout view="hHh lpR fFf" container :class="{'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive}">
+      <q-header bordered>
         <q-toolbar>
           <q-toolbar-title>Edit VM</q-toolbar-title>
           <q-btn
@@ -25,12 +25,12 @@
           <q-tab name="passthrough" label="Passthrough" />
           <q-tab name="xml" label="Xml" />
         </q-tabs>
-        <q-separator />
+        <q-separator color="transparent" />
       </q-header>
 
       <q-page-container>
         <q-page padding>
-          <q-tab-panels v-model="tab">
+          <q-tab-panels v-model="tab" >
             <q-tab-panel name="general">
               <q-input label="Name" v-model="general_name">
                 <template v-slot:append>
@@ -209,7 +209,7 @@
 
             <q-tab-panel name="disk">
               <div v-for="disk in diskList" :key="disk">
-                <q-separator spaced="lg" inset v-if="disk.number != 0" />
+                <q-separator color="transparent" spaced="lg" inset v-if="disk.number != 0" />
                 <div class="row">
                   <div class="col">
                     <q-input
@@ -320,7 +320,7 @@
                     </q-input>
                   </div>
                 </div>
-                <q-separator inset vertical />
+                <q-separator color="transparent" inset vertical />
                 <div class="row">
                   <div class="col">
                     <q-toggle
@@ -341,7 +341,7 @@
             </q-tab-panel>
             <q-tab-panel name="network">
               <div v-for="network in networkList" :key="network">
-                <q-separator spaced="lg" inset v-if="network.number != 0" />
+                <q-separator color="transparent" spaced="lg" inset v-if="network.number != 0" />
                 <div class="row">
                   <div class="col">
                     <q-input
@@ -396,7 +396,7 @@
                 v-for="graphicsdevice in graphicsdevicesList"
                 :key="graphicsdevice"
               >
-                <q-separator
+                <q-separator color="transparent"
                   spaced="lg"
                   inset
                   v-if="graphicsdevice.index != 0"
@@ -419,7 +419,7 @@
                 />
               </div>
               <div v-for="videodevice in videodevicesList" :key="videodevice">
-                <q-separator
+                <q-separator color="transparent"
                   spaced="lg"
                   inset
                   v-if="
@@ -452,7 +452,7 @@
             </q-tab-panel>
             <q-tab-panel name="sound">
               <div v-for="sounddevice in sounddevicesList" :key="sounddevice">
-                <q-separator spaced="lg" inset v-if="sounddevice.index != 0" />
+                <q-separator color="transparent" spaced="lg" inset v-if="sounddevice.index != 0" />
                 <q-input label="Device Type" model-value="Sound" readonly>
                   <template v-slot:after>
                     <q-btn
@@ -495,7 +495,7 @@
                   label="Product Id"
                   readonly
                 />
-                <q-separator spaced="lg" inset />
+                <q-separator color="transparent" spaced="lg" inset />
               </div>
               <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
                 <q-input model-value="PCI Device" label="Type" readonly>
@@ -553,7 +553,7 @@
                     />
                   </template>
                 </q-input>
-                <q-separator spaced="lg" inset />
+                <q-separator color="transparent" spaced="lg" inset />
               </div>
             </q-tab-panel>
             <q-tab-panel name="xml">

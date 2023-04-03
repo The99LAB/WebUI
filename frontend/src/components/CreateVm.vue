@@ -1,7 +1,7 @@
 <template>
   <q-dialog v-model="layout">
-    <q-layout view="hHh lpR fFf" container class="bg-white">
-      <q-header bordered class="bg-primary text-white" height-hint="98">
+    <q-layout view="hHh lpR fFf" container :class="{'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive }">
+      <q-header bordered>
         <q-toolbar>
           <q-toolbar-title>Create VM</q-toolbar-title>
           <q-btn icon="close" flat round dense v-close-popup />
@@ -14,7 +14,7 @@
           <q-tab name="cdrom" label="CD-ROM" />
           <q-tab name="network" label="Network" />
         </q-tabs>
-        <q-separator />
+        <q-separator color="transparent" />
       </q-header>
 
       <q-page-container>
@@ -260,7 +260,8 @@ export default {
         });
     },
     getOvmf() {
-      this.$api.get("/vm-manager/settings").then((response) => {
+      this.$api.get("/vm-manager/settings/ovmf-paths/all").then((response) => {
+        console.log(response.data)
         this.ovmfOptions = response.data;
         this.general_ovmf = this.ovmfOptions[0];
       });

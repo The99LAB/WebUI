@@ -1,12 +1,12 @@
 <template>
   <q-page padding>
-    <q-separator spaced dark />
+    <q-separator color="transparent" spaced dark />
     <HostUsbDevicesList ref="usbDevicesList" />
     <VmList ref="vmList" />
-    <q-separator spaced inset dark />
+    <q-separator color="transparent" spaced/>
     <div class="row">
       <q-btn label="Add device to vm" color="primary" @click="addHotplugUsb" />
-      <q-separator spaced vertical dark />
+      <q-separator color="transparent" spaced vertical dark/>
       <q-btn
         label="Remove device from vm"
         color="primary"

@@ -10,7 +10,7 @@
             <q-card-section>
               <q-icon name="mdi-monitor" size="xl" />
             </q-card-section>
-            <q-separator />
+            <q-separator color="transparent" />
             <q-card-section class="text-subtitle2 text-center">
               System Information
             </q-card-section>
@@ -26,7 +26,7 @@
             <q-card-section>
               <q-icon name="mdi-harddisk" size="xl" />
             </q-card-section>
-            <q-separator />
+            <q-separator color="transparent" />
             <q-card-section class="text-subtitle2 text-center">
               System Devices
             </q-card-section>
@@ -42,7 +42,7 @@
             <q-card-section>
               <q-icon name="mdi-disc" size="xl" />
             </q-card-section>
-            <q-separator />
+            <q-separator color="transparent" />
             <q-card-section class="text-subtitle2 text-center">
               Download ISO
             </q-card-section>
@@ -58,7 +58,7 @@
             <q-card-section>
               <q-icon name="mdi-information" size="xl" />
             </q-card-section>
-            <q-separator />
+            <q-separator color="transparent" />
             <q-card-section class="text-subtitle2 text-center">
               About
             </q-card-section>

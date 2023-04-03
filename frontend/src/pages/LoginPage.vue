@@ -5,9 +5,9 @@
         padding
         class="window-height window-width row justify-center items-center"
       >
-        <q-card square class="shadow-24" style="width: 400px; height: 540px">
+        <q-card style="width: 25vw; height: 50vh">
           <q-card-section class="bg-primary">
-            <h5 class="text-white text-center q-my-md">
+            <h5 class="text-center q-my-md">
               {{ hostname }} - Login
             </h5>
           </q-card-section>
@@ -45,7 +45,7 @@
                   />
                 </template>
               </q-input>
-              <q-separator spaced inset dark />
+              <q-separator color="transparent" spaced inset dark />
               <p class="text-body2 text-weight-bold text-center text-negative">
                 {{ authError }}
               </p>

@@ -6,7 +6,7 @@
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
-      <q-separator spaced="lg" inset />
+      <q-separator color="transparent" spaced="lg" inset />
       <q-card-section class="q-pt-none q-px-xl">
         <HostPcieDevicesList ref="hostPcieDevicesList" />
         <q-toggle v-model="customRomFile" label="Custom ROM file" left-label />

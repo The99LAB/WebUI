@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh LpR fFf">
-    <q-header class="bg-primary text-white">
+    <q-header class="bg-primary">
       <q-toolbar>
         <q-btn
           dense
@@ -18,6 +18,13 @@
           round
           icon="power_settings_new"
           @click="showPowerMenu()"
+        />
+        <q-btn
+          dense
+          flat
+          round
+          icon="mdi-moon-waxing-crescent"
+          @click="this.$q.dark.toggle()"
         />
         <q-btn dense flat round icon="logout" @click="logout()" />
       </q-toolbar>

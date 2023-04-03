@@ -4,7 +4,7 @@
       <q-card-section>
         <div class="text-h6">Download ISO</div>
       </q-card-section>
-      <q-separator dark inset />
+      <q-separator color="transparent" dark inset />
       <q-card-section>
         <q-input v-model="url" label="URL" />
       </q-card-section>
