@@ -32,6 +32,21 @@
         :disable="selected_ovmf_path.length == 0"
         @click="editOvmfPath"
       />
+      <q-separator spaced vertical dark />
+      <q-btn
+        color="primary"
+        label="Remove"
+        icon="mdi-delete"
+        :disable="selected_ovmf_path.length == 0"
+        @click="removeOvmfPath(selected_ovmf_path[0].name)"
+      />
+      <q-separator spaced vertical dark />
+      <q-btn
+        color="primary"
+        label="Add"
+        icon="mdi-plus"
+        @click="addOvmfPathDialogShow = true"
+      />
     </div>
     <div class="q-pa-md">
       <q-table
@@ -69,6 +84,42 @@
               this.editSettingDialogName,
               this.editSettingDialogValue
             )
+          "
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="addOvmfPathDialogShow">
+    <q-card style="min-width: 50vw">
+      <q-card-section class="row items-center q-pb-none">
+        <div class="text-h6">Add OVMF path</div>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup />
+      </q-card-section>
+      <q-separator spaced="lg" inset />
+      <q-card-section class="q-pt-none">
+        <q-input
+          v-model="addOvmfPathDialogName"
+          type="text"
+          label="Name"
+          :rules="[val => val.length > 0 || 'Name is required']"
+        />
+        <q-input
+          v-model="addOvmfPathDialogPath"
+          type="text"
+          label="Path"
+          :rules="[val => val.length > 0 || 'Path is required']"
+        />
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn
+          flat
+          label="Add"
+          @click="
+            addOvmfPath(
+              this.addOvmfPathDialogName,
+              this.addOvmfPathDialogPath
+            ); addOvmfPathDialogShow = false
           "
         />
       </q-card-actions>
@@ -131,6 +182,9 @@ export default {
       editSettingDialogValue: ref(null),
       editSettingDialogName: ref(null),
       editSettingDialogTarget: ref(null),
+      addOvmfPathDialogShow: ref(false),
+      addOvmfPathDialogName: ref("OVMF name"),
+      addOvmfPathDialogPath: ref("/path/to/ovmf"),
     };
   },
   components: {
@@ -149,7 +203,7 @@ export default {
           ]);
         });
       this.$api
-        .get("/vm-manager/settings")
+        .get("/vm-manager/settings/ovmf-paths/all")
         .then((response) => {
           this.ovmf_paths = response.data;
         })
@@ -179,7 +233,6 @@ export default {
     },
 
     changeSetting(setting, value) {
-      console.log("changeSetting", setting, value);
       this.$api
         .post("/host/settings/edit", {
           setting: setting,
@@ -196,9 +249,8 @@ export default {
     },
 
     changeOvmfPath(name, value) {
-      console.log("changeOvmfPath", name, value);
       this.$api
-        .post("/vm-manager/settings", {
+        .post("/vm-manager/settings/ovmf-paths/edit", {
           name: name,
           path: value,
         })
@@ -207,6 +259,37 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error changing OVMF path", [
+            error.response.data,
+          ]);
+        });
+    },
+
+    removeOvmfPath(name) {
+      this.$api
+        .post("/vm-manager/settings/ovmf-paths/delete", {
+          name: name,
+        })
+        .then((response) => {
+          this.getData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting OVMF path", [
+            error.response.data,
+          ]);
+        });
+    },
+
+    addOvmfPath(name, path) {
+      this.$api
+        .post("/vm-manager/settings/ovmf-paths/add", {
+          name: name,
+          path: path,
+        })
+        .then((response) => {
+          this.getData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error adding OVMF path", [
             error.response.data,
           ]);
         });
