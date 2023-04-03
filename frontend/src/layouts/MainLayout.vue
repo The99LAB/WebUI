@@ -23,7 +23,9 @@
           dense
           flat
           round
-          :icon="$q.dark.isActive ? 'mdi-lightbulb' : 'mdi-moon-waning-crescent'"
+          :icon="
+            $q.dark.isActive ? 'mdi-lightbulb' : 'mdi-moon-waning-crescent'
+          "
           @click="this.$q.dark.toggle()"
         />
         <q-btn dense flat round icon="logout" @click="logout()" />

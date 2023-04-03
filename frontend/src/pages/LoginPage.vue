@@ -1,13 +1,12 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
-      <q-page
-        padding
-        class="row justify-center items-center"
-      >
+      <q-page padding class="row justify-center items-center">
         <q-card>
           <q-card-section class="bg-primary">
-            <h5 class="text-center q-my-md text-white">{{ hostname }} - Login</h5>
+            <h5 class="text-center q-my-md text-white">
+              {{ hostname }} - Login
+            </h5>
           </q-card-section>
           <q-card-section class="q-px-lg q-py-lg">
             <div class="q-mx-lg">
