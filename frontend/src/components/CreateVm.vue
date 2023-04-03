@@ -193,6 +193,7 @@ export default {
       layout: ref(false),
       tab: ref("general"),
       osOptions: [
+        "Microsoft Windows 11",
         "Microsft Windows 10",
         "Microsoft Windows 8.1",
         "Microsoft Windows 8",

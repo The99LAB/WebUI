@@ -762,6 +762,9 @@ class create_vm():
 
     def windows(self, version):
         ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
+        self.tpmxml = f"""<tpm model='tpm-tis'>
+        <backend type='emulator' version='2.0'/>
+        </tpm>"""
         self.xml = f"""<domain type='kvm'>
         <name>{self.name}</name>
         <metadata>
@@ -797,6 +800,8 @@ class create_vm():
             <model type='virtio'/>
             </video>
             <input type='tablet' bus='usb'/>
+            # if version == "11", then add xml device
+            {self.tpmxml if version == "11" else ""}
         </devices>
         </domain>"""
         return self.xml
@@ -1416,7 +1421,9 @@ class api_vm_manager(Resource):
             try:
                 vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
                             disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model, ovmf_name=ovmf_name)
-                if os == "Microsoft Windows 10":
+                if os == "Microsoft Windows 11":
+                    vm.windows(version="11")
+                elif os == "Microsoft Windows 10":
                     vm.windows(version="10")
                 elif os == "Microsoft Windows 8.1":
                     vm.windows(version="8.1")
