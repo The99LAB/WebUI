@@ -10,3 +10,4 @@
 - Add terminal
 - CreateVM: Add Windows 11 support
 - Change page title when switching pages
+- Change favicon
