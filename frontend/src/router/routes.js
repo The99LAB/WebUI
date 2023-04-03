@@ -33,7 +33,10 @@ const routes = [
         component: () => import("pages/DownloadIsoPage.vue"),
       },
       { path: "tools/about", component: () => import("pages/AboutPage.vue") },
-      { path: "tools/terminal", component: () => import("pages/TerminalPage.vue") },
+      {
+        path: "tools/terminal",
+        component: () => import("pages/TerminalPage.vue"),
+      },
       { path: "settings", component: () => import("pages/SettingsPage.vue") },
     ],
   },
