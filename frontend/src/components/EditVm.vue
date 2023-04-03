@@ -1,6 +1,10 @@
 <template>
   <q-dialog v-model="layout" maximized>
-    <q-layout view="hHh lpR fFf" container :class="{'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive}">
+    <q-layout
+      view="hHh lpR fFf"
+      container
+      :class="{ 'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive }"
+    >
       <q-header bordered>
         <q-toolbar>
           <q-toolbar-title>Edit VM</q-toolbar-title>
@@ -30,7 +34,7 @@
 
       <q-page-container>
         <q-page padding>
-          <q-tab-panels v-model="tab" >
+          <q-tab-panels v-model="tab">
             <q-tab-panel name="general">
               <q-input label="Name" v-model="general_name">
                 <template v-slot:append>
@@ -209,7 +213,12 @@
 
             <q-tab-panel name="disk">
               <div v-for="disk in diskList" :key="disk">
-                <q-separator color="transparent" spaced="lg" inset v-if="disk.number != 0" />
+                <q-separator
+                  color="transparent"
+                  spaced="lg"
+                  inset
+                  v-if="disk.number != 0"
+                />
                 <div class="row">
                   <div class="col">
                     <q-input
@@ -341,7 +350,12 @@
             </q-tab-panel>
             <q-tab-panel name="network">
               <div v-for="network in networkList" :key="network">
-                <q-separator color="transparent" spaced="lg" inset v-if="network.number != 0" />
+                <q-separator
+                  color="transparent"
+                  spaced="lg"
+                  inset
+                  v-if="network.number != 0"
+                />
                 <div class="row">
                   <div class="col">
                     <q-input
@@ -396,7 +410,8 @@
                 v-for="graphicsdevice in graphicsdevicesList"
                 :key="graphicsdevice"
               >
-                <q-separator color="transparent"
+                <q-separator
+                  color="transparent"
                   spaced="lg"
                   inset
                   v-if="graphicsdevice.index != 0"
@@ -419,7 +434,8 @@
                 />
               </div>
               <div v-for="videodevice in videodevicesList" :key="videodevice">
-                <q-separator color="transparent"
+                <q-separator
+                  color="transparent"
                   spaced="lg"
                   inset
                   v-if="
@@ -452,7 +468,12 @@
             </q-tab-panel>
             <q-tab-panel name="sound">
               <div v-for="sounddevice in sounddevicesList" :key="sounddevice">
-                <q-separator color="transparent" spaced="lg" inset v-if="sounddevice.index != 0" />
+                <q-separator
+                  color="transparent"
+                  spaced="lg"
+                  inset
+                  v-if="sounddevice.index != 0"
+                />
                 <q-input label="Device Type" model-value="Sound" readonly>
                   <template v-slot:after>
                     <q-btn

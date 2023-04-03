@@ -7,9 +7,7 @@
       >
         <q-card style="width: 25vw; height: 50vh">
           <q-card-section class="bg-primary">
-            <h5 class="text-center q-my-md">
-              {{ hostname }} - Login
-            </h5>
+            <h5 class="text-center q-my-md">{{ hostname }} - Login</h5>
           </q-card-section>
           <q-card-section>
             <div class="q-px-sm q-pt-xl">

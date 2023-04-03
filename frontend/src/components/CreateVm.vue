@@ -1,6 +1,10 @@
 <template>
   <q-dialog v-model="layout">
-    <q-layout view="hHh lpR fFf" container :class="{'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive }">
+    <q-layout
+      view="hHh lpR fFf"
+      container
+      :class="{ 'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive }"
+    >
       <q-header bordered>
         <q-toolbar>
           <q-toolbar-title>Create VM</q-toolbar-title>
@@ -261,7 +265,7 @@ export default {
     },
     getOvmf() {
       this.$api.get("/vm-manager/settings/ovmf-paths/all").then((response) => {
-        console.log(response.data)
+        console.log(response.data);
         this.ovmfOptions = response.data;
         this.general_ovmf = this.ovmfOptions[0];
       });
