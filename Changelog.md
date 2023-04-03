@@ -7,3 +7,4 @@
 - Tools: System Information: Fix incorrect memory size
 - Frontend: Add dark mode
 - Login Page: redesign
+- Add terminal
