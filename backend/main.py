@@ -859,6 +859,51 @@ class create_vm():
         </domain>"""
         return self.xml
 
+    def linux(self):
+        ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
+        self.xml = f"""<domain type='kvm'>
+        <name>{self.name}</name>
+        <metadata>
+            <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+            </libosinfo:libosinfo>
+        </metadata>
+        <memory unit='KiB'>{self.mem_max}</memory>
+        <currentMemory unit='KiB'>{self.mem_min}</currentMemory>
+        <vcpu>2</vcpu>
+        <os>
+            <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
+            {ovmfstring if self.bios_type == "ovmf" else ""}
+        </os>
+        <features>
+            <acpi/>
+            <apic/>
+            <hyperv mode='custom'>
+            <relaxed state='on'/>
+            <vapic state='on'/>
+            <spinlocks state='on' retries='8191'/>
+            </hyperv>
+            <vmport state='off'/>
+        </features>
+        <cpu mode='host-model' check='partial'/>
+        <devices>
+            <emulator>{self.qemu_path}</emulator>
+            {self.networkstring}
+            {self.createisoxml}
+            {self.creatediskxml}
+            <graphics type='vnc' port='-1'/>
+            <video>
+            <model type='virtio'/>
+            </video>
+            <input type='tablet' bus='usb'/>
+            <channel type='unix'>
+                <target type='virtio' name='org.qemu.guest_agent.0'/>
+            </channel>
+            <rng model='virtio'>
+                <backend model='random'>/dev/urandom</backend>
+            </rng>
+        </devices>
+        </domain>"""
+        return self.xml
     def create(self):
         conn.defineXML(self.xml)
 
@@ -1387,7 +1432,10 @@ class api_vm_manager(Resource):
                 elif os == "macOS 12 Monterey":
                     vm.macos(version="12")
                 elif os == "macOS 13 Ventura":
-                    vm.macos(version="13")                
+                    vm.macos(version="13")
+                elif os == "Linux":
+                    print("Creating new linux vm")
+                    vm.linux()
                 else:
                     return 'OS not supported', 404
                 vm.create()

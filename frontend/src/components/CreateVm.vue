@@ -201,6 +201,7 @@ export default {
         "macOS 11 Big Sur",
         "macOS 12 Monterey",
         "macOS 13 Ventura",
+        "Linux"
       ],
       machineOptions: [],
       biosOptions: ["ovmf", "BIOS"],
