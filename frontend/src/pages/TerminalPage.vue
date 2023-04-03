@@ -1,10 +1,13 @@
 <template>
-  <q-page> <div style="width: 100%; height: 100%" ref="terminal"></div></q-page>
+  <q-page> 
+    <div ref="terminal"></div>
+  </q-page>
 </template>
 
 <script>
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
+import 'xterm/css/xterm.css';
 import io from "socket.io-client";
 
 export default {
@@ -21,33 +24,26 @@ export default {
       macOptionIsMeta: true,
     });
 
-    // https://github.com/xtermjs/xterm.js/issues/2941
     this.fit = new FitAddon();
     this.term.loadAddon(this.fit);
 
     this.term.open(this.$refs.terminal);
-    this.fit.fit();
-    this.term.resize(15, 50);
-    console.log(`size: ${this.term.cols} columns, ${this.term.rows} rows`);
+    this.term.resize(15, 49);
     this.fit.fit();
 
     this.term.onData((data) => {
-      console.log("browser terminal received new data:", data);
       this.socket.emit("pty_input", { input: data });
     });
 
     this.socket.on("pty_output", (data) => {
-      console.log("new output received from server:", data.output);
       this.term.write(data.output);
     });
 
     this.socket.on("connect", () => {
       this.fitToscreen();
-      console.log("connected to server");
     });
 
     this.socket.on("disconnect", () => {
-      console.log("disconnected from server");
     });
 
     window.addEventListener("resize", this.debouncedFitToscreen);
@@ -77,7 +73,6 @@ export default {
     fitToscreen() {
       this.fit.fit();
       const dims = { cols: this.term.cols, rows: this.term.rows };
-      console.log("sending new dimensions to server's pty", dims);
       this.socket.emit("resize", dims);
     },
     debounce(func, waitMs) {
@@ -97,7 +92,3 @@ export default {
   },
 };
 </script>
-
-<style>
-@import url("https://unpkg.com/xterm@5.1.0/css/xterm.css");
-</style>
