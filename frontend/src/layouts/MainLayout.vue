@@ -147,7 +147,7 @@
 import { defineComponent, ref } from "vue";
 import PowerMenu from "src/components/PowerMenu.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
-import { useMeta } from 'quasar'
+import { useMeta } from "quasar";
 
 export default defineComponent({
   name: "MainLayout",
@@ -179,7 +179,7 @@ export default defineComponent({
   },
   methods: {
     generateTitle() {
-      this.updateTitle(this.hostname + " - " + this.$route.meta.title)
+      this.updateTitle(this.hostname + " - " + this.$route.meta.title);
     },
     showPowerMenu() {
       this.$refs.powerMenu.show();

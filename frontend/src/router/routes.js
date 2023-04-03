@@ -4,9 +4,17 @@ const routes = [
     path: "/",
     component: () => import("layouts/MainLayout.vue"),
     children: [
-      { path: "", redirect: "/dashboard"},
-      { path: "dashboard", component: () => import("pages/DashboardPage.vue"), meta: { title: "Dashboard" } },
-      { path: "vm-manager", component: () => import("pages/VmPage.vue"), meta: { title: "VM Manager" } },
+      { path: "", redirect: "/dashboard" },
+      {
+        path: "dashboard",
+        component: () => import("pages/DashboardPage.vue"),
+        meta: { title: "Dashboard" },
+      },
+      {
+        path: "vm-manager",
+        component: () => import("pages/VmPage.vue"),
+        meta: { title: "VM Manager" },
+      },
       {
         path: "hotplug-usb",
         component: () => import("pages/HotplugUsbPage.vue"),
@@ -37,13 +45,21 @@ const routes = [
         component: () => import("pages/DownloadIsoPage.vue"),
         meta: { title: "Download ISO" },
       },
-      { path: "tools/about", component: () => import("pages/AboutPage.vue"), meta: { title: "About" } },
+      {
+        path: "tools/about",
+        component: () => import("pages/AboutPage.vue"),
+        meta: { title: "About" },
+      },
       {
         path: "tools/terminal",
         component: () => import("pages/TerminalPage.vue"),
         meta: { title: "Terminal" },
       },
-      { path: "settings", component: () => import("pages/SettingsPage.vue"), meta: { title: "Settings" } },
+      {
+        path: "settings",
+        component: () => import("pages/SettingsPage.vue"),
+        meta: { title: "Settings" },
+      },
     ],
   },
   // Always leave this as last one,
