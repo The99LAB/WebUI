@@ -12,3 +12,5 @@
 - Change page title when switching pages
 - Change favicon
 - Login Page: Press enter in password field to login
+
+### 1.2
