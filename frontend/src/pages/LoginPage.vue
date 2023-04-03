@@ -68,6 +68,7 @@
 <script>
 import { ref } from "vue";
 import ErrorDialog from "/src/components/ErrorDialog.vue";
+import { useMeta } from "quasar";
 
 export default {
   data() {
@@ -78,6 +79,21 @@ export default {
       authError: "",
       loginLoading: false,
       hostname: "Unknown",
+    };
+  },
+  setup() {
+    const title = ref("Login");
+    const updateTitle = (newTitle) => {
+      title.value = newTitle;
+    };
+    useMeta(() => {
+      return {
+        title: title.value,
+      };
+    });
+    return {
+      title,
+      updateTitle,
     };
   },
   components: {
@@ -99,12 +115,16 @@ export default {
           this.loginLoading = false;
         });
     },
+    generateTitle() {
+      this.updateTitle(this.hostname + " - Login");
+    },
   },
   created() {
     this.$api
       .get("/no-auth/hostname")
       .then((response) => {
         this.hostname = response.data.hostname;
+        this.generateTitle();
       })
       .catch((error) => {
         this.$refs.errorDialog.show("Error connecting to backend", [

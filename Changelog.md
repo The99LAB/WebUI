@@ -8,3 +8,5 @@
 - Frontend: Add dark mode
 - Login Page: redesign
 - Add terminal
+- CreateVM: Add Windows 11 support
+- Change page title when switching pages

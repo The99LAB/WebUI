@@ -147,6 +147,7 @@
 import { defineComponent, ref } from "vue";
 import PowerMenu from "src/components/PowerMenu.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
+import { useMeta } from 'quasar'
 
 export default defineComponent({
   name: "MainLayout",
@@ -156,11 +157,30 @@ export default defineComponent({
       hostname: "",
     };
   },
+  setup() {
+    const title = ref("");
+    const updateTitle = (newTitle) => {
+      title.value = newTitle;
+    };
+    useMeta(() => {
+      return {
+        title: title.value,
+      };
+    });
+    return {
+      title,
+      updateTitle,
+    };
+  },
+
   components: {
     PowerMenu,
     ErrorDialog,
   },
   methods: {
+    generateTitle() {
+      this.updateTitle(this.hostname + " - " + this.$route.meta.title)
+    },
     showPowerMenu() {
       this.$refs.powerMenu.show();
     },
@@ -169,6 +189,7 @@ export default defineComponent({
         .get("/host/system-info/hostname")
         .then((response) => {
           this.hostname = response.data.hostname;
+          this.generateTitle();
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting hostname", [
@@ -184,6 +205,9 @@ export default defineComponent({
   },
   created() {
     this.getHostName();
+    this.$router.afterEach((to, from) => {
+      this.generateTitle();
+    });
   },
 });
 </script>
