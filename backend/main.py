@@ -1159,6 +1159,18 @@ class settings_ovmfpaths:
 
         return row[2]
     
+    def delete(self, name):
+        self.db_c.execute('''
+        DELETE FROM settings_ovmfpaths WHERE name = ?
+        ''', (name,))
+        self.db.commit()
+
+    def add(self, name, path):
+        self.db_c.execute('''
+        INSERT INTO settings_ovmfpaths (name, path) VALUES (?, ?)
+        ''', (name, path))
+        self.db.commit()
+
     def set(self, name, path):
         self.db_c.execute('''
         UPDATE settings_ovmfpaths SET path = ? WHERE name = ?
@@ -2341,17 +2353,28 @@ api.add_resource(api_host_settings, '/api/host/settings/<string:action>')
 
 class api_vm_manager_settings(Resource):
     @jwt_required()
-    def get(self):
-        return settings_ovmfpaths().getAll()
+    def get(self, action):
+        if action == "all":
+            return settings_ovmfpaths().getAll()
     @jwt_required()
-    def post(self):
+    def post(self, action):
         data = request.get_json()
         name = data['name']
-        path = data['path']
-        settings_ovmfpaths().set(name, path)
-        return '', 204
+        if action == "edit":
+            path = data['path']
+            settings_ovmfpaths().set(name, path)
+            return '', 204
+        elif action == "delete":
+            settings_ovmfpaths().delete(name)
+            return '', 204
+        elif action == "add":
+            path = data['path']
+            settings_ovmfpaths().add(name, path)
+            return '', 204
+        else:
+            return 'Action not found', 404
 
-api.add_resource(api_vm_manager_settings, '/api/vm-manager/settings')
+api.add_resource(api_vm_manager_settings, '/api/vm-manager/settings/ovmf-paths/<string:action>')
 
 if __name__ == '__main__':
     werkzeug_logger = logging.getLogger('werkzeug')
