@@ -31,6 +31,7 @@
                 :type="isPwd ? 'password' : 'text'"
                 label="Password"
                 @update:model-value="authError = ''"
+                @keyup.enter="login"
               >
                 <template v-slot:prepend>
                   <q-icon name="mdi-lock" />

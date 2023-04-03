@@ -11,3 +11,4 @@
 - CreateVM: Add Windows 11 support
 - Change page title when switching pages
 - Change favicon
+- Login Page: Press enter in password field to login
