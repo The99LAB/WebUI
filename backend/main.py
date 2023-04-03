@@ -2261,7 +2261,10 @@ class api_host_system_info(Resource):
                 baseboard_product = sysInfo.find("baseBoard/entry[@name='product']").text
                 baseboard_version = sysInfo.find("baseBoard/entry[@name='version']").text
             processor_version = sysInfo.find("processor/entry[@name='version']").text
-            memory_size = sysInfo.find("memory_device/entry[@name='size']").text
+            memory_size = 0
+            for memory_device in sysInfo.findall("memory_device"):
+                memory_size = int(memory_size) + int(memory_device.find("entry[@name='size']").text.replace(" GB", ""))
+            memory_size = str(memory_size) + " GB"
             return {
                 "motherboard": baseboard_manufacturer + " " + baseboard_product + " " + baseboard_version,
                 "processor": processor_version,
