@@ -3,15 +3,16 @@
     <q-page-container>
       <q-page
         padding
-        class="window-height window-width row justify-center items-center"
+        class="row justify-center items-center"
       >
-        <q-card style="width: 25vw; height: 50vh">
+        <q-card>
           <q-card-section class="bg-primary">
-            <h5 class="text-center q-my-md">{{ hostname }} - Login</h5>
+            <h5 class="text-center q-my-md text-white">{{ hostname }} - Login</h5>
           </q-card-section>
-          <q-card-section>
-            <div class="q-px-sm q-pt-xl">
+          <q-card-section class="q-px-lg q-py-lg">
+            <div class="q-mx-lg">
               <q-input
+                class="q-mb-md q-mt-md"
                 name="username"
                 square
                 clearable
@@ -49,8 +50,7 @@
               </p>
             </div>
           </q-card-section>
-
-          <q-card-actions class="q-px-lg">
+          <q-card-actions class="q-pa-lg">
             <q-btn
               size="lg"
               color="primary"
