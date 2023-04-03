@@ -102,13 +102,13 @@
           v-model="addOvmfPathDialogName"
           type="text"
           label="Name"
-          :rules="[val => val.length > 0 || 'Name is required']"
+          :rules="[(val) => val.length > 0 || 'Name is required']"
         />
         <q-input
           v-model="addOvmfPathDialogPath"
           type="text"
           label="Path"
-          :rules="[val => val.length > 0 || 'Path is required']"
+          :rules="[(val) => val.length > 0 || 'Path is required']"
         />
       </q-card-section>
       <q-card-actions align="right">
@@ -116,10 +116,8 @@
           flat
           label="Add"
           @click="
-            addOvmfPath(
-              this.addOvmfPathDialogName,
-              this.addOvmfPathDialogPath
-            ); addOvmfPathDialogShow = false
+            addOvmfPath(this.addOvmfPathDialogName, this.addOvmfPathDialogPath);
+            addOvmfPathDialogShow = false;
           "
         />
       </q-card-actions>
