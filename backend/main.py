@@ -19,7 +19,11 @@ import pam
 import LibvirtKVMBackup
 import logging
 import sqlite3
-import json
+import pty
+import select
+import termios
+import struct
+import fcntl
 
 """
 NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijn/token.list
@@ -41,6 +45,9 @@ if __name__ == '__main__':
     mode = "development"
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode=f"{'threading' if mode == 'development' else 'gevent'}")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+# app.config["SECRET_KEY"] = "secret!"
+app.config["fd"] = None
+app.config["child_pid"] = None
 jwt = JWTManager(app)
 conn = libvirt.open('qemu:///system')
 
@@ -1176,6 +1183,7 @@ class settings_ovmfpaths:
         UPDATE settings_ovmfpaths SET path = ? WHERE name = ?
         ''', (path, name))
         self.db.commit()
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -1239,6 +1247,60 @@ class api_socketio(Namespace):
 
 
 socketio.on_namespace(api_socketio('/api'))
+
+class PtyNamespace(Namespace):
+    class Terminal:
+        @staticmethod
+        def set_winsize(fd, row, col, xpix=0, ypix=0):
+            winsize = struct.pack("HHHH", row, col, xpix, ypix)
+            fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+
+        @staticmethod
+        def read_and_forward_pty_output():
+            max_read_bytes = 1024 * 20
+            while True:
+                socketio.sleep(0.01)
+                if app.config["fd"]:
+                    timeout_sec = 0
+                    (data_ready, _, _) = select.select([app.config["fd"]], [], [], timeout_sec)
+                    if data_ready:
+                        output = os.read(app.config["fd"], max_read_bytes).decode(errors="ignore")
+                        socketio.emit("pty_output", {"output": output}, namespace="/api/pty")
+
+    @jwt_required()
+    def on_connect(self):
+        if app.config["child_pid"]:
+            # already started child process, don't start another
+            return
+
+        # create child process attached to a pty we can read from and write to
+        (child_pid, fd) = pty.fork()
+        if child_pid == 0:
+            # this is the child process fork.
+            # anything printed here will show up in the pty, including the output
+            # of this subprocess
+            # subprocess run in /root
+            os.chdir("/root")
+            subprocess.run("bash")
+        else:
+            # this is the parent process fork.
+            # store child fd and pid
+            app.config["fd"] = fd
+            app.config["child_pid"] = child_pid
+            PtyNamespace.Terminal.set_winsize(fd, 50, 50)
+            socketio.start_background_task(target=PtyNamespace.Terminal.read_and_forward_pty_output)
+
+    @jwt_required()
+    def on_pty_input(self, data):
+        if app.config["fd"]:
+            os.write(app.config["fd"], data["input"].encode())
+
+    @jwt_required()
+    def on_resize(self, data):
+        if app.config["fd"]:
+            PtyNamespace.Terminal.set_winsize(app.config["fd"], data["rows"], data["cols"])
+
+socketio.on_namespace(PtyNamespace('/api/pty'))
 
 class api_vm_manager(Resource):
     @jwt_required()

@@ -115,6 +115,14 @@
               <q-item-label>About</q-item-label>
             </q-item-section>
           </q-item>
+          <q-item clickable tag="a" to="/tools/terminal">
+          <q-item-section avatar>
+            <q-icon name="mdi-console" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Terminal</q-item-label>
+          </q-item-section>
+         </q-item>
         </q-expansion-item>
         <q-item clickable tag="a" to="/settings">
           <q-item-section avatar>
