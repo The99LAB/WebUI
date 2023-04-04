@@ -5,7 +5,7 @@ Web UI for managing libvirt based virtual machines
 - Download the latest release
 - Extract the archive
 - Run `python3 init_database.py`
-- Run `gunicorn --worker-class gevent -w 1 main:app --bind :80`
+- Run `uwsgi --http :80 --gevent 1000 --master --wsgi-file main.py --callable app`
 
 ## Usage (development)
 - Download the source code
@@ -22,7 +22,7 @@ After=multi-user.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=gunicorn --worker-class gevent -w 1 main:app --bind :80
+ExecStart=uwsgi --http :80 --gevent 1000 --master --wsgi-file main.py --callable app
 WorkingDirectory=/path/to/VmManager
 [Install]
 WantedBy=multi-user.target

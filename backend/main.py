@@ -40,10 +40,7 @@ class CustomFlask(Flask):
 app = CustomFlask(__name__, static_url_path='')
 CORS(app, resources={r"*": {"origins": "*"}})
 api = Api(app)
-mode = "production"
-if __name__ == '__main__':
-    mode = "development"
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode=f"{'threading' if mode == 'development' else 'gevent'}")
+socketio = SocketIO(app, cors_allowed_origins="*")
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 # app.config["SECRET_KEY"] = "secret!"
 app.config["fd"] = None
@@ -64,7 +61,7 @@ def login_user():
 
     if pam.authenticate(username=username, password=password):
         access_token = create_access_token(identity=username)
-        return jsonify(access_token=access_token)
+        return jsonify(access_token=access_token.decode('utf-8'))
     else:
         return "Incorrect password and/or username!", 401
 
