@@ -27,7 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli/boot-files
-    boot: ["socketio", "axios"],
+    boot: ["ws", "axios"],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ["app.scss"],
@@ -65,9 +65,8 @@ module.exports = configure(function (/* ctx */) {
       // publicPath: '/',
       // analyze: true,
       env: {
-        SOCKETIO_ENDPOINT_DEV: "http://192.168.0.37:5000/api",
-        WEBSOCKET_ENDPOINT_DEV: "ws://192.168.0.37:8000",
-        API_ENDPOINT_DEV: "http://192.168.0.37:8000/api",
+        WEBSOCKET_ENDPOINT_DEV: "ws://192.168.0.37:8002",
+        API_ENDPOINT_DEV: "http://192.168.0.37:8002/api",
         PRODUCTION_BACKEND_PORT: 80,
       },
       // rawDefine: {}

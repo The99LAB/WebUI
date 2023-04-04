@@ -29,9 +29,11 @@
       <q-spinner-gears size="50px" color="primary" />
     </q-inner-loading>
   </q-page>
+  <WsReconnectDialog ref="wsReconnectDialog" @ws-reconnect="connectWebSocket"></WsReconnectDialog>
 </template>
 
 <script>
+import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 
 export default {
   data() {
@@ -43,25 +45,34 @@ export default {
       loadingVisible: true,
     };
   },
-  created() {
-    const ws = new WebSocket("ws://192.168.0.37:8000/dashboard");
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      this.cpu_progress = data.cpu_percent;
-      this.cpu_progress_text = data.cpu_percent + "%";
-      this.mem_progress = data.mem_percent;
-      this.mem_progress_text = data.mem_percent + "%";
-      this.loadingVisible = false;
-    };
-
-    // listen if websocket connection is closed
-    ws.onclose = (event) => {
-      console.log("Websocket connection closed");
-    };
+  components: {
+    WsReconnectDialog,
   },
-  beforeUnmount() {
-    clearInterval(this.dataInterval);
+  methods: {
+    connectWebSocket() {
+      this.ws = new WebSocket(this.$WS_ENDPOINT + "/dashboard");
+
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        this.cpu_progress = data.cpu_percent;
+        this.cpu_progress_text = data.cpu_percent + "%";
+        this.mem_progress = data.mem_percent;
+        this.mem_progress_text = data.mem_percent + "%";
+        this.loadingVisible = false;
+      };
+
+      this.ws.onclose = (event) => {
+        this.$refs.wsReconnectDialog.show();
+      };
+    }
+  },
+  created() {
+    this.connectWebSocket();
+  },
+  unmounted() {
+    this.ws.onclose = () => {};
+    this.ws.close();
+    
   },
 };
 </script>

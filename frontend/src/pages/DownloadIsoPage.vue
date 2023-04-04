@@ -59,7 +59,7 @@ export default {
   },
   methods: {
     downloadIso() {
-      this.ws = new WebSocket("ws://192.168.0.37:8000/downloadiso");
+      this.ws = new WebSocket(this.$WS_ENDPOINT + "/downloadiso");
       // when websocket connection is opened
       this.ws.onopen = () => {
           this.ws.send(JSON.stringify({

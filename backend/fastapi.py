@@ -30,8 +30,6 @@ import subprocess
 import fcntl
 import struct
 import select
-import time
-import threading
 
 origins = ["*"]
 

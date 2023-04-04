@@ -122,6 +122,7 @@
     <ErrorDialog ref="errorDialog"></ErrorDialog>
     <CreateVm ref="createVm"></CreateVm>
     <EditVm ref="editVm"></EditVm>
+    <WsReconnectDialog ref="wsReconnectDialog" @ws-reconnect="connectWebSocket"></WsReconnectDialog>
   </q-page>
 </template>
 
@@ -130,6 +131,7 @@ import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";
+import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 
 const selected = ref();
 
@@ -170,6 +172,7 @@ export default {
     ErrorDialog,
     CreateVm,
     EditVm,
+    WsReconnectDialog,
   },
   methods: {
     startVm(uuid) {
@@ -237,7 +240,7 @@ export default {
       this.$refs.createVm.show();
     },
     connectWebSocket() {
-      this.ws = new WebSocket("ws://192.168.0.37:8000/vmdata");
+      this.ws = new WebSocket(this.$WS_ENDPOINT + "/vmdata");
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -246,6 +249,7 @@ export default {
       };
       this.ws.onclose= () => {
         console.log("Websocket connection closed");
+        this.$refs.wsReconnectDialog.show();
         this.vmTableLoading = true;
       };
     }
@@ -258,8 +262,8 @@ export default {
   },
   unmounted() {
     this.vmTableLoading = false;
+    this.ws.onclose = () => {}
     this.ws.close()
-    console.log("Websocket connection closed")
   },
 };
 </script>

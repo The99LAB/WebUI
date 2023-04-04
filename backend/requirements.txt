@@ -1,16 +1,9 @@
-flask
-flask-cors
-flask-restful
 psutil
 libvirt-python
-flask-socketio
 pyusb
 blkinfo
 py-cpuinfo
 distro
-flask-jwt-extended
 python-pam
-gevent
 LibvirtKVMBackup
-uwsgi
 python-multipart

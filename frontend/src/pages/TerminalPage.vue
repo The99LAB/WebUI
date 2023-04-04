@@ -47,7 +47,8 @@ export default {
     this.socket.close();
   },
   created() {
-    this.socket = new WebSocket("ws://192.168.0.37:8002/terminal");
+    console.log("created")
+    this.socket = new WebSocket(this.$WS_ENDPOINT + "/terminal");
     this.socket.onopen = (event) => {
       this.fitToscreen();
     };
