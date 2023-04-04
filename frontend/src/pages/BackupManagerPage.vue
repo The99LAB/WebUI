@@ -465,5 +465,8 @@ export default {
     this.getData();
     this.getDataInterval = setInterval(this.getData, 1000);
   },
+  unmounted() {
+    clearInterval(this.getDataInterval);
+  },
 };
 </script>

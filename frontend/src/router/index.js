@@ -43,22 +43,22 @@ export default route(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
 
-  // check if user is logged in
-  Router.beforeEach((to, from, next) => {
-    var token = localStorage.getItem("jwt-token");
-    const tokenIsExpired = isTokenExpired(token);
+  // // check if user is logged in
+  // Router.beforeEach((to, from, next) => {
+  //   var token = localStorage.getItem("jwt-token");
+  //   const tokenIsExpired = isTokenExpired(token);
 
-    if (token == "" || token == null || token == undefined || tokenIsExpired) {
-      localStorage.removeItem("jwt-token");
-      if (to.path == "/login") {
-        next();
-      } else {
-        next("/login");
-      }
-    } else {
-      next();
-    }
-  });
+  //   if (token == "" || token == null || token == undefined || tokenIsExpired) {
+  //     localStorage.removeItem("jwt-token");
+  //     if (to.path == "/login") {
+  //       next();
+  //     } else {
+  //       next("/login");
+  //     }
+  //   } else {
+  //     next();
+  //   }
+  // });
 
   return Router;
 });

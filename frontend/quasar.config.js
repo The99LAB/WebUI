@@ -66,7 +66,8 @@ module.exports = configure(function (/* ctx */) {
       // analyze: true,
       env: {
         SOCKETIO_ENDPOINT_DEV: "http://192.168.0.37:5000/api",
-        API_ENDPOINT_DEV: "http://192.168.0.37:5000/api",
+        WEBSOCKET_ENDPOINT_DEV: "ws://192.168.0.37:8000",
+        API_ENDPOINT_DEV: "http://192.168.0.37:8000/api",
         PRODUCTION_BACKEND_PORT: 80,
       },
       // rawDefine: {}

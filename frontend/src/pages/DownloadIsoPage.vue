@@ -43,7 +43,6 @@
 import StoragePoolList from "src/components/StoragePoolList.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import { ref } from "vue";
-import io from "socket.io-client";
 
 export default {
   data() {
@@ -60,43 +59,33 @@ export default {
   },
   methods: {
     downloadIso() {
-      this.socket.emit("download_iso", {
-        url: this.url,
-        fileName: this.fileName,
-        storagePool: this.$refs.storagePool.getSelectedPool(),
-      });
+      this.ws = new WebSocket("ws://192.168.0.37:8000/downloadiso");
+      // when websocket connection is opened
+      this.ws.onopen = () => {
+          this.ws.send(JSON.stringify({
+            url: this.url,
+            fileName: this.fileName,
+            storagePool: this.$refs.storagePool.getSelectedPool(),
+          }));
+          
+      };
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("new data from ws", data);
+        if (data.event == "downloadISOError") {
+          this.$refs.errorDialog.show("Error Downloading ISO", [data.message]);
+        }
+        else if (data.event == "downloadISOProgress") {
+          this.showProgressBar = true;
+          this.progress = data.message / 100;
+        }
+        else if (data.event == "downloadISOComplete") {
+          this.showProgressBar = false;
+          this.progress = 0;
+          this.$refs.errorDialog.show("ISO Download Complete", data.message);
+        }
+      };
     },
-  },
-  created() {
-    this.socket = io(this.$SOCKETIO_ENDPOINT, {
-      transportOptions: {
-        polling: {
-          extraHeaders: {
-            Authorization: "Bearer " + localStorage.getItem("jwt-token"),
-          },
-        },
-      },
-    });
-  },
-  mounted() {
-    this.socket.on("downloadIsoError", (msg) => {
-      this.$refs.errorDialog.show("Error Downloading ISO", [msg]);
-    });
-    this.socket.on("downloadIsoProgress", (msg) => {
-      this.showProgressBar = true;
-      this.progress = msg / 100;
-    });
-    this.socket.on("downloadIsoComplete", (msg) => {
-      this.showProgressBar = false;
-      this.progress = 0;
-      this.$refs.errorDialog.show("ISO Download Complete", msg);
-    });
-  },
-  unmounted() {
-    this.socket.off("downloadIsoError");
-    this.socket.off("downloadIsoProgress");
-    this.socket.off("downloadIsoComplete");
-    this.socket.disconnect();
   },
 };
 </script>

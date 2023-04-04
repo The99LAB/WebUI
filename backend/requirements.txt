@@ -13,3 +13,4 @@ python-pam
 gevent
 LibvirtKVMBackup
 uwsgi
+python-multipart

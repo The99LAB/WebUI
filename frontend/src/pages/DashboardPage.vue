@@ -32,7 +32,6 @@
 </template>
 
 <script>
-import io from "socket.io-client";
 
 export default {
   data() {
@@ -45,34 +44,24 @@ export default {
     };
   },
   created() {
-    this.socket = io(this.$SOCKETIO_ENDPOINT, {
-      transportOptions: {
-        polling: {
-          extraHeaders: {
-            Authorization: "Bearer " + localStorage.getItem("jwt-token"),
-          },
-        },
-      },
-    });
-  },
-  mounted() {
-    this.socket.emit("dashboard_data");
-    this.dataInterval = setInterval(() => {
-      this.socket.emit("dashboard_data");
-    }, 1000);
-    this.socket.on("cpu_overall", (data) => {
-      this.cpu_progress = data;
-      this.cpu_progress_text = data + "%";
-    });
-    this.socket.on("mem_overall", (data) => {
-      this.mem_progress = data;
-      this.mem_progress_text = data + "%";
+    const ws = new WebSocket("ws://192.168.0.37:8000/dashboard");
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      this.cpu_progress = data.cpu_percent;
+      this.cpu_progress_text = data.cpu_percent + "%";
+      this.mem_progress = data.mem_percent;
+      this.mem_progress_text = data.mem_percent + "%";
       this.loadingVisible = false;
-    });
+    };
+
+    // listen if websocket connection is closed
+    ws.onclose = (event) => {
+      console.log("Websocket connection closed");
+    };
   },
   beforeUnmount() {
     clearInterval(this.dataInterval);
-    this.socket.disconnect();
   },
 };
 </script>

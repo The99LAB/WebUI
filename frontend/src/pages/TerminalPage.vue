@@ -8,7 +8,6 @@
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
-import io from "socket.io-client";
 
 export default {
   data() {
@@ -32,47 +31,36 @@ export default {
     this.fit.fit();
 
     this.term.onData((data) => {
-      this.socket.emit("pty_input", { input: data });
+      this.socket.send(JSON.stringify({ type: "input", input: data }));
     });
 
-    this.socket.on("pty_output", (data) => {
-      this.term.write(data.output);
-    });
-
-    this.socket.on("connect", () => {
-      this.fitToscreen();
-    });
-
-    this.socket.on("disconnect", () => {});
-
+    this.socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type == "pty_output") {
+        this.term.write(data.output);
+      }
+    };
     window.addEventListener("resize", this.debouncedFitToscreen);
   },
   beforeUnmount() {
     window.removeEventListener("resize", this.debouncedFitToscreen);
+    this.socket.close();
   },
   created() {
-    this.socket = io(this.$SOCKETIO_ENDPOINT + "/pty", {
-      transportOptions: {
-        polling: {
-          extraHeaders: {
-            Authorization: `Bearer ${localStorage.getItem("jwt-token")}`,
-          },
-        },
-      },
-    });
-    this.socket.emit("pty_input", { input: "\n" });
+    this.socket = new WebSocket("ws://192.168.0.37:8002/terminal");
+    this.socket.onopen = (event) => {
+      this.fitToscreen();
+    };
   },
-  unmounted() {
-    this.socket.off("pty_output");
-    this.socket.off("connect");
-    this.socket.off("disconnect");
-    this.socket.disconnect();
-  },
+
   methods: {
     fitToscreen() {
+      console.log("fit to screen")
       this.fit.fit();
       const dims = { cols: this.term.cols, rows: this.term.rows };
-      this.socket.emit("resize", dims);
+
+      console.log("dims", dims)
+      this.socket.send(JSON.stringify({ type: "resize", dims: dims }));
     },
     debounce(func, waitMs) {
       let timeout;

@@ -130,7 +130,6 @@ import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";
-import io from "socket.io-client";
 
 const selected = ref();
 
@@ -237,35 +236,30 @@ export default {
     createVm() {
       this.$refs.createVm.show();
     },
+    connectWebSocket() {
+      this.ws = new WebSocket("ws://192.168.0.37:8000/vmdata");
+
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        this.rows = data;
+        this.vmTableLoading = false;
+      };
+      this.ws.onclose= () => {
+        console.log("Websocket connection closed");
+        this.vmTableLoading = true;
+      };
+    }
   },
   created() {
-    this.socket = io(this.$SOCKETIO_ENDPOINT, {
-      transportOptions: {
-        polling: {
-          extraHeaders: {
-            Authorization: "Bearer " + localStorage.getItem("jwt-token"),
-          },
-        },
-      },
-    });
+    this.connectWebSocket();
   },
   mounted() {
-    this.socket.emit("vmdata");
     this.getVncSettings();
-    this.socket.on("vmdata", (data) => {
-      this.rows = data;
-      this.vmTableLoading = false;
-    });
-    this.vmresultInterval = setInterval(() => {
-      this.socket.emit("vmdata");
-    }, 1000);
   },
   unmounted() {
     this.vmTableLoading = false;
-  },
-  beforeUnmount() {
-    clearInterval(this.vmresultInterval);
-    this.socket.disconnect();
+    this.ws.close()
+    console.log("Websocket connection closed")
   },
 };
 </script>
