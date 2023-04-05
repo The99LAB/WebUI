@@ -1358,7 +1358,6 @@ def kill_child_process():
     child_pid = None
     print("pty closed")
 
-# TODO: add authentication
 @app.websocket("/terminal")
 async def pty_socket(websocket: WebSocket, token: str):
     global fd
@@ -1380,7 +1379,7 @@ async def pty_socket(websocket: WebSocket, token: str):
         # anything printed here will show up in the pty, including the output
         # of this subprocess
         # run bash in /root
-        subprocess.run(["/bin/bash"], cwd="/root")
+        subprocess.run(["/bin/bash"], cwd="/root", env={"TERM": "xterm"})
 
 
     else:
