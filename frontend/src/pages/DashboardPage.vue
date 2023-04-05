@@ -66,8 +66,7 @@ export default {
           this.mem_progress = data.data.mem_percent;
           this.mem_progress_text = data.data.mem_percent + "%";
           this.loadingVisible = false;
-        }
-        else if (data.type == "auth_error"){
+        } else if (data.type == "auth_error") {
           localStorage.setItem("jwt-token", "");
           this.$router.push({ path: "/login" });
         }
