@@ -1,5 +1,6 @@
 from fastapi import FastAPI, WebSocket, Request, Form, WebSocketDisconnect, HTTPException, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import psutil
 import asyncio
 import libvirt
@@ -28,6 +29,7 @@ from datetime import datetime, timedelta
 origins = ["*"]
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -1238,6 +1240,9 @@ class settings_ovmfpaths:
         ''', (path, name))
         self.db.commit()
 
+@app.get("/")
+def index():
+    return FileResponse("templates/index.html")
 
 ### Websockets ###
 @app.websocket("/dashboard")
