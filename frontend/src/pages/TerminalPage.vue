@@ -44,23 +44,25 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener("resize", this.debouncedFitToscreen);
-    this.socket.close();
+
+  },
+  unmounted() {
+    this.socket.close()
   },
   created() {
-    console.log("created")
-    this.socket = new WebSocket(this.$WS_ENDPOINT + "/terminal");
-    this.socket.onopen = (event) => {
-      this.fitToscreen();
-    };
+    this.connectWebSocket();
   },
 
   methods: {
+    connectWebSocket() {
+      this.socket = new WebSocket(this.$WS_ENDPOINT + "/terminal");
+      this.socket.onopen = (event) => {
+        this.fitToscreen();
+      };
+    },
     fitToscreen() {
-      console.log("fit to screen")
       this.fit.fit();
       const dims = { cols: this.term.cols, rows: this.term.rows };
-
-      console.log("dims", dims)
       this.socket.send(JSON.stringify({ type: "resize", dims: dims }));
     },
     debounce(func, waitMs) {

@@ -30,6 +30,7 @@ import subprocess
 import fcntl
 import struct
 import select
+import signal
 
 origins = ["*"]
 
@@ -1316,14 +1317,24 @@ async def pty_socket(websocket: WebSocket):
 
 
     else:
-        # this is the parent process fork.
-        asyncio.create_task(read_and_forward_pty_output(websocket))
-        while True:
-            message = await websocket.receive_json()
-            if message['type'] == 'input':
-                os.write(fd, message["input"].encode())
-            elif message['type'] == 'resize':
-                set_winsize(fd, message["dims"]['rows'], message["dims"]['cols'])
+        try:
+            # this is the parent process fork.
+            asyncio.create_task(read_and_forward_pty_output(websocket))
+            while True:
+                message = await websocket.receive_json()
+                if message['type'] == 'input':
+                    os.write(fd, message["input"].encode())
+                elif message['type'] == 'resize':
+                    set_winsize(fd, message["dims"]['rows'], message["dims"]['cols'])
+        except WebSocketDisconnect as e:
+            print("Websocket connection to terminal is closed")
+            # close the pty
+            os.kill(child_pid, signal.SIGKILL)
+            fd = None
+            child_pid = None
+            print("pty closed")
+
+    
 
 ### API/VM-MANAGER ###
 @app.get('/api/vm-manager/{action}')
