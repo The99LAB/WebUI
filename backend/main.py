@@ -1,19 +1,15 @@
-import psutil
 from fastapi import FastAPI, WebSocket, Request, Form, WebSocketDisconnect, HTTPException, Depends
 from fastapi.responses import JSONResponse
+import psutil
 import asyncio
 import libvirt
 from fastapi.middleware.cors import CORSMiddleware
-import psutil
-import libvirt
 from xml.etree import ElementTree as ET
 import re
 import os
 from string import ascii_lowercase
 import subprocess
-import usb.core
 from blkinfo import BlkDiskInfo
-import cpuinfo
 import distro
 import requests
 import pam
@@ -23,9 +19,6 @@ import select
 import termios
 import struct
 import fcntl
-import subprocess
-import fcntl
-import struct
 import select
 import signal
 from jose import JWTError, jwt
