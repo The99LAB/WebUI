@@ -5,12 +5,12 @@ Web UI for managing libvirt based virtual machines
 - Download the latest release
 - Extract the archive
 - Run `python3 init_database.py`
-- Run `uwsgi --http :80 --gevent 1000 --master --wsgi-file main.py --callable app`
+- Run `uvicorn main:app --host 0.0.0.0 --port 80`
 
 ## Usage (development)
 - Download the source code
 - Run `python3 init_database.py`
-- Run `python3 main.py`
+- Run `uvicorn main:app --reload --host 0.0.0.0 --port 8000`
 
 ## Run as a service
 - Create a file named `VmManager.service` in `/etc/systemd/system/`
@@ -22,7 +22,7 @@ After=multi-user.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=uwsgi --http :80 --gevent 1000 --master --wsgi-file main.py --callable app
+ExecStart=uvicorn main:app --host 0.0.0.0 --port 80
 WorkingDirectory=/path/to/VmManager
 [Install]
 WantedBy=multi-user.target

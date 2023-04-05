@@ -122,6 +122,10 @@
     <ErrorDialog ref="errorDialog"></ErrorDialog>
     <CreateVm ref="createVm"></CreateVm>
     <EditVm ref="editVm"></EditVm>
+    <WsReconnectDialog
+      ref="wsReconnectDialog"
+      @ws-reconnect="connectWebSocket"
+    ></WsReconnectDialog>
   </q-page>
 </template>
 
@@ -130,7 +134,7 @@ import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";
-import io from "socket.io-client";
+import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 
 const selected = ref();
 
@@ -171,6 +175,7 @@ export default {
     ErrorDialog,
     CreateVm,
     EditVm,
+    WsReconnectDialog,
   },
   methods: {
     startVm(uuid) {
@@ -237,35 +242,36 @@ export default {
     createVm() {
       this.$refs.createVm.show();
     },
+    connectWebSocket() {
+      const jwt_token = localStorage.getItem("jwt-token");
+      this.ws = new WebSocket(this.$WS_ENDPOINT + "/vmdata?token=" + jwt_token);
+
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type == "vmdata") {
+          this.rows = data.data;
+          this.vmTableLoading = false;
+        } else if (data.type == "auth_error") {
+          localStorage.setItem("jwt-token", "");
+          this.$router.push({ path: "/login" });
+        }
+      };
+      this.ws.onclose = () => {
+        this.$refs.wsReconnectDialog.show();
+        this.vmTableLoading = true;
+      };
+    },
   },
   created() {
-    this.socket = io(this.$SOCKETIO_ENDPOINT, {
-      transportOptions: {
-        polling: {
-          extraHeaders: {
-            Authorization: "Bearer " + localStorage.getItem("jwt-token"),
-          },
-        },
-      },
-    });
+    this.connectWebSocket();
   },
   mounted() {
-    this.socket.emit("vmdata");
     this.getVncSettings();
-    this.socket.on("vmdata", (data) => {
-      this.rows = data;
-      this.vmTableLoading = false;
-    });
-    this.vmresultInterval = setInterval(() => {
-      this.socket.emit("vmdata");
-    }, 1000);
   },
   unmounted() {
     this.vmTableLoading = false;
-  },
-  beforeUnmount() {
-    clearInterval(this.vmresultInterval);
-    this.socket.disconnect();
+    this.ws.onclose = () => {};
+    this.ws.close();
   },
 };
 </script>

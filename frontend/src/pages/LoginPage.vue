@@ -18,6 +18,7 @@
                 v-model="username"
                 label="Username"
                 @update:model-value="authError = ''"
+                @keydown.tab.prevent="$refs.passwordInput.focus()"
               >
                 <template v-slot:prepend>
                   <q-icon name="mdi-account" />
@@ -30,6 +31,7 @@
                 v-model="password"
                 :type="isPwd ? 'password' : 'text'"
                 label="Password"
+                ref="passwordInput"
                 @update:model-value="authError = ''"
                 @keyup.enter="login"
               >

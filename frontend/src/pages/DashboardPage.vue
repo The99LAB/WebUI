@@ -29,10 +29,14 @@
       <q-spinner-gears size="50px" color="primary" />
     </q-inner-loading>
   </q-page>
+  <WsReconnectDialog
+    ref="wsReconnectDialog"
+    @ws-reconnect="connectWebSocket"
+  ></WsReconnectDialog>
 </template>
 
 <script>
-import io from "socket.io-client";
+import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 
 export default {
   data() {
@@ -44,35 +48,41 @@ export default {
       loadingVisible: true,
     };
   },
+  components: {
+    WsReconnectDialog,
+  },
+  methods: {
+    connectWebSocket() {
+      const jwt_token = localStorage.getItem("jwt-token");
+      this.ws = new WebSocket(
+        this.$WS_ENDPOINT + "/dashboard?token=" + jwt_token
+      );
+
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type == "dashboard") {
+          this.cpu_progress = data.data.cpu_percent;
+          this.cpu_progress_text = data.data.cpu_percent + "%";
+          this.mem_progress = data.data.mem_percent;
+          this.mem_progress_text = data.data.mem_percent + "%";
+          this.loadingVisible = false;
+        } else if (data.type == "auth_error") {
+          localStorage.setItem("jwt-token", "");
+          this.$router.push({ path: "/login" });
+        }
+      };
+
+      this.ws.onclose = (event) => {
+        this.$refs.wsReconnectDialog.show();
+      };
+    },
+  },
   created() {
-    this.socket = io(this.$SOCKETIO_ENDPOINT, {
-      transportOptions: {
-        polling: {
-          extraHeaders: {
-            Authorization: "Bearer " + localStorage.getItem("jwt-token"),
-          },
-        },
-      },
-    });
+    this.connectWebSocket();
   },
-  mounted() {
-    this.socket.emit("dashboard_data");
-    this.dataInterval = setInterval(() => {
-      this.socket.emit("dashboard_data");
-    }, 1000);
-    this.socket.on("cpu_overall", (data) => {
-      this.cpu_progress = data;
-      this.cpu_progress_text = data + "%";
-    });
-    this.socket.on("mem_overall", (data) => {
-      this.mem_progress = data;
-      this.mem_progress_text = data + "%";
-      this.loadingVisible = false;
-    });
-  },
-  beforeUnmount() {
-    clearInterval(this.dataInterval);
-    this.socket.disconnect();
+  unmounted() {
+    this.ws.onclose = () => {};
+    this.ws.close();
   },
 };
 </script>

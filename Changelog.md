@@ -14,3 +14,7 @@
 - Login Page: Press enter in password field to login
 
 ### 1.2
+<!-- backend now uses fastAPI -->
+- Backend: Use fastAPI
+- Websocket: when authentication fails, go to login page
+- Login Page: add tab key navigation between username and password fields in login form
