@@ -1,76 +1,91 @@
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
-from flask_restful import Api, Resource
+import psutil
+from fastapi import FastAPI, WebSocket, Request, Form, WebSocketDisconnect, HTTPException, Depends
+from fastapi.responses import JSONResponse
+import asyncio
+import libvirt
+from fastapi.middleware.cors import CORSMiddleware
 import psutil
 import libvirt
 from xml.etree import ElementTree as ET
 import re
 import os
 from string import ascii_lowercase
-from flask_socketio import SocketIO, Namespace, emit
 import subprocess
 import usb.core
 from blkinfo import BlkDiskInfo
 import cpuinfo
 import distro
 import requests
-from flask_jwt_extended import create_access_token, jwt_required, JWTManager
 import pam
 import LibvirtKVMBackup
-import logging
 import sqlite3
-import pty
 import select
 import termios
 import struct
 import fcntl
+import subprocess
+import fcntl
+import struct
+import select
+import signal
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
 
-"""
-NOTE: Start websocket: websockify -D --web=/usr/share/novnc/ 6080 --target-config /home/stijn/token.list
-"""
+
+origins = ["*"]
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+SECRET_KEY = "secret!"
+ALGORITHM = "HS256"
 
 
-class CustomFlask(Flask):
-    jinja_options = Flask.jinja_options.copy()
-    jinja_options.update(dict(
-        variable_start_string='%%',
-        variable_end_string='%%',
-    ))
-
-app = CustomFlask(__name__, static_url_path='')
-CORS(app, resources={r"*": {"origins": "*"}})
-api = Api(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
-# app.config["SECRET_KEY"] = "secret!"
-app.config["fd"] = None
-app.config["child_pid"] = None
-jwt = JWTManager(app)
+fd = None
+child_pid = None
 conn = libvirt.open('qemu:///system')
 
-@app.route('/api/login', methods=['POST'])
-def login_user():
-    username = request.json['username']
-    password = request.json['password']
+# check if the user is authenticated
+def check_auth(request: Request):
+    try:
+        token = request.headers['Authorization'].split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("username")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+        # check expiration
+        expires = payload.get("exp")
+        if expires is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+        expires_datetime = datetime.utcfromtimestamp(expires)
+        if datetime.utcnow() > expires_datetime:
+            raise HTTPException(status_code=401, detail="Authentication token expired")
+        return username
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid authentication token")
 
-    # if username and/or password are not in the request, return 400
-    if not username:
-        return "Missing username parameter", 400
-    if not password:
-        return "Missing password parameter", 400
-
-    if pam.authenticate(username=username, password=password):
-        access_token = create_access_token(identity=username)
-        return jsonify(access_token=access_token.decode('utf-8'))
-    else:
-        return "Incorrect password and/or username!", 401
-
-@app.route('/api/no-auth/<string:action>', methods=['GET'])
-def noauth(action):
-    if action == "hostname":
-        return {
-            "hostname": conn.getHostname()
-        }
+# check auth by token
+def check_auth_token(token):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("username")
+        if username is None:
+            return False
+        expires = payload.get("exp")
+        if expires is None:
+            return False
+        expires_datetime = datetime.utcfromtimestamp(expires)
+        if datetime.utcnow() > expires_datetime:
+            return False
+        return True
+    except JWTError:
+        return False
 
 def getvmstate(uuid):
     domain = conn.lookupByUUIDString(uuid)
@@ -94,7 +109,6 @@ def getvmstate(uuid):
     else:
         dom_state = 'unknown'
     return dom_state
-
 
 def getvmresults():
     domains = conn.listAllDomains(0)
@@ -1231,50 +1245,71 @@ class settings_ovmfpaths:
         ''', (path, name))
         self.db.commit()
 
-@app.route("/")
-def index():
-    return render_template("index.html")
 
+### Websockets ###
+@app.websocket("/dashboard")
+async def websocket_endpoint(websocket: WebSocket, token: str):
+    await websocket.accept()
+    try:
+        while True:
+            if check_auth_token(token):
+                cpu_percent = psutil.cpu_percent()
+                mem_percent = psutil.virtual_memory().percent
+                message = {"cpu_percent": cpu_percent, "mem_percent": mem_percent}
+                await websocket.send_json(message)
+                await asyncio.sleep(1)
+            else:
+                await websocket.close()
+                break
+    except WebSocketDisconnect:
+        pass
 
-class api_socketio(Namespace):
-    @jwt_required()
-    def on_connect(self):
-        print("Client connected to socketio\n\n")
+@app.websocket("/vmdata")
+async def websocket_endpoint(websocket: WebSocket, token: str):
+    await websocket.accept()
+    try:
+        while True:
+            if check_auth_token(token):
+                await websocket.send_json(getvmresults())
+                await asyncio.sleep(1)
+            else:
+                await websocket.close()
+                break
+    except WebSocketDisconnect:
+        pass
 
-    @jwt_required()
-    def on_vmdata(self):
-        print("getting vm data")
+@app.websocket("/downloadiso")
+async def websocket_endpoint(websocket: WebSocket, token: str):
+    await websocket.accept()
+    if check_auth_token(token):
+        # wait for message
+        data = await websocket.receive_json()
+        print("webscket data", data)
+        # extract data
+        url = data["url"]
+        filename = data["fileName"]
+        pool = data["storagePool"]
         
-        emit("vmdata", getvmresults())
-
-    @jwt_required()
-    def on_dashboard_data(self):
-        emit("cpu_overall", psutil.cpu_percent())
-        emit("mem_overall", psutil.virtual_memory().percent)
-
-    @jwt_required()
-    def on_download_iso(self, message):
-        url = message['url']
-        filename = message['fileName']
-        pool = message['storagePool']
         storagePool = conn.storagePoolLookupByUUIDString(pool)
         poolpath = storagePool.XMLDesc(0).split("<path>")[1].split("</path>")[0]
         poolName = storagePool.name()
-        filepath = f"{poolpath}/{filename}"
+        filepath = os.path.join(poolpath, filename)
 
         if (os.path.isfile(filepath)):
-            emit("downloadIsoError", f"{filename} already exists in pool {poolName}")
+            # send the event "downloadISOError"
+            print("file already exists")
+            await websocket.send_json({"event": "downloadISOError", "message": f"{filename} already exists in pool {poolName}"})
             return
-
+        
         try:
             response = requests.get(url, stream=True)
             if response.status_code != 200:
-                emit("downloadIsoError", f"Response code: {response.status_code}")
+                await websocket.send_json({"event": "downloadISOError", "message": f"Response code: {response.status_code}"})
                 return
             try:
-                total_size = int(response.headers.get('Content-Length'))
+                total_size = int(response.headers.get('content-length'))
             except TypeError as e:
-                emit("downloadIsoError", f"Content-Length not found in response headers. Error: {e}")
+                websocket.send_json({"event": "downloadISOError", "message": f"Content-Length not found in response headers. Error: {e}"})
                 return
             chunk_size = 1000
 
@@ -1284,1216 +1319,1222 @@ class api_socketio(Namespace):
                     prev_percentage = percentage
                     percentage = round(index * chunk_size / total_size * 100)
                     if prev_percentage != percentage:
-                        emit("downloadIsoProgress", percentage)
+                        await websocket.send_json({"event": "downloadISOProgress", "percentage": percentage})
                         if percentage == 100:
                             storagePool.refresh(0)
-                            emit("downloadIsoComplete", ["ISO Download Complete", f"ISO File: {filename}", f"Storage Pool: {poolName}"])
+                            print("download complete")
+                            await websocket.send_json({"event": "downloadISOComplete", "message": ["ISO Download Complete", f"ISO File: {filename}", f"Storage Pool: {poolName}"]})
                     f.write(data)
         except Exception as e:
-            emit("downloadIsoError", f"Error: {e}")
+            await websocket.send_json({"event": "downloadISOError", "message": f"Error: {e}"})
+    else:
+        await websocket.close()
 
+# changes the size reported to TTY-aware applications like vim
+def set_winsize(fd, row, col, xpix=0, ypix=0):
+    winsize = struct.pack("HHHH", row, col, xpix, ypix)
+    fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
 
-socketio.on_namespace(api_socketio('/api'))
-
-class PtyNamespace(Namespace):
-    class Terminal:
-        @staticmethod
-        def set_winsize(fd, row, col, xpix=0, ypix=0):
-            winsize = struct.pack("HHHH", row, col, xpix, ypix)
-            fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
-
-        @staticmethod
-        def read_and_forward_pty_output():
-            max_read_bytes = 1024 * 20
-            while True:
-                socketio.sleep(0.01)
-                if app.config["fd"]:
-                    timeout_sec = 0
-                    (data_ready, _, _) = select.select([app.config["fd"]], [], [], timeout_sec)
-                    if data_ready:
-                        output = os.read(app.config["fd"], max_read_bytes).decode(errors="ignore")
-                        socketio.emit("pty_output", {"output": output}, namespace="/api/pty")
-
-    @jwt_required()
-    def on_connect(self):
-        if app.config["child_pid"]:
-            # already started child process, don't start another
+async def read_and_forward_pty_output(websocket: WebSocket):
+    global fd
+    max_read_bytes = 1024 * 20
+    while True:
+        await asyncio.sleep(0.01)
+        if fd:
+            timeout_sec = 0
+            (data_ready, _, _) = select.select([fd], [], [], timeout_sec)
+            if data_ready:
+                output = os.read(fd, max_read_bytes).decode()
+                await websocket.send_json({"type": "pty_output", "output": output})
+        else:
             return
 
-        # create child process attached to a pty we can read from and write to
-        (child_pid, fd) = pty.fork()
-        if child_pid == 0:
-            # this is the child process fork.
-            # anything printed here will show up in the pty, including the output
-            # of this subprocess
-            # subprocess run in /root
-            os.chdir("/root")
-            subprocess.run("bash")
-        else:
+def kill_child_process():
+    global child_pid
+    global fd
+    os.kill(child_pid, signal.SIGKILL)
+    fd = None
+    child_pid = None
+    print("pty closed")
+
+# TODO: add authentication
+@app.websocket("/terminal")
+async def pty_socket(websocket: WebSocket, token: str):
+    global fd
+    global child_pid
+
+    await websocket.accept()
+
+    if child_pid:
+        # already started child process, don't start another
+        # write a new line so that when a client refresh the shell prompt is printed
+        os.write(fd, "\n".encode())
+        # return
+
+    # create child process attached to a pty we can read from and write to
+    (child_pid, fd) = os.forkpty()
+
+    if child_pid == 0:
+        # this is the child process fork.
+        # anything printed here will show up in the pty, including the output
+        # of this subprocess
+        # run bash in /root
+        subprocess.run(["/bin/bash"], cwd="/root")
+
+
+    else:
+        try:
             # this is the parent process fork.
-            # store child fd and pid
-            app.config["fd"] = fd
-            app.config["child_pid"] = child_pid
-            PtyNamespace.Terminal.set_winsize(fd, 50, 50)
-            socketio.start_background_task(target=PtyNamespace.Terminal.read_and_forward_pty_output)
+            asyncio.create_task(read_and_forward_pty_output(websocket))
+            while True:
+                message = await websocket.receive_json()
+                if check_auth_token(token):
+                    if message['type'] == 'input':
+                        os.write(fd, message["input"].encode())
+                    elif message['type'] == 'resize':
+                        set_winsize(fd, message["dims"]['rows'], message["dims"]['cols'])
+                else:
+                    await websocket.close()
+                    kill_child_process()
+                    break
+        except WebSocketDisconnect:
+            print("Websocket connection to terminal is closed")
+            # close the pty
+            kill_child_process()
+            
 
-    @jwt_required()
-    def on_pty_input(self, data):
-        if app.config["fd"]:
-            os.write(app.config["fd"], data["input"].encode())
+@app.get('/api/no-auth/hostname')
+async def get_hostname(request: Request):
+    return JSONResponse(content={"hostname": conn.getHostname()})
 
-    @jwt_required()
-    def on_resize(self, data):
-        if app.config["fd"]:
-            PtyNamespace.Terminal.set_winsize(app.config["fd"], data["rows"], data["cols"])
+@app.post('/api/login')
+async def login(request: Request):
+    data = await request.json()
+    username = data['username']
+    password = data['password']
 
-socketio.on_namespace(PtyNamespace('/api/pty'))
-
-class api_vm_manager(Resource):
-    @jwt_required()
-    def get(self, action):
-        if action == "running":
-            domainList = []
-            for domain in conn.listAllDomains():
-                if domain.isActive():
-                    domainList.append({
-                        "name": domain.name(),
-                        "uuid": domain.UUIDString(),
-                    })
-            return domainList
-        elif action == "all":
-            return getvmresults()
-        else:
-            return {"error": "Invalid action"}
+    if not username:
+        return HTTPException(status_code=400, detail="Username is required")
+    if not password:
+        return HTTPException(status_code=400, detail="Password is required")
     
-    @jwt_required()
-    def post(self, action):
-        if action == "create":
-            name = request.form['name']
-            os = request.form['os']
-            machine_type = request.form['machine_type']
-            bios_type = request.form['bios_type']
-            ovmf_name = None
-            if bios_type == "ovmf":
-                ovmf_name = request.form['ovmf_name']
-                print("ovmf_name: " + ovmf_name)
-            min_mem = request.form['memory_min']
-            mim_mem_unit = request.form['memory_min_unit']
-            max_mem = request.form['memory_max']
-            max_mem_unit = request.form['memory_max_unit']
-            disk = True
-            disk_size = request.form['disk_size']
-            disk_size_unit = request.form['disk_size_unit']
-            disk_type = request.form['disk_type']
-            disk_bus = request.form['disk_bus']
-            disk_pool = request.form['disk_pool']
-            iso = True
-            cdrom_pool = request.form['cdrom_pool']
-            cdrom_volume = request.form['cdrom_volume']
-            network = True
-            network_source = request.form['network_source']
-            network_model = request.form['network_model']
+    if pam.authenticate(username, password):
+        expires_delta = timedelta(minutes=15)
+        expire = datetime.utcnow() + expires_delta
+        token = jwt.encode({"username": username, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM, )
+        print("auth success")
+        return JSONResponse(content={"access_token": token})
+    else:
+        return HTTPException(status_code=401, detail="Invalid username or password")
 
-            print("name: " + name)
-            print("os: " + os)
-            print("machine_type: " + machine_type)
-            print("bios_type: " + bios_type)
-            print("min_mem: " + min_mem)
-            print("mim_mem_unit: " + mim_mem_unit)
-            print("max_mem: " + max_mem)
-            print("max_mem_unit: " + max_mem_unit)
-            print("disk: " + str(disk))
-            print("disk_size: " + disk_size)
-            print("disk_size_unit: " + disk_size_unit)
-            print("disk_type: " + disk_type)
-            print("disk_bus: " + disk_bus)
-            print("disk_pool: " + disk_pool)
-            print("iso: " + str(iso))
-            print("cdrom_pool: " + cdrom_pool)
-            print("cdrom_volume: " + cdrom_volume)
-            print("network: " + str(network))
-            print("network_source: " + network_source)
-            print("network_model: " + network_model)
 
-            try:
-                vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
-                            disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model, ovmf_name=ovmf_name)
-                if os == "Microsoft Windows 11":
-                    vm.windows(version="11")
-                elif os == "Microsoft Windows 10":
-                    vm.windows(version="10")
-                elif os == "Microsoft Windows 8.1":
-                    vm.windows(version="8.1")
-                elif os == "Microsoft Windows 8":
-                    vm.windows(version="8")
-                elif os == "Microsoft Windows 7":
-                    vm.windows(version="7")
-                elif os == "macOS 10.15 Catalina":
-                    vm.macos(version="10.15")
-                elif os == "macOS 11 Big Sur":
-                    print("macOS 11 Big Sur")
-                    print(vm.macos(version="11"))
-                elif os == "macOS 12 Monterey":
-                    vm.macos(version="12")
-                elif os == "macOS 13 Ventura":
-                    vm.macos(version="13")
-                elif os == "Linux":
-                    print("Creating new linux vm")
-                    vm.linux()
-                else:
-                    return 'OS not supported', 404
-                vm.create()
-                return '', 204
-            except Exception as e:
-                return f'{e}', 500
+
+
+#protected route
+@app.get('/api/protected')
+async def protected(request: Request, username: str = Depends(check_auth)):
+    print("protected route success")
+    return JSONResponse(content={"message": "Protected route success"})
+
+### API/VM-MANAGER ###
+@app.get('/api/vm-manager/{action}')
+async def get_vm_manager(request: Request, action: str, username: str = Depends(check_auth)):
+    if action == "running":
+        domainList = []
+        for domain in conn.listAllDomains():
+            if domain.isActive():
+                domainList.append({
+                    "name": domain.name(),
+                    "uuid": domain.UUIDString(),
+                })
+        return domainList
+    elif action == "all":
+        return getvmresults()
+    else:
+        return JSONResponse(content={"error": "Invalid action"})
+
+@app.post('/api/vm-manager/{action}')
+async def post_vm_manager(request: Request, action: str, username: str = Depends(check_auth)):
+    if action == "create":
+        form_data = await request.form()
+        name = form_data.get('name')
+        os = form_data.get('os')
+        machine_type = form_data.get('machine_type')
+        bios_type = form_data.get('bios_type')
+        ovmf_name = None
+        if bios_type == "ovmf":
+            ovmf_name = form_data.get('ovmf_name')
+            print("ovmf_name: " + ovmf_name)
+        min_mem = form_data.get('memory_min')
+        mim_mem_unit = form_data.get('memory_min_unit')
+        max_mem = form_data.get('memory_max')
+        max_mem_unit = form_data.get('memory_max_unit')
+        disk = True
+        disk_size = form_data.get('disk_size')
+        disk_size_unit = form_data.get('disk_size_unit')
+        disk_type = form_data.get('disk_type')
+        disk_bus = form_data.get('disk_bus')
+        disk_pool = form_data.get('disk_pool')
+        iso = True
+        cdrom_pool = form_data.get('cdrom_pool')
+        cdrom_volume = form_data.get('cdrom_volume')
+        network = True
+        network_source = form_data.get('network_source')
+        network_model = form_data.get('network_model')
+
+        print("name: " + name)
+        print("os: " + os)
+        print("machine_type: " + machine_type)
+        print("bios_type: " + bios_type)
+        print("min_mem: " + min_mem)
+        print("mim_mem_unit: " + mim_mem_unit)
+        print("max_mem: " + max_mem)
+        print("max_mem_unit: " + max_mem_unit)
+        print("disk: " + str(disk))
+        print("disk_size: " + disk_size)
+        print("disk_size_unit: " + disk_size_unit)
+        print("disk_type: " + disk_type)
+        print("disk_bus: " + disk_bus)
+        print("disk_pool: " + disk_pool)
+        print("iso: " + str(iso))
+        print("cdrom_pool: " + cdrom_pool)
+        print("cdrom_volume: " + cdrom_volume)
+        print("network: " + str(network))
+        print("network_source: " + network_source)
+        print("network_model: " + network_model)
+
+        try:
+            vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
+                        disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model, ovmf_name=ovmf_name)
+            if os == "Microsoft Windows 11":
+                vm.windows(version="11")
+            elif os == "Microsoft Windows 10":
+                vm.windows(version="10")
+            elif os == "Microsoft Windows 8.1":
+                vm.windows(version="8.1")
+            elif os == "Microsoft Windows 8":
+                vm.windows(version="8")
+            elif os == "Microsoft Windows 7":
+                vm.windows(version="7")
+            elif os == "macOS 10.15 Catalina":
+                vm.macos(version="10.15")
+            elif os == "macOS 11 Big Sur":
+                print("macOS 11 Big Sur")
+                print(vm.macos(version="11"))
+            elif os == "macOS 12 Monterey":
+                vm.macos(version="12")
+            elif os == "macOS 13 Ventura":
+                vm.macos(version="13")
+            elif os == "Linux":
+                print("Creating new linux vm")
+                vm.linux()
+            else:
+                return 'OS not supported', 404
+            vm.create()
+            return '', 200
+        except Exception as e:
+            return f'{e}', 500
+
+#### API/VM-MANAGER-ACTIONS ####
+@app.get('/api/vm-manager/{vmuuid}/{action}')
+async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
+    domain = conn.lookupByUUIDString(vmuuid)
+    domain_xml = domain.XMLDesc()
+    if action == "xml":
+        return { "xml": domain_xml }
+    elif action == "disk-data":
+        try:
+            return storage(domain_uuid=vmuuid).get()
+        except Exception as e:
+            return {"error": f"{e}"}
+    elif action == "data":
+        domain_xml = ET.fromstring(domain_xml)
+        # get cpu model from xml
+        cpu_model = domain_xml.find('cpu').get('mode')
+        # get vcpus from xml
+        vcpu = domain_xml.find('vcpu').text
+        try:
+            current_vcpu = domain_xml.find('vcpu').attrib['current']
+        except KeyError:
+            current_vcpu = vcpu
+        
+        topologyelem = domain_xml.find('cpu/topology')
+        if topologyelem is None:
+            custom_topology = False
+            sockets = vcpu
+            dies = 1
+            cores = 1
+            threads = 1
         else:
-            return 'Action not found', 404
+            sockets = topologyelem.attrib['sockets']
+            dies = topologyelem.attrib['dies']
+            cores = topologyelem.attrib['cores']
+            threads = topologyelem.attrib['threads']
+            custom_topology = True
+            
+        
+        # get machine type
+        machine_type = domain_xml.find('os/type').attrib['machine']
+        # get bios type
+        os_loader_elem = domain_xml.find('os/loader')
+        bios_type = "BIOS"
+        if os_loader_elem != None:
+            bios_type = os_loader_elem.text
 
+        # get autostart boolean
+        autostart = domain.autostart()
+        if autostart == 1:
+            autostart = True
+        else:
+            autostart = False
+        # get memory
+        meminfo = vmmemory(uuid=vmuuid).current("GB")
+        minmem = meminfo[0]
+        maxmem = meminfo[1]
+        # get disk
+        diskinfo = storage(domain_uuid=vmuuid).get()
+        networks = domainNetworkInterface(dom_uuid=vmuuid).get()
 
-api.add_resource(api_vm_manager, '/api/vm-manager/<string:action>')
+        # graphics tab            
+        graphicsdevices = DomainGraphics(domuuid=vmuuid).get
+        videodevices = DomainVideo(domuuid=vmuuid).get
 
+        # sound tab
+        sounddevices = DomainSound(domuuid=vmuuid).get
 
-class api_vm_manager_action(Resource):
-    @jwt_required()
-    def get(self, vmuuid, action):
-        domain = conn.lookupByUUIDString(vmuuid)
-        domain_xml = domain.XMLDesc(0)
+        # passthrough devices
+        usbdevices = DomainUsb(domuuid=vmuuid).get
+        pcidevices = DomainPcie(domuuid=vmuuid).get
+
+        data = {
+            "name": domain.name(),
+            "autostart": autostart,
+            "current_vcpu": current_vcpu,
+            "cpu_model": cpu_model,
+            "vcpu": vcpu,
+            "current_vcpu": current_vcpu,
+            "custom_topology": custom_topology,
+            "topology_sockets": sockets,
+            "topology_dies": dies,
+            "topology_cores": cores,
+            "topology_threads": threads,
+            "uuid": domain.UUIDString(),
+            "state": domain.state()[0],
+            "machine": machine_type,
+            "bios": bios_type,
+            "memory_max": maxmem,
+            "memory_max_unit": "GB",
+            "memory_min":minmem,
+            "memory_min_unit": "GB",
+            "disks": diskinfo,
+            "networks": networks,
+            "sounddevices": sounddevices,
+            "usbdevices": usbdevices,
+            "pcidevices": pcidevices,
+            "graphicsdevices": graphicsdevices,
+            "videodevices": videodevices
+        }
+        return data
+    else:
+        return 'Action not found', 404
+
+@app.post('/api/vm-manager/{vmuuid}/{action}')
+async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
+    domain = conn.lookupByUUIDString(vmuuid)
+    if action == "start":
+        try:
+            if domain.state()[0] == libvirt.VIR_DOMAIN_SHUTOFF:
+                domain.create()
+                return '', 204
+            elif domain.state()[0] == libvirt.VIR_DOMAIN_PMSUSPENDED:
+                domain.pMWakeup()
+                return '', 204
+            else:
+                return "Domain is in an invalid state", 400
+        except Exception as e:
+            return f'{e}', 500
+    elif action == "stop":
+        try:
+            domain.shutdown()
+            return '', 204
+        except Exception as e:
+            return f'{e}', 500
+    elif action == "forcestop":
+        try:
+            domain.destroy()
+            return '', 204
+        except Exception as e:
+            return f'{e}', 500
+    elif action == "remove":
+        try:
+            # flag 4 = also remove any nvram file
+            domain.undefineFlags(4)
+            return '', 204
+        except Exception as e:
+            return f'{e}', 500
+    elif action.startswith("edit"):
+        data = await request.json()
+        action = action.replace("edit-", "")
         if action == "xml":
-            return {"xml": domain_xml}
-        elif action == "disk-data":
+            xml = data['xml']
+            origxml = domain.XMLDesc(0)
             try:
-                return storage(domain_uuid=vmuuid).get()
-            except Exception as e:
-                return {"error": f"{e}"}
-        elif action == "data":
-            domain_xml = ET.fromstring(domain_xml)
-            # get cpu model from xml
-            cpu_model = domain_xml.find('cpu').get('mode')
-            # get vcpus from xml
-            vcpu = domain_xml.find('vcpu').text
-            try:
-                current_vcpu = domain_xml.find('vcpu').attrib['current']
-            except KeyError:
-                current_vcpu = vcpu
-            
-            topologyelem = domain_xml.find('cpu/topology')
-            if topologyelem is None:
-                custom_topology = False
-                sockets = vcpu
-                dies = 1
-                cores = 1
-                threads = 1
-            else:
-                sockets = topologyelem.attrib['sockets']
-                dies = topologyelem.attrib['dies']
-                cores = topologyelem.attrib['cores']
-                threads = topologyelem.attrib['threads']
-                custom_topology = True
-                
-            
-            # get machine type
-            machine_type = domain_xml.find('os/type').attrib['machine']
-            # get bios type
-            os_loader_elem = domain_xml.find('os/loader')
-            bios_type = "BIOS"
-            if os_loader_elem != None:
-                bios_type = os_loader_elem.text
-
-            # get autostart boolean
-            autostart = domain.autostart()
-            if autostart == 1:
-                autostart = True
-            else:
-                autostart = False
-            # get memory
-            meminfo = vmmemory(uuid=vmuuid).current("GB")
-            minmem = meminfo[0]
-            maxmem = meminfo[1]
-            # get disk
-            diskinfo = storage(domain_uuid=vmuuid).get()
-            networks = domainNetworkInterface(dom_uuid=vmuuid).get()
-
-            # graphics tab            
-            graphicsdevices = DomainGraphics(domuuid=vmuuid).get
-            videodevices = DomainVideo(domuuid=vmuuid).get
-
-            # sound tab
-            sounddevices = DomainSound(domuuid=vmuuid).get
-
-            # passthrough devices
-            usbdevices = DomainUsb(domuuid=vmuuid).get
-            pcidevices = DomainPcie(domuuid=vmuuid).get
-
-            data = {
-                "name": domain.name(),
-                "autostart": autostart,
-                "current_vcpu": current_vcpu,
-                "cpu_model": cpu_model,
-                "vcpu": vcpu,
-                "current_vcpu": current_vcpu,
-                "custom_topology": custom_topology,
-                "topology_sockets": sockets,
-                "topology_dies": dies,
-                "topology_cores": cores,
-                "topology_threads": threads,
-                "uuid": domain.UUIDString(),
-                "state": domain.state()[0],
-                "machine": machine_type,
-                "bios": bios_type,
-                "memory_max": maxmem,
-                "memory_max_unit": "GB",
-                "memory_min":minmem,
-                "memory_min_unit": "GB",
-                "disks": diskinfo,
-                "networks": networks,
-                "sounddevices": sounddevices,
-                "usbdevices": usbdevices,
-                "pcidevices": pcidevices,
-                "graphicsdevices": graphicsdevices,
-                "videodevices": videodevices
-            }
-            return data
-        else:
-            return 'Action not found', 404
-
-    @jwt_required()
-    def post(self, vmuuid, action):
-        domain = conn.lookupByUUIDString(vmuuid)
-        if action == "start":
-            try:
-                if domain.state()[0] == libvirt.VIR_DOMAIN_SHUTOFF:
-                    domain.create()
-                    return '', 204
-                elif domain.state()[0] == libvirt.VIR_DOMAIN_PMSUSPENDED:
-                    domain.pMWakeup()
-                    return '', 204
-                else:
-                    return "Domain is in an invalid state", 400
-            except Exception as e:
-                return f'{e}', 500
-        elif action == "stop":
-            try:
-                domain.shutdown()
-                return '', 204
-            except Exception as e:
-                return f'{e}', 500
-        elif action == "forcestop":
-            try:
-                domain.destroy()
-                return '', 204
-            except Exception as e:
-                return f'{e}', 500
-        elif action == "remove":
-            try:
-                # flag 4 = also remove any nvram file
                 domain.undefineFlags(4)
-                return '', 204
-            except Exception as e:
+            except libvirt.libvirtError as e:
                 return f'{e}', 500
+            try:
+                domain = conn.defineXML(xml)
+                return '', 204
+            except libvirt.libvirtError as e:
+                try:
+                    domain = conn.defineXML(origxml)
+                    return f'{e}', 500
+                except libvirt.libvirtError as e2:
+                    return f'{e2}', 500
 
-        elif action.startswith("edit"):
-            data = request.get_json()
-            action = action.replace("edit-", "")
-            if action == "xml":
-                xml = data['xml']
-                origxml = domain.XMLDesc(0)
+        elif action.startswith("general"):
+            action = action.replace("general-", "")
+            value = data['value']
+            if action == "name":
+                xml = ET.fromstring(domain.XMLDesc(0))
+                xml.find('name').text = value
+                xml = ET.tostring(xml).decode()
                 try:
                     domain.undefineFlags(4)
-                except libvirt.libvirtError as e:
-                    return f'{e}', 500
-                try:
                     domain = conn.defineXML(xml)
                     return '', 204
                 except libvirt.libvirtError as e:
-                    try:
-                        domain = conn.defineXML(origxml)
-                        return f'{e}', 500
-                    except libvirt.libvirtError as e2:
-                        return f'{e2}', 500
-
-            elif action.startswith("general"):
-                action = action.replace("general-", "")
-                value = data['value']
-                if action == "name":
-                    xml = ET.fromstring(domain.XMLDesc(0))
-                    xml.find('name').text = value
-                    xml = ET.tostring(xml).decode()
-                    try:
-                        domain.undefineFlags(4)
-                        domain = conn.defineXML(xml)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return f'{e}', 500
-                elif action == "autostart":
-                    if value == True:
-                        value = 1
-                    else:
-                        value = 0
-                    try:
-                        domain.setAutostart(value)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return f'{e}', 500
-
-            # edit-cpu
-            elif action == "cpu":
-                model = data['cpu_model']
-                vcpu = str(data['vcpu'])
-                current_vcpu = str(data['current_vcpu'])
-                custom_topology = data['custom_topology']
-                sockets = str(data['topology_sockets'])
-                dies = str(data['topology_dies'])
-                cores = str(data['topology_cores'])
-                threads = str(data['topology_threads'])
-                vm_xml = ET.fromstring(domain.XMLDesc(0))
-                # set cpu model
-                cpu_elem  = vm_xml.find('cpu')
-                cpu_elem.set('mode', model)
-                # remove migratable from cpu element
-                if cpu_elem.attrib.get('migratable') != None:
-                    cpu_elem.attrib.pop('migratable')
-                
-
-                if custom_topology:
-                    # new dict for topology
-                    topologyelem = vm_xml.find('cpu/topology')
-                    if topologyelem != None:
-                        topologyelem.set('sockets', sockets)
-                        topologyelem.set('dies', dies)
-                        topologyelem.set('cores', cores)
-                        topologyelem.set('threads', threads)
-                    else:
-                        topologyelem = ET.Element('topology')
-                        topologyelem.set('sockets', sockets)
-                        topologyelem.set('dies', dies)
-                        topologyelem.set('cores', cores)
-                        topologyelem.set('threads', threads)
-                        vm_xml.find('cpu').append(topologyelem)
-                
-                vm_xml.find('vcpu').text = vcpu
-                if current_vcpu != vcpu:
-                    vm_xml.find('vcpu').attrib['current'] = current_vcpu 
-                vm_xml = ET.tostring(vm_xml).decode()
+                    return f'{e}', 500
+            elif action == "autostart":
+                if value == True:
+                    value = 1
+                else:
+                    value = 0
                 try:
-                    domain.undefineFlags(4)
-                    domain = conn.defineXML(vm_xml)
+                    domain.setAutostart(value)
                     return '', 204
                 except libvirt.libvirtError as e:
                     return f'{e}', 500
 
-
-            # edit-memory
-            elif action == "memory":
-                memory_min = data['memory_min']
-                memory_min_unit = data['memory_min_unit']
-                memory_max = data['memory_max']
-                memory_max_unit = data['memory_max_unit']
-
-                memory_min = convertSizeUnit(
-                    int(memory_min), memory_min_unit, "KB")
-                memory_max = convertSizeUnit(
-                    int(memory_max), memory_max_unit, "KB")
-                if memory_min > memory_max:
-                    return ("Error: minmemory can't be bigger than maxmemory", 400)
-                else:
-                    vm_xml = domain.XMLDesc(0)
-                    try:
-                        current_min_mem = (
-                            re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vm_xml).group())
-                        current_max_mem = (
-                            re.search("<memory unit='KiB'>[0-9]+</memory>", vm_xml).group())
-                        try:
-                            output = vm_xml
-                            output = output.replace(
-                                current_max_mem, "<memory unit='KiB'>" + str(memory_max) + "</memory>")
-                            output = output.replace(
-                                current_min_mem, "<currentMemory unit='KiB'>" + str(memory_min) + "</currentMemory>")
-                            try:
-                                conn.defineXML(output)
-                                return '', 204
-                            except libvirt.libvirtError as e:
-                                return str(e), 500
-                        except Exception:
-                            return "failed to replace minmemory and/or maxmemory!", 500
-                    except Exception:
-                        return "failed to find minmemory and maxmemory in xml!", 500
+        # edit-cpu
+        elif action == "cpu":
+            model = data['cpu_model']
+            vcpu = str(data['vcpu'])
+            current_vcpu = str(data['current_vcpu'])
+            custom_topology = data['custom_topology']
+            sockets = str(data['topology_sockets'])
+            dies = str(data['topology_dies'])
+            cores = str(data['topology_cores'])
+            threads = str(data['topology_threads'])
+            vm_xml = ET.fromstring(domain.XMLDesc(0))
+            # set cpu model
+            cpu_elem  = vm_xml.find('cpu')
+            cpu_elem.set('mode', model)
+            # remove migratable from cpu element
+            if cpu_elem.attrib.get('migratable') != None:
+                cpu_elem.attrib.pop('migratable')
             
-            # edit-network-action
-            elif action.startswith("network"):
-                action = action.replace("network-", "")
-                if action == "add":
-                    source_network = data['sourceNetwork']
-                    model = data['networkModel']
 
-                    try:
-                        source_network_name = conn.networkLookupByUUIDString(source_network).name()
-                        xml = f"<interface type='network'><source network='{source_network_name}'/><model type='{model}'/></interface>"
-                        domain.attachDeviceFlags(
-                            xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return f"Error: {e}", 500
-
-                elif action == "delete":
-                    index = data['number']
-                    networkxml = domainNetworkInterface(dom_uuid=vmuuid).remove(index)
-                    try:
-                        domain.detachDeviceFlags(networkxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
+            if custom_topology:
+                # new dict for topology
+                topologyelem = vm_xml.find('cpu/topology')
+                if topologyelem != None:
+                    topologyelem.set('sockets', sockets)
+                    topologyelem.set('dies', dies)
+                    topologyelem.set('cores', cores)
+                    topologyelem.set('threads', threads)
                 else:
-                    return "Action not found", 404
+                    topologyelem = ET.Element('topology')
+                    topologyelem.set('sockets', sockets)
+                    topologyelem.set('dies', dies)
+                    topologyelem.set('cores', cores)
+                    topologyelem.set('threads', threads)
+                    vm_xml.find('cpu').append(topologyelem)
             
-            # edit-disk-action
-            elif action.startswith("disk"):
-                action = action.replace("disk-", "")
-                if action != "add":
-                    disknumber = data['number']
-                    xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
-                    xml = ET.fromstring(xml_orig)
-                if action == "add":
-                    
-                    volume_path = data['volumePath']
-                    device_type = data['deviceType']
-                    disk_driver_type = data['diskDriverType']
-                    disk_bus = data['diskBus']
-                    disk_type = data['diskType']
-                    source_device = data['sourceDevice']
-                    diskxml = storage(domain_uuid=vmuuid).add_xml(disktype=disk_type, targetbus=disk_bus, devicetype=device_type, sourcefile=volume_path, sourcedev=source_device, drivertype=disk_driver_type)
-                    try:
-                        domain.attachDeviceFlags(diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
-
-                elif action == "type":
-                    value = data['value']
-                    orig_value = xml.get('device')
-                    xml.set('device', value)
-                    if orig_value == "cdrom" and value == "disk":
-                        xml.remove(xml.find('readonly'))
-                    xml = ET.tostring(xml).decode()
-                    try:
-                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
-
-                elif action == "driver-type":
-                    value = data['value']
-                    xml.find('driver').set('type', value)
-                    xml = ET.tostring(xml).decode()
-                    try:
-                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
-
-                elif action == "bus":
-                    value = data['value']
-                    xml.find('target').set('bus', value)
-                    xml.remove(xml.find('address'))
-                    xml = ET.tostring(xml).decode()
-                    try:
-                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
-
-                elif action == "source-file":
-                    value = data['value']
-                    xml.find('source').set('file', value)
-                    xml = ET.tostring(xml).decode()
-                    try:
-                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
-                
-                elif action == "source-dev":
-                    value = data['value']
-                    xml.find('source').set('dev', value)
-                    xml = ET.tostring(xml).decode()
-                    try:
-                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
-
-                elif action == "bootorder":
-                    value = data['value']
-                    bootelem = xml.find('boot')
-                    if bootelem is None:
-                        bootelem = ET.SubElement(xml, 'boot')
-                    bootelem.set('order', value)
-                    xml = ET.tostring(xml).decode()
-                    try:
-                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
-
-                elif action == "delete":
-                    try:
-                        domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                        return '', 204
-                    except libvirt.libvirtError as e:
-                        return str(e), 500
-                else:
-                    return 'Action not found', 404
-
-            # edit-usbhotplug-action
-            elif action.startswith("usbhotplug"):
-                action = action.replace("usbhotplug-", "")
-                if action == "add":
-                    product_id = data['productid']
-                    vendor_id = data['vendorid']
-                    print("add usb hotplug", product_id, vendor_id)
-                    try:
-                        xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-                elif action == "delete":
-                    product_id = data['productid']
-                    vendor_id = data['vendorid']
-                    print("delete usb hotplug", product_id, vendor_id)
-                    try:
-                        xml = DomainUsb(vmuuid).remove(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-                else:
-                    return 'Action not found', 404
-
-            # edit-usb-action
-            elif action.startswith("usb"):
-                action = action.replace("usb-", "")
-                if action == "add":
-                    print("add usb")
-                    product_id = data['productid']
-                    vendor_id = data['vendorid']
-                    try:
-                        xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}")
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-                elif action == "delete":
-                    product_id = data['productid']
-                    vendor_id = data['vendorid']
-                    try:
-                        xml = DomainUsb(vmuuid).remove(vendorid=vendor_id, productid=product_id)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-                else:
-                    return 'Action not found', 404
- 
-            # edit-pcie-action
-            elif action.startswith("pcie"):
-                action = action.replace("pcie-", "")
-                if action == "add":
-                    domain = "0x" + data['domain']
-                    bus = "0x" + data['bus']
-                    slot = "0x" + data['slot']
-                    function = "0x" + data['function']
-                    custom_rom_file = data['customRomFile']
-                    rom_file = data['romFile']
-                    try:
-                        if custom_rom_file:
-                            devicexml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function, romfile=rom_file)
-                        else:
-                            xml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-                elif action == "delete":
-                    domain = data['domain']
-                    bus = data['bus']
-                    slot = data['slot']
-                    function = data['function']                   
-                    DomainPcie(vmuuid).remove(domain=domain, bus=bus, slot=slot, function=function)
-                    return '', 204
-                elif action == "romfile":
-                    devicexml = data['xml']
-                    romfile = data['romfile']
-                    try:
-                        DomainPcie(vmuuid).romfile(xml=devicexml, romfile=romfile)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-                else:
-                    return 'Action not found', 404
-
-            # edit-graphics-action
-            elif action.startswith("graphics"):
-                action = action.replace("graphics-", "")
-                if action == "add":
-                    graphics_type = data['type']
-                    try:
-                        DomainGraphics(vmuuid).add(graphics_type=graphics_type)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-
-                elif action == "delete":
-                    index = data['index']
-                    try:
-                        xml = DomainGraphics(vmuuid).remove(index=index)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-                else:
-                    return 'Action not found', 404
-
-            # edit-video-action
-            elif action.startswith("video"):
-                action = action.replace("video-", "")
-                if action == "add":
-                    model_type = data['type'].lower()
-                    try:
-                        DomainVideo(vmuuid).add(model_type=model_type)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-
-                elif action == "delete":
-                    index = data['index']
-                    try:
-                        xml = DomainVideo(vmuuid).remove(index=index)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-                else:
-                    return 'Action not found', 404
-            elif action.startswith("sound"):
-                action = action.replace("sound-", "")
-                if action == "add":
-                    model = data['model']
-                    try:
-                        DomainSound(vmuuid).add(model=model)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-
-                elif action == "delete":
-                    index = data['index']
-                    try:
-                        DomainSound(vmuuid).remove(index=index)
-                        return '', 204
-                    except Exception as e:
-                        return str(e), 500
-            else:
-                return 'Action not found', 404
-        else:
-            return 'Action not found', 404
-
-
-api.add_resource(api_vm_manager_action,
-                 '/api/vm-manager/<string:vmuuid>/<string:action>')
-
-
-class api_storage_pool(Resource):
-    @jwt_required()
-    def get(self):
-        storage_pools = []
-        for pool in conn.listAllStoragePools():
-            pool_name = pool.name()
-            pool_uuid = pool.UUIDString()
-            _pool = conn.storagePoolLookupByUUIDString(pool_uuid)
-            pool_info = pool.info()
-            pool_volumes = []
-            if pool.isActive():
-                pool_state = "active"
-                pool_volumes_list = _pool.listVolumes()
-                for volume in pool_volumes_list:
-                    volume_info = _pool.storageVolLookupByName(volume).info()
-                    volume_capacity = round(
-                        volume_info[1] / 1024 / 1024 / 1024, 2)
-                    volume_allocation = round(
-                        volume_info[2] / 1024 / 1024 / 1024, 2)
-                    _volume = {
-                        "name": volume,
-                        "size": f"{volume_allocation}/{volume_capacity} GB",
-                    }
-                    pool_volumes.append(_volume)
-            else:
-                pool_state = "inactive"
-
-            pool_capacity = str(
-                round(pool_info[1] / 1024 / 1024 / 1024)) + "GB"
-            pool_allocation = str(
-                round(pool_info[2] / 1024 / 1024 / 1024)) + "GB"
-            pool_available = str(
-                round(pool_info[3] / 1024 / 1024 / 1024)) + "GB"
-            pool_autostart_int = pool.autostart()
-            pool_type_int = pool_info[0]
-            if pool_type_int == libvirt.VIR_STORAGE_VOL_FILE:
-                pool_type = "file"
-            elif pool_type_int == libvirt.VIR_STORAGE_VOL_BLOCK:
-                pool_type = "block"
-            elif pool_type_int == libvirt.VIR_STORAGE_VOL_DIR:
-                pool_type = "dir"
-            elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETWORK:
-                pool_type = "network"
-            elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETDIR:
-                pool_type = "netdir"
-            elif pool_type_int == libvirt.VIR_STORAGE_VOL_PLOOP:
-                pool_type = "ploop"
-            else:
-                pool_type = "unknown"
-
-            pool_path = ET.fromstring(
-                _pool.XMLDesc(0)).find('target/path').text
-
-            if pool_autostart_int == 1:
-                pool_autostart = True
-            else:
-                pool_autostart = False
-
-            pool_result = {
-                "name": pool_name,
-                "uuid": pool_uuid,
-                "state": pool_state,
-                "type": pool_type,
-                "path": pool_path,
-                "capacity": pool_capacity,
-                "allocation": pool_allocation,
-                "available": pool_available,
-                "autostart": pool_autostart,
-                "volumes": pool_volumes
-            }
-            storage_pools.append(pool_result)
-        # sort storage pools by name
-        storage_pools = sorted(storage_pools, key=lambda k: k['name'])
-        return storage_pools
-
-    @jwt_required()
-    def post(self):
-        pool_name = request.form['name']
-        pool_type = request.form['type']
-        pool_path = request.form['path']
-        if not os.path.exists(pool_path):
-            os.makedirs(pool_path)
-
-        if pool_type == "dir":
-            pool_xml = f"""<pool type='dir'>
-              <name>{pool_name}</name>
-              <target>
-                <path>{pool_path}</path>
-              </target>
-            </pool>"""
+            vm_xml.find('vcpu').text = vcpu
+            if current_vcpu != vcpu:
+                vm_xml.find('vcpu').attrib['current'] = current_vcpu 
+            vm_xml = ET.tostring(vm_xml).decode()
             try:
-                conn.storagePoolDefineXML(pool_xml, 0)
-                pool = conn.storagePoolLookupByName(pool_name)
-                pool.create()
-                pool.setAutostart(1)
-
+                domain.undefineFlags(4)
+                domain = conn.defineXML(vm_xml)
                 return '', 204
             except libvirt.libvirtError as e:
-                return str(e), 500
-        else:
-            return 'Pool type not allowed', 400
+                return f'{e}', 500
 
 
-api.add_resource(api_storage_pool, '/api/storage-pools')
+        # edit-memory
+        elif action == "memory":
+            memory_min = data['memory_min']
+            memory_min_unit = data['memory_min_unit']
+            memory_max = data['memory_max']
+            memory_max_unit = data['memory_max_unit']
 
-
-class api_storage_pool_action(Resource):
-    @jwt_required()
-    def get(self, pooluuid, action):
-        if action == "volumes":
-            pool = conn.storagePoolLookupByUUIDString(pooluuid)
-            pool_volumes = []
-            if pool.isActive():
-                pool_volumes_list = pool.listVolumes()
-                for volume in pool_volumes_list:
-                    volume_info = pool.storageVolLookupByName(volume).info()
-                    volume_capacity = round(
-                        volume_info[1] / 1024 / 1024 / 1024)
-                    volume_allocation = round(
-                        volume_info[2] / 1024 / 1024 / 1024)
-                    volume_xml = ET.fromstring(pool.storageVolLookupByName(volume).XMLDesc(0))
-                    volume_format = volume_xml.find('target/format').get('type')
-                    volume_path = volume_xml.find('target/path').text
-                    _volume = {
-                        "name": volume,
-                        "format": volume_format,
-                        "capacity": volume_capacity,
-                        "allocation": volume_allocation,
-                        "path": volume_path,
-                    }
-                    pool_volumes.append(_volume)
-            return pool_volumes
+            memory_min = convertSizeUnit(
+                int(memory_min), memory_min_unit, "KB")
+            memory_max = convertSizeUnit(
+                int(memory_max), memory_max_unit, "KB")
+            if memory_min > memory_max:
+                return ("Error: minmemory can't be bigger than maxmemory", 400)
+            else:
+                vm_xml = domain.XMLDesc(0)
+                try:
+                    current_min_mem = (
+                        re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vm_xml).group())
+                    current_max_mem = (
+                        re.search("<memory unit='KiB'>[0-9]+</memory>", vm_xml).group())
+                    try:
+                        output = vm_xml
+                        output = output.replace(
+                            current_max_mem, "<memory unit='KiB'>" + str(memory_max) + "</memory>")
+                        output = output.replace(
+                            current_min_mem, "<currentMemory unit='KiB'>" + str(memory_min) + "</currentMemory>")
+                        try:
+                            conn.defineXML(output)
+                            return '', 204
+                        except libvirt.libvirtError as e:
+                            return str(e), 500
+                    except Exception:
+                        return "failed to replace minmemory and/or maxmemory!", 500
+                except Exception:
+                    return "failed to find minmemory and maxmemory in xml!", 500
         
-    @jwt_required()
-    def post(self, pooluuid, action):
-        try:
-            pool = conn.storagePoolLookupByUUIDString(pooluuid)
-            if action == "start":
-                pool.create()
-            elif action == "stop":
-                print("stopping pool with uuid" +
-                      pooluuid + "..." + pool.name())
-                pool.destroy()
-            elif action == "toggle-autostart":
-                if pool.autostart() == 1:
-                    pool.setAutostart(0)
-                else:
-                    pool.setAutostart(1)
+        # edit-network-action
+        elif action.startswith("network"):
+            action = action.replace("network-", "")
+            if action == "add":
+                source_network = data['sourceNetwork']
+                model = data['networkModel']
+
+                try:
+                    source_network_name = conn.networkLookupByUUIDString(source_network).name()
+                    xml = f"<interface type='network'><source network='{source_network_name}'/><model type='{model}'/></interface>"
+                    domain.attachDeviceFlags(
+                        xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return f"Error: {e}", 500
+
             elif action == "delete":
-                print("deleting pool with uuid" +
-                      pooluuid + "..." + pool.name())
-                pool.destroy()
-                pool.delete()
-                pool.undefine()
+                index = data['number']
+                networkxml = domainNetworkInterface(dom_uuid=vmuuid).remove(index)
+                try:
+                    domain.detachDeviceFlags(networkxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
+            else:
+                return "Action not found", 404
+        
+        # edit-disk-action
+        elif action.startswith("disk"):
+            action = action.replace("disk-", "")
+            if action != "add":
+                disknumber = data['number']
+                xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
+                xml = ET.fromstring(xml_orig)
+            if action == "add":
+                
+                volume_path = data['volumePath']
+                device_type = data['deviceType']
+                disk_driver_type = data['diskDriverType']
+                disk_bus = data['diskBus']
+                disk_type = data['diskType']
+                source_device = data['sourceDevice']
+                diskxml = storage(domain_uuid=vmuuid).add_xml(disktype=disk_type, targetbus=disk_bus, devicetype=device_type, sourcefile=volume_path, sourcedev=source_device, drivertype=disk_driver_type)
+                try:
+                    domain.attachDeviceFlags(diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
+
+            elif action == "type":
+                value = data['value']
+                orig_value = xml.get('device')
+                xml.set('device', value)
+                if orig_value == "cdrom" and value == "disk":
+                    xml.remove(xml.find('readonly'))
+                xml = ET.tostring(xml).decode()
+                try:
+                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
+
+            elif action == "driver-type":
+                value = data['value']
+                xml.find('driver').set('type', value)
+                xml = ET.tostring(xml).decode()
+                try:
+                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
+
+            elif action == "bus":
+                value = data['value']
+                xml.find('target').set('bus', value)
+                xml.remove(xml.find('address'))
+                xml = ET.tostring(xml).decode()
+                try:
+                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
+
+            elif action == "source-file":
+                value = data['value']
+                xml.find('source').set('file', value)
+                xml = ET.tostring(xml).decode()
+                try:
+                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
+            
+            elif action == "source-dev":
+                value = data['value']
+                xml.find('source').set('dev', value)
+                xml = ET.tostring(xml).decode()
+                try:
+                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
+
+            elif action == "bootorder":
+                value = data['value']
+                bootelem = xml.find('boot')
+                if bootelem is None:
+                    bootelem = ET.SubElement(xml, 'boot')
+                bootelem.set('order', value)
+                xml = ET.tostring(xml).decode()
+                try:
+                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
+
+            elif action == "delete":
+                try:
+                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                    return '', 204
+                except libvirt.libvirtError as e:
+                    return str(e), 500
             else:
                 return 'Action not found', 404
-            return '', 204
-        except libvirt.libvirtError as e:
-            return str(e), 500
 
-
-api.add_resource(api_storage_pool_action,
-                 '/api/storage-pools/<string:pooluuid>/<string:action>')
-
-
-class api_storage_pool_volumes(Resource):
-    @jwt_required()
-    def delete(self, pooluuid, volumename):
-        print("removing volume with name: " +
-              volumename + "on pool with uuid: " + pooluuid)
-        try:
-            pool = conn.storagePoolLookupByUUIDString(pooluuid)
-            volume = pool.storageVolLookupByName(volumename)
-            volume.delete()
-            return '', 204
-        except libvirt.libvirtError as e:
-            return str(e), 500
-
-    @jwt_required()
-    def post(self, pooluuid, volumename):
-        print("creating volume with name: " +
-              volumename + "on pool with uuid: " + pooluuid)
-        volume_format = request.form['format']
-        volume_size = request.form['size']
-        volume_size_unit = request.form['size_unit']
-        print("volume format: " + volume_format)
-        print("volume size: " + volume_size)
-        print("volume size unit: " + volume_size_unit)
-        try:
-            pool = conn.storagePoolLookupByUUIDString(pooluuid)
-            if volume_size_unit == "TB":
-                volume_size = int(volume_size) * 1024 * 1024 * 1024 * 1024
-            elif volume_size_unit == "GB":
-                volume_size = int(volume_size) * 1024 * 1024 * 1024
-            elif volume_size_unit == "MB":
-                volume_size = int(volume_size) * 1024 * 1024
+        # edit-usbhotplug-action
+        elif action.startswith("usbhotplug"):
+            action = action.replace("usbhotplug-", "")
+            if action == "add":
+                product_id = data['productid']
+                vendor_id = data['vendorid']
+                print("add usb hotplug", product_id, vendor_id)
+                try:
+                    xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
+            elif action == "delete":
+                product_id = data['productid']
+                vendor_id = data['vendorid']
+                print("delete usb hotplug", product_id, vendor_id)
+                try:
+                    xml = DomainUsb(vmuuid).remove(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
             else:
-                return "Error: Unknown disk size unit", 400
+                return 'Action not found', 404
 
-            volume_xml = f"""<volume>
-            <name>{volumename}.{volume_format}</name>
-            <capacity>{volume_size}</capacity>
-            <allocation>0</allocation>
-            <target>
-                <format type="{volume_format}"/>
-            </target>
-            </volume>"""
-
-            pool.createXML(volume_xml)
-            return '', 204
-        except libvirt.libvirtError as e:
-            return str(e), 500
-
-
-api.add_resource(api_storage_pool_volumes,
-                 '/api/storage-pools/<string:pooluuid>/volume/<string:volumename>')
-
-class api_backups_configs(Resource):
-    def get(self):
-        configs = []
-        for config in LibvirtKVMBackup.configManager.list():
-            backups = LibvirtKVMBackup.configManager(config).listBackups()
-            backup_count = len(backups)
-            backup_config_data = LibvirtKVMBackup.configManager(config).data()
-            backup_destination = backup_config_data['Destination']
-            backup_auto_shutdown = backup_config_data['AutoShutdown']
-            backup_disks = backup_config_data['Disks']
-            
-            # sort backups by latest first
-            backups.sort(key=lambda x: x['name'], reverse=True)
-            # convert item size in backups to GG
-            for backup in backups:
-                backup['size'] = str(round(convertSizeUnit(backup['size'], "B", "GB"))) + " GB"
-
-            backup_last_result = None
-            if backup_count > 0:
-                backup_last_result = backups[0]['status']
-                
-            configs.append({
-                "config": config,
-                "lastResult": backup_last_result,
-                "backupCount": backup_count,
-                "destination": backup_destination,
-                "autoShutdown": backup_auto_shutdown,
-                "disks": backup_disks,
-                "backups": backups,
-            })
-        return configs
-    def post(self): # create new config
-        data = request.get_json()
-        try:
-            config_name = data['configName']
-            vm_name = data['vmName']
-            destination = data['destination']
-            auto_shutdown = data['autoShutdown']
-            disks = data['disks']
-        except KeyError:
-            return "Error: Missing required data", 400
-        try:
-            config_data = {
-                'DomainName': vm_name, 
-                'Disks': disks, 
-                'Destination': destination, 
-                'AutoShutdown': auto_shutdown
-            }
-            LibvirtKVMBackup.configManager(config_name).create(config_data)
-            return '', 204
-        except LibvirtKVMBackup.configError as e:
-            return str(e), 500
-
-api.add_resource(api_backups_configs, '/api/backup-manager/configs')
-
-class api_backup_action(Resource):
-    def post(self, config, backup, action):
-        if action == "log":
-            try:
-                return LibvirtKVMBackup.configManager(config).backupLog(backup)
-            except LibvirtKVMBackup.configError as e:
-                return str(e), 500
-        elif action == "restore":
-            try:
-                LibvirtKVMBackup.restore(config, backup)
-                return '', 204
-            except LibvirtKVMBackup.configError as e:
-                return str(e), 500
-        elif action == "delete":
-            try:
-                LibvirtKVMBackup.configManager(config).backupDelete(backup)
-                return '', 204
-            except LibvirtKVMBackup.configError as e:
-                return str(e), 500
-        else:
-            return "action not found", 404
-
-api.add_resource(api_backup_action, '/api/backup-manager/<string:config>/<string:backup>/<string:action>')
-
-class api_backup_config_action(Resource):
-    def post(self, config, action):
-        if action == "delete":
-            try:
-                LibvirtKVMBackup.configManager(config).delete()
-                return '', 204
-            except LibvirtKVMBackup.configError as e:
-                return str(e), 500
-        elif action == "create-backup":
-            try:
-                LibvirtKVMBackup.backup(config)
-                return '', 204
-            except LibvirtKVMBackup.configError as e:
-                return str(e), 500
-        else:
-            return "action not found", 404
-        
-api.add_resource(api_backup_config_action, '/api/backup-manager/config/<string:config>/<string:action>')
-
-class api_networks(Resource):
-    @jwt_required()
-    def get(self):
-        # get all networks from libvirt
-        networks = conn.listAllNetworks()
-        # create empty list for networks
-        networks_list = []
-        # loop through networks
-        for network in networks:
-            # get network xml
-            network_xml = ET.fromstring(network.XMLDesc(0))            
-            # get network autostart
-            network_autostart = network.autostart()
-            # get network active
-            network_active = network.isActive()
-            if network_active == 1:
-                network_active = True
+        # edit-usb-action
+        elif action.startswith("usb"):
+            action = action.replace("usb-", "")
+            if action == "add":
+                print("add usb")
+                product_id = data['productid']
+                vendor_id = data['vendorid']
+                try:
+                    xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}")
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
+            elif action == "delete":
+                product_id = data['productid']
+                vendor_id = data['vendorid']
+                try:
+                    xml = DomainUsb(vmuuid).remove(vendorid=vendor_id, productid=product_id)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
             else:
-                network_active = False
-            # get network persistent
-            network_persistent = network.isPersistent()
-            # create network dict
-            _network = {
-                "uuid": network.UUIDString(),
-                "name": network.name(),
-                "active": network_active,
-                "persistent": network_persistent,
-                "autostart": network_autostart,
-                
-            }
-            # append network dict to networks list
-            networks_list.append(_network)
-        return networks_list
+                return 'Action not found', 404
 
-api.add_resource(api_networks, '/api/networks')
-
-class api_host_power(Resource):
-    @jwt_required()
-    def post(self, powermsg):
-        if powermsg == "shutdown":
-            shutdown_result = subprocess.run(
-                ["shutdown", "-h", "now"], capture_output=True, text=True)
-            if shutdown_result.returncode == 0:
+        # edit-pcie-action
+        elif action.startswith("pcie"):
+            action = action.replace("pcie-", "")
+            if action == "add":
+                domain = "0x" + data['domain']
+                bus = "0x" + data['bus']
+                slot = "0x" + data['slot']
+                function = "0x" + data['function']
+                custom_rom_file = data['customRomFile']
+                rom_file = data['romFile']
+                try:
+                    if custom_rom_file:
+                        devicexml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function, romfile=rom_file)
+                    else:
+                        xml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
+            elif action == "delete":
+                domain = data['domain']
+                bus = data['bus']
+                slot = data['slot']
+                function = data['function']                   
+                DomainPcie(vmuuid).remove(domain=domain, bus=bus, slot=slot, function=function)
                 return '', 204
+            elif action == "romfile":
+                devicexml = data['xml']
+                romfile = data['romfile']
+                try:
+                    DomainPcie(vmuuid).romfile(xml=devicexml, romfile=romfile)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
             else:
-                return shutdown_result.stdout, 500
-        elif powermsg == "reboot":
-            reboot_result = subprocess.run(
-                ["reboot"], capture_output=True, text=True)
-            if reboot_result.returncode == 0:
-                return '', 204
+                return 'Action not found', 404
+
+        # edit-graphics-action
+        elif action.startswith("graphics"):
+            action = action.replace("graphics-", "")
+            if action == "add":
+                graphics_type = data['type']
+                try:
+                    DomainGraphics(vmuuid).add(graphics_type=graphics_type)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
+
+            elif action == "delete":
+                index = data['index']
+                try:
+                    xml = DomainGraphics(vmuuid).remove(index=index)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
             else:
-                return reboot_result.stdout, 500
+                return 'Action not found', 404
 
+        # edit-video-action
+        elif action.startswith("video"):
+            action = action.replace("video-", "")
+            if action == "add":
+                model_type = data['type'].lower()
+                try:
+                    DomainVideo(vmuuid).add(model_type=model_type)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
 
-api.add_resource(api_host_power, '/api/host/power/<string:powermsg>')
+            elif action == "delete":
+                index = data['index']
+                try:
+                    xml = DomainVideo(vmuuid).remove(index=index)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
+            else:
+                return 'Action not found', 404
+        elif action.startswith("sound"):
+            action = action.replace("sound-", "")
+            if action == "add":
+                model = data['model']
+                try:
+                    DomainSound(vmuuid).add(model=model)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
 
-
-class api_host_system_info(Resource):
-    @jwt_required()
-    def get(self, action):
-        if action == "all":
-            sysInfo = ET.fromstring(conn.getSysinfo(0))
-            # if baseboard exists in sysinfo
-            baseboard_manufacturer = "Unknown"
-            baseboard_product = ""
-            baseboard_version = ""
-            if sysInfo.find("baseBoard") is not None:
-                baseboard_manufacturer = sysInfo.find("baseBoard/entry[@name='manufacturer']").text
-                baseboard_product = sysInfo.find("baseBoard/entry[@name='product']").text
-                baseboard_version = sysInfo.find("baseBoard/entry[@name='version']").text
-            processor_version = sysInfo.find("processor/entry[@name='version']").text
-            memory_size = 0
-            for memory_device in sysInfo.findall("memory_device"):
-                memory_size = int(memory_size) + int(memory_device.find("entry[@name='size']").text.replace(" GB", ""))
-            memory_size = str(memory_size) + " GB"
-            return {
-                "motherboard": baseboard_manufacturer + " " + baseboard_product + " " + baseboard_version,
-                "processor": processor_version,
-                "memory": memory_size,
-                "os": distro.name(pretty=True),
-                "hostname": conn.getHostname(),
-                "linuxVersion": os.uname()[2],
-            }
-        elif action == "hostname":
-            return {
-                "hostname": conn.getHostname()
-            }
-        elif action == "guest-machine-types":
-            return getGuestMachineTypes()
+            elif action == "delete":
+                index = data['index']
+                try:
+                    DomainSound(vmuuid).remove(index=index)
+                    return '', 204
+                except Exception as e:
+                    return str(e), 500
         else:
             return 'Action not found', 404
     
-    @jwt_required()
-    def post(self, action):
-        if action == "hostname":
-            # print("request to change hostname")
-            # print("new hostname: " + request.form['hostname'])
-            return 'Feature not implemented', 501
+    else:
+        return 'Action not found', 404
+
+### API-STORAGE-POOL ###
+@app.get("/api/storage-pools")
+async def api_storage_pools(username: str = Depends(check_auth)):
+    storage_pools = []
+    for pool in conn.listAllStoragePools():
+        pool_name = pool.name()
+        pool_uuid = pool.UUIDString()
+        _pool = conn.storagePoolLookupByUUIDString(pool_uuid)
+        pool_info = pool.info()
+        pool_volumes = []
+        if pool.isActive():
+            pool_state = "active"
+            pool_volumes_list = _pool.listVolumes()
+            for volume in pool_volumes_list:
+                volume_info = _pool.storageVolLookupByName(volume).info()
+                volume_capacity = round(
+                    volume_info[1] / 1024 / 1024 / 1024, 2)
+                volume_allocation = round(
+                    volume_info[2] / 1024 / 1024 / 1024, 2)
+                _volume = {
+                    "name": volume,
+                    "size": f"{volume_allocation}/{volume_capacity} GB",
+                }
+                pool_volumes.append(_volume)
         else:
-            return 'Action not found', 404
+            pool_state = "inactive"
 
-api.add_resource(api_host_system_info, '/api/host/system-info/<string:action>')
-
-
-class api_host_system_devices(Resource):
-    @jwt_required()
-    def get(self, devicetype):
-        if devicetype == "pcie":
-            return HostPcieDevices()
-        elif devicetype == "scsi":
-            disk_list = []
-            myblkd = BlkDiskInfo()
-            all_my_disks = myblkd.get_disks()
-
-            for i in all_my_disks:
-                disk_list.append(
-                    {'model': i["model"], 'type': i['type'], 'path': f"/dev/{i['name']}", 'capacity': f'{round(convertSizeUnit(size=int(i["size"]), from_unit="B", to_unit="GB"))} GB'})
-            return disk_list
-        elif devicetype == "usb":
-            return SystemUsbDevicesList()
+        pool_capacity = str(
+            round(pool_info[1] / 1024 / 1024 / 1024)) + "GB"
+        pool_allocation = str(
+            round(pool_info[2] / 1024 / 1024 / 1024)) + "GB"
+        pool_available = str(
+            round(pool_info[3] / 1024 / 1024 / 1024)) + "GB"
+        pool_autostart_int = pool.autostart()
+        pool_type_int = pool_info[0]
+        if pool_type_int == libvirt.VIR_STORAGE_VOL_FILE:
+            pool_type = "file"
+        elif pool_type_int == libvirt.VIR_STORAGE_VOL_BLOCK:
+            pool_type = "block"
+        elif pool_type_int == libvirt.VIR_STORAGE_VOL_DIR:
+            pool_type = "dir"
+        elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETWORK:
+            pool_type = "network"
+        elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETDIR:
+            pool_type = "netdir"
+        elif pool_type_int == libvirt.VIR_STORAGE_VOL_PLOOP:
+            pool_type = "ploop"
         else:
-            return 'Device type not found', 404
+            pool_type = "unknown"
 
+        pool_path = ET.fromstring(
+            _pool.XMLDesc(0)).find('target/path').text
 
-api.add_resource(api_host_system_devices,
-                 '/api/host/system-devices/<string:devicetype>')
-
-class api_host_settings(Resource):
-    @jwt_required()
-    def get(self, action):
-        if action == "all":
-            return settings().getAll()
-        elif action == "vnc":
-            vnc_settings = { 
-                "port": settings().get("novnc port"), 
-                "protocool": settings().get("novnc protocool"), 
-                "path": settings().get("novnc path"),
-                "ip": settings().get("novnc ip")
-            }
-            return vnc_settings
+        if pool_autostart_int == 1:
+            pool_autostart = True
         else:
-            return 'Action not found', 404
-    @jwt_required()
-    def post(self, action):
-        if action == "edit":
-            data = request.get_json()
-            setting = data['setting']
-            value = data['value']
-            settings().set(setting, value)
+            pool_autostart = False
+
+        pool_result = {
+            "name": pool_name,
+            "uuid": pool_uuid,
+            "state": pool_state,
+            "type": pool_type,
+            "path": pool_path,
+            "capacity": pool_capacity,
+            "allocation": pool_allocation,
+            "available": pool_available,
+            "autostart": pool_autostart,
+            "volumes": pool_volumes
+        }
+        storage_pools.append(pool_result)
+    # sort storage pools by name
+    storage_pools = sorted(storage_pools, key=lambda k: k['name'])
+    return storage_pools
+
+@app.post("/api/storage-pools")
+async def api_storage_pools_create(data: dict = Form(...), username: str = Depends(check_auth)):
+    pool_name = data['name']
+    pool_type = data['type']
+    pool_path = data['path']
+
+    if not os.path.exists(pool_path):
+        os.makedirs(pool_path)
+
+    if pool_type == "dir":
+        pool_xml = f"""<pool type='dir'>
+            <name>{pool_name}</name>
+            <target>
+            <path>{pool_path}</path>
+            </target>
+        </pool>"""
+        try:
+            conn.storagePoolDefineXML(pool_xml, 0)
+            pool = conn.storagePoolLookupByName(pool_name)
+            pool.create()
+            pool.setAutostart(1)
+
             return '', 204
-api.add_resource(api_host_settings, '/api/host/settings/<string:action>')
+        except libvirt.libvirtError as e:
+            return str(e), 500
+    else:
+        return 'Pool type not allowed', 400
 
-class api_vm_manager_settings(Resource):
-    @jwt_required()
-    def get(self, action):
-        if action == "all":
-            return settings_ovmfpaths().getAll()
-    @jwt_required()
-    def post(self, action):
-        data = request.get_json()
-        name = data['name']
-        if action == "edit":
-            path = data['path']
-            settings_ovmfpaths().set(name, path)
-            return '', 204
+### API-STORAGE-POOL-ACTIONS ###
+@app.get("/api/storage-pools/{pooluuid}/{action}")
+async def api_storage_pools_actions_get(pooluuid: str, action: str, username: str = Depends(check_auth)):
+    if action == "volumes":
+        pool = conn.storagePoolLookupByUUIDString(pooluuid)
+        pool_volumes = []
+        if pool.isActive():
+            pool_volumes_list = pool.listVolumes()
+            for volume in pool_volumes_list:
+                volume_info = pool.storageVolLookupByName(volume).info()
+                volume_capacity = round(
+                    volume_info[1] / 1024 / 1024 / 1024)
+                volume_allocation = round(
+                    volume_info[2] / 1024 / 1024 / 1024)
+                volume_xml = ET.fromstring(pool.storageVolLookupByName(volume).XMLDesc(0))
+                volume_format = volume_xml.find('target/format').get('type')
+                volume_path = volume_xml.find('target/path').text
+                _volume = {
+                    "name": volume,
+                    "format": volume_format,
+                    "capacity": volume_capacity,
+                    "allocation": volume_allocation,
+                    "path": volume_path,
+                }
+                pool_volumes.append(_volume)
+        return pool_volumes
+
+@app.post("/api/storage-pools/{pooluuid}/{action}")
+async def api_storage_pools_actions_post(pooluuid: str, action: str, username: str = Depends(check_auth)):
+    try:
+        pool = conn.storagePoolLookupByUUIDString(pooluuid)
+        if action == "start":
+            pool.create()
+        elif action == "stop":
+            print("stopping pool with uuid" +
+                    pooluuid + "..." + pool.name())
+            pool.destroy()
+        elif action == "toggle-autostart":
+            if pool.autostart() == 1:
+                pool.setAutostart(0)
+            else:
+                pool.setAutostart(1)
         elif action == "delete":
-            settings_ovmfpaths().delete(name)
-            return '', 204
-        elif action == "add":
-            path = data['path']
-            settings_ovmfpaths().add(name, path)
-            return '', 204
+            print("deleting pool with uuid" +
+                    pooluuid + "..." + pool.name())
+            pool.destroy()
+            pool.delete()
+            pool.undefine()
         else:
             return 'Action not found', 404
+        return '', 204
+    except libvirt.libvirtError as e:
+        return str(e), 500
 
-api.add_resource(api_vm_manager_settings, '/api/vm-manager/settings/ovmf-paths/<string:action>')
+### API-STORAGE-POOL-VOLUMES ###
+@app.delete('/api/storage-pools/{pooluuid}/volume/{volumename}')
+async def delete_storage_pool_volume(pooluuid: str, volumename: str, username: str = Depends(check_auth)):
+    print(f"removing volume with name: {volumename} on pool with uuid: {pooluuid}")
+    try:
+        pool = conn.storagePoolLookupByUUIDString(pooluuid)
+        volume = pool.storageVolLookupByName(volumename)
+        volume.delete()
+        return '', 204
+    except libvirt.libvirtError as e:
+        return str(e), 500
 
-if __name__ == '__main__':
-    werkzeug_logger = logging.getLogger('werkzeug')
-    werkzeug_logger.setLevel(logging.CRITICAL)
-    app.run(debug=True, host="0.0.0.0")
+@app.post('/api/storage-pools/{pooluuid}/volume/{volumename}')
+async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str = Form(...), size: int = Form(...), size_unit: str = Form(...), username: str = Depends(check_auth)):
+    print(f"creating volume with name: {volumename} on pool with uuid: {pooluuid}")
+    try:
+        pool = conn.storagePoolLookupByUUIDString(pooluuid)        
+        if size_unit == "TB" or size_unit == "GB" or size_unit == "MB":
+            size = convertSizeUnit(size, size_unit, "KB")
+        else:
+            return "Error: Unknown disk size unit", 400
+
+        volume_xml = f"""<volume>
+        <name>{volumename}.{format}</name>
+        <capacity>{size}</capacity>
+        <allocation>0</allocation>
+        <target>
+            <format type="{format}"/>
+        </target>
+        </volume>"""
+
+        pool.createXML(volume_xml)
+        return '', 204
+    except libvirt.libvirtError as e:
+        return str(e), 500
+
+#TODO: API-BACKUP-MANAGER
+@app.get("/api/backup-manager/configs")
+async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
+    print("getting backup manager configs...")
+    configs = []
+    for config in LibvirtKVMBackup.configManager.list():
+        backups = LibvirtKVMBackup.configManager(config).listBackups()
+        backup_count = len(backups)
+        backup_config_data = LibvirtKVMBackup.configManager(config).data()
+        backup_destination = backup_config_data['Destination']
+        backup_auto_shutdown = backup_config_data['AutoShutdown']
+        backup_disks = backup_config_data['Disks']
+        
+        # sort backups by latest first
+        backups.sort(key=lambda x: x['name'], reverse=True)
+        # convert item size in backups to GG
+        for backup in backups:
+            backup['size'] = str(round(convertSizeUnit(backup['size'], "B", "GB"))) + " GB"
+
+        backup_last_result = None
+        if backup_count > 0:
+            backup_last_result = backups[0]['status']
+            
+        configs.append({
+            "config": config,
+            "lastResult": backup_last_result,
+            "backupCount": backup_count,
+            "destination": backup_destination,
+            "autoShutdown": backup_auto_shutdown,
+            "disks": backup_disks,
+            "backups": backups,
+        })
+    return configs
+
+@app.post("/api/backup-manager/configs")
+async def api_backup_manager_configs_post(request: Request, username: str = Depends(check_auth)):
+    print("creating backup manager config...")
+    data = request.json()
+    try:
+        config_name = data['configName']
+        vm_name = data['vmName']
+        destination = data['destination']
+        auto_shutdown = data['autoShutdown']
+        disks = data['disks']
+    except KeyError:
+        return "Error: Missing required data", 400
+    try:
+        config_data = {
+            'DomainName': vm_name, 
+            'Disks': disks, 
+            'Destination': destination, 
+            'AutoShutdown': auto_shutdown
+        }
+        LibvirtKVMBackup.configManager(config_name).create(config_data)
+        return '', 204
+    except LibvirtKVMBackup.configError as e:
+        return str(e), 500
+
+### API-BACKUP-CONFIG ###
+@app.post("/api/backup-manager/config/{config}/{action}")
+async def api_backup_manager_config_get(config: str, action: str, username: str = Depends(check_auth)):
+    print("action: " + action)
+    print("config: " + config)
+    if action == "delete":
+        try:
+            LibvirtKVMBackup.configManager(config).delete()
+            return '', 204
+        except LibvirtKVMBackup.configError as e:
+            return str(e), 500
+    elif action == "create-backup":
+        try:
+            print("creating backup")
+            LibvirtKVMBackup.backup(config)
+            return '', 204
+        except LibvirtKVMBackup.configError as e:
+            return str(e), 500
+    else:
+        return "action not found", 404
+    
+
+### API-BACKUP-ACTIONS ###
+@app.post("/api/backup-manager/{config}/{backup}/{action}")
+async def api_backup_manager_actions_post(config: str, backup: str, action: str, username: str = Depends(check_auth)):
+    print("action: " + action)
+    print("config: " + config)
+    print("backup: " + backup)
+    if action == "log":
+        try:
+            return LibvirtKVMBackup.configManager(config).backupLog(backup)
+        except LibvirtKVMBackup.configError as e:
+            return str(e), 500
+    elif action == "restore":
+        try:
+            LibvirtKVMBackup.restore(config, backup)
+            return '', 204
+        except LibvirtKVMBackup.configError as e:
+            return str(e), 500
+    elif action == "delete":
+        try:
+            LibvirtKVMBackup.configManager(config).backupDelete(backup)
+            return '', 204
+        except LibvirtKVMBackup.configError as e:
+            return str(e), 500
+    else:
+        return "action not found", 404
+    
+
+### API-NETWORKS ###
+@app.get("/api/networks")
+async def api_networks_get(username: str = Depends(check_auth)):
+    # get all networks from libvirt
+    networks = conn.listAllNetworks()
+    # create empty list for networks
+    networks_list = []
+    # loop through networks
+    for network in networks:
+        # get network xml
+        network_xml = ET.fromstring(network.XMLDesc(0))            
+        # get network autostart
+        network_autostart = network.autostart()
+        # get network active
+        network_active = network.isActive()
+        if network_active == 1:
+            network_active = True
+        else:
+            network_active = False
+        # get network persistent
+        network_persistent = network.isPersistent()
+        # create network dict
+        _network = {
+            "uuid": network.UUIDString(),
+            "name": network.name(),
+            "active": network_active,
+            "persistent": network_persistent,
+            "autostart": network_autostart,
+            
+        }
+        # append network dict to networks list
+        networks_list.append(_network)
+    return networks_list
+
+### api-host-power###
+@app.post("/api/host/power/{powermsg}")
+async def api_host_power_post(powermsg: str, username: str = Depends(check_auth)):
+    if powermsg == "shutdown":
+        shutdown_result = subprocess.run(
+            ["shutdown", "-h", "now"], capture_output=True, text=True)
+        if shutdown_result.returncode == 0:
+            return '', 204
+        else:
+            return shutdown_result.stdout, 500
+    elif powermsg == "reboot":
+        reboot_result = subprocess.run(
+            ["reboot"], capture_output=True, text=True)
+        if reboot_result.returncode == 0:
+            return '', 204
+        else:
+            return reboot_result.stdout, 500
+        
+@app.get("/api/host/system-info/{action}")
+async def api_system_info_get(action: str, username: str = Depends(check_auth)):
+    if action == "all":
+        sysInfo = ET.fromstring(conn.getSysinfo(0))
+        # if baseboard exists in sysinfo
+        baseboard_manufacturer = "Unknown"
+        baseboard_product = ""
+        baseboard_version = ""
+        if sysInfo.find("baseBoard") is not None:
+            baseboard_manufacturer = sysInfo.find("baseBoard/entry[@name='manufacturer']").text
+            baseboard_product = sysInfo.find("baseBoard/entry[@name='product']").text
+            baseboard_version = sysInfo.find("baseBoard/entry[@name='version']").text
+        processor_version = sysInfo.find("processor/entry[@name='version']").text
+        memory_size = 0
+        for memory_device in sysInfo.findall("memory_device"):
+            memory_size = int(memory_size) + int(memory_device.find("entry[@name='size']").text.replace(" GB", ""))
+        memory_size = str(memory_size) + " GB"
+        return {
+            "motherboard": baseboard_manufacturer + " " + baseboard_product + " " + baseboard_version,
+            "processor": processor_version,
+            "memory": memory_size,
+            "os": distro.name(pretty=True),
+            "hostname": conn.getHostname(),
+            "linuxVersion": os.uname()[2],
+        }
+    elif action == "hostname":
+        return {
+            "hostname": conn.getHostname()
+        }
+    elif action == "guest-machine-types":
+        return getGuestMachineTypes()
+    else:
+        return 'Action not found', 404
+
+@app.post("/api/host/system-info/{action}}")
+async def api_system_info_hostname_post(action: str, username: str = Depends(check_auth)):
+    if action == "hostname":
+        # print("request to change hostname")
+        # print("new hostname: " + request.form['hostname'])
+        return 'Feature not implemented', 501
+    else:
+        return 'Action not found', 404
+
+### API-HOST-SYSTEM-DEVICES ###
+@app.get("/api/host/system-devices/{devicetype}")
+async def api_host_system_devices_get(devicetype: str, username: str = Depends(check_auth)):
+    if devicetype == "pcie":
+        return HostPcieDevices()
+    elif devicetype == "scsi":
+        disk_list = []
+        myblkd = BlkDiskInfo()
+        all_my_disks = myblkd.get_disks()
+
+        for i in all_my_disks:
+            disk_list.append(
+                {'model': i["model"], 'type': i['type'], 'path': f"/dev/{i['name']}", 'capacity': f'{round(convertSizeUnit(size=int(i["size"]), from_unit="B", to_unit="GB"))} GB'})
+        return disk_list
+    elif devicetype == "usb":
+        return SystemUsbDevicesList()
+    else:
+        return 'Device type not found', 404
+
+### API-HOST-SETTINGS-ACTIONS ###
+@app.get("/api/host/settings/{action}")
+async def api_host_settings_get(action: str, username: str = Depends(check_auth)):
+    if action == "all":
+        return settings().getAll()
+    elif action == "vnc":
+        vnc_settings = { 
+            "port": settings().get("novnc port"), 
+            "protocool": settings().get("novnc protocool"), 
+            "path": settings().get("novnc path"),
+            "ip": settings().get("novnc ip")
+        }
+        return vnc_settings
+    else:
+        return 'Action not found', 404
+    
+@app.post("/api/host/settings/{action}")
+async def api_host_settings_post(request: Request, action: str, username: str = Depends(check_auth)):
+    if action == "edit":
+        data = await request.json()
+        setting = data['setting']
+        value = data['value']
+        settings().set(setting, value)
+        return '', 204
+    
+@app.get("/api/vm-manager/settings/ovmf-paths/{action}")
+async def api_vm_manager_settings_ovmf_paths_get(action: str, username: str = Depends(check_auth)):
+    if action == "all":
+        return settings_ovmfpaths().getAll()
+    
+@app.post("/api/vm-manager/settings/ovmf-paths/{action}")
+async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = request.json()
+    name = data['name']
+    if action == "edit":
+        path = data['path']
+        settings_ovmfpaths().set(name, path)
+        return '', 204
+    elif action == "delete":
+        settings_ovmfpaths().delete(name)
+        return '', 204
+    elif action == "add":
+        path = data['path']
+        settings_ovmfpaths().add(name, path)
+        return '', 204
+    else:
+        return 'Action not found', 404
