@@ -62,7 +62,7 @@ module.exports = configure(function (/* ctx */) {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      publicPath: '/static/',
+      publicPath: "/static/",
       // analyze: true,
       env: {
         WEBSOCKET_ENDPOINT_DEV: "ws://192.168.0.37:8000",
