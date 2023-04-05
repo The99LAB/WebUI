@@ -84,8 +84,7 @@ export default {
           this.showProgressBar = false;
           this.progress = 0;
           this.$refs.errorDialog.show("ISO Download Complete", data.message);
-        }
-        else if (data.event == "auth_error"){
+        } else if (data.event == "auth_error") {
           localStorage.setItem("jwt-token", "");
           this.$router.push({ path: "/login" });
         }

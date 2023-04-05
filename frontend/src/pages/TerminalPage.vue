@@ -38,8 +38,7 @@ export default {
       const data = JSON.parse(event.data);
       if (data.type == "pty_output") {
         this.term.write(data.output);
-      }
-      else if (data.event == "auth_error"){
+      } else if (data.event == "auth_error") {
         localStorage.setItem("jwt-token", "");
         this.$router.push({ path: "/login" });
       }
