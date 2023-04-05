@@ -1421,14 +1421,6 @@ async def login(request: Request):
         return HTTPException(status_code=401, detail="Invalid username or password")
 
 
-
-
-#protected route
-@app.get('/api/protected')
-async def protected(request: Request, username: str = Depends(check_auth)):
-    print("protected route success")
-    return JSONResponse(content={"message": "Protected route success"})
-
 ### API/VM-MANAGER ###
 @app.get('/api/vm-manager/{action}')
 async def get_vm_manager(request: Request, action: str, username: str = Depends(check_auth)):
