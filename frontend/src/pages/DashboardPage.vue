@@ -29,7 +29,10 @@
       <q-spinner-gears size="50px" color="primary" />
     </q-inner-loading>
   </q-page>
-  <WsReconnectDialog ref="wsReconnectDialog" @ws-reconnect="connectWebSocket"></WsReconnectDialog>
+  <WsReconnectDialog
+    ref="wsReconnectDialog"
+    @ws-reconnect="connectWebSocket"
+  ></WsReconnectDialog>
 </template>
 
 <script>
@@ -51,7 +54,9 @@ export default {
   methods: {
     connectWebSocket() {
       const jwt_token = localStorage.getItem("jwt-token");
-      this.ws = new WebSocket(this.$WS_ENDPOINT + "/dashboard?token=" + jwt_token);
+      this.ws = new WebSocket(
+        this.$WS_ENDPOINT + "/dashboard?token=" + jwt_token
+      );
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -65,7 +70,7 @@ export default {
       this.ws.onclose = (event) => {
         this.$refs.wsReconnectDialog.show();
       };
-    }
+    },
   },
   created() {
     this.connectWebSocket();
@@ -73,7 +78,6 @@ export default {
   unmounted() {
     this.ws.onclose = () => {};
     this.ws.close();
-    
   },
 };
 </script>

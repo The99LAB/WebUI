@@ -44,10 +44,9 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener("resize", this.debouncedFitToscreen);
-
   },
   unmounted() {
-    this.socket.close()
+    this.socket.close();
   },
   created() {
     this.connectWebSocket();
@@ -56,7 +55,9 @@ export default {
   methods: {
     connectWebSocket() {
       const jwt_token = localStorage.getItem("jwt-token");
-      this.socket = new WebSocket(this.$WS_ENDPOINT + "/terminal?token=" + jwt_token);
+      this.socket = new WebSocket(
+        this.$WS_ENDPOINT + "/terminal?token=" + jwt_token
+      );
       this.socket.onopen = (event) => {
         this.fitToscreen();
       };

@@ -60,27 +60,28 @@ export default {
   methods: {
     downloadIso() {
       const jwt_token = localStorage.getItem("jwt-token");
-      this.ws = new WebSocket(this.$WS_ENDPOINT + "/downloadiso?token=" + jwt_token);
+      this.ws = new WebSocket(
+        this.$WS_ENDPOINT + "/downloadiso?token=" + jwt_token
+      );
       // when websocket connection is opened
       this.ws.onopen = () => {
-          this.ws.send(JSON.stringify({
+        this.ws.send(
+          JSON.stringify({
             url: this.url,
             fileName: this.fileName,
             storagePool: this.$refs.storagePool.getSelectedPool(),
-          }));
-          
+          })
+        );
       };
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log("new data from ws", data);
         if (data.event == "downloadISOError") {
           this.$refs.errorDialog.show("Error Downloading ISO", [data.message]);
-        }
-        else if (data.event == "downloadISOProgress") {
+        } else if (data.event == "downloadISOProgress") {
           this.showProgressBar = true;
           this.progress = data.message / 100;
-        }
-        else if (data.event == "downloadISOComplete") {
+        } else if (data.event == "downloadISOComplete") {
           this.showProgressBar = false;
           this.progress = 0;
           this.$refs.errorDialog.show("ISO Download Complete", data.message);

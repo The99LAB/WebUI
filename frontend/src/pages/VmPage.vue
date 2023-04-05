@@ -122,7 +122,10 @@
     <ErrorDialog ref="errorDialog"></ErrorDialog>
     <CreateVm ref="createVm"></CreateVm>
     <EditVm ref="editVm"></EditVm>
-    <WsReconnectDialog ref="wsReconnectDialog" @ws-reconnect="connectWebSocket"></WsReconnectDialog>
+    <WsReconnectDialog
+      ref="wsReconnectDialog"
+      @ws-reconnect="connectWebSocket"
+    ></WsReconnectDialog>
   </q-page>
 </template>
 
@@ -248,12 +251,12 @@ export default {
         this.rows = data;
         this.vmTableLoading = false;
       };
-      this.ws.onclose= () => {
+      this.ws.onclose = () => {
         console.log("Websocket connection closed");
         this.$refs.wsReconnectDialog.show();
         this.vmTableLoading = true;
       };
-    }
+    },
   },
   created() {
     this.connectWebSocket();
@@ -263,8 +266,8 @@ export default {
   },
   unmounted() {
     this.vmTableLoading = false;
-    this.ws.onclose = () => {}
-    this.ws.close()
+    this.ws.onclose = () => {};
+    this.ws.close();
   },
 };
 </script>
