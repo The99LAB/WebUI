@@ -1206,23 +1206,28 @@ class settings_ovmfpaths:
 
 
 ### Websockets ###
-
 @app.websocket("/dashboard")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        cpu_percent = psutil.cpu_percent()
-        mem_percent = psutil.virtual_memory().percent
-        message = {"cpu_percent": cpu_percent, "mem_percent": mem_percent}
-        await websocket.send_json(message)
-        await asyncio.sleep(1)
+    try:
+        while True:
+            cpu_percent = psutil.cpu_percent()
+            mem_percent = psutil.virtual_memory().percent
+            message = {"cpu_percent": cpu_percent, "mem_percent": mem_percent}
+            await websocket.send_json(message)
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        pass
 
 @app.websocket("/vmdata")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        await websocket.send_json(getvmresults())
-        await asyncio.sleep(1)
+    try:
+        while True:
+            await websocket.send_json(getvmresults())
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        pass
 
 @app.websocket("/downloadiso")
 async def websocket_endpoint(websocket: WebSocket):
@@ -1326,7 +1331,7 @@ async def pty_socket(websocket: WebSocket):
                     os.write(fd, message["input"].encode())
                 elif message['type'] == 'resize':
                     set_winsize(fd, message["dims"]['rows'], message["dims"]['cols'])
-        except WebSocketDisconnect as e:
+        except WebSocketDisconnect:
             print("Websocket connection to terminal is closed")
             # close the pty
             os.kill(child_pid, signal.SIGKILL)
