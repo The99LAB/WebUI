@@ -1253,7 +1253,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     try:
         while True:
             if check_auth_token(token):
-                print('websocket token valid')
                 cpu_percent = psutil.cpu_percent()
                 mem_percent = psutil.virtual_memory().percent
                 message = {"cpu_percent": cpu_percent, "mem_percent": mem_percent}
@@ -1350,9 +1349,17 @@ async def read_and_forward_pty_output(websocket: WebSocket):
         else:
             return
 
+def kill_child_process():
+    global child_pid
+    global fd
+    os.kill(child_pid, signal.SIGKILL)
+    fd = None
+    child_pid = None
+    print("pty closed")
+
 # TODO: add authentication
 @app.websocket("/terminal")
-async def pty_socket(websocket: WebSocket):
+async def pty_socket(websocket: WebSocket, token: str):
     global fd
     global child_pid
 
@@ -1381,18 +1388,20 @@ async def pty_socket(websocket: WebSocket):
             asyncio.create_task(read_and_forward_pty_output(websocket))
             while True:
                 message = await websocket.receive_json()
-                if message['type'] == 'input':
-                    os.write(fd, message["input"].encode())
-                elif message['type'] == 'resize':
-                    set_winsize(fd, message["dims"]['rows'], message["dims"]['cols'])
+                if check_auth_token(token):
+                    if message['type'] == 'input':
+                        os.write(fd, message["input"].encode())
+                    elif message['type'] == 'resize':
+                        set_winsize(fd, message["dims"]['rows'], message["dims"]['cols'])
+                else:
+                    await websocket.close()
+                    kill_child_process()
+                    break
         except WebSocketDisconnect:
             print("Websocket connection to terminal is closed")
             # close the pty
-            os.kill(child_pid, signal.SIGKILL)
-            fd = None
-            child_pid = None
-            print("pty closed")
-
+            kill_child_process()
+            
 
 @app.get('/api/no-auth/hostname')
 async def get_hostname(request: Request):

@@ -55,7 +55,8 @@ export default {
 
   methods: {
     connectWebSocket() {
-      this.socket = new WebSocket(this.$WS_ENDPOINT + "/terminal");
+      const jwt_token = localStorage.getItem("jwt-token");
+      this.socket = new WebSocket(this.$WS_ENDPOINT + "/terminal?token=" + jwt_token);
       this.socket.onopen = (event) => {
         this.fitToscreen();
       };
