@@ -240,7 +240,8 @@ export default {
       this.$refs.createVm.show();
     },
     connectWebSocket() {
-      this.ws = new WebSocket(this.$WS_ENDPOINT + "/vmdata");
+      const jwt_token = localStorage.getItem("jwt-token");
+      this.ws = new WebSocket(this.$WS_ENDPOINT + "/vmdata?token=" + jwt_token);
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);

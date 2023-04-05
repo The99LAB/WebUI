@@ -50,7 +50,8 @@ export default {
   },
   methods: {
     connectWebSocket() {
-      this.ws = new WebSocket(this.$WS_ENDPOINT + "/dashboard");
+      const jwt_token = localStorage.getItem("jwt-token");
+      this.ws = new WebSocket(this.$WS_ENDPOINT + "/dashboard?token=" + jwt_token);
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);

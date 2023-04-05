@@ -59,7 +59,8 @@ export default {
   },
   methods: {
     downloadIso() {
-      this.ws = new WebSocket(this.$WS_ENDPOINT + "/downloadiso");
+      const jwt_token = localStorage.getItem("jwt-token");
+      this.ws = new WebSocket(this.$WS_ENDPOINT + "/downloadiso?token=" + jwt_token);
       // when websocket connection is opened
       this.ws.onopen = () => {
           this.ws.send(JSON.stringify({

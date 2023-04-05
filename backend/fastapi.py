@@ -1,5 +1,5 @@
 import psutil
-from fastapi import FastAPI, WebSocket, Request, Form, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, Request, Form, WebSocketDisconnect, HTTPException, Depends
 from fastapi.responses import JSONResponse
 import asyncio
 import libvirt
@@ -18,19 +18,19 @@ import distro
 import requests
 import pam
 import LibvirtKVMBackup
-import logging
 import sqlite3
-import pty
 import select
 import termios
 import struct
 import fcntl
-import pty
 import subprocess
 import fcntl
 import struct
 import select
 import signal
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+
 
 origins = ["*"]
 
@@ -42,9 +42,50 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+SECRET_KEY = "secret!"
+ALGORITHM = "HS256"
+
+
 fd = None
 child_pid = None
 conn = libvirt.open('qemu:///system')
+
+# check if the user is authenticated
+def check_auth(request: Request):
+    try:
+        token = request.headers['Authorization'].split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("username")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+        # check expiration
+        expires = payload.get("exp")
+        if expires is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+        expires_datetime = datetime.utcfromtimestamp(expires)
+        if datetime.utcnow() > expires_datetime:
+            raise HTTPException(status_code=401, detail="Authentication token expired")
+        return username
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid authentication token")
+
+# check auth by token
+def check_auth_token(token):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("username")
+        if username is None:
+            return False
+        expires = payload.get("exp")
+        if expires is None:
+            return False
+        expires_datetime = datetime.utcfromtimestamp(expires)
+        if datetime.utcnow() > expires_datetime:
+            return False
+        return True
+    except JWTError:
+        return False
 
 def getvmstate(uuid):
     domain = conn.lookupByUUIDString(uuid)
@@ -1207,76 +1248,88 @@ class settings_ovmfpaths:
 
 ### Websockets ###
 @app.websocket("/dashboard")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     try:
         while True:
-            cpu_percent = psutil.cpu_percent()
-            mem_percent = psutil.virtual_memory().percent
-            message = {"cpu_percent": cpu_percent, "mem_percent": mem_percent}
-            await websocket.send_json(message)
-            await asyncio.sleep(1)
+            if check_auth_token(token):
+                print('websocket token valid')
+                cpu_percent = psutil.cpu_percent()
+                mem_percent = psutil.virtual_memory().percent
+                message = {"cpu_percent": cpu_percent, "mem_percent": mem_percent}
+                await websocket.send_json(message)
+                await asyncio.sleep(1)
+            else:
+                await websocket.close()
+                break
     except WebSocketDisconnect:
         pass
 
 @app.websocket("/vmdata")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     try:
         while True:
-            await websocket.send_json(getvmresults())
-            await asyncio.sleep(1)
+            if check_auth_token(token):
+                await websocket.send_json(getvmresults())
+                await asyncio.sleep(1)
+            else:
+                await websocket.close()
+                break
     except WebSocketDisconnect:
         pass
 
 @app.websocket("/downloadiso")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
-    # wait for message
-    data = await websocket.receive_json()
-    print("webscket data", data)
-    # extract data
-    url = data["url"]
-    filename = data["fileName"]
-    pool = data["storagePool"]
-    
-    storagePool = conn.storagePoolLookupByUUIDString(pool)
-    poolpath = storagePool.XMLDesc(0).split("<path>")[1].split("</path>")[0]
-    poolName = storagePool.name()
-    filepath = os.path.join(poolpath, filename)
+    if check_auth_token(token):
+        # wait for message
+        data = await websocket.receive_json()
+        print("webscket data", data)
+        # extract data
+        url = data["url"]
+        filename = data["fileName"]
+        pool = data["storagePool"]
+        
+        storagePool = conn.storagePoolLookupByUUIDString(pool)
+        poolpath = storagePool.XMLDesc(0).split("<path>")[1].split("</path>")[0]
+        poolName = storagePool.name()
+        filepath = os.path.join(poolpath, filename)
 
-    if (os.path.isfile(filepath)):
-        # send the event "downloadISOError"
-        print("file already exists")
-        await websocket.send_json({"event": "downloadISOError", "message": f"{filename} already exists in pool {poolName}"})
-        return
-    
-    try:
-        response = requests.get(url, stream=True)
-        if response.status_code != 200:
-            await websocket.send_json({"event": "downloadISOError", "message": f"Response code: {response.status_code}"})
+        if (os.path.isfile(filepath)):
+            # send the event "downloadISOError"
+            print("file already exists")
+            await websocket.send_json({"event": "downloadISOError", "message": f"{filename} already exists in pool {poolName}"})
             return
+        
         try:
-            total_size = int(response.headers.get('content-length'))
-        except TypeError as e:
-            websocket.send_json({"event": "downloadISOError", "message": f"Content-Length not found in response headers. Error: {e}"})
-            return
-        chunk_size = 1000
+            response = requests.get(url, stream=True)
+            if response.status_code != 200:
+                await websocket.send_json({"event": "downloadISOError", "message": f"Response code: {response.status_code}"})
+                return
+            try:
+                total_size = int(response.headers.get('content-length'))
+            except TypeError as e:
+                websocket.send_json({"event": "downloadISOError", "message": f"Content-Length not found in response headers. Error: {e}"})
+                return
+            chunk_size = 1000
 
-        with open(filepath, 'wb') as f:
-            percentage = 0
-            for index, data in enumerate(response.iter_content(chunk_size)):
-                prev_percentage = percentage
-                percentage = round(index * chunk_size / total_size * 100)
-                if prev_percentage != percentage:
-                    await websocket.send_json({"event": "downloadISOProgress", "percentage": percentage})
-                    if percentage == 100:
-                        storagePool.refresh(0)
-                        print("download complete")
-                        await websocket.send_json({"event": "downloadISOComplete", "message": ["ISO Download Complete", f"ISO File: {filename}", f"Storage Pool: {poolName}"]})
-                f.write(data)
-    except Exception as e:
-        await websocket.send_json({"event": "downloadISOError", "message": f"Error: {e}"})
+            with open(filepath, 'wb') as f:
+                percentage = 0
+                for index, data in enumerate(response.iter_content(chunk_size)):
+                    prev_percentage = percentage
+                    percentage = round(index * chunk_size / total_size * 100)
+                    if prev_percentage != percentage:
+                        await websocket.send_json({"event": "downloadISOProgress", "percentage": percentage})
+                        if percentage == 100:
+                            storagePool.refresh(0)
+                            print("download complete")
+                            await websocket.send_json({"event": "downloadISOComplete", "message": ["ISO Download Complete", f"ISO File: {filename}", f"Storage Pool: {poolName}"]})
+                    f.write(data)
+        except Exception as e:
+            await websocket.send_json({"event": "downloadISOError", "message": f"Error: {e}"})
+    else:
+        await websocket.close()
 
 # changes the size reported to TTY-aware applications like vim
 def set_winsize(fd, row, col, xpix=0, ypix=0):
@@ -1297,6 +1350,7 @@ async def read_and_forward_pty_output(websocket: WebSocket):
         else:
             return
 
+# TODO: add authentication
 @app.websocket("/terminal")
 async def pty_socket(websocket: WebSocket):
     global fd
@@ -1339,11 +1393,43 @@ async def pty_socket(websocket: WebSocket):
             child_pid = None
             print("pty closed")
 
+
+@app.get('/api/no-auth/hostname')
+async def get_hostname(request: Request):
+    return JSONResponse(content={"hostname": conn.getHostname()})
+
+@app.post('/api/login')
+async def login(request: Request):
+    data = await request.json()
+    username = data['username']
+    password = data['password']
+
+    if not username:
+        return HTTPException(status_code=400, detail="Username is required")
+    if not password:
+        return HTTPException(status_code=400, detail="Password is required")
     
+    if pam.authenticate(username, password):
+        expires_delta = timedelta(minutes=15)
+        expire = datetime.utcnow() + expires_delta
+        token = jwt.encode({"username": username, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM, )
+        print("auth success")
+        return JSONResponse(content={"access_token": token})
+    else:
+        return HTTPException(status_code=401, detail="Invalid username or password")
+
+
+
+
+#protected route
+@app.get('/api/protected')
+async def protected(request: Request, username: str = Depends(check_auth)):
+    print("protected route success")
+    return JSONResponse(content={"message": "Protected route success"})
 
 ### API/VM-MANAGER ###
 @app.get('/api/vm-manager/{action}')
-async def get_vm_manager(request: Request, action: str):
+async def get_vm_manager(request: Request, action: str, username: str = Depends(check_auth)):
     if action == "running":
         domainList = []
         for domain in conn.listAllDomains():
@@ -1359,7 +1445,7 @@ async def get_vm_manager(request: Request, action: str):
         return JSONResponse(content={"error": "Invalid action"})
 
 @app.post('/api/vm-manager/{action}')
-async def post_vm_manager(request: Request, action: str):
+async def post_vm_manager(request: Request, action: str, username: str = Depends(check_auth)):
     if action == "create":
         form_data = await request.form()
         name = form_data.get('name')
@@ -1442,7 +1528,7 @@ async def post_vm_manager(request: Request, action: str):
 
 #### API/VM-MANAGER-ACTIONS ####
 @app.get('/api/vm-manager/{vmuuid}/{action}')
-async def get_vm_manager_actions(request: Request, vmuuid: str, action: str):
+async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
     domain = conn.lookupByUUIDString(vmuuid)
     domain_xml = domain.XMLDesc()
     if action == "xml":
@@ -1544,7 +1630,7 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str):
         return 'Action not found', 404
 
 @app.post('/api/vm-manager/{vmuuid}/{action}')
-async def post_vm_manager_actions(request: Request, vmuuid: str, action: str):
+async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
     domain = conn.lookupByUUIDString(vmuuid)
     if action == "start":
         try:
@@ -1984,7 +2070,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str):
 
 ### API-STORAGE-POOL ###
 @app.get("/api/storage-pools")
-async def api_storage_pools():
+async def api_storage_pools(username: str = Depends(check_auth)):
     storage_pools = []
     for pool in conn.listAllStoragePools():
         pool_name = pool.name()
@@ -2058,7 +2144,7 @@ async def api_storage_pools():
     return storage_pools
 
 @app.post("/api/storage-pools")
-async def api_storage_pools_create(data: dict = Form(...)):
+async def api_storage_pools_create(data: dict = Form(...), username: str = Depends(check_auth)):
     pool_name = data['name']
     pool_type = data['type']
     pool_path = data['path']
@@ -2087,7 +2173,7 @@ async def api_storage_pools_create(data: dict = Form(...)):
 
 ### API-STORAGE-POOL-ACTIONS ###
 @app.get("/api/storage-pools/{pooluuid}/{action}")
-async def api_storage_pools_actions_get(pooluuid: str, action: str):
+async def api_storage_pools_actions_get(pooluuid: str, action: str, username: str = Depends(check_auth)):
     if action == "volumes":
         pool = conn.storagePoolLookupByUUIDString(pooluuid)
         pool_volumes = []
@@ -2113,7 +2199,7 @@ async def api_storage_pools_actions_get(pooluuid: str, action: str):
         return pool_volumes
 
 @app.post("/api/storage-pools/{pooluuid}/{action}")
-async def api_storage_pools_actions_post(pooluuid: str, action: str):
+async def api_storage_pools_actions_post(pooluuid: str, action: str, username: str = Depends(check_auth)):
     try:
         pool = conn.storagePoolLookupByUUIDString(pooluuid)
         if action == "start":
@@ -2141,7 +2227,7 @@ async def api_storage_pools_actions_post(pooluuid: str, action: str):
 
 ### API-STORAGE-POOL-VOLUMES ###
 @app.delete('/api/storage-pools/{pooluuid}/volume/{volumename}')
-async def delete_storage_pool_volume(pooluuid: str, volumename: str):
+async def delete_storage_pool_volume(pooluuid: str, volumename: str, username: str = Depends(check_auth)):
     print(f"removing volume with name: {volumename} on pool with uuid: {pooluuid}")
     try:
         pool = conn.storagePoolLookupByUUIDString(pooluuid)
@@ -2152,7 +2238,7 @@ async def delete_storage_pool_volume(pooluuid: str, volumename: str):
         return str(e), 500
 
 @app.post('/api/storage-pools/{pooluuid}/volume/{volumename}')
-async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str = Form(...), size: int = Form(...), size_unit: str = Form(...)):
+async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str = Form(...), size: int = Form(...), size_unit: str = Form(...), username: str = Depends(check_auth)):
     print(f"creating volume with name: {volumename} on pool with uuid: {pooluuid}")
     try:
         pool = conn.storagePoolLookupByUUIDString(pooluuid)        
@@ -2177,7 +2263,7 @@ async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str
 
 #TODO: API-BACKUP-MANAGER
 @app.get("/api/backup-manager/configs")
-async def api_backup_manager_configs_get():
+async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
     print("getting backup manager configs...")
     configs = []
     for config in LibvirtKVMBackup.configManager.list():
@@ -2210,7 +2296,7 @@ async def api_backup_manager_configs_get():
     return configs
 
 @app.post("/api/backup-manager/configs")
-async def api_backup_manager_configs_post(request: Request):
+async def api_backup_manager_configs_post(request: Request, username: str = Depends(check_auth)):
     print("creating backup manager config...")
     data = request.json()
     try:
@@ -2235,7 +2321,7 @@ async def api_backup_manager_configs_post(request: Request):
 
 ### API-BACKUP-CONFIG ###
 @app.post("/api/backup-manager/config/{config}/{action}")
-async def api_backup_manager_config_get(config: str, action: str):
+async def api_backup_manager_config_get(config: str, action: str, username: str = Depends(check_auth)):
     print("action: " + action)
     print("config: " + config)
     if action == "delete":
@@ -2257,7 +2343,7 @@ async def api_backup_manager_config_get(config: str, action: str):
 
 ### API-BACKUP-ACTIONS ###
 @app.post("/api/backup-manager/{config}/{backup}/{action}")
-async def api_backup_manager_actions_post(config: str, backup: str, action: str):
+async def api_backup_manager_actions_post(config: str, backup: str, action: str, username: str = Depends(check_auth)):
     print("action: " + action)
     print("config: " + config)
     print("backup: " + backup)
@@ -2284,7 +2370,7 @@ async def api_backup_manager_actions_post(config: str, backup: str, action: str)
 
 ### API-NETWORKS ###
 @app.get("/api/networks")
-async def api_networks_get():
+async def api_networks_get(username: str = Depends(check_auth)):
     # get all networks from libvirt
     networks = conn.listAllNetworks()
     # create empty list for networks
@@ -2318,7 +2404,7 @@ async def api_networks_get():
 
 ### api-host-power###
 @app.post("/api/host/power/{powermsg}")
-async def api_host_power_post(powermsg: str):
+async def api_host_power_post(powermsg: str, username: str = Depends(check_auth)):
     if powermsg == "shutdown":
         shutdown_result = subprocess.run(
             ["shutdown", "-h", "now"], capture_output=True, text=True)
@@ -2335,7 +2421,7 @@ async def api_host_power_post(powermsg: str):
             return reboot_result.stdout, 500
         
 @app.get("/api/host/system-info/{action}")
-async def api_system_info_get(action: str):
+async def api_system_info_get(action: str, username: str = Depends(check_auth)):
     if action == "all":
         sysInfo = ET.fromstring(conn.getSysinfo(0))
         # if baseboard exists in sysinfo
@@ -2369,7 +2455,7 @@ async def api_system_info_get(action: str):
         return 'Action not found', 404
 
 @app.post("/api/host/system-info/{action}}")
-async def api_system_info_hostname_post(action: str):
+async def api_system_info_hostname_post(action: str, username: str = Depends(check_auth)):
     if action == "hostname":
         # print("request to change hostname")
         # print("new hostname: " + request.form['hostname'])
@@ -2379,7 +2465,7 @@ async def api_system_info_hostname_post(action: str):
 
 ### API-HOST-SYSTEM-DEVICES ###
 @app.get("/api/host/system-devices/{devicetype}")
-async def api_host_system_devices_get(devicetype: str):
+async def api_host_system_devices_get(devicetype: str, username: str = Depends(check_auth)):
     if devicetype == "pcie":
         return HostPcieDevices()
     elif devicetype == "scsi":
@@ -2398,7 +2484,7 @@ async def api_host_system_devices_get(devicetype: str):
 
 ### API-HOST-SETTINGS-ACTIONS ###
 @app.get("/api/host/settings/{action}")
-async def api_host_settings_get(action: str):
+async def api_host_settings_get(action: str, username: str = Depends(check_auth)):
     if action == "all":
         return settings().getAll()
     elif action == "vnc":
@@ -2413,7 +2499,7 @@ async def api_host_settings_get(action: str):
         return 'Action not found', 404
     
 @app.post("/api/host/settings/{action}")
-async def api_host_settings_post(request: Request, action: str):
+async def api_host_settings_post(request: Request, action: str, username: str = Depends(check_auth)):
     if action == "edit":
         data = await request.json()
         setting = data['setting']
@@ -2422,12 +2508,12 @@ async def api_host_settings_post(request: Request, action: str):
         return '', 204
     
 @app.get("/api/vm-manager/settings/ovmf-paths/{action}")
-async def api_vm_manager_settings_ovmf_paths_get(action: str):
+async def api_vm_manager_settings_ovmf_paths_get(action: str, username: str = Depends(check_auth)):
     if action == "all":
         return settings_ovmfpaths().getAll()
     
 @app.post("/api/vm-manager/settings/ovmf-paths/{action}")
-async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str):
+async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str, username: str = Depends(check_auth)):
     data = request.json()
     name = data['name']
     if action == "edit":
