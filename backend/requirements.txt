@@ -6,12 +6,6 @@ blkinfo
 distro
 python-pam
 LibvirtKVMBackup
-sqlite3
-select
-termios
-struct
-fnctl
-select
-signal
-jose
-uvicorn
+python-jose[cryptography]
+python-multipart
+uvicorn[standard]
