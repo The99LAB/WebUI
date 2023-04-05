@@ -1249,9 +1249,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 cpu_percent = psutil.cpu_percent()
                 mem_percent = psutil.virtual_memory().percent
                 message = {"cpu_percent": cpu_percent, "mem_percent": mem_percent}
-                await websocket.send_json(message)
+                await websocket.send_json({"type": "dashboard", "data": message})
                 await asyncio.sleep(1)
             else:
+                await websocket.send_json({"type": "auth_error"})
                 await websocket.close()
                 break
     except WebSocketDisconnect:
@@ -1263,9 +1264,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     try:
         while True:
             if check_auth_token(token):
-                await websocket.send_json(getvmresults())
+                await websocket.send_json({"type": "vmdata", "data": getvmresults()})
                 await asyncio.sleep(1)
             else:
+                await websocket.send_json({"type": "auth_error"})
                 await websocket.close()
                 break
     except WebSocketDisconnect:
@@ -1321,6 +1323,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         except Exception as e:
             await websocket.send_json({"event": "downloadISOError", "message": f"Error: {e}"})
     else:
+        await websocket.send_json({"event": "auth_error"})
         await websocket.close()
 
 # changes the size reported to TTY-aware applications like vim
@@ -1387,6 +1390,7 @@ async def pty_socket(websocket: WebSocket, token: str):
                     elif message['type'] == 'resize':
                         set_winsize(fd, message["dims"]['rows'], message["dims"]['cols'])
                 else:
+                    await websocket.send_json({"type": "auth_error"})
                     await websocket.close()
                     kill_child_process()
                     break

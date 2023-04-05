@@ -63,7 +63,6 @@ export default {
       this.ws = new WebSocket(
         this.$WS_ENDPOINT + "/downloadiso?token=" + jwt_token
       );
-      // when websocket connection is opened
       this.ws.onopen = () => {
         this.ws.send(
           JSON.stringify({
@@ -85,6 +84,10 @@ export default {
           this.showProgressBar = false;
           this.progress = 0;
           this.$refs.errorDialog.show("ISO Download Complete", data.message);
+        }
+        else if (data.event == "auth_error"){
+          localStorage.setItem("jwt-token", "");
+          this.$router.push({ path: "/login" });
         }
       };
     },

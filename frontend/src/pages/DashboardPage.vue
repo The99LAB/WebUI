@@ -60,11 +60,17 @@ export default {
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        this.cpu_progress = data.cpu_percent;
-        this.cpu_progress_text = data.cpu_percent + "%";
-        this.mem_progress = data.mem_percent;
-        this.mem_progress_text = data.mem_percent + "%";
-        this.loadingVisible = false;
+        if (data.type == "dashboard") {
+          this.cpu_progress = data.data.cpu_percent;
+          this.cpu_progress_text = data.data.cpu_percent + "%";
+          this.mem_progress = data.data.mem_percent;
+          this.mem_progress_text = data.data.mem_percent + "%";
+          this.loadingVisible = false;
+        }
+        else if (data.type == "auth_error"){
+          localStorage.setItem("jwt-token", "");
+          this.$router.push({ path: "/login" });
+        }
       };
 
       this.ws.onclose = (event) => {

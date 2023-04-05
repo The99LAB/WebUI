@@ -39,6 +39,10 @@ export default {
       if (data.type == "pty_output") {
         this.term.write(data.output);
       }
+      else if (data.event == "auth_error"){
+        localStorage.setItem("jwt-token", "");
+        this.$router.push({ path: "/login" });
+      }
     };
     window.addEventListener("resize", this.debouncedFitToscreen);
   },

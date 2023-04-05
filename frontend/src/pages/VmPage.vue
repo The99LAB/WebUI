@@ -248,11 +248,16 @@ export default {
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        this.rows = data;
-        this.vmTableLoading = false;
+        if (data.type == "vmdata") {
+          this.rows = data.data;
+          this.vmTableLoading = false;
+        }
+        else if (data.type == "auth_error"){
+          localStorage.setItem("jwt-token", "");
+          this.$router.push({ path: "/login" });
+        }
       };
       this.ws.onclose = () => {
-        console.log("Websocket connection closed");
         this.$refs.wsReconnectDialog.show();
         this.vmTableLoading = true;
       };
