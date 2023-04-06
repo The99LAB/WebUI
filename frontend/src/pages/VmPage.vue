@@ -217,16 +217,17 @@ export default {
     },
     logsVm(uuid) {
       console.log("logs vm with uuid", uuid);
-      this.$api.get("vm-manager/" + uuid + "/logs")
-      .then((response) => {
-        this.$refs.logDialog.show("VM Logs", response.data.log);
-      })
-      .catch((error) => {
-        this.$refs.errorDialog.show("Error getting logs", [
-          "vm uuid: " + uuid,
-          "Error: " + error.response.data.detail,
-        ]);
-      });
+      this.$api
+        .get("vm-manager/" + uuid + "/logs")
+        .then((response) => {
+          this.$refs.logDialog.show("VM Logs", response.data.log);
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting logs", [
+            "vm uuid: " + uuid,
+            "Error: " + error.response.data.detail,
+          ]);
+        });
     },
     removeVm(uuid) {
       console.log("removing vm with uuid", uuid);
