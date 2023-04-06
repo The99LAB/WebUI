@@ -1535,6 +1535,16 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             return storage(domain_uuid=vmuuid).get()
         except Exception as e:
             return {"error": f"{e}"}
+    elif action == "logs":
+        domain_name = domain.name()
+        libvirt_domain_logs_path = settings().get("libvirt domain logs path")
+        domain_log_path = os.path.join(libvirt_domain_logs_path, domain_name + ".log")
+        if os.path.exists(domain_log_path):
+            with open(domain_log_path, "r") as f:
+                return { "log": f.readlines() }
+        else:
+            raise HTTPException(status_code=404, detail="Log file not found")
+        
     elif action == "data":
         domain_xml = ET.fromstring(domain_xml)
         # get cpu model from xml

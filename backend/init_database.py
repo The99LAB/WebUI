@@ -8,6 +8,7 @@ novnc_ip = input("Enter novnc ip: ")
 novnc_port = input("Enter novnc port: ")
 novnc_protocool = input("Enter novnc protocool: ")
 novnc_path = input("Enter novnc path: ")
+libvirt_domain_logs_path = input("Enter libvirt domain logs path: ")
 
 # Create table settings
 c.execute('''CREATE TABLE "settings" (
@@ -23,6 +24,7 @@ c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (2, "novnc i
 c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (3, "novnc port", "{novnc_port}")''')
 c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (4, "novnc protocool", "{novnc_protocool}")''')
 c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (5, "novnc path", "{novnc_path}")''')
+c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (6, "libvirt domain logs path", "{libvirt_domain_logs_path}")''')
 
 # Create table settings_ovmfpaths
 c.execute('''CREATE TABLE "settings_ovmfpaths" (

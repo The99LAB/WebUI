@@ -114,6 +114,13 @@
                 v-if="props.row.state == 'Shutoff'"
                 @click="editVm(props.row.uuid)"
               />
+              <q-btn
+                class="q-ma-sm"
+                color="primary"
+                icon="mdi-file-document"
+                label="Logs"
+                @click="logsVm(props.row.uuid)"
+              />
             </div>
           </q-td>
         </q-tr>
@@ -122,6 +129,7 @@
     <ErrorDialog ref="errorDialog"></ErrorDialog>
     <CreateVm ref="createVm"></CreateVm>
     <EditVm ref="editVm"></EditVm>
+    <LogDialog ref="logDialog"></LogDialog>
     <WsReconnectDialog
       ref="wsReconnectDialog"
       @ws-reconnect="connectWebSocket"
@@ -134,6 +142,7 @@ import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";
+import LogDialog from "src/components/LogDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 
 const selected = ref();
@@ -175,6 +184,7 @@ export default {
     ErrorDialog,
     CreateVm,
     EditVm,
+    LogDialog,
     WsReconnectDialog,
   },
   methods: {
@@ -200,6 +210,19 @@ export default {
       console.log("force stopping vm with uuid", uuid);
       this.$api.post("vm-manager/" + uuid + "/forcestop").catch((error) => {
         this.$refs.errorDialog.show("Error force stopping VM", [
+          "vm uuid: " + uuid,
+          "Error: " + error.response.data.detail,
+        ]);
+      });
+    },
+    logsVm(uuid) {
+      console.log("logs vm with uuid", uuid);
+      this.$api.get("vm-manager/" + uuid + "/logs")
+      .then((response) => {
+        this.$refs.logDialog.show("VM Logs", response.data.log);
+      })
+      .catch((error) => {
+        this.$refs.errorDialog.show("Error getting logs", [
           "vm uuid: " + uuid,
           "Error: " + error.response.data.detail,
         ]);
