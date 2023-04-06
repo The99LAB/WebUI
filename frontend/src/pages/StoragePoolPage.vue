@@ -319,7 +319,7 @@ export default {
           //console.log("storagepools:", response.data)
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
     createVolume(pooluuid) {
@@ -333,7 +333,7 @@ export default {
         .post("/storage-pools/" + pooluuid + "/start")
         .then((response) => {})
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
     deactivateStoragePool(pooluuid) {
@@ -341,7 +341,7 @@ export default {
         .post("/storage-pools/" + pooluuid + "/stop")
         .then((response) => {})
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
     deleteStoragePool(pooluuid) {
@@ -349,7 +349,7 @@ export default {
         .post("/storage-pools/" + pooluuid + "/delete")
         .then((response) => {})
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
     toggleAutostartStoragePool(pooluuid) {
@@ -357,7 +357,7 @@ export default {
         .post("/storage-pools/" + pooluuid + "/toggle-autostart")
         .then((response) => {})
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
   },

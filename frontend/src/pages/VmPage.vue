@@ -183,7 +183,7 @@ export default {
       this.$api.post("vm-manager/" + uuid + "/start").catch((error) => {
         this.$refs.errorDialog.show("Error starting VM", [
           "vm uuid: " + uuid,
-          "Error: " + error.response.data,
+          "Error: " + error.response.data.detail.detail,
         ]);
       });
     },
@@ -192,7 +192,7 @@ export default {
       this.$api.post("vm-manager/" + uuid + "/stop").catch((error) => {
         this.$refs.errorDialog.show("Error stopping VM", [
           "vm uuid: " + uuid,
-          "Error: " + error.response.data,
+          "Error: " + error.response.data.detail.detail,
         ]);
       });
     },
@@ -201,7 +201,7 @@ export default {
       this.$api.post("vm-manager/" + uuid + "/forcestop").catch((error) => {
         this.$refs.errorDialog.show("Error force stopping VM", [
           "vm uuid: " + uuid,
-          "Error: " + error.response.data,
+          "Error: " + error.response.data.detail.detail,
         ]);
       });
     },
@@ -210,7 +210,7 @@ export default {
       this.$api.post("vm-manager/" + uuid + "/remove").catch((error) => {
         this.$refs.errorDialog.show("Error removing VM", [
           "vm uuid: " + uuid,
-          "Error: " + error.response.data,
+          "Error: " + error.response.data.detail.detail,
         ]);
       });
     },

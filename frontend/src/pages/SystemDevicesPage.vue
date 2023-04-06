@@ -164,7 +164,7 @@ export default {
           this.pciTableLoading = false;
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
     updateScsiDevices() {
@@ -175,7 +175,7 @@ export default {
           this.scsiTableLoading = false;
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
     updateUsbDevices() {
@@ -186,7 +186,7 @@ export default {
           this.usbTableLoading = false;
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data);
+          this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
   },

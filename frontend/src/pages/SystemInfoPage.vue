@@ -90,7 +90,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting system info", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

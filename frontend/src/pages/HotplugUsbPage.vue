@@ -54,7 +54,7 @@ export default {
         )
         .catch((error) => {
           this.$refs.errorDialog.show("Error adding USB device to VM", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -86,7 +86,7 @@ export default {
         )
         .catch((error) => {
           this.$refs.errorDialog.show("Error removing USB device from VM", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

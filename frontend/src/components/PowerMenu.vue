@@ -42,7 +42,7 @@ export default {
       this.$api.post("host/power/shutdown").catch((error) => {
         this.$refs.errorDialog.show("Shutdown error", [
           error,
-          error.response.data,
+          error.response.data.detail,
         ]);
       });
     },
@@ -50,7 +50,7 @@ export default {
       this.$api.post("host/power/reboot").catch((error) => {
         this.$refs.errorDialog.show("Reboot error", [
           error,
-          error.response.data,
+          error.response.data.detail,
         ]);
       });
     },

@@ -68,7 +68,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error", [
             "Failed to add PCIe device.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

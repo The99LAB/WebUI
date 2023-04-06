@@ -101,7 +101,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error adding disk", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

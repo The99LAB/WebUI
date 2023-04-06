@@ -760,7 +760,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error loading VM data.", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
 
@@ -771,7 +771,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error loading VM XML.", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -789,7 +789,7 @@ export default {
           })
           .catch((error) => {
             this.$refs.errorDialog.show("Error changing memory", [
-              error.response.data,
+              error.response.data.detail,
             ]);
           });
       } else if (this.tab == "cpu") {
@@ -815,7 +815,7 @@ export default {
           })
           .catch((error) => {
             this.$refs.errorDialog.show("Error changing CPU", [
-              error.response.data,
+              error.response.data.detail,
             ]);
           });
       } else if (this.tab == "xml") {
@@ -828,7 +828,7 @@ export default {
           })
           .catch((error) => {
             this.$refs.errorDialog.show("Error changing XML", [
-              error.response.data,
+              error.response.data.detail,
             ]);
           });
       }
@@ -843,7 +843,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error changing name", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -858,7 +858,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error editing disk type", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -873,7 +873,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error editing driver type", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -888,7 +888,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error editing bus", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -903,7 +903,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error editing source file", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -918,7 +918,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error editing source device", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -936,7 +936,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error changing bootorder", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -957,7 +957,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting disk", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -991,7 +991,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting network", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -1013,7 +1013,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error changing autostart", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -1031,7 +1031,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting usb device", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -1051,7 +1051,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting pcie device", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -1066,7 +1066,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error changing pcie rom file", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -1088,7 +1088,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting graphics", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -1105,7 +1105,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting video", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -1119,7 +1119,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting sound", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

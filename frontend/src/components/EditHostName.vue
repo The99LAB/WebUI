@@ -56,7 +56,7 @@ export default {
           this.hostName = response.data.hostname;
         })
         .catch((error) => {
-          console.log("Error getting hostname: " + error.response.data);
+          console.log("Error getting hostname: " + error.response.data.detail);
         });
     },
     editHostName() {
@@ -67,7 +67,7 @@ export default {
         .then((this.layout = false), this.$emit("hostname-edit-finished"))
         .catch((error) => {
           this.$refs.errorDialog.show("Error editing hostname", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

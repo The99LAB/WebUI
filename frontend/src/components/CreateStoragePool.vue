@@ -72,7 +72,7 @@ export default {
         .then((this.layout = false), this.$emit("storagepool-created"))
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating pool", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

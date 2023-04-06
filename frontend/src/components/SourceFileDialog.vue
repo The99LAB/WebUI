@@ -56,7 +56,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error changing source file", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

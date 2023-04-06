@@ -55,7 +55,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error adding video", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

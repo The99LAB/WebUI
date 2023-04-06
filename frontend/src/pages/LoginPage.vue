@@ -114,7 +114,7 @@ export default {
           this.loginLoading = false;
         })
         .catch((error) => {
-          this.authError = error.response.data;
+          this.authError = error.response.data.detail;
           this.loginLoading = false;
         });
     },

@@ -107,7 +107,7 @@ export default {
         .then((this.layout = false), this.$emit("volume-created"))
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating volume", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

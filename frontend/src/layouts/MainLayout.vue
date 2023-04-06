@@ -194,7 +194,7 @@ export default defineComponent({
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting hostname", [
             "Could not get hostname.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

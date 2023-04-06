@@ -339,12 +339,9 @@ class storage():
     def add(self, targetbus, devicetype, sourcefile, drivertype, readonly="", bootorder=None):
         diskxml = self.add_xml(targetbus=targetbus, devicetype=devicetype, sourcefile=sourcefile,
                                drivertype=drivertype, readonly=readonly, bootorder=bootorder)
-        try:
-            self.domain.attachDeviceFlags(
-                diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-            return 'Succeed'
-        except libvirt.libvirtError as e:
-            return f'Error: {e}'
+        self.domain.attachDeviceFlags(
+            diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+
 
     def createnew(self, pooluuid, disksize, disksizeunit, disktype, diskbus, bootorder=None):
         volumename = poolStorage(pooluuid).getUnusedVolumeName(
@@ -377,12 +374,10 @@ class storage():
             return f"Error: Creating volume on pool with uuid: {pooluuid} failed with error: {e}"
 
         volumepath = poolStorage(pooluuid).getVolumePath(volumename)
-        adddisk = storage(self.domain_uuid).add(
+        
+        storage(self.domain_uuid).add(
             diskbus, "disk", volumepath, disktype, bootorder=bootorder)
-        if adddisk != "Succeed":
-            return f"Error adding disk: {adddisk}"
-        else:
-            return "Succeed"
+        
 
 
 class poolStorage():
@@ -1522,11 +1517,11 @@ async def post_vm_manager(request: Request, action: str, username: str = Depends
                 print("Creating new linux vm")
                 vm.linux()
             else:
-                return 'OS not supported', 404
+                raise HTTPException(status_code=404, detail="OS not supported")
             vm.create()
-            return '', 200
+            return
         except Exception as e:
-            return f'{e}', 500
+            raise HTTPException(status_code=500, detail=str(e))
 
 #### API/VM-MANAGER-ACTIONS ####
 @app.get('/api/vm-manager/{vmuuid}/{action}')
@@ -1629,7 +1624,7 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
         }
         return data
     else:
-        return 'Action not found', 404
+        raise HTTPException(status_code=404, detail="Action not found")
 
 @app.post('/api/vm-manager/{vmuuid}/{action}')
 async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
@@ -1638,33 +1633,34 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         try:
             if domain.state()[0] == libvirt.VIR_DOMAIN_SHUTOFF:
                 domain.create()
-                return '', 204
+                return
             elif domain.state()[0] == libvirt.VIR_DOMAIN_PMSUSPENDED:
                 domain.pMWakeup()
-                return '', 204
+                return
             else:
                 return "Domain is in an invalid state", 400
-        except Exception as e:
-            return f'{e}', 500
+        except libvirt.libvirtError as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
     elif action == "stop":
         try:
             domain.shutdown()
-            return '', 204
+            return
         except Exception as e:
-            return f'{e}', 500
+            raise HTTPException(status_code=500, detail=str(e))
     elif action == "forcestop":
         try:
             domain.destroy()
-            return '', 204
+            return
         except Exception as e:
-            return f'{e}', 500
+            raise HTTPException(status_code=500, detail=str(e))
     elif action == "remove":
         try:
             # flag 4 = also remove any nvram file
             domain.undefineFlags(4)
-            return '', 204
+            return
         except Exception as e:
-            return f'{e}', 500
+            raise HTTPException(status_code=500, detail=str(e))
     elif action.startswith("edit"):
         data = await request.json()
         action = action.replace("edit-", "")
@@ -1674,16 +1670,16 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             try:
                 domain.undefineFlags(4)
             except libvirt.libvirtError as e:
-                return f'{e}', 500
+                raise HTTPException(status_code=500, detail=str(e))
             try:
                 domain = conn.defineXML(xml)
-                return '', 204
+                return
             except libvirt.libvirtError as e:
                 try:
                     domain = conn.defineXML(origxml)
-                    return f'{e}', 500
+                    raise HTTPException(status_code=500, detail=str(e))
                 except libvirt.libvirtError as e2:
-                    return f'{e2}', 500
+                    raise HTTPException(status_code=500, detail=str(e2))
 
         elif action.startswith("general"):
             action = action.replace("general-", "")
@@ -1695,9 +1691,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 try:
                     domain.undefineFlags(4)
                     domain = conn.defineXML(xml)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return f'{e}', 500
+                    raise HTTPException(status_code=500, detail=str(e))
             elif action == "autostart":
                 if value == True:
                     value = 1
@@ -1705,9 +1701,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                     value = 0
                 try:
                     domain.setAutostart(value)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return f'{e}', 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
         # edit-cpu
         elif action == "cpu":
@@ -1751,9 +1747,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             try:
                 domain.undefineFlags(4)
                 domain = conn.defineXML(vm_xml)
-                return '', 204
+                return
             except libvirt.libvirtError as e:
-                return f'{e}', 500
+                raise HTTPException(status_code=500, detail=str(e))
 
 
         # edit-memory
@@ -1784,13 +1780,13 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                             current_min_mem, "<currentMemory unit='KiB'>" + str(memory_min) + "</currentMemory>")
                         try:
                             conn.defineXML(output)
-                            return '', 204
+                            return
                         except libvirt.libvirtError as e:
-                            return str(e), 500
+                            raise HTTPException(status_code=500, detail=str(e))
                     except Exception:
-                        return "failed to replace minmemory and/or maxmemory!", 500
+                        raise HTTPException(status_code=500, detail="failed to replace minmemory and/or maxmemory!")
                 except Exception:
-                    return "failed to find minmemory and maxmemory in xml!", 500
+                    raise HTTPException(status_code=500, detail="failed to find minmemory and maxmemory in xml!")
         
         # edit-network-action
         elif action.startswith("network"):
@@ -1804,18 +1800,18 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                     xml = f"<interface type='network'><source network='{source_network_name}'/><model type='{model}'/></interface>"
                     domain.attachDeviceFlags(
                         xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return f"Error: {e}", 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['number']
                 networkxml = domainNetworkInterface(dom_uuid=vmuuid).remove(index)
                 try:
                     domain.detachDeviceFlags(networkxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             else:
                 return "Action not found", 404
         
@@ -1837,9 +1833,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 diskxml = storage(domain_uuid=vmuuid).add_xml(disktype=disk_type, targetbus=disk_bus, devicetype=device_type, sourcefile=volume_path, sourcedev=source_device, drivertype=disk_driver_type)
                 try:
                     domain.attachDeviceFlags(diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "type":
                 value = data['value']
@@ -1851,9 +1847,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 try:
                     domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                     domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "driver-type":
                 value = data['value']
@@ -1862,9 +1858,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 try:
                     domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                     domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "bus":
                 value = data['value']
@@ -1874,9 +1870,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 try:
                     domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                     domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "source-file":
                 value = data['value']
@@ -1885,9 +1881,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 try:
                     domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                     domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             
             elif action == "source-dev":
                 value = data['value']
@@ -1896,9 +1892,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 try:
                     domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                     domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "bootorder":
                 value = data['value']
@@ -1910,18 +1906,18 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 try:
                     domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                     domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 try:
                     domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return '', 204
+                    return
                 except libvirt.libvirtError as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             else:
-                return 'Action not found', 404
+                raise HTTPException(status_code=404, detail="Action not found")
 
         # edit-usbhotplug-action
         elif action.startswith("usbhotplug"):
@@ -1932,20 +1928,20 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 print("add usb hotplug", product_id, vendor_id)
                 try:
                     xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             elif action == "delete":
                 product_id = data['productid']
                 vendor_id = data['vendorid']
                 print("delete usb hotplug", product_id, vendor_id)
                 try:
                     xml = DomainUsb(vmuuid).remove(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             else:
-                return 'Action not found', 404
+                raise HTTPException(status_code=404, detail="Action not found")
 
         # edit-usb-action
         elif action.startswith("usb"):
@@ -1956,19 +1952,19 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 vendor_id = data['vendorid']
                 try:
                     xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}")
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             elif action == "delete":
                 product_id = data['productid']
                 vendor_id = data['vendorid']
                 try:
                     xml = DomainUsb(vmuuid).remove(vendorid=vendor_id, productid=product_id)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             else:
-                return 'Action not found', 404
+                raise HTTPException(status_code=404, detail="Action not found")
 
         # edit-pcie-action
         elif action.startswith("pcie"):
@@ -1985,26 +1981,26 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                         devicexml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function, romfile=rom_file)
                     else:
                         xml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             elif action == "delete":
                 domain = data['domain']
                 bus = data['bus']
                 slot = data['slot']
                 function = data['function']                   
                 DomainPcie(vmuuid).remove(domain=domain, bus=bus, slot=slot, function=function)
-                return '', 204
+                return
             elif action == "romfile":
                 devicexml = data['xml']
                 romfile = data['romfile']
                 try:
                     DomainPcie(vmuuid).romfile(xml=devicexml, romfile=romfile)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             else:
-                return 'Action not found', 404
+                raise HTTPException(status_code=404, detail="Action not found")
 
         # edit-graphics-action
         elif action.startswith("graphics"):
@@ -2013,19 +2009,19 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 graphics_type = data['type']
                 try:
                     DomainGraphics(vmuuid).add(graphics_type=graphics_type)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
                     xml = DomainGraphics(vmuuid).remove(index=index)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             else:
-                return 'Action not found', 404
+                raise HTTPException(status_code=404, detail="Action not found")
 
         # edit-video-action
         elif action.startswith("video"):
@@ -2034,41 +2030,42 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 model_type = data['type'].lower()
                 try:
                     DomainVideo(vmuuid).add(model_type=model_type)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
                     xml = DomainVideo(vmuuid).remove(index=index)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
             else:
-                return 'Action not found', 404
+                raise HTTPException(status_code=404, detail="Action not found")
+
         elif action.startswith("sound"):
             action = action.replace("sound-", "")
             if action == "add":
                 model = data['model']
                 try:
                     DomainSound(vmuuid).add(model=model)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
                     DomainSound(vmuuid).remove(index=index)
-                    return '', 204
+                    return
                 except Exception as e:
-                    return str(e), 500
+                    raise HTTPException(status_code=500, detail=str(e))
         else:
-            return 'Action not found', 404
+            raise HTTPException(status_code=404, detail="Action not found")
     
     else:
-        return 'Action not found', 404
+        raise HTTPException(status_code=404, detail="Action not found")
 
 ### API-STORAGE-POOL ###
 @app.get("/api/storage-pools")
@@ -2167,11 +2164,11 @@ async def api_storage_pools_create(data: dict = Form(...), username: str = Depen
             pool.create()
             pool.setAutostart(1)
 
-            return '', 204
+            return
         except libvirt.libvirtError as e:
-            return str(e), 500
+            raise HTTPException(status_code=500, detail=str(e))
     else:
-        return 'Pool type not allowed', 400
+        raise HTTPException(status_code=400, detail="Pool type not allowed")
 
 ### API-STORAGE-POOL-ACTIONS ###
 @app.get("/api/storage-pools/{pooluuid}/{action}")
@@ -2222,10 +2219,10 @@ async def api_storage_pools_actions_post(pooluuid: str, action: str, username: s
             pool.delete()
             pool.undefine()
         else:
-            return 'Action not found', 404
-        return '', 204
+            raise HTTPException(status_code=404, detail="Action not found")
+        return
     except libvirt.libvirtError as e:
-        return str(e), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 ### API-STORAGE-POOL-VOLUMES ###
 @app.delete('/api/storage-pools/{pooluuid}/volume/{volumename}')
@@ -2235,9 +2232,9 @@ async def delete_storage_pool_volume(pooluuid: str, volumename: str, username: s
         pool = conn.storagePoolLookupByUUIDString(pooluuid)
         volume = pool.storageVolLookupByName(volumename)
         volume.delete()
-        return '', 204
+        return
     except libvirt.libvirtError as e:
-        return str(e), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post('/api/storage-pools/{pooluuid}/volume/{volumename}')
 async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str = Form(...), size: int = Form(...), size_unit: str = Form(...), username: str = Depends(check_auth)):
@@ -2259,9 +2256,9 @@ async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str
         </volume>"""
 
         pool.createXML(volume_xml)
-        return '', 204
+        return
     except libvirt.libvirtError as e:
-        return str(e), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 #TODO: API-BACKUP-MANAGER
 @app.get("/api/backup-manager/configs")
@@ -2317,9 +2314,9 @@ async def api_backup_manager_configs_post(request: Request, username: str = Depe
             'AutoShutdown': auto_shutdown
         }
         LibvirtKVMBackup.configManager(config_name).create(config_data)
-        return '', 204
+        return
     except LibvirtKVMBackup.configError as e:
-        return str(e), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 ### API-BACKUP-CONFIG ###
 @app.post("/api/backup-manager/config/{config}/{action}")
@@ -2329,16 +2326,16 @@ async def api_backup_manager_config_get(config: str, action: str, username: str 
     if action == "delete":
         try:
             LibvirtKVMBackup.configManager(config).delete()
-            return '', 204
+            return
         except LibvirtKVMBackup.configError as e:
-            return str(e), 500
+            raise HTTPException(status_code=500, detail=str(e))
     elif action == "create-backup":
         try:
             print("creating backup")
             LibvirtKVMBackup.backup(config)
-            return '', 204
+            return
         except LibvirtKVMBackup.configError as e:
-            return str(e), 500
+            raise HTTPException(status_code=500, detail=str(e))
     else:
         return "action not found", 404
     
@@ -2353,19 +2350,19 @@ async def api_backup_manager_actions_post(config: str, backup: str, action: str,
         try:
             return LibvirtKVMBackup.configManager(config).backupLog(backup)
         except LibvirtKVMBackup.configError as e:
-            return str(e), 500
+            raise HTTPException(status_code=500, detail=str(e))
     elif action == "restore":
         try:
             LibvirtKVMBackup.restore(config, backup)
-            return '', 204
+            return
         except LibvirtKVMBackup.configError as e:
-            return str(e), 500
+            raise HTTPException(status_code=500, detail=str(e))
     elif action == "delete":
         try:
             LibvirtKVMBackup.configManager(config).backupDelete(backup)
-            return '', 204
+            return
         except LibvirtKVMBackup.configError as e:
-            return str(e), 500
+            raise HTTPException(status_code=500, detail=str(e))
     else:
         return "action not found", 404
     
@@ -2411,17 +2408,19 @@ async def api_host_power_post(powermsg: str, username: str = Depends(check_auth)
         shutdown_result = subprocess.run(
             ["shutdown", "-h", "now"], capture_output=True, text=True)
         if shutdown_result.returncode == 0:
-            return '', 204
+            return
         else:
-            return shutdown_result.stdout, 500
+            raise HTTPException(status_code=500, detail=shutdown_result.stdout)
     elif powermsg == "reboot":
         reboot_result = subprocess.run(
             ["reboot"], capture_output=True, text=True)
         if reboot_result.returncode == 0:
-            return '', 204
+            return
         else:
-            return reboot_result.stdout, 500
-        
+            raise HTTPException(status_code=500, detail=reboot_result.stdout)
+    else:
+        raise HTTPException(status_code=404, detail="power action not found")
+
 @app.get("/api/host/system-info/{action}")
 async def api_system_info_get(action: str, username: str = Depends(check_auth)):
     if action == "all":
@@ -2454,16 +2453,16 @@ async def api_system_info_get(action: str, username: str = Depends(check_auth)):
     elif action == "guest-machine-types":
         return getGuestMachineTypes()
     else:
-        return 'Action not found', 404
+        raise HTTPException(status_code=404, detail="action not found")
 
 @app.post("/api/host/system-info/{action}}")
 async def api_system_info_hostname_post(action: str, username: str = Depends(check_auth)):
     if action == "hostname":
         # print("request to change hostname")
         # print("new hostname: " + request.form['hostname'])
-        return 'Feature not implemented', 501
+        raise HTTPException(status_code=501, detail="Feature not implemented")
     else:
-        return 'Action not found', 404
+        raise HTTPException(status_code=404, detail="action not found")
 
 ### API-HOST-SYSTEM-DEVICES ###
 @app.get("/api/host/system-devices/{devicetype}")
@@ -2482,7 +2481,7 @@ async def api_host_system_devices_get(devicetype: str, username: str = Depends(c
     elif devicetype == "usb":
         return SystemUsbDevicesList()
     else:
-        return 'Device type not found', 404
+        raise HTTPException(status_code=404, detail="Device type not found")
 
 ### API-HOST-SETTINGS-ACTIONS ###
 @app.get("/api/host/settings/{action}")
@@ -2498,7 +2497,7 @@ async def api_host_settings_get(action: str, username: str = Depends(check_auth)
         }
         return vnc_settings
     else:
-        return 'Action not found', 404
+        raise HTTPException(status_code=404, detail="Action not found")
     
 @app.post("/api/host/settings/{action}")
 async def api_host_settings_post(request: Request, action: str, username: str = Depends(check_auth)):
@@ -2507,7 +2506,7 @@ async def api_host_settings_post(request: Request, action: str, username: str = 
         setting = data['setting']
         value = data['value']
         settings().set(setting, value)
-        return '', 204
+        return
     
 @app.get("/api/vm-manager/settings/ovmf-paths/{action}")
 async def api_vm_manager_settings_ovmf_paths_get(action: str, username: str = Depends(check_auth)):
@@ -2521,13 +2520,13 @@ async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str,
     if action == "edit":
         path = data['path']
         settings_ovmfpaths().set(name, path)
-        return '', 204
+        return
     elif action == "delete":
         settings_ovmfpaths().delete(name)
-        return '', 204
+        return
     elif action == "add":
         path = data['path']
         settings_ovmfpaths().add(name, path)
-        return '', 204
+        return
     else:
-        return 'Action not found', 404
+        raise HTTPException(status_code=404, detail="Action not found")

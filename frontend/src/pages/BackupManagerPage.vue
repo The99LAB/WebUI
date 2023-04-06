@@ -347,7 +347,7 @@ export default {
           } else {
             this.$refs.errorDialog.show("Error getting backup configs", [
               "Could not get backup configs.",
-              error.response.data,
+              error.response.data.detail,
             ]);
           }
         });
@@ -358,7 +358,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating backup", [
             "Could not create backup.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -369,7 +369,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting backup", [
             "Could not delete backup.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -380,7 +380,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error restoring backup", [
             "Could not restore backup.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -390,7 +390,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting config", [
             "Could not delete config.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -405,7 +405,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting backup log", [
             "Could not get backup log.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -430,7 +430,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating config", [
             "Could not create config.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -456,7 +456,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting disks", [
             "Could not get disks.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

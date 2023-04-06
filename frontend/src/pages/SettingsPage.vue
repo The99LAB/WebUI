@@ -197,7 +197,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting settings", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
       this.$api
@@ -207,7 +207,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting OVMF paths", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -241,7 +241,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error changing setting", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -257,7 +257,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error changing OVMF path", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -272,7 +272,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting OVMF path", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -288,7 +288,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error adding OVMF path", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

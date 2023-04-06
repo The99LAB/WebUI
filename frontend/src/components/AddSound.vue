@@ -64,7 +64,7 @@ export default {
         .catch((error) => {
           this.$refs.errorDialog.show("Error", [
             "Failed to add sound device.",
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },

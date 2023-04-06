@@ -261,7 +261,7 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Failed to get machine types", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
@@ -338,7 +338,7 @@ export default {
         .then((this.layout = false))
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating VM", [
-            error.response.data,
+            error.response.data.detail,
           ]);
         });
     },
