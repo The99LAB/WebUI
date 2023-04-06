@@ -2306,7 +2306,7 @@ async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
 
 @app.post("/api/backup-manager/configs")
 async def api_backup_manager_configs_post(request: Request, username: str = Depends(check_auth)):
-    data = request.json()
+    data = await request.json()
     try:
         config_name = data['configName']
         vm_name = data['vmName']
@@ -2323,6 +2323,7 @@ async def api_backup_manager_configs_post(request: Request, username: str = Depe
             'AutoShutdown': auto_shutdown
         }
         LibvirtKVMBackup.configManager(config=config_name).create(configData=config_data)
+        LibvirtKVMBackup.configManager(config=config_name).create(configdata=config_data)
         return
     except LibvirtKVMBackup.configError as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -2519,7 +2520,7 @@ async def api_vm_manager_settings_ovmf_paths_get(action: str, username: str = De
     
 @app.post("/api/vm-manager/settings/ovmf-paths/{action}")
 async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str, username: str = Depends(check_auth)):
-    data = request.json()
+    data = await request.json()
     name = data['name']
     if action == "edit":
         path = data['path']
