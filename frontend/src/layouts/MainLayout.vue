@@ -16,6 +16,13 @@
           dense
           flat
           round
+          icon="mdi-bell"
+          @click="rightDrawerOpen = !rightDrawerOpen"
+        />
+        <q-btn
+          dense
+          flat
+          round
           icon="power_settings_new"
           @click="showPowerMenu()"
         />
@@ -135,6 +142,30 @@
       </q-list>
     </q-drawer>
 
+    <q-drawer v-model="rightDrawerOpen" side="right" overlay bordered>
+      <q-list>
+        <q-item-label header>Notifications</q-item-label>
+        <q-item clickable>
+          <q-item-section avatar>
+            <q-icon name="mdi-alert-circle" color="red" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Restore failed</q-item-label>
+            <q-item-label caption>Domain Arch is not shutdown and AutoShutdown is disabled, aborting restore</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable>
+          <q-item-section avatar>
+            <q-icon name="mdi-check-circle" color="green" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Backup succeed</q-item-label>
+            <q-item-label caption>Domain Arch is successfully backed up</q-item-label>
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-drawer>
+
     <q-page-container>
       <router-view />
       <PowerMenu ref="powerMenu" />
@@ -154,6 +185,7 @@ export default defineComponent({
   data() {
     return {
       leftDrawerOpen: ref(false),
+      rightDrawerOpen: ref(false),
       hostname: "",
     };
   },
