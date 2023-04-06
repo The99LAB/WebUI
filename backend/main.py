@@ -2266,9 +2266,9 @@ async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
     print("getting backup manager configs...")
     configs = []
     for config in LibvirtKVMBackup.configManager.list():
-        backups = LibvirtKVMBackup.configManager(config).listBackups()
+        backups = LibvirtKVMBackup.configManager(config=config).listBackups()
         backup_count = len(backups)
-        backup_config_data = LibvirtKVMBackup.configManager(config).data()
+        backup_config_data = LibvirtKVMBackup.configManager(config=config).data()
         backup_destination = backup_config_data['Destination']
         backup_auto_shutdown = backup_config_data['AutoShutdown']
         backup_disks = backup_config_data['Disks']
@@ -2296,7 +2296,6 @@ async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
 
 @app.post("/api/backup-manager/configs")
 async def api_backup_manager_configs_post(request: Request, username: str = Depends(check_auth)):
-    print("creating backup manager config...")
     data = request.json()
     try:
         config_name = data['configName']
@@ -2313,7 +2312,7 @@ async def api_backup_manager_configs_post(request: Request, username: str = Depe
             'Destination': destination, 
             'AutoShutdown': auto_shutdown
         }
-        LibvirtKVMBackup.configManager(config_name).create(config_data)
+        LibvirtKVMBackup.configManager(config=config_name).create(configData=config_data)
         return
     except LibvirtKVMBackup.configError as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -2321,18 +2320,16 @@ async def api_backup_manager_configs_post(request: Request, username: str = Depe
 ### API-BACKUP-CONFIG ###
 @app.post("/api/backup-manager/config/{config}/{action}")
 async def api_backup_manager_config_get(config: str, action: str, username: str = Depends(check_auth)):
-    print("action: " + action)
-    print("config: " + config)
     if action == "delete":
         try:
-            LibvirtKVMBackup.configManager(config).delete()
+            LibvirtKVMBackup.configManager(config=config).delete()
             return
         except LibvirtKVMBackup.configError as e:
             raise HTTPException(status_code=500, detail=str(e))
     elif action == "create-backup":
         try:
             print("creating backup")
-            LibvirtKVMBackup.backup(config)
+            LibvirtKVMBackup.backup(config=config)
             return
         except LibvirtKVMBackup.configError as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -2343,9 +2340,6 @@ async def api_backup_manager_config_get(config: str, action: str, username: str 
 ### API-BACKUP-ACTIONS ###
 @app.post("/api/backup-manager/{config}/{backup}/{action}")
 async def api_backup_manager_actions_post(config: str, backup: str, action: str, username: str = Depends(check_auth)):
-    print("action: " + action)
-    print("config: " + config)
-    print("backup: " + backup)
     if action == "log":
         try:
             return LibvirtKVMBackup.configManager(config).backupLog(backup)
@@ -2353,13 +2347,13 @@ async def api_backup_manager_actions_post(config: str, backup: str, action: str,
             raise HTTPException(status_code=500, detail=str(e))
     elif action == "restore":
         try:
-            LibvirtKVMBackup.restore(config, backup)
+            LibvirtKVMBackup.restore(config=config, backup=backup)
             return
         except LibvirtKVMBackup.configError as e:
             raise HTTPException(status_code=500, detail=str(e))
     elif action == "delete":
         try:
-            LibvirtKVMBackup.configManager(config).backupDelete(backup)
+            LibvirtKVMBackup.configManager(config=config).backupDelete(backup=backup)
             return
         except LibvirtKVMBackup.configError as e:
             raise HTTPException(status_code=500, detail=str(e))
