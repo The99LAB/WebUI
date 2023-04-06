@@ -2322,7 +2322,6 @@ async def api_backup_manager_configs_post(request: Request, username: str = Depe
             'Destination': destination, 
             'AutoShutdown': auto_shutdown
         }
-        LibvirtKVMBackup.configManager(config=config_name).create(configData=config_data)
         LibvirtKVMBackup.configManager(config=config_name).create(configdata=config_data)
         return
     except LibvirtKVMBackup.configError as e:
