@@ -19,6 +19,8 @@
         selection="single"
         row-key="name"
         v-model:selected="selected_setting"
+        :pagination="table_pagination"
+        hide-pagination
       />
     </div>
     <q-separator color="transparent" spaced="xl" />
@@ -55,6 +57,8 @@
         selection="single"
         row-key="name"
         v-model:selected="selected_ovmf_path"
+        :pagination="table_pagination"
+        hide-pagination
       />
     </div>
   </q-page>
@@ -183,6 +187,10 @@ export default {
       addOvmfPathDialogShow: ref(false),
       addOvmfPathDialogName: ref("OVMF name"),
       addOvmfPathDialogPath: ref("/path/to/ovmf"),
+      table_pagination: {
+        sortBy: "name",
+        rowsPerPage: 0,
+      },
     };
   },
   components: {
