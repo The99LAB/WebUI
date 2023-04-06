@@ -12,13 +12,9 @@
         <q-toolbar-title>
           {{ hostname }}
         </q-toolbar-title>
-        <q-btn
-          dense
-          flat
-          round
-          icon="mdi-bell"
-          @click="rightDrawerOpen = !rightDrawerOpen"
-        />
+        <q-btn dense flat round icon="notifications" @click="rightDrawerOpen = !rightDrawerOpen">
+          <q-badge floating color="red" rounded :label="notificationCount" />
+        </q-btn>
         <q-btn
           dense
           flat
@@ -145,22 +141,13 @@
     <q-drawer v-model="rightDrawerOpen" side="right" overlay bordered>
       <q-list>
         <q-item-label header>Notifications</q-item-label>
-        <q-item clickable>
+        <q-item v-for="n in notifications" :key="n.id" clickable>
           <q-item-section avatar>
-            <q-icon name="mdi-alert-circle" color="red" />
+            <q-icon :name="n.type == 'error' ? 'mdi-alert-circle' : n.type == 'warning' ? 'mdi-alert-circle' : 'mdi-check-circle'" :color="n.type == 'error' ? 'red' : n.type == 'warning' ? 'orange' : 'green'" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>Restore failed</q-item-label>
-            <q-item-label caption>Domain Arch is not shutdown and AutoShutdown is disabled, aborting restore</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable>
-          <q-item-section avatar>
-            <q-icon name="mdi-check-circle" color="green" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Backup succeed</q-item-label>
-            <q-item-label caption>Domain Arch is successfully backed up</q-item-label>
+            <q-item-label>{{ n.title }}</q-item-label>
+            <q-item-label caption>{{ n.message }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
@@ -187,6 +174,25 @@ export default defineComponent({
       leftDrawerOpen: ref(false),
       rightDrawerOpen: ref(false),
       hostname: "",
+      notificationCount: 3,
+      notifications: [
+        {
+          type: "error",
+          title: "Restore failed",
+          message:
+            "Domain Arch is not shutdown and AutoShutdown is disabled, aborting restore",
+        },
+        {
+          type: "success",
+          title: "Backup succeed",
+          message: "Domain Arch is successfully backed up",
+        },
+        {
+          type: "warning",
+          title: "Backup failed",
+          message: "Domain Arch is not shutdown and AutoShutdown is disabled",
+        }
+      ],
     };
   },
   setup() {
