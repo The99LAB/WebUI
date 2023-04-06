@@ -1638,7 +1638,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 domain.pMWakeup()
                 return
             else:
-                return "Domain is in an invalid state", 400
+                raise HTTPException(status_code=400, detail="Domain is in an invalid state")
         except libvirt.libvirtError as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -1813,7 +1813,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 except libvirt.libvirtError as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
-                return "Action not found", 404
+                raise HTTPException(status_code=404, detail="Action not found")
         
         # edit-disk-action
         elif action.startswith("disk"):
@@ -2244,7 +2244,7 @@ async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str
         if size_unit == "TB" or size_unit == "GB" or size_unit == "MB":
             size = convertSizeUnit(size, size_unit, "KB")
         else:
-            return "Error: Unknown disk size unit", 400
+            raise HTTPException(status_code=400, detail="Unknown disk size unit")
 
         volume_xml = f"""<volume>
         <name>{volumename}.{format}</name>
@@ -2305,7 +2305,7 @@ async def api_backup_manager_configs_post(request: Request, username: str = Depe
         auto_shutdown = data['autoShutdown']
         disks = data['disks']
     except KeyError:
-        return "Error: Missing required data", 400
+        raise HTTPException(status_code=400, detail="Missing required data")
     try:
         config_data = {
             'DomainName': vm_name, 
@@ -2337,7 +2337,7 @@ async def api_backup_manager_config_get(config: str, action: str, username: str 
         except LibvirtKVMBackup.configError as e:
             raise HTTPException(status_code=500, detail=str(e))
     else:
-        return "action not found", 404
+        raise HTTPException(status_code=404, detail="action not found")
     
 
 ### API-BACKUP-ACTIONS ###
@@ -2364,7 +2364,7 @@ async def api_backup_manager_actions_post(config: str, backup: str, action: str,
         except LibvirtKVMBackup.configError as e:
             raise HTTPException(status_code=500, detail=str(e))
     else:
-        return "action not found", 404
+        raise HTTPException(status_code=404, detail="action not found")
     
 
 ### API-NETWORKS ###
