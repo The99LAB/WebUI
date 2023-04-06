@@ -2341,7 +2341,7 @@ async def api_backup_manager_config_get(config: str, action: str, username: str 
             print("creating backup")
             LibvirtKVMBackup.backup(config=config)
             return
-        except LibvirtKVMBackup.configError as e:
+        except LibvirtKVMBackup.backupError as e:
             raise HTTPException(status_code=500, detail=str(e))
     else:
         raise HTTPException(status_code=404, detail="action not found")
@@ -2359,7 +2359,7 @@ async def api_backup_manager_actions_post(config: str, backup: str, action: str,
         try:
             LibvirtKVMBackup.restore(config=config, backup=backup)
             return
-        except LibvirtKVMBackup.configError as e:
+        except LibvirtKVMBackup.restoreError as e:
             raise HTTPException(status_code=500, detail=str(e))
     elif action == "delete":
         try:
