@@ -2449,7 +2449,7 @@ async def api_system_info_get(action: str, username: str = Depends(check_auth)):
     else:
         raise HTTPException(status_code=404, detail="action not found")
 
-@app.post("/api/host/system-info/{action}}")
+@app.post("/api/host/system-info/{action}")
 async def api_system_info_hostname_post(action: str, username: str = Depends(check_auth)):
     if action == "hostname":
         # print("request to change hostname")
