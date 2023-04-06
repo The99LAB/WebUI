@@ -1261,10 +1261,15 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 @app.websocket("/vmdata")
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
+    vm_list = None
     try:
         while True:
             if check_auth_token(token):
-                await websocket.send_json({"type": "vmdata", "data": getvmresults()})
+                # only send new data if the vm list has changed
+                new_vm_list = getvmresults()
+                if vm_list == None or vm_list != new_vm_list:
+                    vm_list = new_vm_list
+                    await websocket.send_json({"type": "vmdata", "data": vm_list})
                 await asyncio.sleep(1)
             else:
                 await websocket.send_json({"type": "auth_error"})
