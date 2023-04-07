@@ -12,8 +12,20 @@
         <q-toolbar-title>
           {{ hostname }}
         </q-toolbar-title>
-        <q-btn dense flat round icon="notifications" @click="rightDrawerOpen = !rightDrawerOpen">
-          <q-badge floating color="red" rounded :label="notificationCount" v-if="notificationCount != 0"/>
+        <q-btn
+          dense
+          flat
+          round
+          icon="notifications"
+          @click="rightDrawerOpen = !rightDrawerOpen"
+        >
+          <q-badge
+            floating
+            color="red"
+            rounded
+            :label="notificationCount"
+            v-if="notificationCount != 0"
+          />
         </q-btn>
         <q-btn
           dense
@@ -143,18 +155,43 @@
         <q-item-label header>Notifications</q-item-label>
         <q-item v-for="n in notifications" :key="n.id" clickable>
           <q-item-section avatar>
-            <q-icon :name="n.type == 'error' ? 'mdi-alert-circle' : n.type == 'warning' ? 'mdi-alert-circle' : n.type == 'success' ? 'mdi-check-circle' : n.type == 'info' ? 'mdi-information' : 'mdi-help'" :color="n.type == 'error' ? 'red' : n.type == 'warning' ? 'orange' : n.type == 'success' ? 'green' : 'white'" />
+            <q-icon
+              :name="
+                n.type == 'error'
+                  ? 'mdi-alert-circle'
+                  : n.type == 'warning'
+                  ? 'mdi-alert-circle'
+                  : n.type == 'success'
+                  ? 'mdi-check-circle'
+                  : n.type == 'info'
+                  ? 'mdi-information'
+                  : 'mdi-help'
+              "
+              :color="
+                n.type == 'error'
+                  ? 'red'
+                  : n.type == 'warning'
+                  ? 'orange'
+                  : n.type == 'success'
+                  ? 'green'
+                  : 'white'
+              "
+            />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ n.title }}</q-item-label>
             <q-item-label caption>{{ n.message }}</q-item-label>
-            <q-item-label caption class="row"><q-btn
+            <q-item-label caption class="row"
+              ><q-btn
                 @click="NotificationDelete(n.id)"
                 flat
                 text-color="primary"
                 size="sm"
                 padding="none"
-                label="Dismiss"></q-btn> <q-space />{{ n.timestamp }}</q-item-label>
+                label="Dismiss"
+              ></q-btn>
+              <q-space />{{ n.timestamp }}</q-item-label
+            >
           </q-item-section>
         </q-item>
         <div class="row justify-center" v-if="notificationCount != 0">
@@ -163,7 +200,8 @@
             flat
             text-color="primary"
             size="sm"
-            label="Dismiss All"></q-btn>
+            label="Dismiss All"
+          ></q-btn>
         </div>
       </q-list>
     </q-drawer>
@@ -252,7 +290,7 @@ export default defineComponent({
           ]);
         });
     },
-    NotificationDelete(id){
+    NotificationDelete(id) {
       this.$api
         .delete("notifications/" + id)
         .then((response) => {
