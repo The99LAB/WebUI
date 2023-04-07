@@ -150,7 +150,6 @@
             <q-item-label caption>{{ n.message }}</q-item-label>
             <q-item-label caption class="row"><q-btn
                 @click="NotificationDelete(n.id)"
-                round
                 flat
                 text-color="primary"
                 size="sm"
@@ -158,6 +157,14 @@
                 label="Dismiss"></q-btn> <q-space />{{ n.timestamp }}</q-item-label>
           </q-item-section>
         </q-item>
+        <div class="row justify-center" v-if="notificationCount != 0">
+          <q-btn
+            @click="NotificationDelete(-1)"
+            flat
+            text-color="primary"
+            size="sm"
+            label="Dismiss All"></q-btn>
+        </div>
       </q-list>
     </q-drawer>
 

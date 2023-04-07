@@ -1278,6 +1278,12 @@ class notifications:
         DELETE FROM notifications WHERE id = ?
         ''', (id,))
         self.db.commit()
+    
+    def deleteAll(self):
+        self.db_c.execute('''
+        DELETE FROM notifications
+        ''')
+        self.db.commit()
 
 @app.get("/")
 def index():
@@ -2598,14 +2604,8 @@ async def api_notifications_get(username: str = Depends(check_auth)):
 
 @app.delete("/api/notifications/{id}")
 async def api_notifications_delete(id: int, username: str = Depends(check_auth)):
-    notifications().delete(id)
+    if id == -1:
+        notifications().deleteAll()
+    else:
+        notifications().delete(id)
     return
-
-# @app.post("/api/notifications")
-# async def api_notifications_post(request: Request, username: str = Depends(check_auth)):
-#     data = await request.json()
-#     notification_type = data['type']
-#     notification_title = data['title']
-#     notification_message = data['message']
-#     notifications().add(notification_type=notification_type, notification_title=notification_title, notification_message=notification_message)
-#     return
