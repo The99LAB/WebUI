@@ -13,7 +13,7 @@
           {{ hostname }}
         </q-toolbar-title>
         <q-btn dense flat round icon="notifications" @click="rightDrawerOpen = !rightDrawerOpen">
-          <q-badge floating color="red" rounded :label="notificationCount" />
+          <q-badge floating color="red" rounded :label="notificationCount" v-if="notificationCount != 0"/>
         </q-btn>
         <q-btn
           dense
@@ -143,11 +143,19 @@
         <q-item-label header>Notifications</q-item-label>
         <q-item v-for="n in notifications" :key="n.id" clickable>
           <q-item-section avatar>
-            <q-icon :name="n.type == 'error' ? 'mdi-alert-circle' : n.type == 'warning' ? 'mdi-alert-circle' : 'mdi-check-circle'" :color="n.type == 'error' ? 'red' : n.type == 'warning' ? 'orange' : 'green'" />
+            <q-icon :name="n.type == 'error' ? 'mdi-alert-circle' : n.type == 'warning' ? 'mdi-alert-circle' : n.type == 'success' ? 'mdi-check-circle' : n.type == 'info' ? 'mdi-information' : 'mdi-help'" :color="n.type == 'error' ? 'red' : n.type == 'warning' ? 'orange' : n.type == 'success' ? 'green' : 'white'" />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ n.title }}</q-item-label>
             <q-item-label caption>{{ n.message }}</q-item-label>
+            <q-item-label caption class="row"><q-btn
+                @click="NotificationDelete(n.id)"
+                round
+                flat
+                text-color="primary"
+                size="sm"
+                padding="none"
+                label="Dismiss"></q-btn> <q-space />{{ n.timestamp }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
@@ -174,25 +182,8 @@ export default defineComponent({
       leftDrawerOpen: ref(false),
       rightDrawerOpen: ref(false),
       hostname: "",
-      notificationCount: 3,
-      notifications: [
-        {
-          type: "error",
-          title: "Restore failed",
-          message:
-            "Domain Arch is not shutdown and AutoShutdown is disabled, aborting restore",
-        },
-        {
-          type: "success",
-          title: "Backup succeed",
-          message: "Domain Arch is successfully backed up",
-        },
-        {
-          type: "warning",
-          title: "Backup failed",
-          message: "Domain Arch is not shutdown and AutoShutdown is disabled",
-        }
-      ],
+      notificationCount: 0,
+      notifications: [],
     };
   },
   setup() {
@@ -240,9 +231,37 @@ export default defineComponent({
       localStorage.setItem("jwt-token", "");
       this.$router.push({ path: "/login" });
     },
+    NotifiactionUpdate() {
+      this.$api
+        .get("notifications")
+        .then((response) => {
+          this.notifications = response.data;
+          this.notificationCount = this.notifications.length;
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting notifications", [
+            "Could not get notifications.",
+            error.response.data.detail,
+          ]);
+        });
+    },
+    NotificationDelete(id){
+      this.$api
+        .delete("notifications/" + id)
+        .then((response) => {
+          this.NotifiactionUpdate();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting notification", [
+            "Could not delete notification.",
+            error.response.data.detail,
+          ]);
+        });
+    },
   },
   created() {
     this.getHostName();
+    this.NotifiactionUpdate();
     this.$router.afterEach((to, from) => {
       this.generateTitle();
     });

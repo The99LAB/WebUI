@@ -1235,6 +1235,50 @@ class settings_ovmfpaths:
         ''', (path, name))
         self.db.commit()
 
+class notifications:
+    def __init__(self):
+        self.db = sqlite3.connect('database.db')
+        self.db_c = self.db.cursor()
+
+    def getAll(self):
+        self.db_c.execute('''
+        SELECT * FROM notifications
+        ''')
+        rows = self.db_c.fetchall()
+
+
+        notificationsData = []
+
+        for row in rows:
+            id = row[0]
+            notification_type = row[1]
+            timestamp = row[2]
+            title = row[3]
+            message = row[4]
+            notificationsData.append(
+            {
+                "id": id,
+                "type": notification_type,
+                "timestamp": timestamp,
+                "title": title,
+                "message": message
+            })
+
+        return notificationsData
+    
+    def add(self, notification_type, notification_title, notification_message):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.db_c.execute('''
+        INSERT INTO notifications (type, timestamp, title, message) VALUES (?, ?, ?, ?)
+        ''', (notification_type, timestamp, notification_title, notification_message))
+        self.db.commit()
+    
+    def delete(self, id):
+        self.db_c.execute('''
+        DELETE FROM notifications WHERE id = ?
+        ''', (id,))
+        self.db.commit()
+
 @app.get("/")
 def index():
     return FileResponse("templates/index.html")
@@ -2332,6 +2376,7 @@ async def api_backup_manager_configs_post(request: Request, username: str = Depe
     except LibvirtKVMBackup.configError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#TODO
 ### API-BACKUP-CONFIG ###
 @app.post("/api/backup-manager/config/{config}/{action}")
 async def api_backup_manager_config_get(config: str, action: str, username: str = Depends(check_auth)):
@@ -2344,7 +2389,10 @@ async def api_backup_manager_config_get(config: str, action: str, username: str 
     elif action == "create-backup":
         try:
             print("creating backup")
-            LibvirtKVMBackup.backup(config=config)
+
+            ret =  LibvirtKVMBackup.backup(config=config)
+            if ret != 0:
+                notifications.add(notification_type="error", notification_title="Backup Error", notification_message=f"Backup of {config} failed. See log for details.")
             return
         except LibvirtKVMBackup.backupError as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -2362,7 +2410,9 @@ async def api_backup_manager_actions_post(config: str, backup: str, action: str,
             raise HTTPException(status_code=500, detail=str(e))
     elif action == "restore":
         try:
-            LibvirtKVMBackup.restore(config=config, backup=backup)
+            ret = LibvirtKVMBackup.restore(config=config, backup=backup)
+            if ret != 0:
+                notifications.add(notification_type="error", notification_title="Restore Error", notification_message=f"Restore of {config} failed. See log for details.")
             return
         except LibvirtKVMBackup.restoreError as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -2539,3 +2589,23 @@ async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str,
         return
     else:
         raise HTTPException(status_code=404, detail="Action not found")
+
+### API-NOTIFICATIONS ###
+@app.get("/api/notifications")
+async def api_notifications_get(username: str = Depends(check_auth)):
+    print("get notifications")
+    return notifications().getAll()
+
+@app.delete("/api/notifications/{id}")
+async def api_notifications_delete(id: int, username: str = Depends(check_auth)):
+    notifications().delete(id)
+    return
+
+# @app.post("/api/notifications")
+# async def api_notifications_post(request: Request, username: str = Depends(check_auth)):
+#     data = await request.json()
+#     notification_type = data['type']
+#     notification_title = data['title']
+#     notification_message = data['message']
+#     notifications().add(notification_type=notification_type, notification_title=notification_title, notification_message=notification_message)
+#     return
