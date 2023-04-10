@@ -719,7 +719,9 @@ class create_vm():
         self.network = network
         self.network_source = network_source
         self.network_model = network_model
-        self.ovmf_path = settings_ovmfpaths().get(ovmf_name)
+        if ovmf_name:
+            self.ovmf_path = settings_ovmfpaths().get(ovmf_name)
+            self.ovmf_string = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
         self.qemu_path = settings().get("qemu path")
         self.networkstring = ""
         if self.network:
@@ -762,7 +764,6 @@ class create_vm():
                             </disk>"""
 
     def windows(self, version):
-        ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
         self.tpmxml = f"""<tpm model='tpm-tis'>
         <backend type='emulator' version='2.0'/>
         </tpm>"""
@@ -778,7 +779,7 @@ class create_vm():
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
-            {ovmfstring if self.bios_type == "ovmf" else ""}
+            {self.ovmf_string if self.bios_type == "ovmf" else ""}
         </os>
         <features>
             <acpi/>
@@ -815,7 +816,7 @@ class create_vm():
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
-            <loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>
+            {self.ovmf_string if self.bios_type == "ovmf" else ""}
         </os>
         <features>
             <acpi/>
@@ -866,7 +867,6 @@ class create_vm():
         return self.xml
 
     def linux(self):
-        ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
         self.xml = f"""<domain type='kvm'>
         <name>{self.name}</name>
         <metadata>
@@ -878,7 +878,7 @@ class create_vm():
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
-            {ovmfstring if self.bios_type == "ovmf" else ""}
+            {self.ovmf_string if self.bios_type == "ovmf" else ""}
         </os>
         <features>
             <acpi/>
@@ -1235,11 +1235,81 @@ class settings_ovmfpaths:
         ''', (path, name))
         self.db.commit()
 
+class notifications:
+    def __init__(self):
+        self.db = sqlite3.connect('database.db')
+        self.db_c = self.db.cursor()
+
+    def getAll(self):
+        self.db_c.execute('''
+        SELECT * FROM notifications
+        ''')
+        rows = self.db_c.fetchall()
+
+
+        notificationsData = []
+
+        for row in rows:
+            id = row[0]
+            notification_type = row[1]
+            timestamp = row[2]
+            title = row[3]
+            message = row[4]
+            notificationsData.append(
+            {
+                "id": id,
+                "type": notification_type,
+                "timestamp": timestamp,
+                "title": title,
+                "message": message
+            })
+
+        return notificationsData
+    
+    def add(self, notification_type, notification_title, notification_message):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.db_c.execute('''
+        INSERT INTO notifications (type, timestamp, title, message) VALUES (?, ?, ?, ?)
+        ''', (notification_type, timestamp, notification_title, notification_message))
+        self.db.commit()
+    
+    def delete(self, id):
+        self.db_c.execute('''
+        DELETE FROM notifications WHERE id = ?
+        ''', (id,))
+        self.db.commit()
+    
+    def deleteAll(self):
+        self.db_c.execute('''
+        DELETE FROM notifications
+        ''')
+        self.db.commit()
+
 @app.get("/")
 def index():
     return FileResponse("templates/index.html")
 
 ### Websockets ###
+@app.websocket("/notifications")
+async def websocket_endpoint(websocket: WebSocket, token: str):
+    await websocket.accept()
+    notifications_list = None
+    try:
+        while True:
+            if check_auth_token(token):
+                # only send new data if the notifications list has changed
+                new_notifications_list = notifications().getAll()
+                if notifications_list == None or notifications_list != new_notifications_list:
+                    notifications_list = new_notifications_list
+                    await websocket.send_json({"type": "notifications", "data": notifications_list})
+                await asyncio.sleep(1)
+            else:
+                await websocket.send_json({"type": "auth_error"})
+                await websocket.close()
+                break
+    except WebSocketDisconnect:
+        pass
+
 @app.websocket("/dashboard")
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
@@ -2332,6 +2402,7 @@ async def api_backup_manager_configs_post(request: Request, username: str = Depe
     except LibvirtKVMBackup.configError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#TODO
 ### API-BACKUP-CONFIG ###
 @app.post("/api/backup-manager/config/{config}/{action}")
 async def api_backup_manager_config_get(config: str, action: str, username: str = Depends(check_auth)):
@@ -2344,7 +2415,10 @@ async def api_backup_manager_config_get(config: str, action: str, username: str 
     elif action == "create-backup":
         try:
             print("creating backup")
-            LibvirtKVMBackup.backup(config=config)
+
+            ret =  LibvirtKVMBackup.backup(config=config)
+            if ret != 0:
+                notifications.add(notification_type="error", notification_title="Backup Error", notification_message=f"Backup of {config} failed. See log for details.")
             return
         except LibvirtKVMBackup.backupError as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -2362,7 +2436,9 @@ async def api_backup_manager_actions_post(config: str, backup: str, action: str,
             raise HTTPException(status_code=500, detail=str(e))
     elif action == "restore":
         try:
-            LibvirtKVMBackup.restore(config=config, backup=backup)
+            ret = LibvirtKVMBackup.restore(config=config, backup=backup)
+            if ret != 0:
+                notifications.add(notification_type="error", notification_title="Restore Error", notification_message=f"Restore of {config} failed. See log for details.")
             return
         except LibvirtKVMBackup.restoreError as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -2469,6 +2545,7 @@ async def api_system_info_hostname_post(action: str, username: str = Depends(che
     if action == "hostname":
         # print("request to change hostname")
         # print("new hostname: " + request.form['hostname'])
+        notifications().add(notification_type="info", notification_title="Reboot required", notification_message="Hostname change requires a reboot to take effect.")
         raise HTTPException(status_code=501, detail="Feature not implemented")
     else:
         raise HTTPException(status_code=404, detail="action not found")
@@ -2539,3 +2616,17 @@ async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str,
         return
     else:
         raise HTTPException(status_code=404, detail="Action not found")
+
+### API-NOTIFICATIONS ###
+@app.get("/api/notifications")
+async def api_notifications_get(username: str = Depends(check_auth)):
+    print("get notifications")
+    return notifications().getAll()
+
+@app.delete("/api/notifications/{id}")
+async def api_notifications_delete(id: int, username: str = Depends(check_auth)):
+    if id == -1:
+        notifications().deleteAll()
+    else:
+        notifications().delete(id)
+    return

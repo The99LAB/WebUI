@@ -16,6 +16,21 @@
           dense
           flat
           round
+          icon="notifications"
+          @click="rightDrawerOpen = !rightDrawerOpen"
+        >
+          <q-badge
+            floating
+            color="red"
+            rounded
+            :label="notificationCount"
+            v-if="notificationCount != 0"
+          />
+        </q-btn>
+        <q-btn
+          dense
+          flat
+          round
           icon="power_settings_new"
           @click="showPowerMenu()"
         />
@@ -135,10 +150,70 @@
       </q-list>
     </q-drawer>
 
+    <q-drawer v-model="rightDrawerOpen" side="right" overlay bordered>
+      <q-list>
+        <q-item-label header>Notifications</q-item-label>
+        <q-item v-for="n in notifications" :key="n.id" clickable>
+          <q-item-section avatar>
+            <q-icon
+              :name="
+                n.type == 'error'
+                  ? 'mdi-alert-circle'
+                  : n.type == 'warning'
+                  ? 'mdi-alert-circle'
+                  : n.type == 'success'
+                  ? 'mdi-check-circle'
+                  : n.type == 'info'
+                  ? 'mdi-information'
+                  : 'mdi-help'
+              "
+              :color="
+                n.type == 'error'
+                  ? 'red'
+                  : n.type == 'warning'
+                  ? 'orange'
+                  : n.type == 'success'
+                  ? 'green'
+                  : 'white'
+              "
+            />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{ n.title }}</q-item-label>
+            <q-item-label caption>{{ n.message }}</q-item-label>
+            <q-item-label caption class="row"
+              ><q-btn
+                @click="NotificationDelete(n.id)"
+                flat
+                text-color="primary"
+                size="sm"
+                padding="none"
+                label="Dismiss"
+              ></q-btn>
+              <q-space />{{ n.timestamp }}</q-item-label
+            >
+          </q-item-section>
+        </q-item>
+        <div class="row justify-center" v-if="notificationCount != 0">
+          <q-btn
+            @click="NotificationDelete(-1)"
+            flat
+            text-color="primary"
+            size="sm"
+            label="Dismiss All"
+          ></q-btn>
+        </div>
+      </q-list>
+    </q-drawer>
+
     <q-page-container>
       <router-view />
       <PowerMenu ref="powerMenu" />
       <ErrorDialog ref="errorDialog" />
+      <WsReconnectDialog
+        ref="wsReconnectDialog"
+        @ws-reconnect="connectNotificationsWebsocket"
+      />
     </q-page-container>
   </q-layout>
 </template>
@@ -148,13 +223,17 @@ import { defineComponent, ref } from "vue";
 import PowerMenu from "src/components/PowerMenu.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
+import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 
 export default defineComponent({
   name: "MainLayout",
   data() {
     return {
       leftDrawerOpen: ref(false),
+      rightDrawerOpen: ref(false),
       hostname: "",
+      notificationCount: 0,
+      notifications: [],
     };
   },
   setup() {
@@ -176,6 +255,7 @@ export default defineComponent({
   components: {
     PowerMenu,
     ErrorDialog,
+    WsReconnectDialog,
   },
   methods: {
     generateTitle() {
@@ -202,9 +282,39 @@ export default defineComponent({
       localStorage.setItem("jwt-token", "");
       this.$router.push({ path: "/login" });
     },
+    NotificationDelete(id) {
+      this.$api.delete("notifications/" + id).catch((error) => {
+        this.$refs.errorDialog.show("Error deleting notification", [
+          "Could not delete notification.",
+          error.response.data.detail,
+        ]);
+      });
+    },
+    connectNotificationsWebsocket() {
+      const jwt_token = localStorage.getItem("jwt-token");
+      this.ws = new WebSocket(
+        this.$WS_ENDPOINT + "/notifications?token=" + jwt_token
+      );
+
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type == "notifications") {
+          this.notifications = data.data;
+          this.notificationCount = this.notifications.length;
+        } else if (data.type == "auth_error") {
+          localStorage.setItem("jwt-token", "");
+          this.$router.push({ path: "/login" });
+        }
+      };
+
+      this.ws.onclose = (event) => {
+        this.$refs.wsReconnectDialog.show();
+      };
+    },
   },
   created() {
     this.getHostName();
+    this.connectNotificationsWebsocket();
     this.$router.afterEach((to, from) => {
       this.generateTitle();
     });

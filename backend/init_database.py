@@ -3,12 +3,12 @@ import sqlite3
 db = sqlite3.connect('database.db')
 c = db.cursor()
 
-qemu_path = input("Enter qemu path: ")
+qemu_path = input("Enter qemu path: ") # /usr/bin/qemu-system-x86_64
 novnc_ip = input("Enter novnc ip: ")
 novnc_port = input("Enter novnc port: ")
 novnc_protocool = input("Enter novnc protocool: ")
 novnc_path = input("Enter novnc path: ")
-libvirt_domain_logs_path = input("Enter libvirt domain logs path: ")
+libvirt_domain_logs_path = input("Enter libvirt domain logs path: ") # /var/log/libvirt/qemu
 
 # Create table settings
 c.execute('''CREATE TABLE "settings" (
@@ -37,6 +37,19 @@ c.execute('''CREATE TABLE "settings_ovmfpaths" (
 # Create records in table settings_ovmfpaths
 c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (1, "OVMF", "/usr/share/OVMF/OVMF_CODE.fd")''')
 c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (2, "OVMF Secureboot", "/usr/share/OVMF/OVMF_CODE.secboot.fd")''')
+
+# Create table notifications
+c.execute('''CREATE TABLE "notifications" (
+	"id"	INTEGER,
+	"type"	TEXT,
+	"timestamp"	TEXT,
+	"title"	TEXT,
+	"message"	TEXT,
+	PRIMARY KEY("id")
+    )''')
+
+# insert notification
+c.execute('''INSERT INTO "notifications" ("id", "type", "timestamp", "title", "message") VALUES (1, "info", "2020-01-01 00:00:00", "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")''')
 
 # finish work with database
 db.commit()

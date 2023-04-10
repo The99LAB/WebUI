@@ -19,3 +19,5 @@
 - Login Page: add tab key navigation between username and password fields in login form
 - Settings Page: Show all table rows & hide table pagination
 - VmPage: Add option to show VM logs
+- Notifications: Implement notifications
+- VmPage: Fix bug where only 5 VMs were shown
