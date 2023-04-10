@@ -21,3 +21,4 @@
 - VmPage: Add option to show VM logs
 - Notifications: Implement notifications
 - VmPage: Fix bug where only 5 VMs were shown
+- Login: Add setting to control token expiration time

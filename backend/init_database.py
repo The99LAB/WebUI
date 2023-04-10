@@ -25,6 +25,7 @@ c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (3, "novnc p
 c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (4, "novnc protocool", "{novnc_protocool}")''')
 c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (5, "novnc path", "{novnc_path}")''')
 c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (6, "libvirt domain logs path", "{libvirt_domain_logs_path}")''')
+c.execute('''INSERT INTO "settings" ("id", "name", "value") VALUES (7, "login token expire", "900")''')
 
 # Create table settings_ovmfpaths
 c.execute('''CREATE TABLE "settings_ovmfpaths" (
