@@ -79,7 +79,7 @@ export default {
           this.$refs.errorDialog.show("Error Downloading ISO", [data.message]);
         } else if (data.event == "downloadISOProgress") {
           this.showProgressBar = true;
-          this.progress = data.message / 100;
+          this.progress = data.percentage / 100;
         } else if (data.event == "downloadISOComplete") {
           this.showProgressBar = false;
           this.progress = 0;
