@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 
 db = sqlite3.connect('database.db')
 c = db.cursor()
@@ -50,7 +51,8 @@ c.execute('''CREATE TABLE "notifications" (
     )''')
 
 # insert notification
-c.execute('''INSERT INTO "notifications" ("id", "type", "timestamp", "title", "message") VALUES (1, "info", "2020-01-01 00:00:00", "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")''')
+timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+c.execute(f'''INSERT INTO "notifications" ("id", "type", "timestamp", "title", "message") VALUES (1, "info", "{timestamp}", "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")''')
 
 # finish work with database
 db.commit()
