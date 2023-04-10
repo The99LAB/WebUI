@@ -719,7 +719,9 @@ class create_vm():
         self.network = network
         self.network_source = network_source
         self.network_model = network_model
-        self.ovmf_path = settings_ovmfpaths().get(ovmf_name)
+        if ovmf_name:
+            self.ovmf_path = settings_ovmfpaths().get(ovmf_name)
+            self.ovmf_string = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
         self.qemu_path = settings().get("qemu path")
         self.networkstring = ""
         if self.network:
@@ -762,7 +764,6 @@ class create_vm():
                             </disk>"""
 
     def windows(self, version):
-        ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
         self.tpmxml = f"""<tpm model='tpm-tis'>
         <backend type='emulator' version='2.0'/>
         </tpm>"""
@@ -778,7 +779,7 @@ class create_vm():
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
-            {ovmfstring if self.bios_type == "ovmf" else ""}
+            {self.ovmf_string if self.bios_type == "ovmf" else ""}
         </os>
         <features>
             <acpi/>
@@ -815,7 +816,7 @@ class create_vm():
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
-            <loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>
+            {self.ovmf_string if self.bios_type == "ovmf" else ""}
         </os>
         <features>
             <acpi/>
@@ -866,7 +867,6 @@ class create_vm():
         return self.xml
 
     def linux(self):
-        ovmfstring = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
         self.xml = f"""<domain type='kvm'>
         <name>{self.name}</name>
         <metadata>
@@ -878,7 +878,7 @@ class create_vm():
         <vcpu>2</vcpu>
         <os>
             <type arch='x86_64' machine='{self.machine_type}'>hvm</type>
-            {ovmfstring if self.bios_type == "ovmf" else ""}
+            {self.ovmf_string if self.bios_type == "ovmf" else ""}
         </os>
         <features>
             <acpi/>
