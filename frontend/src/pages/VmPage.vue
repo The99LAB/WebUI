@@ -18,6 +18,7 @@
       separator="none"
       no-data-label="Failed to get data from backend or no vm's defined"
       hide-pagination
+      :pagination="vmTablePagination"
     >
       <template #body="props">
         <q-tr :props="props">
@@ -178,6 +179,9 @@ export default {
       novnc_protocool: null,
       novnc_path: null,
       novnc_ip: null,
+      vmTablePagination: {
+        rowsPerPage: 0,
+      },
     };
   },
   components: {
