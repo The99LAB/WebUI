@@ -21,6 +21,7 @@
         v-model:selected="selected_setting"
         :pagination="table_pagination"
         hide-pagination
+        :loading="settings_loading"
       />
     </div>
     <q-separator color="transparent" spaced="xl" />
@@ -59,6 +60,7 @@
         v-model:selected="selected_ovmf_path"
         :pagination="table_pagination"
         hide-pagination
+        :loading="ovmf_paths_loading"
       />
     </div>
   </q-page>
@@ -191,6 +193,8 @@ export default {
         sortBy: "name",
         rowsPerPage: 0,
       },
+      settings_loading: ref(true),
+      ovmf_paths_loading: ref(true),
     };
   },
   components: {
@@ -202,6 +206,7 @@ export default {
         .get("/host/settings/all")
         .then((response) => {
           this.settings = response.data;
+          this.settings_loading = false;
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting settings", [
@@ -212,6 +217,7 @@ export default {
         .get("/vm-manager/settings/ovmf-paths/all")
         .then((response) => {
           this.ovmf_paths = response.data;
+          this.ovmf_paths_loading = false;
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting OVMF paths", [
