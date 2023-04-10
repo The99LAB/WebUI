@@ -210,7 +210,10 @@
       <router-view />
       <PowerMenu ref="powerMenu" />
       <ErrorDialog ref="errorDialog" />
-      <WsReconnectDialog ref="wsReconnectDialog" @ws-reconnect="connectNotificationsWebsocket"/>
+      <WsReconnectDialog
+        ref="wsReconnectDialog"
+        @ws-reconnect="connectNotificationsWebsocket"
+      />
     </q-page-container>
   </q-layout>
 </template>
@@ -280,14 +283,12 @@ export default defineComponent({
       this.$router.push({ path: "/login" });
     },
     NotificationDelete(id) {
-      this.$api
-        .delete("notifications/" + id)
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting notification", [
-            "Could not delete notification.",
-            error.response.data.detail,
-          ]);
-        });
+      this.$api.delete("notifications/" + id).catch((error) => {
+        this.$refs.errorDialog.show("Error deleting notification", [
+          "Could not delete notification.",
+          error.response.data.detail,
+        ]);
+      });
     },
     connectNotificationsWebsocket() {
       const jwt_token = localStorage.getItem("jwt-token");
@@ -309,7 +310,7 @@ export default defineComponent({
       this.ws.onclose = (event) => {
         this.$refs.wsReconnectDialog.show();
       };
-    }
+    },
   },
   created() {
     this.getHostName();
