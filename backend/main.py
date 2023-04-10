@@ -1290,6 +1290,26 @@ def index():
     return FileResponse("templates/index.html")
 
 ### Websockets ###
+@app.websocket("/notifications")
+async def websocket_endpoint(websocket: WebSocket, token: str):
+    await websocket.accept()
+    notifications_list = None
+    try:
+        while True:
+            if check_auth_token(token):
+                # only send new data if the notifications list has changed
+                new_notifications_list = notifications().getAll()
+                if notifications_list == None or notifications_list != new_notifications_list:
+                    notifications_list = new_notifications_list
+                    await websocket.send_json({"type": "notifications", "data": notifications_list})
+                await asyncio.sleep(1)
+            else:
+                await websocket.send_json({"type": "auth_error"})
+                await websocket.close()
+                break
+    except WebSocketDisconnect:
+        pass
+
 @app.websocket("/dashboard")
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
@@ -2525,6 +2545,7 @@ async def api_system_info_hostname_post(action: str, username: str = Depends(che
     if action == "hostname":
         # print("request to change hostname")
         # print("new hostname: " + request.form['hostname'])
+        notifications().add(notification_type="info", notification_title="Reboot required", notification_message="Hostname change requires a reboot to take effect.")
         raise HTTPException(status_code=501, detail="Feature not implemented")
     else:
         raise HTTPException(status_code=404, detail="action not found")

@@ -210,6 +210,7 @@
       <router-view />
       <PowerMenu ref="powerMenu" />
       <ErrorDialog ref="errorDialog" />
+      <WsReconnectDialog ref="wsReconnectDialog" @ws-reconnect="connectNotificationsWebsocket"/>
     </q-page-container>
   </q-layout>
 </template>
@@ -219,6 +220,7 @@ import { defineComponent, ref } from "vue";
 import PowerMenu from "src/components/PowerMenu.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
+import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 
 export default defineComponent({
   name: "MainLayout",
@@ -250,6 +252,7 @@ export default defineComponent({
   components: {
     PowerMenu,
     ErrorDialog,
+    WsReconnectDialog,
   },
   methods: {
     generateTitle() {
@@ -276,26 +279,9 @@ export default defineComponent({
       localStorage.setItem("jwt-token", "");
       this.$router.push({ path: "/login" });
     },
-    NotifiactionUpdate() {
-      this.$api
-        .get("notifications")
-        .then((response) => {
-          this.notifications = response.data;
-          this.notificationCount = this.notifications.length;
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error getting notifications", [
-            "Could not get notifications.",
-            error.response.data.detail,
-          ]);
-        });
-    },
     NotificationDelete(id) {
       this.$api
         .delete("notifications/" + id)
-        .then((response) => {
-          this.NotifiactionUpdate();
-        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting notification", [
             "Could not delete notification.",
@@ -303,10 +289,31 @@ export default defineComponent({
           ]);
         });
     },
+    connectNotificationsWebsocket() {
+      const jwt_token = localStorage.getItem("jwt-token");
+      this.ws = new WebSocket(
+        this.$WS_ENDPOINT + "/notifications?token=" + jwt_token
+      );
+
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type == "notifications") {
+          this.notifications = data.data;
+          this.notificationCount = this.notifications.length;
+        } else if (data.type == "auth_error") {
+          localStorage.setItem("jwt-token", "");
+          this.$router.push({ path: "/login" });
+        }
+      };
+
+      this.ws.onclose = (event) => {
+        this.$refs.wsReconnectDialog.show();
+      };
+    }
   },
   created() {
     this.getHostName();
-    this.NotifiactionUpdate();
+    this.connectNotificationsWebsocket();
     this.$router.afterEach((to, from) => {
       this.generateTitle();
     });
