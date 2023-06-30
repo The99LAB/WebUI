@@ -277,7 +277,7 @@ export default {
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type == "vmdata") {
-          if (data.data != null){
+          if (data.data != null) {
             this.rows = data.data;
           }
           this.vmTableLoading = false;
