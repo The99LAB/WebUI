@@ -2542,13 +2542,15 @@ async def api_system_info_get(action: str, username: str = Depends(check_auth)):
         raise HTTPException(status_code=404, detail="action not found")
 
 @app.post("/api/host/system-info/{action}")
-async def api_system_info_hostname_post(action: str, username: str = Depends(check_auth)):
+async def api_system_info_hostname_post(action: str, hostname: str = Form(...), username: str = Depends(check_auth)):
     if action == "hostname":
-        # print("request to change hostname")
-        # print("new hostname: " + request.form['hostname'])
-        notifications().add(notification_type="info", notification_title="Reboot required", notification_message="Hostname change requires a reboot to take effect.")
-        raise HTTPException(status_code=501, detail="Feature not implemented")
-        print("new hostname: " + hostname)
+        # Run hostnamectl set-hostname
+        hostname_result = subprocess.run(
+            ["hostnamectl", "set-hostname", hostname], capture_output=True, text=True)
+        if hostname_result.returncode == 0:
+            return
+        else:
+            raise HTTPException(status_code=500, detail=hostname_result.stdout)
     else:
         raise HTTPException(status_code=404, detail="action not found")
 
