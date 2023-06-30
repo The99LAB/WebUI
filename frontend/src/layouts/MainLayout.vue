@@ -283,6 +283,14 @@ export default defineComponent({
       this.$router.push({ path: "/login" });
     },
     NotificationDelete(id) {
+      if (id == -1) { 
+        this.notifications = [];
+        this.notificationCount = 0;
+      } else {
+        this.notifications = this.notifications.filter((n) => n.id != id);
+        this.notificationCount = this.notifications.length;
+      }
+
       this.$api.delete("notifications/" + id).catch((error) => {
         this.$refs.errorDialog.show("Error deleting notification", [
           "Could not delete notification.",

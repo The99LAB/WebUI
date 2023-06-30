@@ -2548,6 +2548,7 @@ async def api_system_info_hostname_post(action: str, username: str = Depends(che
         # print("new hostname: " + request.form['hostname'])
         notifications().add(notification_type="info", notification_title="Reboot required", notification_message="Hostname change requires a reboot to take effect.")
         raise HTTPException(status_code=501, detail="Feature not implemented")
+        print("new hostname: " + hostname)
     else:
         raise HTTPException(status_code=404, detail="action not found")
 
