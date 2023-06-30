@@ -327,5 +327,9 @@ export default defineComponent({
       this.generateTitle();
     });
   },
+  unmounted() {
+    this.ws.onclose = () => {};
+    this.ws.close();
+  },
 });
 </script>
