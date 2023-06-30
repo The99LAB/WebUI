@@ -277,7 +277,9 @@ export default {
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type == "vmdata") {
-          this.rows = data.data;
+          if (data.data != null){
+            this.rows = data.data;
+          }
           this.vmTableLoading = false;
         } else if (data.type == "auth_error") {
           localStorage.setItem("jwt-token", "");
