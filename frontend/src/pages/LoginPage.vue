@@ -42,9 +42,12 @@
                   <q-icon
                     :name="isPwd ? 'visibility_off' : 'visibility'"
                     class="cursor-pointer"
-                    @click="isPwd = !isPwd">
-                    <ToolTip :content="isPwd ? 'Show Password' : 'Hide Password'" />
-                    </q-icon>
+                    @click="isPwd = !isPwd"
+                  >
+                    <ToolTip
+                      :content="isPwd ? 'Show Password' : 'Hide Password'"
+                    />
+                  </q-icon>
                 </template>
               </q-input>
               <q-separator color="transparent" spaced inset dark />

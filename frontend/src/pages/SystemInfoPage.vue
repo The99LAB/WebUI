@@ -37,8 +37,8 @@
                 padding="none"
                 @click="editHostName()"
               >
-              <ToolTip content="Edit Hostname" />
-            </q-btn>
+                <ToolTip content="Edit Hostname" />
+              </q-btn>
             </p>
           </div>
         </div>

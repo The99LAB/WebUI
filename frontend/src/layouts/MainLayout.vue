@@ -35,7 +35,8 @@
           flat
           round
           icon="power_settings_new"
-          @click="showPowerMenu()">
+          @click="showPowerMenu()"
+        >
           <ToolTip content="Power" />
         </q-btn>
         <q-btn
@@ -47,7 +48,11 @@
           "
           @click="this.$q.dark.toggle()"
         >
-          <ToolTip :content="$q.dark.isActive ? 'Enable light mode' : 'Enable dark mode'" />
+          <ToolTip
+            :content="
+              $q.dark.isActive ? 'Enable light mode' : 'Enable dark mode'
+            "
+          />
         </q-btn>
         <q-btn dense flat round icon="logout" @click="logout()">
           <ToolTip content="Logout" />
@@ -164,7 +169,7 @@
           <div class="row">
             Notifications
             <q-space />
-            {{notificationCount}}
+            {{ notificationCount }}
           </div>
         </q-item-label>
         <q-item v-for="n in notifications" :key="n.id" clickable>
