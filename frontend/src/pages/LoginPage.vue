@@ -77,6 +77,8 @@ import { ref } from "vue";
 import ErrorDialog from "/src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
 import ToolTip from "src/components/ToolTip.vue";
+import { useHostnameStore } from 'stores/hostname';
+import { storeToRefs } from 'pinia';
 
 export default {
   data() {
@@ -86,22 +88,18 @@ export default {
       password: "",
       authError: "",
       loginLoading: false,
-      hostname: "Unknown",
     };
   },
   setup() {
-    const title = ref("Login");
-    const updateTitle = (newTitle) => {
-      title.value = newTitle;
-    };
     useMeta(() => {
       return {
-        title: title.value,
+        title: "Login",
       };
     });
+    const store = useHostnameStore();
+    const { getHostname } = storeToRefs(store);
     return {
-      title,
-      updateTitle,
+      hostname: getHostname,
     };
   },
   components: {
@@ -124,22 +122,6 @@ export default {
           this.loginLoading = false;
         });
     },
-    generateTitle() {
-      this.updateTitle(this.hostname + " - Login");
-    },
-  },
-  created() {
-    this.$api
-      .get("/no-auth/hostname")
-      .then((response) => {
-        this.hostname = response.data.hostname;
-        this.generateTitle();
-      })
-      .catch((error) => {
-        this.$refs.errorDialog.show("Error connecting to backend", [
-          "Couln't get hostname from backend. Please check if the backend is running and the API is reachable.",
-        ]);
-      });
   },
 };
 </script>

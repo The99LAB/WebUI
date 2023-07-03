@@ -244,6 +244,8 @@ import ErrorDialog from "src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
+import { useHostnameStore } from "stores/hostname";
+import { storeToRefs } from 'pinia';
 
 export default defineComponent({
   name: "MainLayout",
@@ -251,13 +253,14 @@ export default defineComponent({
     return {
       leftDrawerOpen: ref(false),
       rightDrawerOpen: ref(false),
-      hostname: "",
       notificationCount: 0,
       notifications: [],
     };
   },
   setup() {
     const title = ref("");
+    const store = useHostnameStore();
+    const { getHostname } = storeToRefs(store);
     const updateTitle = (newTitle) => {
       title.value = newTitle;
     };
@@ -268,6 +271,7 @@ export default defineComponent({
     });
     return {
       title,
+      hostname: getHostname,
       updateTitle,
     };
   },
@@ -284,20 +288,6 @@ export default defineComponent({
     },
     showPowerMenu() {
       this.$refs.powerMenu.show();
-    },
-    getHostName() {
-      this.$api
-        .get("/host/system-info/hostname")
-        .then((response) => {
-          this.hostname = response.data.hostname;
-          this.generateTitle();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error getting hostname", [
-            "Could not get hostname.",
-            error.response.data.detail,
-          ]);
-        });
     },
     logout() {
       localStorage.setItem("jwt-token", "");
@@ -342,11 +332,11 @@ export default defineComponent({
     },
   },
   created() {
-    this.getHostName();
     this.connectNotificationsWebsocket();
     this.$router.afterEach((to, from) => {
       this.generateTitle();
     });
+    this.generateTitle();
   },
   unmounted() {
     this.ws.onclose = () => {};
