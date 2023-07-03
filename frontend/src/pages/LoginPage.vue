@@ -77,8 +77,8 @@ import { ref } from "vue";
 import ErrorDialog from "/src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
 import ToolTip from "src/components/ToolTip.vue";
-import { useHostnameStore } from 'stores/hostname';
-import { storeToRefs } from 'pinia';
+import { useHostnameStore } from "stores/hostname";
+import { storeToRefs } from "pinia";
 
 export default {
   data() {

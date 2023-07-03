@@ -245,7 +245,7 @@ import { useMeta } from "quasar";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
 import { useHostnameStore } from "stores/hostname";
-import { storeToRefs } from 'pinia';
+import { storeToRefs } from "pinia";
 
 export default defineComponent({
   name: "MainLayout",
