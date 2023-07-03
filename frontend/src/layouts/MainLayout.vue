@@ -160,7 +160,13 @@
 
     <q-drawer v-model="rightDrawerOpen" side="right" overlay bordered>
       <q-list>
-        <q-item-label header>Notifications</q-item-label>
+        <q-item-label header>
+          <div class="row">
+            Notifications
+            <q-space />
+            {{notificationCount}}
+          </div>
+        </q-item-label>
         <q-item v-for="n in notifications" :key="n.id" clickable>
           <q-item-section avatar>
             <q-icon
