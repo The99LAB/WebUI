@@ -42,8 +42,9 @@
                   <q-icon
                     :name="isPwd ? 'visibility_off' : 'visibility'"
                     class="cursor-pointer"
-                    @click="isPwd = !isPwd"
-                  />
+                    @click="isPwd = !isPwd">
+                    <ToolTip :content="isPwd ? 'Show Password' : 'Hide Password'" />
+                    </q-icon>
                 </template>
               </q-input>
               <q-separator color="transparent" spaced inset dark />
@@ -72,6 +73,7 @@
 import { ref } from "vue";
 import ErrorDialog from "/src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
+import ToolTip from "src/components/ToolTip.vue";
 
 export default {
   data() {
@@ -101,6 +103,7 @@ export default {
   },
   components: {
     ErrorDialog,
+    ToolTip,
   },
   methods: {
     login() {

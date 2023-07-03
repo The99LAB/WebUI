@@ -8,7 +8,9 @@
           round
           icon="menu"
           @click="leftDrawerOpen = !leftDrawerOpen"
-        />
+        >
+          <ToolTip content="Toggle" />
+        </q-btn>
         <q-toolbar-title>
           {{ hostname }}
         </q-toolbar-title>
@@ -26,14 +28,16 @@
             :label="notificationCount"
             v-if="notificationCount != 0"
           />
+          <ToolTip content="Notifications" />
         </q-btn>
         <q-btn
           dense
           flat
           round
           icon="power_settings_new"
-          @click="showPowerMenu()"
-        />
+          @click="showPowerMenu()">
+          <ToolTip content="Power" />
+        </q-btn>
         <q-btn
           dense
           flat
@@ -42,8 +46,12 @@
             $q.dark.isActive ? 'mdi-lightbulb' : 'mdi-moon-waning-crescent'
           "
           @click="this.$q.dark.toggle()"
-        />
-        <q-btn dense flat round icon="logout" @click="logout()" />
+        >
+          <ToolTip :content="$q.dark.isActive ? 'Enable light mode' : 'Enable dark mode'" />
+        </q-btn>
+        <q-btn dense flat round icon="logout" @click="logout()">
+          <ToolTip content="Logout" />
+        </q-btn>
       </q-toolbar>
     </q-header>
 
@@ -224,6 +232,7 @@ import PowerMenu from "src/components/PowerMenu.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
+import ToolTip from "src/components/ToolTip.vue";
 
 export default defineComponent({
   name: "MainLayout",
@@ -256,6 +265,7 @@ export default defineComponent({
     PowerMenu,
     ErrorDialog,
     WsReconnectDialog,
+    ToolTip,
   },
   methods: {
     generateTitle() {

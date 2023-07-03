@@ -36,7 +36,9 @@
                 size="sm"
                 padding="none"
                 @click="editHostName()"
-              ></q-btn>
+              >
+              <ToolTip content="Edit Hostname" />
+            </q-btn>
             </p>
           </div>
         </div>
@@ -53,6 +55,7 @@
 <script>
 import editHostName from "src/components/EditHostName.vue";
 import errorDialog from "src/components/ErrorDialog.vue";
+import ToolTip from "src/components/ToolTip.vue";
 
 import { ref } from "vue";
 export default {
@@ -73,6 +76,7 @@ export default {
   components: {
     editHostName,
     errorDialog,
+    ToolTip,
   },
   methods: {
     getSystemInfo() {
