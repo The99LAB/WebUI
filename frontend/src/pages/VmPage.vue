@@ -188,10 +188,10 @@ export default {
   },
   setup() {
     const store = useVncSettingsStore();
-    const { getVncSettings} = storeToRefs(store);
+    const { getVncSettings } = storeToRefs(store);
     return {
       vncSettings: getVncSettings,
-    }
+    };
   },
   components: {
     ErrorDialog,
@@ -295,8 +295,7 @@ export default {
   created() {
     this.connectWebSocket();
   },
-  mounted() {
-  },
+  mounted() {},
   unmounted() {
     this.vmTableLoading = false;
     this.ws.onclose = () => {};

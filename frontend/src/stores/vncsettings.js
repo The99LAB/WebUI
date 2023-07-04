@@ -11,7 +11,12 @@ export const useVncSettingsStore = defineStore("vncsettings", {
 
   getters: {
     getVncSettings() {
-      if (this.vnc_port == null || this.vnc_protocool == null || this.vnc_path == null || this.vnc_ip == null) {
+      if (
+        this.vnc_port == null ||
+        this.vnc_protocool == null ||
+        this.vnc_path == null ||
+        this.vnc_ip == null
+      ) {
         this.getVncSettingsApi();
       }
       return {
@@ -20,7 +25,7 @@ export const useVncSettingsStore = defineStore("vncsettings", {
         path: this.vnc_path,
         ip: this.vnc_ip,
       };
-    }
+    },
   },
 
   actions: {

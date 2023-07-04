@@ -64,7 +64,11 @@ export default {
     createPool() {
       console.log("Creating pool...");
       this.$api
-        .post("/storage-pools", { name: this.poolName, type: this.poolType, path: this.poolPath })
+        .post("/storage-pools", {
+          name: this.poolName,
+          type: this.poolType,
+          path: this.poolPath,
+        })
         .then((this.layout = false), this.$emit("storagepool-created"))
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating pool", [
