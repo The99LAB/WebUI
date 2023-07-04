@@ -244,7 +244,7 @@ import ErrorDialog from "src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
-import { useHostnameStore } from "stores/hostname";
+import { useBackendStore } from "stores/backend";
 import { storeToRefs } from "pinia";
 
 export default defineComponent({
@@ -259,7 +259,7 @@ export default defineComponent({
   },
   setup() {
     const title = ref("");
-    const store = useHostnameStore();
+    const store = useBackendStore();
     const { getHostname } = storeToRefs(store);
     const updateTitle = (newTitle) => {
       title.value = newTitle;

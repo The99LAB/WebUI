@@ -77,7 +77,7 @@ import { ref } from "vue";
 import ErrorDialog from "/src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
 import ToolTip from "src/components/ToolTip.vue";
-import { useHostnameStore } from "stores/hostname";
+import { useBackendStore } from "stores/backend";
 import { storeToRefs } from "pinia";
 
 export default {
@@ -96,7 +96,7 @@ export default {
         title: "Login",
       };
     });
-    const store = useHostnameStore();
+    const store = useBackendStore();
     const { getHostname } = storeToRefs(store);
     return {
       hostname: getHostname,
