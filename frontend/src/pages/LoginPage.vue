@@ -5,7 +5,13 @@
         <q-card>
           <q-card-section class="bg-primary">
             <h5 class="text-center q-my-md text-white">
-              {{ hostname }} - Login
+              <div v-if = "hostname !== null">
+                {{ hostname }} - Login
+              </div>
+              <div v-else>
+                Login
+              </div>
+
             </h5>
           </q-card-section>
           <q-card-section class="q-px-lg q-py-lg">
