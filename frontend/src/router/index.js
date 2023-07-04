@@ -7,6 +7,7 @@ import {
 } from "vue-router";
 import routes from "./routes";
 import jwtDecode from "jwt-decode";
+import { useHostnameStore } from "src/stores/hostname.js";
 
 function isTokenExpired(token) {
   if (token == null || token == undefined || token == "") {
@@ -41,6 +42,17 @@ export default route(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> vueRouterMode
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE),
+  });
+
+  Router.afterEach((to, from) => {
+    const hostnameStore = useHostnameStore();
+    const hostname = hostnameStore.getHostname;
+
+    if (hostname == null) {
+      document.title = to.meta.title;
+    } else {
+      document.title = hostname + " - " + to.meta.title;
+    }
   });
 
   // // check if user is logged in

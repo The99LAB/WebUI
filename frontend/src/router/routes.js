@@ -1,5 +1,5 @@
 const routes = [
-  { path: "/login", component: () => import("pages/LoginPage.vue") },
+  { path: "/login", component: () => import("pages/LoginPage.vue"), meta: { title: "Login" } },
   {
     path: "/",
     component: () => import("layouts/MainLayout.vue"),
@@ -67,6 +67,7 @@ const routes = [
   {
     path: "/:catchAll(.*)*",
     component: () => import("pages/ErrorNotFound.vue"),
+    meta: { title: "404" },
   },
 ];
 

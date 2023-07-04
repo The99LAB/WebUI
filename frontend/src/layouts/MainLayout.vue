@@ -238,10 +238,9 @@
 </template>
 
 <script>
-import { defineComponent, onMounted, ref } from "vue";
+import { defineComponent, ref } from "vue";
 import PowerMenu from "src/components/PowerMenu.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
-import { useMeta } from "quasar";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
 import { useHostnameStore } from "stores/hostname";
@@ -250,8 +249,6 @@ import { storeToRefs } from "pinia";
 export default defineComponent({
   name: "MainLayout",
   data() {
-    // add a watcher to the hostname value
-    this.$watch("hostname", this.generateTitle);
     return {
       leftDrawerOpen: ref(false),
       rightDrawerOpen: ref(false),
@@ -260,21 +257,10 @@ export default defineComponent({
     };
   },
   setup() {
-    const title = ref("");
     const store = useHostnameStore();
     const { getHostname } = storeToRefs(store);
-    const updateTitle = (newTitle) => {
-      title.value = newTitle;
-    };
-    useMeta(() => {
-      return {
-        title: title.value,
-      };
-    });
     return {
-      title,
       hostname: getHostname,
-      updateTitle,
     };
   },
 
@@ -285,9 +271,6 @@ export default defineComponent({
     ToolTip,
   },
   methods: {
-    generateTitle() {
-      this.updateTitle(this.hostname + " - " + this.$route.meta.title);
-    },
     showPowerMenu() {
       this.$refs.powerMenu.show();
     },
@@ -335,9 +318,6 @@ export default defineComponent({
   },
   created() {
     this.connectNotificationsWebsocket();
-    this.$router.afterEach((to, from) => {
-      this.generateTitle();
-    });
   },
   unmounted() {
     this.ws.onclose = () => {};

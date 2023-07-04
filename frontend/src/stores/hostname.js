@@ -9,6 +9,9 @@ export const useHostnameStore = defineStore("hostname", {
   getters: {
     getHostname() {
       if (this.hostname == null) {
+        if (localStorage.getItem("hostname") != null) {
+          this.hostname = localStorage.getItem("hostname");
+        }
         this.getHostnameApi();
       }
       return this.hostname;
@@ -20,6 +23,7 @@ export const useHostnameStore = defineStore("hostname", {
       console.log("getHostnameApi");
       api.get("/no-auth/hostname").then((response) => {
         this.hostname = response.data.hostname;
+        localStorage.setItem("hostname", this.hostname);
       });
     },
   },
