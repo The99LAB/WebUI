@@ -27,13 +27,14 @@
             <p>{{ os }}</p>
             <p>{{ linuxVersion }}</p>
             <p>
-              {{ hostname
-              }}<q-btn
+              {{ hostname }}
+              <q-btn
                 round
                 icon="edit"
                 flat
                 text-color="primary"
                 size="sm"
+                class="q-ml-xs"
                 padding="none"
                 @click="editHostName()"
               >
