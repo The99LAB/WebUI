@@ -47,7 +47,7 @@ import { ref } from "vue";
 export default {
   data() {
     return {
-      url: "https://geo.mirror.pkgbuild.com/iso/2023.02.01/archlinux-x86_64.iso",
+      url: "https://geo.mirror.pkgbuild.com/iso/latest/archlinux-x86_64.iso",
       fileName: "archlinux-x86_64.iso",
       showProgressBar: false,
       progress: 0,
