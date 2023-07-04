@@ -1395,6 +1395,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                             print("download complete")
                             await websocket.send_json({"event": "downloadISOComplete", "message": ["ISO Download Complete", f"ISO File: {filename}", f"Storage Pool: {poolName}"]})
                     f.write(data)
+                    await asyncio.sleep(0) # allow the websocket to send the message before continuing
         except Exception as e:
             await websocket.send_json({"event": "downloadISOError", "message": f"Error: {e}"})
     else:
