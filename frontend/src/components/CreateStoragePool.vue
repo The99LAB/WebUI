@@ -63,12 +63,8 @@ export default {
     },
     createPool() {
       console.log("Creating pool...");
-      const formData = new FormData();
-      formData.append("name", this.poolName);
-      formData.append("type", this.poolType);
-      formData.append("path", this.poolPath);
       this.$api
-        .post("/storage-pools", formData)
+        .post("/storage-pools", { name: this.poolName, type: this.poolType, path: this.poolPath })
         .then((this.layout = false), this.$emit("storagepool-created"))
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating pool", [

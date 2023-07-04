@@ -2229,7 +2229,8 @@ async def api_storage_pools(username: str = Depends(check_auth)):
     return storage_pools
 
 @app.post("/api/storage-pools")
-async def api_storage_pools_create(data: dict = Form(...), username: str = Depends(check_auth)):
+async def api_storage_pools_create(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
     pool_name = data['name']
     pool_type = data['type']
     pool_path = data['path']
