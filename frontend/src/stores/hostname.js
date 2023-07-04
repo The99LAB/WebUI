@@ -1,12 +1,7 @@
 import { defineStore } from "pinia";
 import { api } from "boot/axios";
-/*
-  Stores information from the backend:
-  - hostname
-  - vnc settings
-*/
 
-export const useBackendStore = defineStore("backend", {
+export const useHostnameStore = defineStore("hostname", {
   state: () => ({
     hostname: null,
   }),

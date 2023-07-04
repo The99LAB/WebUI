@@ -238,18 +238,20 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
 import PowerMenu from "src/components/PowerMenu.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
-import { useBackendStore } from "stores/backend";
+import { useHostnameStore } from "stores/hostname";
 import { storeToRefs } from "pinia";
 
 export default defineComponent({
   name: "MainLayout",
   data() {
+    // add a watcher to the hostname value
+    this.$watch("hostname", this.generateTitle);
     return {
       leftDrawerOpen: ref(false),
       rightDrawerOpen: ref(false),
@@ -259,7 +261,7 @@ export default defineComponent({
   },
   setup() {
     const title = ref("");
-    const store = useBackendStore();
+    const store = useHostnameStore();
     const { getHostname } = storeToRefs(store);
     const updateTitle = (newTitle) => {
       title.value = newTitle;
@@ -336,7 +338,6 @@ export default defineComponent({
     this.$router.afterEach((to, from) => {
       this.generateTitle();
     });
-    this.generateTitle();
   },
   unmounted() {
     this.ws.onclose = () => {};

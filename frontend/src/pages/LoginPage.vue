@@ -83,7 +83,7 @@ import { ref } from "vue";
 import ErrorDialog from "/src/components/ErrorDialog.vue";
 import { useMeta } from "quasar";
 import ToolTip from "src/components/ToolTip.vue";
-import { useBackendStore } from "stores/backend";
+import { useHostnameStore } from "stores/hostname";
 import { storeToRefs } from "pinia";
 
 export default {
@@ -102,7 +102,7 @@ export default {
         title: "Login",
       };
     });
-    const store = useBackendStore();
+    const store = useHostnameStore();
     const { getHostname } = storeToRefs(store);
     return {
       hostname: getHostname,

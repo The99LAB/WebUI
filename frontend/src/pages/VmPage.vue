@@ -145,6 +145,8 @@ import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";
 import LogDialog from "src/components/LogDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
+import { useVncSettingsStore } from "stores/vncsettings";
+import { storeToRefs } from "pinia";
 
 const selected = ref();
 
@@ -183,6 +185,13 @@ export default {
         rowsPerPage: 0,
       },
     };
+  },
+  setup() {
+    const store = useVncSettingsStore();
+    const { getVncSettings} = storeToRefs(store);
+    return {
+      vncSettings: getVncSettings,
+    }
   },
   components: {
     ErrorDialog,
@@ -242,24 +251,15 @@ export default {
         ]);
       });
     },
-    getVncSettings() {
-      this.$api.get("/host/settings/vnc").then((response) => {
-        this.novnc_port = response.data.port;
-        this.novnc_protocool = response.data.protocool;
-        this.novnc_path = response.data.path;
-        this.novnc_ip = response.data.ip;
-      });
-    },
     vncVm(uuid) {
-      console.log("vnc vm with uuid", uuid);
       const novnc_url =
-        this.novnc_protocool +
+        this.vncSettings.protocool +
         "://" +
-        this.novnc_ip +
+        this.vncSettings.ip +
         ":" +
-        this.novnc_port +
+        this.vncSettings.port +
         "/" +
-        this.novnc_path +
+        this.vncSettings.path +
         "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
         uuid;
       window.open(novnc_url, "_blank");
@@ -296,7 +296,6 @@ export default {
     this.connectWebSocket();
   },
   mounted() {
-    this.getVncSettings();
   },
   unmounted() {
     this.vmTableLoading = false;
