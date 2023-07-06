@@ -1,5 +1,8 @@
 name: Format source code
 on: push
+pull request:
+  branches-ignore:
+    - 'renovate*'
 
 jobs:
   run:
