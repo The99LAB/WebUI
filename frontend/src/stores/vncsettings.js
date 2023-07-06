@@ -43,7 +43,7 @@ export const useVncSettingsStore = defineStore("vncsettings", {
         this.vnc_protocool = response.data.protocool;
         this.vnc_path = response.data.path;
         this.vnc_ip = response.data.ip;
-        localStorage.setItem("vnc_settings", JSON.stringify(response.data))
+        localStorage.setItem("vnc_settings", JSON.stringify(response.data));
       });
     },
   },
