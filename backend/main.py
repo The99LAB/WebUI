@@ -2315,16 +2315,18 @@ async def api_storage_pools_actions_post(pooluuid: str, action: str, username: s
         raise HTTPException(status_code=500, detail=str(e))
 
 ### API-STORAGE-POOL-VOLUMES ###
-@app.delete('/api/storage-pools/{pooluuid}/volume/{volumename}')
-async def delete_storage_pool_volume(pooluuid: str, volumename: str, username: str = Depends(check_auth)):
-    print(f"removing volume with name: {volumename} on pool with uuid: {pooluuid}")
-    try:
-        pool = conn.storagePoolLookupByUUIDString(pooluuid)
-        volume = pool.storageVolLookupByName(volumename)
-        volume.delete()
-        return
-    except libvirt.libvirtError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@app.delete('/api/storage-pools/{pooluuid}/volume')
+async def delete_storage_pool_volumes(pooluuid: str, request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    print("deleting volumes: " + str(data))
+    for volume in data:
+        try:
+            pool = conn.storagePoolLookupByUUIDString(pooluuid)
+            volume = pool.storageVolLookupByName(volume)
+            volume.delete()
+        except libvirt.libvirtError as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    return
 
 @app.post('/api/storage-pools/{pooluuid}/volume/{volumename}')
 async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str = Form(...), size: int = Form(...), size_unit: str = Form(...), username: str = Depends(check_auth)):

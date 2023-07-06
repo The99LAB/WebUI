@@ -151,7 +151,7 @@
                     :rows="props.row.volumes"
                     :columns="volumeColums"
                     row-key="name"
-                    selection="single"
+                    selection="multiple"
                     v-model:selected="props.row.selectedVolume"
                     hide-no-data
                     hide-bottom
@@ -309,14 +309,14 @@ export default {
         });
     },
     removeVolume(pooluuid, volume) {
-      //console.log("pooluuid:", pooluuid)
-      //console.log("volume:", volume)
-      const volumeName = volume[0]["name"];
-      //console.log(volume[0]["name"])
+      var volumeNames = [];
+      for (let i = 0; i < volume.length; i++) {
+        volumeNames.push(volume[i]["name"]);
+      }
+
       this.$api
-        .delete("/storage-pools/" + pooluuid + "/volume/" + volumeName)
-        .then((response) => {
-          //console.log("storagepools:", response.data)
+        .delete("/storage-pools/" + pooluuid + "/volume", {
+          data: volumeNames,
         })
         .catch((error) => {
           this.$refs.errorDialog.show(error.response.data.detail);
