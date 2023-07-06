@@ -57,7 +57,9 @@
             <div class="col">
               <div class="row justify-start q-ml-lg q-my-none items-center">
                 <div class="q-py-none q-my-none row justify-center items-end">
-                  <p class="text-h3 q-mr-xs q-py-none q-my-none">{{ Math.round(mem_total *10) /10}}</p>
+                  <p class="text-h3 q-mr-xs q-py-none q-my-none">
+                    {{ Math.round(mem_total * 10) / 10 }}
+                  </p>
                   <p class="text-subtitle1 q-py-none q-my-none">GB</p>
                 </div>
               </div>
@@ -279,13 +281,11 @@ export default {
           categories: this.cpu_thread_categories,
         },
       });
-      this.$refs.cpuThreadChart.updateSeries(
-        [
-          {
-            data: threadData,
-          },
-        ]
-      );
+      this.$refs.cpuThreadChart.updateSeries([
+        {
+          data: threadData,
+        },
+      ]);
     },
     updateMemChart(used, total) {
       this.$refs.memUsageChart.updateOptions({
