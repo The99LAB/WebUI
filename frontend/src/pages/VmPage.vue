@@ -249,28 +249,31 @@ export default {
     },
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid);
-      console.log("vnc settings", this.vncSettings)
-      if (this.vncSettings.protocool == null || this.vncSettings.ip == null || this.vncSettings.port == null || this.vncSettings.path == null) {
+      console.log("vnc settings", this.vncSettings);
+      if (
+        this.vncSettings.protocool == null ||
+        this.vncSettings.ip == null ||
+        this.vncSettings.port == null ||
+        this.vncSettings.path == null
+      ) {
         this.$refs.errorDialog.show("Error getting VNC settings", [
-          "Error: VNC settings not set", "Please set VNC settings in the settings page."
+          "Error: VNC settings not set",
+          "Please set VNC settings in the settings page.",
         ]);
         return;
-      }
-      else {
+      } else {
         const novnc_url =
-        this.vncSettings.protocool +
-        "://" +
-        this.vncSettings.ip +
-        ":" +
-        this.vncSettings.port +
-        "/" +
-        this.vncSettings.path +
-        "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
-        uuid;
+          this.vncSettings.protocool +
+          "://" +
+          this.vncSettings.ip +
+          ":" +
+          this.vncSettings.port +
+          "/" +
+          this.vncSettings.path +
+          "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
+          uuid;
         window.open(novnc_url, "_blank");
       }
-      
-      
     },
     editVm(uuid) {
       this.$refs.editVm.show(uuid);

@@ -27,7 +27,10 @@
               </div>
               <div class="row justify-start q-ml-lg q-my-none items-center">
                 <p class="q-mr-lg text-weight-bold">Highest usage:</p>
-                <p>{{ cpu_thread_highest_usage.usage }}% (Thread {{ cpu_thread_highest_usage.thread }})</p>
+                <p>
+                  {{ cpu_thread_highest_usage.usage }}% (Thread
+                  {{ cpu_thread_highest_usage.thread }})
+                </p>
               </div>
             </div>
           </q-card-section>
@@ -246,9 +249,10 @@ export default {
           this.cpu_progress = data.data.cpu_percent;
           this.cpu_progress_text = data.data.cpu_percent + "%";
           this.cpu_thread_count = data.data.cpu_thread_data.length;
-          this.updateCpuChart(this.cpu_thread_count, data.data.cpu_thread_data)
+          this.updateCpuChart(this.cpu_thread_count, data.data.cpu_thread_data);
           let highest_thread_usage = Math.max(...data.data.cpu_thread_data);
-          this.cpu_thread_highest_usage.thread = data.data.cpu_thread_data.indexOf(highest_thread_usage);
+          this.cpu_thread_highest_usage.thread =
+            data.data.cpu_thread_data.indexOf(highest_thread_usage);
           this.cpu_thread_highest_usage.usage = highest_thread_usage;
           this.mem_progress = data.data.mem_percent;
           this.mem_progress_text = data.data.mem_percent + "%";
