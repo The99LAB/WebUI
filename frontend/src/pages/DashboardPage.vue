@@ -6,7 +6,7 @@
           <q-card-section class="text-left row items-center q-pb-none">
             <p class="text-h6">CPU</p>
             <q-space></q-space>
-            <p class="text-subtitle2 text-grey-8">AMD Ryzen 9 5900X</p>
+            <p class="text-subtitle2 text-grey-8">{{ cpu_name }}</p>
           </q-card-section>
           <q-card-section class="row items-center q-py-none">
             <div class="col">
@@ -148,6 +148,7 @@ import { colors } from "quasar";
 export default {
   data() {
     return {
+      cpu_name: "",
       cpu_progress: 0,
       cpu_thread_count: null,
       cpu_thread_categories: null,
@@ -246,6 +247,10 @@ export default {
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        if (data.type == "dashboard_init") {
+          this.mem_total = data.data.mem_total;
+          this.cpu_name = data.data.cpu_name;
+        }
         if (data.type == "dashboard") {
           this.cpu_progress = data.data.cpu_percent;
           this.cpu_progress_text = data.data.cpu_percent + "%";
@@ -256,7 +261,6 @@ export default {
             data.data.cpu_thread_data.indexOf(highest_thread_usage);
           this.cpu_thread_highest_usage.usage = highest_thread_usage;
           this.mem_used = data.data.mem_used;
-          this.mem_total = data.data.mem_total;
           this.updateMemChart(this.mem_used, this.mem_total);
           this.loadingVisible = false;
         } else if (data.type == "auth_error") {

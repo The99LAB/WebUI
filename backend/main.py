@@ -1314,13 +1314,17 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     try:
+        if check_auth_token(token):
+            sysInfo = ET.fromstring(conn.getSysinfo(0))
+            cpu_name = sysInfo.find("processor/entry[@name='version']").text
+            mem_total = round(convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB"), 2)
+            await websocket.send_json({"type": "dashboard_init", "data": {"cpu_name": cpu_name, "mem_total": mem_total}})
         while True:
             if check_auth_token(token):
                 cpu_percent = int(psutil.cpu_percent())
                 cpu_thread_data = psutil.cpu_percent(interval=1, percpu=True)
-                mem_total = round(convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB"), 2)
                 mem_used = round(convertSizeUnit(psutil.virtual_memory().used, from_unit="B", to_unit="GB"), 2)
-                message = {"cpu_percent": cpu_percent, "cpu_thread_data": cpu_thread_data, "mem_total": mem_total, "mem_used": mem_used}
+                message = {"cpu_percent": cpu_percent, "cpu_thread_data": cpu_thread_data, "mem_used": mem_used}
                 await websocket.send_json({"type": "dashboard", "data": message})
                 await asyncio.sleep(1)
             else:
