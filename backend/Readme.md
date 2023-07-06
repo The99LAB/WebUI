@@ -1,2 +1,3 @@
 - Install dependencies: `pip3 install -r requirements.txt`
+- Init database: `python3 init_database.py`
 - Run the server: `uvicorn main:app --host 0.0.0.0 --reload`
