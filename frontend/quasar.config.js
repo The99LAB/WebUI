@@ -27,7 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli/boot-files
-    boot: ["ws", "axios"],
+    boot: ["ws", "axios", "apexcharts"],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ["app.scss"],
@@ -93,6 +93,9 @@ module.exports = configure(function (/* ctx */) {
     framework: {
       config: {
         dark: "auto", // or Boolean true/false
+        screen: {
+          bodyClasses: true, // <<< add this
+        },
       },
       // iconSet: 'material-icons', // Quasar icon set
       // lang: 'en-US', // Quasar language pack

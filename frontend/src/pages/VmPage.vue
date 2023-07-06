@@ -177,10 +177,6 @@ export default {
       columns,
       selected,
       vmTableLoading: ref(true),
-      novnc_port: null,
-      novnc_protocool: null,
-      novnc_path: null,
-      novnc_ip: null,
       vmTablePagination: {
         rowsPerPage: 0,
       },
@@ -252,7 +248,16 @@ export default {
       });
     },
     vncVm(uuid) {
-      const novnc_url =
+      console.log("vnc vm with uuid", uuid);
+      console.log("vnc settings", this.vncSettings)
+      if (this.vncSettings.protocool == null || this.vncSettings.ip == null || this.vncSettings.port == null || this.vncSettings.path == null) {
+        this.$refs.errorDialog.show("Error getting VNC settings", [
+          "Error: VNC settings not set", "Please set VNC settings in the settings page."
+        ]);
+        return;
+      }
+      else {
+        const novnc_url =
         this.vncSettings.protocool +
         "://" +
         this.vncSettings.ip +
@@ -262,7 +267,10 @@ export default {
         this.vncSettings.path +
         "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
         uuid;
-      window.open(novnc_url, "_blank");
+        window.open(novnc_url, "_blank");
+      }
+      
+      
     },
     editVm(uuid) {
       this.$refs.editVm.show(uuid);
