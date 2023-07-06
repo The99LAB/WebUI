@@ -249,7 +249,6 @@ export default {
     },
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid);
-      console.log("vnc settings", this.vncSettings);
       if (
         this.vncSettings.protocool == null ||
         this.vncSettings.ip == null ||

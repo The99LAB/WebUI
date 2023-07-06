@@ -17,6 +17,13 @@ export const useVncSettingsStore = defineStore("vncsettings", {
         this.vnc_path == null ||
         this.vnc_ip == null
       ) {
+        if (localStorage.getItem("vnc_settings") != null) {
+          const vnc_settings = JSON.parse(localStorage.getItem("vnc_settings"));
+          this.vnc_port = vnc_settings.port;
+          this.vnc_protocool = vnc_settings.protocool;
+          this.vnc_path = vnc_settings.path;
+          this.vnc_ip = vnc_settings.ip;
+        }
         this.getVncSettingsApi();
       }
       return {
@@ -36,6 +43,7 @@ export const useVncSettingsStore = defineStore("vncsettings", {
         this.vnc_protocool = response.data.protocool;
         this.vnc_path = response.data.path;
         this.vnc_ip = response.data.ip;
+        localStorage.setItem("vnc_settings", JSON.stringify(response.data))
       });
     },
   },
