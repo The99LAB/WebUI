@@ -1318,8 +1318,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             if check_auth_token(token):
                 cpu_percent = int(psutil.cpu_percent())
                 cpu_thread_data = psutil.cpu_percent(interval=1, percpu=True)
-                mem_percent = int(psutil.virtual_memory().percent)
-                message = {"cpu_percent": cpu_percent, "cpu_thread_data": cpu_thread_data, "mem_percent": mem_percent}
+                mem_total = round(convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB"), 2)
+                mem_used = round(convertSizeUnit(psutil.virtual_memory().used, from_unit="B", to_unit="GB"), 2)
+                message = {"cpu_percent": cpu_percent, "cpu_thread_data": cpu_thread_data, "mem_total": mem_total, "mem_used": mem_used}
                 await websocket.send_json({"type": "dashboard", "data": message})
                 await asyncio.sleep(1)
             else:

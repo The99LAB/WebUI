@@ -57,7 +57,7 @@
             <div class="col">
               <div class="row justify-start q-ml-lg q-my-none items-center">
                 <div class="q-py-none q-my-none row justify-center items-end">
-                  <p class="text-h3 q-mr-xs q-py-none q-my-none">4.0</p>
+                  <p class="text-h3 q-mr-xs q-py-none q-my-none">{{ Math.round(mem_total *10) /10}}</p>
                   <p class="text-subtitle1 q-py-none q-my-none">GB</p>
                 </div>
               </div>
@@ -71,14 +71,14 @@
                   name="fiber_manual_record"
                   class="text-primary q-mr-xs q-pa-none"
                 ></q-icon
-                >Used
+                >Used ({{ mem_used }} GB)
               </div>
               <div class="row justify-start q-ml-lg q-my-none items-center">
                 <q-icon
                   name="fiber_manual_record"
                   class="text-grey-9 q-mr-xs q-pa-none"
                 ></q-icon
-                >Free
+                >Free ( {{ (mem_total - mem_used).toFixed(2) }} GB)
               </div>
             </div>
             <div class="col-8">
@@ -154,8 +154,8 @@ export default {
         usage: null,
       },
       cpu_progress_text: "",
-      mem_progress: 0,
-      mem_progress_text: "",
+      mem_used: null,
+      mem_total: null,
       loadingVisible: true,
       cpuChartOptions: {
         grid: {
@@ -218,7 +218,6 @@ export default {
         tooltip: {
           enabled: false,
         },
-        // disable hover effect
         states: {
           hover: {
             filter: {
@@ -254,10 +253,10 @@ export default {
           this.cpu_thread_highest_usage.thread =
             data.data.cpu_thread_data.indexOf(highest_thread_usage);
           this.cpu_thread_highest_usage.usage = highest_thread_usage;
-          this.mem_progress = data.data.mem_percent;
-          this.mem_progress_text = data.data.mem_percent + "%";
+          this.mem_used = data.data.mem_used;
+          this.mem_total = data.data.mem_total;
+          this.updateMemChart(this.mem_used, this.mem_total);
           this.loadingVisible = false;
-          this.testmethod2();
         } else if (data.type == "auth_error") {
           localStorage.setItem("jwt-token", "");
           this.$router.push({ path: "/login" });
@@ -285,21 +284,17 @@ export default {
           {
             data: threadData,
           },
-        ],
-        false
-      ); // false means no animation
+        ]
+      );
     },
-    testmethod() {
-      this.updateCpuChart(8, [10, 20, 30, 40, 50, 60, 70, 80]);
-    },
-    testmethod2() {
+    updateMemChart(used, total) {
       this.$refs.memUsageChart.updateOptions({
         colors: [
           colors.getPaletteColor("primary"),
           colors.getPaletteColor("grey-9"),
         ],
       });
-      this.$refs.memUsageChart.updateSeries([5, 95], false);
+      this.$refs.memUsageChart.updateSeries([used, total - used]);
     },
   },
   created() {
