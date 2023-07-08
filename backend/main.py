@@ -24,6 +24,7 @@ import select
 import signal
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
+import humanize
 
 
 origins = ["*"]
@@ -1318,7 +1319,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             sysInfo = ET.fromstring(conn.getSysinfo(0))
             cpu_name = sysInfo.find("processor/entry[@name='version']").text
             mem_total = round(convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB"), 2)
-            await websocket.send_json({"type": "dashboard_init", "data": {"cpu_name": cpu_name, "mem_total": mem_total}})
+            os_name = distro.name(pretty=True)
+            uptime = humanize.precisedelta(datetime.now() - datetime.fromtimestamp(psutil.boot_time()), minimum_unit="minutes", format="%0.0f")
+            await websocket.send_json({"type": "dashboard_init", "data": {"cpu_name": cpu_name, "mem_total": mem_total, "os_name": os_name, "uptime": uptime}})
         while True:
             if check_auth_token(token):
                 cpu_percent = int(psutil.cpu_percent())

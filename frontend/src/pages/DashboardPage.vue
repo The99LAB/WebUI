@@ -1,7 +1,36 @@
 <template>
   <q-page padding>
     <div class="row justify-evenly text-center q-gutter-md">
-      <div class="col-auto">
+      <q-card class="dashboard-card">
+          <div class="row justify-between full-height items-center q-pb-none">
+            <div class="col-4 bg-grey-9 self-start full-height">
+                <!-- 3x text test. First one on top, second one in middle, third on bottom -->
+                <p style="height: 50%;" class="q-my-none text-h4">Server99</p>
+                <p style="height: 50%;" class="q-my-none">Logo</p>
+            </div>
+            <div class="col-8 self-start">
+              <p class="text-h6 text-left q-my-none q-pl-md">System Information</p>
+              <p class="text-subtitle2 text-grey-8 text-left q-pl-md">
+                Overview
+              </p>
+              <div class="text-left row items-center q-pl-md">
+                <p class="text-subtitle2 text-weight-bolder q-mr-xs">Version:</p>
+                <p class="text-weight-regular">{{os_name}}</p>
+              </div>
+              <q-separator class="q-mb-md"></q-separator>
+              <div class="text-left row items-center q-pl-md">
+                <p class="text-subtitle2 text-weight-bolder q-mr-xs">Hostname:</p>
+                <p class="text-weight-regular">{{hostname}}</p>
+              </div>
+              <q-separator class="q-mb-md"></q-separator>
+              <div class="text-left row items-center q-pl-md">
+                <p class="text-subtitle2 text-weight-bolder q-mr-xs">Uptime:</p>
+                <p class="text-weight-regular">{{uptime}}</p>
+              </div>
+              <q-separator class="q-mb-md"></q-separator>
+            </div>
+          </div>
+        </q-card>
         <q-card class="dashboard-card">
           <q-card-section class="text-left row items-center q-pb-none">
             <p class="text-h6">CPU</p>
@@ -44,8 +73,7 @@
             ></apexchart>
           </q-card-section>
         </q-card>
-      </div>
-      <div class="col-auto">
+
         <q-card class="dashboard-card">
           <q-card-section class="text-left q-pb-none">
             <p class="text-h6">Memory</p>
@@ -94,7 +122,6 @@
           </q-card-section>
         </q-card>
       </div>
-    </div>
     <q-inner-loading :showing="loadingVisible">
       <q-spinner-gears size="50px" color="primary" />
     </q-inner-loading>
@@ -142,8 +169,9 @@ body.screen--xl {
 
 <script>
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
-import { getCssVar } from "quasar";
 import { colors } from "quasar";
+import { useHostnameStore } from "stores/hostname";
+import { storeToRefs } from "pinia";
 
 export default {
   data() {
@@ -159,6 +187,8 @@ export default {
       cpu_progress_text: "",
       mem_used: null,
       mem_total: null,
+      uptime: null,
+      os_name: null,
       loadingVisible: true,
       cpuChartOptions: {
         grid: {
@@ -235,6 +265,13 @@ export default {
       memChartSeries: [0],
     };
   },
+  setup() {
+    const store = useHostnameStore();
+    const { getHostname } = storeToRefs(store);
+    return {
+      hostname: getHostname,
+    };
+  },
   components: {
     WsReconnectDialog,
   },
@@ -250,6 +287,8 @@ export default {
         if (data.type == "dashboard_init") {
           this.mem_total = data.data.mem_total;
           this.cpu_name = data.data.cpu_name;
+          this.os_name = data.data.os_name;
+          this.uptime = data.data.uptime;
         }
         if (data.type == "dashboard") {
           this.cpu_progress = data.data.cpu_percent;
