@@ -8,12 +8,12 @@
       </q-card-section>
       <q-card-section class="row">
         <q-space />
-        <q-btn color="primary" label="Shutdown" @click="shutdown()" />
+        <q-btn color="primary" label="Shutdown" icon="mdi-power" @click="shutdown()" />
         <q-space />
       </q-card-section>
       <q-card-section class="row">
         <q-space />
-        <q-btn color="primary" label="Reboot" @click="reboot()" />
+        <q-btn color="primary" icon="mdi-refresh" label="Reboot" @click="reboot()" />
         <q-space />
       </q-card-section>
     </q-card>
