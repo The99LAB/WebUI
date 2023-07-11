@@ -136,9 +136,7 @@
         </q-card-section>
       </q-card>
     </div>
-    <q-inner-loading :showing="loadingVisible">
-      <q-spinner-gears size="50px" color="primary" />
-    </q-inner-loading>
+    <q-inner-loading :showing="loadingVisible"/>
   </q-page>
   <WsReconnectDialog
     ref="wsReconnectDialog"
