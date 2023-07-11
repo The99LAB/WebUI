@@ -34,10 +34,40 @@
           dense
           flat
           round
-          icon="power_settings_new"
-          @click="showPowerMenu()"
+          icon="mdi-power"
         >
           <ToolTip content="Power" />
+          <q-menu >
+            <q-list style="min-width: 10em;">
+              <q-item clickable>
+                <q-item-section>
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="mdi-power"
+                    label="Shutdown"
+                    @click="shutdown()"
+                    class="disable-focus-helper"
+                  />
+                </q-item-section>
+              </q-item>
+              <q-separator/>
+              <q-item clickable>
+                <q-item-section>
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="mdi-refresh"
+                    label="Reboot"
+                    @click="reboot()"
+                    class="disable-focus-helper"
+                  />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
         <q-btn
           dense
@@ -315,6 +345,33 @@ export default defineComponent({
         this.$refs.wsReconnectDialog.show();
       };
     },
+    shutdown() {
+      this.$api.post("host/power/shutdown").catch((error) => {
+        let errormsg = "";
+        if (error.response == undefined) {
+          error = "Could not connect to server.";
+        } else {
+          error = error.response.data.detail;
+        }
+        this.$refs.errorDialog.show("Shutdown error", [
+          errormsg
+        ]);
+      });
+    },
+    reboot() {
+      this.$api.post("host/power/reboot")
+      .catch((error) => {
+        let errormsg = "";
+        if (error.response == undefined) {
+          error = "Could not connect to server.";
+        } else {
+          error = error.response.data.detail;
+        }
+        this.$refs.errorDialog.show("Reboot error", [
+          errormsg
+        ]);
+      });
+    },
   },
   created() {
     this.connectNotificationsWebsocket();
@@ -325,3 +382,10 @@ export default defineComponent({
   },
 });
 </script>
+<style lang="scss">
+.disable-focus-helper {
+  .q-focus-helper {
+    opacity: 0 !important;
+  }
+}
+</style>
