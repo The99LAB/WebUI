@@ -3,13 +3,24 @@
     <div class="row justify-evenly text-center q-gutter-md">
       <q-card class="dashboard-card">
           <div class="row justify-between full-height items-center q-pb-none">
-            <div class="col-4 bg-grey-9 self-start full-height">
-                <!-- 3x text test. First one on top, second one in middle, third on bottom -->
-                <p style="height: 50%;" class="q-my-none text-h4">Server99</p>
-                <p style="height: 50%;" class="q-my-none">Logo</p>
+            <div class="col-4 bg-grey-10 full-height q-pa-sm" style="border-radius: 0.3em;">
+                <q-img src="/src/assets/Server99-logo-full.png" style="margin-bottom: 6em;"/>
+                <q-img src="/src/assets/Server99-base.png"/>
             </div>
             <div class="col-8 self-start">
-              <p class="text-h6 text-left q-my-none q-pl-md">System Information</p>
+              <div class="row items-center q-my-none q-pl-md">
+                <p class="text-h6 q-ma-none">System Information</p>
+                <q-space />
+                <q-btn
+                  flat
+                  dense
+                  round
+                  icon="mdi-eye-outline"
+                  @click="$router.push( { name: 'system-info' } )"
+                >
+                  <q-tooltip>View full system information</q-tooltip>
+                </q-btn>
+              </div>
               <p class="text-subtitle2 text-grey-8 text-left q-pl-md">
                 Overview
               </p>
@@ -51,11 +62,11 @@
             </div>
             <div class="col-7">
               <div class="row justify-start q-ml-lg q-my-none items-center">
-                <p class="q-mr-lg text-weight-bold">Threads:</p>
+                <p class="q-mr-sm text-weight-bold">Threads:</p>
                 <p>{{ cpu_thread_count }}</p>
               </div>
               <div class="row justify-start q-ml-lg q-my-none items-center">
-                <p class="q-mr-lg text-weight-bold">Highest usage:</p>
+                <p class="q-mr-sm text-weight-bold">Highest usage:</p>
                 <p>
                   {{ cpu_thread_highest_usage.usage }}% (Thread
                   {{ cpu_thread_highest_usage.thread }})
@@ -73,7 +84,6 @@
             ></apexchart>
           </q-card-section>
         </q-card>
-
         <q-card class="dashboard-card">
           <q-card-section class="text-left q-pb-none">
             <p class="text-h6">Memory</p>
@@ -152,14 +162,7 @@ body.screen--md {
   }
 }
 
-body.screen--lg {
-  .dashboard-card {
-    width: 500px;
-    height: 400px;
-  }
-}
-
-body.screen--xl {
+body.screen--lg, body.screen--xl {
   .dashboard-card {
     width: 500px;
     height: 400px;
