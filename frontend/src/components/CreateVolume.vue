@@ -102,7 +102,7 @@ export default {
       this.$api
         .post(
           "/storage-pools/" + this.pooluuid + "/volume/" + this.volumeName,
-          formData
+          formData,
         )
         .then((this.layout = false), this.$emit("volume-created"))
         .catch((error) => {

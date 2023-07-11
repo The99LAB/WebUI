@@ -300,7 +300,7 @@ export default {
           "Please select a network"[
             ("Please select a network",
             "Create a network if you don't have one")
-          ]
+          ],
         );
         return;
       }
@@ -322,15 +322,15 @@ export default {
       formData.append("disk_pool", this.$refs.diskPool.getSelectedPool());
       formData.append(
         "cdrom_pool",
-        this.$refs.cdromPoolVolume.getSelectedPool()
+        this.$refs.cdromPoolVolume.getSelectedPool(),
       );
       formData.append(
         "cdrom_volume",
-        this.$refs.cdromPoolVolume.getSelectedVolume()
+        this.$refs.cdromPoolVolume.getSelectedVolume(),
       );
       formData.append(
         "network_source",
-        this.$refs.networkSource.getSelectedNetwork()
+        this.$refs.networkSource.getSelectedNetwork(),
       );
       formData.append("network_model", this.network_model);
       this.$api

@@ -529,7 +529,7 @@
                           pcidevice.domain,
                           pcidevice.bus,
                           pcidevice.slot,
-                          pcidevice.function
+                          pcidevice.function,
                         )
                       "
                     />

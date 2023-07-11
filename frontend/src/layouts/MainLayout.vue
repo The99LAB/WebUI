@@ -297,7 +297,7 @@ export default defineComponent({
     connectNotificationsWebsocket() {
       const jwt_token = localStorage.getItem("jwt-token");
       this.ws = new WebSocket(
-        this.$WS_ENDPOINT + "/notifications?token=" + jwt_token
+        this.$WS_ENDPOINT + "/notifications?token=" + jwt_token,
       );
 
       this.ws.onmessage = (event) => {
