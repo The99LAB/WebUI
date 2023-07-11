@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <q-card>
-      <q-inner-loading :showing="loadingVisible"/>
+      <q-inner-loading :showing="loadingVisible" />
       <q-card-section>
         <div class="text-h6 text-center" v-show="showData">
           System Information

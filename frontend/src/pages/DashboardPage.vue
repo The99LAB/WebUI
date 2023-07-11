@@ -136,7 +136,7 @@
         </q-card-section>
       </q-card>
     </div>
-    <q-inner-loading :showing="loadingVisible"/>
+    <q-inner-loading :showing="loadingVisible" />
   </q-page>
   <WsReconnectDialog
     ref="wsReconnectDialog"
