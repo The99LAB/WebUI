@@ -3,14 +3,19 @@
     <q-page-container>
       <q-page padding class="row justify-center items-center">
         <q-card>
-          <q-card-section class="bg-primary">
-            <h5 class="text-center q-my-md text-white">
+          <q-linear-progress
+            rounded
+            :query="loginLoading"
+            track-color="transparent"
+          />
+          <q-card-section >            
+            <img class="login-logo text-center" src="/src/assets/Server99-logo-full.png" alt="Logo" />
+            <!-- <h5 class="text-center q-my-md text-white">
               <div v-if="hostname !== null">{{ hostname }} - Login</div>
               <div v-else>Login</div>
-            </h5>
+            </h5> -->
           </q-card-section>
-          <q-card-section class="q-px-lg q-py-lg">
-            <div class="q-mx-lg">
+          <q-card-section class="q-py-lg q-px-lg">
               <q-input
                 class="q-mb-md q-mt-md"
                 name="username"
@@ -26,6 +31,7 @@
                 </template>
               </q-input>
               <q-input
+                style="width: 20em;"
                 name="password"
                 square
                 clearable
@@ -51,20 +57,17 @@
                   </q-icon>
                 </template>
               </q-input>
-              <q-separator color="transparent" spaced inset dark />
-              <p class="text-body2 text-weight-bold text-center text-negative">
-                {{ authError }}
+              <p class="text-body2 text-weight-bold text-center text-negative q-mb-none">
+                {{ authError }}&nbsp;
               </p>
-            </div>
           </q-card-section>
-          <q-card-actions class="q-pa-lg">
+          <q-card-actions class="q-pb-md q-px-md">
             <q-btn
               size="lg"
               color="primary"
               class="full-width"
               label="Login"
               @click="login"
-              :loading="loginLoading"
             />
           </q-card-actions>
         </q-card>
@@ -73,6 +76,17 @@
   </q-layout>
   <ErrorDialog ref="errorDialog" />
 </template>
+
+<style lang="scss" scoped>
+body.screen--xs, body.screen--sm, body.screen--md, body.screen--lg, body.screen--xl {
+  .login-logo {
+    width: 150px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+  }
+}
+</style>
 <script>
 import { ref } from "vue";
 import ErrorDialog from "/src/components/ErrorDialog.vue";
