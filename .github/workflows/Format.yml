@@ -1,11 +1,5 @@
 name: Format source code
-on:
-  push:
-    branches-ignore:
-      - renovate/*
-  pull_request:
-    branches-ignore: 'renovate/*'
-
+on: push
 jobs:
   run:
     name: Format
