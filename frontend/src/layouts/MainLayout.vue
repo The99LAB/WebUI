@@ -257,7 +257,6 @@
 
     <q-page-container>
       <router-view />
-      <PowerMenu ref="powerMenu" />
       <ErrorDialog ref="errorDialog" />
       <WsReconnectDialog
         ref="wsReconnectDialog"
@@ -269,7 +268,6 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-import PowerMenu from "src/components/PowerMenu.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
@@ -295,7 +293,6 @@ export default defineComponent({
   },
 
   components: {
-    PowerMenu,
     ErrorDialog,
     WsReconnectDialog,
     ToolTip,
