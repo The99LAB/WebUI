@@ -11,7 +11,7 @@
       </q-card-section>
       <q-separator color="transparent" dark inset />
       <q-card-section>
-        <div  v-show="showData">
+        <div v-show="showData">
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Motherboard:</p>
             <p class="col">{{ systemInfo.motherboard }}</p>
@@ -31,9 +31,7 @@
             <p class="col">{{ systemInfo.os }}</p>
           </div>
           <div class="row items-start">
-            <p class="col text-right q-mr-sm text-weight-bold">
-              Linux Kernel:
-            </p>
+            <p class="col text-right q-mr-sm text-weight-bold">Linux Kernel:</p>
             <p class="col">{{ systemInfo.linuxVersion }}</p>
           </div>
           <div class="row items-start">
@@ -57,8 +55,8 @@
                 <ToolTip content="Edit Hostname" />
               </q-btn>
             </p>
-            </div>
-        </div>  
+          </div>
+        </div>
       </q-card-section>
     </q-card>
     <editHostName
@@ -80,7 +78,7 @@ export default {
     const loadingVisible = ref(true);
     const showData = ref(false);
     return {
-      systemInfo:{
+      systemInfo: {
         motherboard: "",
         processor: "",
         memory: "",

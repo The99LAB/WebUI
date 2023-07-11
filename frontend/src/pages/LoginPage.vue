@@ -8,58 +8,64 @@
             :query="loginLoading"
             track-color="transparent"
           />
-          <q-card-section >            
-            <img class="login-logo text-center" src="/src/assets/Server99-logo-full.png" alt="Logo" />
+          <q-card-section>
+            <img
+              class="login-logo text-center"
+              src="/src/assets/Server99-logo-full.png"
+              alt="Logo"
+            />
             <!-- <h5 class="text-center q-my-md text-white">
               <div v-if="hostname !== null">{{ hostname }} - Login</div>
               <div v-else>Login</div>
             </h5> -->
           </q-card-section>
           <q-card-section class="q-py-lg q-px-lg">
-              <q-input
-                class="q-mb-md q-mt-md"
-                name="username"
-                square
-                clearable
-                v-model="username"
-                label="Username"
-                @update:model-value="authError = ''"
-                @keydown.tab.prevent="$refs.passwordInput.focus()"
-              >
-                <template v-slot:prepend>
-                  <q-icon name="mdi-account" />
-                </template>
-              </q-input>
-              <q-input
-                style="width: 20em;"
-                name="password"
-                square
-                clearable
-                v-model="password"
-                :type="isPwd ? 'password' : 'text'"
-                label="Password"
-                ref="passwordInput"
-                @update:model-value="authError = ''"
-                @keyup.enter="login"
-              >
-                <template v-slot:prepend>
-                  <q-icon name="mdi-lock" />
-                </template>
-                <template v-slot:append>
-                  <q-icon
-                    :name="isPwd ? 'visibility_off' : 'visibility'"
-                    class="cursor-pointer"
-                    @click="isPwd = !isPwd"
-                  >
-                    <ToolTip
-                      :content="isPwd ? 'Show Password' : 'Hide Password'"
-                    />
-                  </q-icon>
-                </template>
-              </q-input>
-              <p class="text-body2 text-weight-bold text-center text-negative q-mb-none">
-                {{ authError }}&nbsp;
-              </p>
+            <q-input
+              class="q-mb-md q-mt-md"
+              name="username"
+              square
+              clearable
+              v-model="username"
+              label="Username"
+              @update:model-value="authError = ''"
+              @keydown.tab.prevent="$refs.passwordInput.focus()"
+            >
+              <template v-slot:prepend>
+                <q-icon name="mdi-account" />
+              </template>
+            </q-input>
+            <q-input
+              style="width: 20em"
+              name="password"
+              square
+              clearable
+              v-model="password"
+              :type="isPwd ? 'password' : 'text'"
+              label="Password"
+              ref="passwordInput"
+              @update:model-value="authError = ''"
+              @keyup.enter="login"
+            >
+              <template v-slot:prepend>
+                <q-icon name="mdi-lock" />
+              </template>
+              <template v-slot:append>
+                <q-icon
+                  :name="isPwd ? 'visibility_off' : 'visibility'"
+                  class="cursor-pointer"
+                  @click="isPwd = !isPwd"
+                >
+                  <ToolTip
+                    :content="isPwd ? 'Show Password' : 'Hide Password'"
+                  />
+                </q-icon>
+              </template>
+            </q-input>
+            <p
+              class="text-body2 text-weight-bold text-center text-negative q-mb-none"
+            >
+              {{ authError }}&nbsp;
+            </p>
           </q-card-section>
           <q-card-actions class="q-pb-md q-px-md">
             <q-btn
@@ -78,7 +84,11 @@
 </template>
 
 <style lang="scss" scoped>
-body.screen--xs, body.screen--sm, body.screen--md, body.screen--lg, body.screen--xl {
+body.screen--xs,
+body.screen--sm,
+body.screen--md,
+body.screen--lg,
+body.screen--xl {
   .login-logo {
     width: 150px;
     margin-left: auto;
@@ -129,9 +139,7 @@ export default {
         .catch((error) => {
           if (error.response == undefined) {
             this.authError = "Server is not responding";
-            
-          }
-          else {
+          } else {
             this.authError = error.response.data.detail;
           }
           this.loginLoading = false;

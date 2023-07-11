@@ -88,7 +88,7 @@
             editSettingDialogSave(
               this.editSettingDialogTarget,
               this.editSettingDialogName,
-              this.editSettingDialogValue
+              this.editSettingDialogValue,
             )
           "
         />

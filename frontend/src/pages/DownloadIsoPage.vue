@@ -61,7 +61,7 @@ export default {
     downloadIso() {
       const jwt_token = localStorage.getItem("jwt-token");
       this.ws = new WebSocket(
-        this.$WS_ENDPOINT + "/downloadiso?token=" + jwt_token
+        this.$WS_ENDPOINT + "/downloadiso?token=" + jwt_token,
       );
       this.ws.onopen = () => {
         this.ws.send(
@@ -69,7 +69,7 @@ export default {
             url: this.url,
             fileName: this.fileName,
             storagePool: this.$refs.storagePool.getSelectedPool(),
-          })
+          }),
         );
       };
       this.ws.onmessage = (event) => {

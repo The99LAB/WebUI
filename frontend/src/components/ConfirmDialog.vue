@@ -47,7 +47,7 @@ export default {
   methods: {
     show(
       title = "Are you sure?",
-      content = ["Are you sure you want to do this?"]
+      content = ["Are you sure you want to do this?"],
     ) {
       this.title = title;
       this.content = content;

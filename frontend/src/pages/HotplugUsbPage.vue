@@ -50,7 +50,7 @@ export default {
           {
             vendorid: this.$refs.usbDevicesList.getSelectedUsbVendorId(),
             productid: this.$refs.usbDevicesList.getSelectedUsbProductId(),
-          }
+          },
         )
         .catch((error) => {
           this.$refs.errorDialog.show("Error adding USB device to VM", [
@@ -82,7 +82,7 @@ export default {
           {
             vendorid: this.$refs.usbDevicesList.getSelectedUsbVendorId(),
             productid: this.$refs.usbDevicesList.getSelectedUsbProductId(),
-          }
+          },
         )
         .catch((error) => {
           this.$refs.errorDialog.show("Error removing USB device from VM", [
