@@ -2537,6 +2537,7 @@ async def api_system_info_get(action: str, username: str = Depends(check_auth)):
         for memory_device in sysInfo.findall("memory_device"):
             memory_size = int(memory_size) + int(memory_device.find("entry[@name='size']").text.replace(" GB", ""))
         memory_size = str(memory_size) + " GB"
+        uptime = humanize.precisedelta(datetime.now() - datetime.fromtimestamp(psutil.boot_time()), minimum_unit="minutes", format="%0.0f")
         return {
             "motherboard": baseboard_manufacturer + " " + baseboard_product + " " + baseboard_version,
             "processor": processor_version,
@@ -2544,6 +2545,7 @@ async def api_system_info_get(action: str, username: str = Depends(check_auth)):
             "os": distro.name(pretty=True),
             "hostname": conn.getHostname(),
             "linuxVersion": os.uname()[2],
+            "uptime": uptime,
         }
     elif action == "hostname":
         return {

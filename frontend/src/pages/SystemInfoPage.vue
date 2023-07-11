@@ -14,32 +14,36 @@
         <div  v-show="showData">
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Motherboard:</p>
-            <p class="col">{{ motherboard }}</p>
+            <p class="col">{{ systemInfo.motherboard }}</p>
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Processor:</p>
-            <p class="col">{{ processor }}</p>
+            <p class="col">{{ systemInfo.processor }}</p>
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Memory:</p>
-            <p class="col">{{ memory }}</p>
+            <p class="col">{{ systemInfo.memory }}</p>
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">
               Operating System:
             </p>
-            <p class="col">{{ os }}</p>
+            <p class="col">{{ systemInfo.os }}</p>
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">
               Linux Kernel:
             </p>
-            <p class="col">{{ linuxVersion }}</p>
+            <p class="col">{{ systemInfo.linuxVersion }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Uptime:</p>
+            <p class="col">{{ systemInfo.uptime }}</p>
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Hostname:</p>
             <p class="col">
-              {{ hostname }}
+              {{ systemInfo.hostname }}
               <q-btn
                 round
                 icon="edit"
@@ -76,12 +80,15 @@ export default {
     const loadingVisible = ref(true);
     const showData = ref(false);
     return {
-      motherboard: "",
-      processor: "",
-      memory: "",
-      os: "",
-      hostname: "",
-      linuxVersion: "",
+      systemInfo:{
+        motherboard: "",
+        processor: "",
+        memory: "",
+        os: "",
+        hostname: "",
+        linuxVersion: "",
+        uptime: "",
+      },
       loadingVisible,
       showData,
     };
@@ -96,12 +103,7 @@ export default {
       this.$api
         .get("/host/system-info/all")
         .then((response) => {
-          this.motherboard = response.data.motherboard;
-          this.processor = response.data.processor;
-          this.memory = response.data.memory;
-          this.os = response.data.os;
-          this.hostname = response.data.hostname;
-          this.linuxVersion = response.data.linuxVersion;
+          this.systemInfo = response.data;
           this.loadingVisible = false;
           this.showData = true;
         })
