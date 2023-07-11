@@ -127,7 +127,13 @@ export default {
           this.loginLoading = false;
         })
         .catch((error) => {
-          this.authError = error.response.data.detail;
+          if (error.response == undefined) {
+            this.authError = "Server is not responding";
+            
+          }
+          else {
+            this.authError = error.response.data.detail;
+          }
           this.loginLoading = false;
         });
     },
