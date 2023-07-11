@@ -6,7 +6,8 @@
           <q-linear-progress
             rounded
             :query="loginLoading"
-            track-color="transparent"
+            track-color="primary"
+            color="secondary"
           />
           <q-card-section>
             <img
