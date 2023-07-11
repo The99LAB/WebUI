@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Web UI for managing libvirt based virtual machines",
   "productName": "VmManager",
-  "author": "Stijn Rombouts <thehackguy@icloud.com>",
+  "author": "Stijn Rombouts",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
@@ -35,7 +35,7 @@
     "prettier": "^3.0.0"
   },
   "engines": {
-    "node": "^18 || ^16 || ^14.19",
+    "node": "^20 ||^18 || ^16 || ^14.19",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
   }
