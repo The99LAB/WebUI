@@ -30,15 +30,10 @@
           />
           <ToolTip content="Notifications" />
         </q-btn>
-        <q-btn
-          dense
-          flat
-          round
-          icon="mdi-power"
-        >
+        <q-btn dense flat round icon="mdi-power">
           <ToolTip content="Power" />
-          <q-menu >
-            <q-list style="min-width: 10em;">
+          <q-menu>
+            <q-list style="min-width: 10em">
               <q-item clickable>
                 <q-item-section>
                   <q-btn
@@ -52,7 +47,7 @@
                   />
                 </q-item-section>
               </q-item>
-              <q-separator/>
+              <q-separator />
               <q-item clickable>
                 <q-item-section>
                   <q-btn
@@ -353,23 +348,18 @@ export default defineComponent({
         } else {
           error = error.response.data.detail;
         }
-        this.$refs.errorDialog.show("Shutdown error", [
-          errormsg
-        ]);
+        this.$refs.errorDialog.show("Shutdown error", [errormsg]);
       });
     },
     reboot() {
-      this.$api.post("host/power/reboot")
-      .catch((error) => {
+      this.$api.post("host/power/reboot").catch((error) => {
         let errormsg = "";
         if (error.response == undefined) {
           error = "Could not connect to server.";
         } else {
           error = error.response.data.detail;
         }
-        this.$refs.errorDialog.show("Reboot error", [
-          errormsg
-        ]);
+        this.$refs.errorDialog.show("Reboot error", [errormsg]);
       });
     },
   },
