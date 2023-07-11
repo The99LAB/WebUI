@@ -11,22 +11,34 @@
       </q-card-section>
       <q-separator color="transparent" dark inset />
       <q-card-section>
-        <div class="row justify-center text-body2" v-show="showData">
-          <div class="col text-right q-mr-sm text-weight-bold">
-            <p>Motherboard</p>
-            <p>Processor</p>
-            <p>Memory</p>
-            <p>Operating System</p>
-            <p>Linux Version</p>
-            <p>Host Name</p>
+        <div  v-show="showData">
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Motherboard:</p>
+            <p class="col">{{ motherboard }}</p>
           </div>
-          <div class="col text-weight-regular" v-show="showData">
-            <p>{{ motherboard }}</p>
-            <p>{{ processor }}</p>
-            <p>{{ memory }}</p>
-            <p>{{ os }}</p>
-            <p>{{ linuxVersion }}</p>
-            <p>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Processor:</p>
+            <p class="col">{{ processor }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Memory:</p>
+            <p class="col">{{ memory }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">
+              Operating System:
+            </p>
+            <p class="col">{{ os }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">
+              Linux Kernel:
+            </p>
+            <p class="col">{{ linuxVersion }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Hostname:</p>
+            <p class="col">
               {{ hostname }}
               <q-btn
                 round
@@ -41,8 +53,8 @@
                 <ToolTip content="Edit Hostname" />
               </q-btn>
             </p>
-          </div>
-        </div>
+            </div>
+        </div>  
       </q-card-section>
     </q-card>
     <editHostName
