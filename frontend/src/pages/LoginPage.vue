@@ -15,10 +15,6 @@
               src="/src/assets/Server99-logo-full.png"
               alt="Logo"
             />
-            <!-- <h5 class="text-center q-my-md text-white">
-              <div v-if="hostname !== null">{{ hostname }} - Login</div>
-              <div v-else>Login</div>
-            </h5> -->
           </q-card-section>
           <q-card-section class="q-py-lg q-px-lg">
             <q-input
