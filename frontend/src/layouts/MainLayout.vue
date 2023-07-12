@@ -32,7 +32,7 @@
         </q-btn>
         <q-btn dense flat round icon="mdi-power">
           <ToolTip content="Power" />
-          <q-menu>
+          <q-menu v-model="showPowerMenu">
             <q-list style="min-width: 10em">
               <q-item clickable>
                 <q-item-section>
@@ -42,7 +42,7 @@
                     dense
                     icon="mdi-power"
                     label="Shutdown"
-                    @click="shutdown()"
+                    @click="powerAction('shutdown')"
                     class="disable-focus-helper"
                   />
                 </q-item-section>
@@ -56,7 +56,7 @@
                     dense
                     icon="mdi-refresh"
                     label="Reboot"
-                    @click="reboot()"
+                    @click="powerAction('reboot')"
                     class="disable-focus-helper"
                   />
                 </q-item-section>
@@ -253,6 +253,7 @@
     <q-page-container>
       <router-view />
       <ErrorDialog ref="errorDialog" />
+      <ConfirmDialog ref="confirmDialog" />
       <WsReconnectDialog
         ref="wsReconnectDialog"
         @ws-reconnect="connectNotificationsWebsocket"
@@ -268,6 +269,7 @@ import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
 import { useHostnameStore } from "stores/hostname";
 import { storeToRefs } from "pinia";
+import ConfirmDialog from "src/components/ConfirmDialog.vue";
 
 export default defineComponent({
   name: "MainLayout",
@@ -277,6 +279,7 @@ export default defineComponent({
       rightDrawerOpen: ref(false),
       notificationCount: 0,
       notifications: [],
+      showPowerMenu: ref(false),
     };
   },
   setup() {
@@ -291,11 +294,9 @@ export default defineComponent({
     ErrorDialog,
     WsReconnectDialog,
     ToolTip,
+    ConfirmDialog,
   },
   methods: {
-    showPowerMenu() {
-      this.$refs.powerMenu.show();
-    },
     logout() {
       localStorage.setItem("jwt-token", "");
       this.$router.push({ path: "/login" });
@@ -337,13 +338,22 @@ export default defineComponent({
         this.$refs.wsReconnectDialog.show();
       };
     },
+    powerAction(action) {
+      if (action == 'shutdown'){
+        this.$refs.confirmDialog.show("Shutdown", ["Are you sure you want to shutdown?"], this.shutdown);
+      }
+      else if (action == 'reboot'){
+        this.$refs.confirmDialog.show("Reboot", ["Are you sure you want to reboot?"], this.reboot);
+      }
+      this.showPowerMenu = false;
+    },
     shutdown() {
       this.$api.post("host/power/shutdown").catch((error) => {
         let errormsg = "";
         if (error.response == undefined) {
-          error = "Could not connect to server.";
+          errormsg = "Could not connect to server.";
         } else {
-          error = error.response.data.detail;
+          errormsg = error.response.data.detail;
         }
         this.$refs.errorDialog.show("Shutdown error", [errormsg]);
       });
@@ -352,9 +362,9 @@ export default defineComponent({
       this.$api.post("host/power/reboot").catch((error) => {
         let errormsg = "";
         if (error.response == undefined) {
-          error = "Could not connect to server.";
+          errormsg = "Could not connect to server.";
         } else {
-          error = error.response.data.detail;
+          errormsg = error.response.data.detail;
         }
         this.$refs.errorDialog.show("Reboot error", [errormsg]);
       });

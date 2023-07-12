@@ -634,7 +634,7 @@
     </q-layout>
   </q-dialog>
   <ErrorDialog ref="errorDialog" />
-  <ConfirmDialog ref="confirmDialog" @confirm-yes="confirmDialogYes()" />
+  <ConfirmDialog ref="confirmDialog"/>
   <AddDisk ref="addDisk" @disk-add-finished="refreshData()" />
   <sourceFileDialog
     ref="sourceFileDialog"
@@ -794,7 +794,7 @@ export default {
           });
       } else if (this.tab == "cpu") {
         if (this.currentVcpu > this.vcpu) {
-          this.$refs.confirmDialog.show("VCPU error", [
+          this.$refs.errorDialog.show("VCPU error", [
             "Current VCPU is greater than the new VCPU. This is not allowed.",
           ]);
           return;
@@ -943,8 +943,8 @@ export default {
     diskDelete(disknumber) {
       this.$refs.confirmDialog.show("Delete disk", [
         "Are you sure you want to delete this disk?",
-        "This only removes the disk from the vm, not from the storage pool.",
-      ]);
+        "This only removes the disk from the vm, not from the storage pool."
+      ], this.diskDeleteConfirm);
       this.diskDeleteNumber = disknumber;
     },
     diskDeleteConfirm() {
@@ -964,21 +964,14 @@ export default {
     diskAdd() {
       this.$refs.addDisk.show(this.uuid);
     },
-    confirmDialogYes() {
-      if (this.tab == "disk") {
-        this.diskDeleteConfirm();
-      } else if (this.tab == "network") {
-        this.networkDeleteConfirm();
-      }
-    },
     networkAdd() {
       this.$refs.addNetwork.show(this.uuid);
     },
     networkDelete(networknumber) {
       this.$refs.confirmDialog.show("Delete network", [
         "Are you sure you want to delete this network?",
-        "This only removes the network from the vm, not from the network pool.",
-      ]);
+        "This only removes the network from the vm, not from the network pool."
+      ], this.networkDeleteConfirm);
       this.networkDeleteNumber = networknumber;
     },
     networkDeleteConfirm() {

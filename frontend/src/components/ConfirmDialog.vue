@@ -14,18 +14,12 @@
         <q-btn
           flat
           label="Yes"
-          @click="
-            this.$emit('confirm-yes');
-            layout = false;
-          "
+          @click="confirmYes"
         />
         <q-btn
           flat
           label="No"
-          @click="
-            this.$emit('confirm-no');
-            layout = false;
-          "
+          @click="confirmNo();"
         />
       </q-card-actions>
     </q-card>
@@ -41,18 +35,32 @@ export default {
       title: "",
       content: [],
       layout: ref(false),
+      confirmAction: () => {},
+      cancelAction: () => {}
     };
   },
-  emits: ["confirm-yes", "confirm-no"],
   methods: {
     show(
       title = "Are you sure?",
       content = ["Are you sure you want to do this?"],
+      confirmAction = () => {},
+      cancelAction = () => {}
     ) {
+      this.confirmAction = confirmAction;
+      this.cancelAction = cancelAction;
       this.title = title;
       this.content = content;
       this.layout = true;
     },
+    confirmYes() {
+      this.confirmAction();
+      this.layout = false;
+    },
+    confirmNo() {
+      this.cancelAction();
+      this.layout = false;
+    }
+      
   },
 };
 </script>
