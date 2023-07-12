@@ -9,9 +9,9 @@
             track-color="primary"
             color="secondary"
           />
-          <q-card-section>
+          <q-card-section class="q-pb-none">
             <img
-              class="login-logo text-center"
+              class="login-logo"
               src="/src/assets/Server99-logo-full.png"
               alt="Logo"
             />
@@ -87,7 +87,7 @@ body.screen--md,
 body.screen--lg,
 body.screen--xl {
   .login-logo {
-    width: 150px;
+    width: 12em;
     margin-left: auto;
     margin-right: auto;
     display: block;
