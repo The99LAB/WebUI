@@ -1,8 +1,26 @@
 const routes = [
   {
     path: "/login",
+    name: "login",
     component: () => import("pages/LoginPage.vue"),
     meta: { title: "Login" },
+  },
+  { 
+    path: "/powerstate",
+    children: [
+      {
+        path: "shutdown",
+        name: "shutdown",
+        component: () => import("pages/ShutdownPage.vue"),
+        meta: { title: "Shutdown" },
+      },
+      {
+        path: "reboot",
+        name: "reboot",
+        component: () => import("pages/RebootPage.vue"),
+        meta: { title: "Reboot" },
+      },
+    ],
   },
   {
     path: "/",

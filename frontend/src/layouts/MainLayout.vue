@@ -348,7 +348,11 @@ export default defineComponent({
       this.showPowerMenu = false;
     },
     shutdown() {
-      this.$api.post("host/power/shutdown").catch((error) => {
+      this.$api.post("host/power/shutdown")
+      .then((response => {
+        this.$router.push( { name: 'shutdown' })
+      }))
+      .catch((error) => {
         let errormsg = "";
         if (error.response == undefined) {
           errormsg = "Could not connect to server.";
