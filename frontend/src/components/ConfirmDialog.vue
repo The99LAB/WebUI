@@ -11,16 +11,8 @@
         {{ item }}
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn
-          flat
-          label="Yes"
-          @click="confirmYes"
-        />
-        <q-btn
-          flat
-          label="No"
-          @click="confirmNo();"
-        />
+        <q-btn flat label="Yes" @click="confirmYes" />
+        <q-btn flat label="No" @click="confirmNo()" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -36,7 +28,7 @@ export default {
       content: [],
       layout: ref(false),
       confirmAction: () => {},
-      cancelAction: () => {}
+      cancelAction: () => {},
     };
   },
   methods: {
@@ -44,7 +36,7 @@ export default {
       title = "Are you sure?",
       content = ["Are you sure you want to do this?"],
       confirmAction = () => {},
-      cancelAction = () => {}
+      cancelAction = () => {},
     ) {
       this.confirmAction = confirmAction;
       this.cancelAction = cancelAction;
@@ -59,8 +51,7 @@ export default {
     confirmNo() {
       this.cancelAction();
       this.layout = false;
-    }
-      
+    },
   },
 };
 </script>

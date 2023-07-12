@@ -1,5 +1,5 @@
 <template>
-    <q-layout view="lHh Lpr lFf">
+  <q-layout view="lHh Lpr lFf">
     <q-page-container>
       <q-page padding class="row justify-center items-center">
         <q-card>
@@ -20,24 +20,24 @@
   </q-layout>
 </template>
 <script>
-import { ref } from 'vue'
+import { ref } from "vue";
 
 export default {
-    data() {
-        return {
-            dots: 0,
-            dotsText: ref(''),
-        }
-    },
-    mounted () {
-        this.dots = setInterval(() => {
-            if (this.dots < 3) {
-                this.dots++
-            } else {
-                this.dots = 0
-            }
-            this.dotsText = '.'.repeat(this.dots)
-        }, 500)
-    },
-}
+  data() {
+    return {
+      dots: 0,
+      dotsText: ref(""),
+    };
+  },
+  mounted() {
+    this.dots = setInterval(() => {
+      if (this.dots < 3) {
+        this.dots++;
+      } else {
+        this.dots = 0;
+      }
+      this.dotsText = ".".repeat(this.dots);
+    }, 500);
+  },
+};
 </script>

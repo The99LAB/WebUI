@@ -634,7 +634,7 @@
     </q-layout>
   </q-dialog>
   <ErrorDialog ref="errorDialog" />
-  <ConfirmDialog ref="confirmDialog"/>
+  <ConfirmDialog ref="confirmDialog" />
   <AddDisk ref="addDisk" @disk-add-finished="refreshData()" />
   <sourceFileDialog
     ref="sourceFileDialog"
@@ -941,10 +941,14 @@ export default {
         });
     },
     diskDelete(disknumber) {
-      this.$refs.confirmDialog.show("Delete disk", [
-        "Are you sure you want to delete this disk?",
-        "This only removes the disk from the vm, not from the storage pool."
-      ], this.diskDeleteConfirm);
+      this.$refs.confirmDialog.show(
+        "Delete disk",
+        [
+          "Are you sure you want to delete this disk?",
+          "This only removes the disk from the vm, not from the storage pool.",
+        ],
+        this.diskDeleteConfirm,
+      );
       this.diskDeleteNumber = disknumber;
     },
     diskDeleteConfirm() {
@@ -968,10 +972,14 @@ export default {
       this.$refs.addNetwork.show(this.uuid);
     },
     networkDelete(networknumber) {
-      this.$refs.confirmDialog.show("Delete network", [
-        "Are you sure you want to delete this network?",
-        "This only removes the network from the vm, not from the network pool."
-      ], this.networkDeleteConfirm);
+      this.$refs.confirmDialog.show(
+        "Delete network",
+        [
+          "Are you sure you want to delete this network?",
+          "This only removes the network from the vm, not from the network pool.",
+        ],
+        this.networkDeleteConfirm,
+      );
       this.networkDeleteNumber = networknumber;
     },
     networkDeleteConfirm() {

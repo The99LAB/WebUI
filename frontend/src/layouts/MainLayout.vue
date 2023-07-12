@@ -339,28 +339,36 @@ export default defineComponent({
       };
     },
     powerAction(action) {
-      if (action == 'shutdown'){
-        this.$refs.confirmDialog.show("Shutdown", ["Are you sure you want to shutdown?"], this.shutdown);
-      }
-      else if (action == 'reboot'){
-        this.$refs.confirmDialog.show("Reboot", ["Are you sure you want to reboot?"], this.reboot);
+      if (action == "shutdown") {
+        this.$refs.confirmDialog.show(
+          "Shutdown",
+          ["Are you sure you want to shutdown?"],
+          this.shutdown,
+        );
+      } else if (action == "reboot") {
+        this.$refs.confirmDialog.show(
+          "Reboot",
+          ["Are you sure you want to reboot?"],
+          this.reboot,
+        );
       }
       this.showPowerMenu = false;
     },
     shutdown() {
-      this.$api.post("host/power/shutdown")
-      .then((response => {
-        this.$router.push( { name: 'shutdown' })
-      }))
-      .catch((error) => {
-        let errormsg = "";
-        if (error.response == undefined) {
-          errormsg = "Could not connect to server.";
-        } else {
-          errormsg = error.response.data.detail;
-        }
-        this.$refs.errorDialog.show("Shutdown error", [errormsg]);
-      });
+      this.$api
+        .post("host/power/shutdown")
+        .then((response) => {
+          this.$router.push({ name: "shutdown" });
+        })
+        .catch((error) => {
+          let errormsg = "";
+          if (error.response == undefined) {
+            errormsg = "Could not connect to server.";
+          } else {
+            errormsg = error.response.data.detail;
+          }
+          this.$refs.errorDialog.show("Shutdown error", [errormsg]);
+        });
     },
     reboot() {
       this.$api.post("host/power/reboot").catch((error) => {
