@@ -378,7 +378,11 @@ export default defineComponent({
         });
     },
     reboot() {
-      this.$api.post("host/power/reboot").catch((error) => {
+      this.$api.post("host/power/reboot")
+      .then((response) => {
+        this.$router.push({ name: "reboot" });
+      })
+      .catch((error) => {
         let errormsg = "";
         if (error.response == undefined) {
           errormsg = "Could not connect to server.";

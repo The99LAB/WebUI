@@ -14,12 +14,12 @@ const routes = [
         component: () => import("pages/ShutdownPage.vue"),
         meta: { title: "Shutdown" },
       },
-      // {
-      //   path: "reboot",
-      //   name: "reboot",
-      //   component: () => import("pages/RebootPage.vue"),
-      //   meta: { title: "Reboot" },
-      // },
+      {
+        path: "reboot",
+        name: "reboot",
+        component: () => import("pages/RebootPage.vue"),
+        meta: { title: "Reboot" },
+      },
     ],
   },
   {
