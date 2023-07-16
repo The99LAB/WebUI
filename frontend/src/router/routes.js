@@ -93,6 +93,13 @@ const routes = [
         component: () => import("pages/SettingsPage.vue"),
         meta: { title: "Settings" },
       },
+      {
+        path: "notifications-test",
+        name: "notifications-test",
+        component: () => import("pages/NotificationsPageTest.vue"),
+        meta: { title: "Notifications Test" },
+        devOnly: true,
+      }
     ],
   },
   // Always leave this as last one,

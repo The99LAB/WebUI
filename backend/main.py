@@ -2652,3 +2652,13 @@ async def api_notifications_delete(id: int, username: str = Depends(check_auth))
     else:
         notifications().delete(id)
     return
+
+@app.post("/api/notifications")
+async def api_notifications_post(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    for notification in data:
+        notification_type = notification['type']
+        notification_title = notification['title']
+        notification_message = notification['message']
+        notifications().add(notification_type=notification_type, notification_title=notification_title, notification_message=notification_message)
+    return
