@@ -1296,13 +1296,16 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     notifications_list = None
     try:
+        if check_auth_token(token):
+            notifications_list = notifications().getAll()
+            await websocket.send_json({"type": "notifications_init", "data": notifications_list})
         while True:
             if check_auth_token(token):
-                # only send new data if the notifications list has changed
                 new_notifications_list = notifications().getAll()
-                if notifications_list == None or notifications_list != new_notifications_list:
+                if notifications_list != new_notifications_list:
+                    new_notifications = [x for x in new_notifications_list if x not in notifications_list]
                     notifications_list = new_notifications_list
-                    await websocket.send_json({"type": "notifications", "data": notifications_list})
+                    await websocket.send_json({"type": "notifications", "data": new_notifications})
                 await asyncio.sleep(1)
             else:
                 await websocket.send_json({"type": "auth_error"})

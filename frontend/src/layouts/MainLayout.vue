@@ -25,8 +25,8 @@
             floating
             color="red"
             rounded
-            :label="notificationCount"
-            v-if="notificationCount != 0"
+            :label="notifications.length"
+            v-if="notifications.length != 0"
           />
           <ToolTip content="Notifications" />
         </q-btn>
@@ -194,32 +194,14 @@
           <div class="row">
             Notifications
             <q-space />
-            {{ notificationCount }}
+            {{ notifications.length }}
           </div>
         </q-item-label>
         <q-item v-for="n in notifications" :key="n.id" clickable>
           <q-item-section avatar>
             <q-icon
-              :name="
-                n.type == 'error'
-                  ? 'mdi-alert-circle'
-                  : n.type == 'warning'
-                  ? 'mdi-alert-circle'
-                  : n.type == 'success'
-                  ? 'mdi-check-circle'
-                  : n.type == 'info'
-                  ? 'mdi-information'
-                  : 'mdi-help'
-              "
-              :color="
-                n.type == 'error'
-                  ? 'red'
-                  : n.type == 'warning'
-                  ? 'orange'
-                  : n.type == 'success'
-                  ? 'green'
-                  : 'white'
-              "
+              :name="notificationIcon[n.type]"
+              :color="notificationColor[n.type]"
             />
           </q-item-section>
           <q-item-section>
@@ -238,7 +220,7 @@
             >
           </q-item-section>
         </q-item>
-        <div class="row justify-center" v-if="notificationCount != 0">
+        <div class="row justify-center" v-if="notifications.length != 0">
           <q-btn
             @click="NotificationDelete(-1)"
             flat
@@ -263,6 +245,7 @@
 </template>
 
 <script>
+import { Notify } from 'quasar'
 import { defineComponent, ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
@@ -277,9 +260,20 @@ export default defineComponent({
     return {
       leftDrawerOpen: ref(false),
       rightDrawerOpen: ref(false),
-      notificationCount: 0,
       notifications: [],
       showPowerMenu: ref(false),
+      notificationIcon: {
+        error: "mdi-alert-circle",
+        warning: "mdi-alert-circle",
+        success: "mdi-check-circle",
+        info: "mdi-information",
+      },
+      notificationColor: {
+        error: "red",
+        warning: "orange",
+        success: "green",
+        info: "white",
+      },
     };
   },
   setup() {
@@ -304,10 +298,8 @@ export default defineComponent({
     NotificationDelete(id) {
       if (id == -1) {
         this.notifications = [];
-        this.notificationCount = 0;
       } else {
         this.notifications = this.notifications.filter((n) => n.id != id);
-        this.notificationCount = this.notifications.length;
       }
 
       this.$api.delete("notifications/" + id).catch((error) => {
@@ -325,9 +317,24 @@ export default defineComponent({
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        if (data.type == "notifications") {
+        if (data.type == "notifications_init") {
           this.notifications = data.data;
-          this.notificationCount = this.notifications.length;
+        }
+        else if (data.type == "notifications") {
+          let newNotifications = data.data;
+          for (let i = 0; i < newNotifications.length; i++) {
+            this.notifications.push(newNotifications[i]);
+            Notify.create({
+              progress: true,
+              message: newNotifications[i].title,
+              caption: newNotifications[i].message,
+              position: "bottom",
+              icon: this.notificationIcon[newNotifications[i].type],
+              timeout: 2000,
+              color: this.notificationColor[newNotifications[i].type],
+              textColor: "black",
+            });
+          }
         } else if (data.type == "auth_error") {
           localStorage.setItem("jwt-token", "");
           this.$router.push({ path: "/login" });
