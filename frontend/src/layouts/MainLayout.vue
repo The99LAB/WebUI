@@ -245,7 +245,7 @@
 </template>
 
 <script>
-import { Notify } from 'quasar'
+import { Notify } from "quasar";
 import { defineComponent, ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
@@ -319,8 +319,7 @@ export default defineComponent({
         const data = JSON.parse(event.data);
         if (data.type == "notifications_init") {
           this.notifications = data.data;
-        }
-        else if (data.type == "notifications") {
+        } else if (data.type == "notifications") {
           let newNotifications = data.data;
           for (let i = 0; i < newNotifications.length; i++) {
             this.notifications.push(newNotifications[i]);
