@@ -10,7 +10,7 @@
             color="secondary"
           />
           <q-card-section class="text-center">
-            System is rebooting{{ dotsText }}
+            System is currently {{status}}{{ dotsText }}
           </q-card-section>
           <q-card-section>
             <img
@@ -33,6 +33,8 @@ export default {
     return {
       dots: 0,
       dotsText: ref(""),
+      status: "rebooting",
+      statusRefreshInterval: 5000,
     };
   },
   mounted() {
@@ -44,6 +46,23 @@ export default {
       }
       this.dotsText = ".".repeat(this.dots);
     }, 500);
+    this.checkSystemStatus();
   },
+  methods: {
+    checkSystemStatus() {
+        this.$api.get("/no-auth/system-status")
+        .then((response) => {
+            if (response.data === "running") {
+                this.$router.push({ name: "login" });
+            } else {
+                this.status = "rebooting"
+                setTimeout(this.checkSystemStatus, this.statusRefreshInterval);
+            }
+        }).catch((error) => {
+            this.status = "offline";
+            setTimeout(this.checkSystemStatus, this.statusRefreshInterval);
+        });
+    }
+  }
 };
 </script>

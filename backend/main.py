@@ -45,6 +45,7 @@ ALGORITHM = "HS256"
 
 fd = None
 child_pid = None
+system_status = 'running'
 conn = libvirt.open('qemu:///system')
 
 # check if the user is authenticated
@@ -1491,6 +1492,11 @@ async def pty_socket(websocket: WebSocket, token: str):
 async def get_hostname(request: Request):
     return JSONResponse(content={"hostname": conn.getHostname()})
 
+@app.get('/api/no-auth/system-status')
+async def get_system_status(request: Request):
+    global system_status
+    return system_status
+
 @app.post('/api/login')
 async def login(request: Request):
     data = await request.json()
@@ -2514,11 +2520,14 @@ async def api_host_power_post(powermsg: str, username: str = Depends(check_auth)
         else:
             raise HTTPException(status_code=500, detail=shutdown_result.stdout)
     elif powermsg == "reboot":
+        global system_status
+        system_status = "rebooting"
         reboot_result = subprocess.run(
             ["reboot"], capture_output=True, text=True)
         if reboot_result.returncode == 0:
             return
         else:
+            system_status = "running"
             raise HTTPException(status_code=500, detail=reboot_result.stdout)
     else:
         raise HTTPException(status_code=404, detail="power action not found")
