@@ -10,7 +10,7 @@
             color="secondary"
           />
           <q-card-section class="text-center">
-            System is currently {{status}}{{ dotsText }}
+            System is currently {{ status }}{{ dotsText }}
           </q-card-section>
           <q-card-section>
             <img
@@ -50,19 +50,21 @@ export default {
   },
   methods: {
     checkSystemStatus() {
-        this.$api.get("/no-auth/system-status")
+      this.$api
+        .get("/no-auth/system-status")
         .then((response) => {
-            if (response.data === "running") {
-                this.$router.push({ name: "login" });
-            } else {
-                this.status = "rebooting"
-                setTimeout(this.checkSystemStatus, this.statusRefreshInterval);
-            }
-        }).catch((error) => {
-            this.status = "offline";
+          if (response.data === "running") {
+            this.$router.push({ name: "login" });
+          } else {
+            this.status = "rebooting";
             setTimeout(this.checkSystemStatus, this.statusRefreshInterval);
+          }
+        })
+        .catch((error) => {
+          this.status = "offline";
+          setTimeout(this.checkSystemStatus, this.statusRefreshInterval);
         });
-    }
-  }
+    },
+  },
 };
 </script>
