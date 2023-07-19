@@ -40,7 +40,9 @@
             <q-separator class="q-mb-md"></q-separator>
             <div class="text-left row items-center q-pl-md">
               <p class="text-subtitle2 text-weight-bolder q-mr-xs">Uptime:</p>
-              <p class="text-weight-regular">{{ uptime }} at {{ loading_timestamp }}</p>
+              <p class="text-weight-regular">
+                {{ uptime }} at {{ loading_timestamp }}
+              </p>
             </div>
             <q-separator class="q-mb-md"></q-separator>
           </div>
@@ -354,7 +356,7 @@ export default {
         minutes = "0" + minutes;
       }
       this.loading_timestamp = hours + ":" + minutes;
-    }
+    },
   },
   created() {
     this.connectWebSocket();
