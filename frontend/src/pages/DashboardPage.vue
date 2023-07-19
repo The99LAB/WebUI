@@ -40,7 +40,7 @@
             <q-separator class="q-mb-md"></q-separator>
             <div class="text-left row items-center q-pl-md">
               <p class="text-subtitle2 text-weight-bolder q-mr-xs">Uptime:</p>
-              <p class="text-weight-regular">{{ uptime }}</p>
+              <p class="text-weight-regular">{{ uptime }} at {{ loading_timestamp }}</p>
             </div>
             <q-separator class="q-mb-md"></q-separator>
           </div>
@@ -194,6 +194,7 @@ export default {
       mem_used: null,
       mem_total: null,
       uptime: null,
+      loading_timestamp: null,
       os_name: null,
       loadingVisible: true,
       cpuChartOptions: {
@@ -345,9 +346,21 @@ export default {
       });
       this.$refs.memUsageChart.updateSeries([used, total - used]);
     },
+    getCurrentTime() {
+      let date = new Date();
+      let hours = date.getHours();
+      let minutes = date.getMinutes();
+      if (minutes < 10) {
+        minutes = "0" + minutes;
+      }
+      this.loading_timestamp = hours + ":" + minutes;
+    }
   },
   created() {
     this.connectWebSocket();
+  },
+  mounted() {
+    this.getCurrentTime();
   },
   unmounted() {
     this.ws.onclose = () => {};
