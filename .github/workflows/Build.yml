@@ -31,7 +31,7 @@ jobs:
 
       - name: Upload to release
         if: github.event_name == 'release'
-        uses: svenstaro/upload-release-action@a724093295a00203030b903ce60468e4b24e8d39
+        uses: svenstaro/upload-release-action@5eb2ffd70bf494145e0e19c898ab1389b9d252c6
         with:
           repo_token: ${{ secrets.TOKEN }}
           file: VmManager-build.zip
