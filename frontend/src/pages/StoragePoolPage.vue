@@ -130,9 +130,9 @@
                     color="primary"
                     icon="mdi-delete"
                     label="Remove"
-                    v-if="
-                      props.row.selectedVolume !== undefined &&
-                      props.row.selectedVolume.length
+                    :disable="
+                      props.row.selectedVolume === undefined ||
+                      props.row.selectedVolume.length == 0
                     "
                     @click="
                       removeVolume(props.row.uuid, props.row.selectedVolume)

@@ -1,15 +1,10 @@
 <template>
   <q-page padding>
     <q-card>
-      <q-inner-loading :showing="loadingVisible" />
       <q-card-section>
-        <div class="text-h6 text-center" v-show="showData">
-          System Information
-        </div>
-      </q-card-section>
-      <q-separator color="transparent" dark inset />
-      <q-card-section>
-        <div v-show="showData">
+        <div class="text-h6 text-center">System</div>
+        <q-separator color="transparent" spaced="xs" />
+        <div v-if="!loadingSystem">
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Motherboard:</p>
             <p class="col">{{ systemInfo.motherboard }}</p>
@@ -55,6 +50,44 @@
             </p>
           </div>
         </div>
+        <q-inner-loading :showing="loadingSystem" />
+      </q-card-section>
+      <q-card-section>
+        <div class="text-h6 text-center">WebUI</div>
+        <q-separator color="transparent" spaced="xs" />
+        <div class="row items-start">
+          <p class="col text-right q-mr-sm text-weight-bold">Version:</p>
+          <p class="col">1.2</p>
+        </div>
+      </q-card-section>
+      <q-card-section>
+        <div class="text-h6 text-center">Docker</div>
+        <q-separator color="transparent" spaced="xs" />
+        <div v-if="!loadingDocker">
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Version:</p>
+            <p class="col">{{ dockerInfo.Version }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">API Version:</p>
+            <p class="col">{{ dockerInfo.ApiVersion }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Git Commit:</p>
+            <p class="col">{{ dockerInfo.GitCommit }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Go Version:</p>
+            <p class="col">{{ dockerInfo.GoVersion }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Platform:</p>
+            <p class="col" v-if="dockerInfo.Platform">
+              {{ dockerInfo.Platform.Name }}
+            </p>
+          </div>
+        </div>
+        <q-inner-loading :showing="loadingDocker" />
       </q-card-section>
     </q-card>
     <editHostName
@@ -73,20 +106,11 @@ import ToolTip from "src/components/ToolTip.vue";
 import { ref } from "vue";
 export default {
   data() {
-    const loadingVisible = ref(true);
-    const showData = ref(false);
     return {
-      systemInfo: {
-        motherboard: "",
-        processor: "",
-        memory: "",
-        os: "",
-        hostname: "",
-        linuxVersion: "",
-        uptime: "",
-      },
-      loadingVisible,
-      showData,
+      systemInfo: {},
+      dockerInfo: {},
+      loadingSystem: ref(false),
+      loadingDocker: ref(false),
     };
   },
   components: {
@@ -96,15 +120,29 @@ export default {
   },
   methods: {
     getSystemInfo() {
+      this.loadingSystem = true;
       this.$api
         .get("/host/system-info/all")
         .then((response) => {
           this.systemInfo = response.data;
-          this.loadingVisible = false;
-          this.showData = true;
+          this.loadingSystem = false;
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting system info", [
+            error.response.data.detail,
+          ]);
+        });
+    },
+    getDockerInfo() {
+      this.loadingDocker = true;
+      this.$api
+        .get("docker-manager/info")
+        .then((response) => {
+          this.dockerInfo = response.data;
+          this.loadingDocker = false;
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error getting docker info", [
             error.response.data.detail,
           ]);
         });
@@ -115,6 +153,7 @@ export default {
   },
   mounted() {
     this.getSystemInfo();
+    this.getDockerInfo();
   },
 };
 </script>

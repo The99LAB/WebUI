@@ -25,12 +25,16 @@ import signal
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import humanize
+import docker
+import json
+import base64
 
 
 origins = ["*"]
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+docker_client = docker.from_env()
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -1287,6 +1291,149 @@ class notifications:
         ''')
         self.db.commit()
 
+class dockerTemplates:
+    def __init__(self):
+        self.db = sqlite3.connect('database.db')
+        self.db_c = self.db.cursor()
+    
+    def getAll(self):
+        self.db_c.execute('''
+        SELECT * FROM docker_templates
+        ''')
+        rows = self.db_c.fetchall()
+        
+        templatesData = []
+        for row in rows:
+            _image = row[6]
+            if _image:
+                _image = base64.b64encode(_image).decode("utf-8")
+            templatesData.append(self.convertRow(row))
+        return templatesData
+    
+    def convertRow(slef, row):
+        _image = row[6]
+        if _image:
+            _image = base64.b64encode(_image).decode("utf-8")
+        return {
+            "id": row[0],
+            "template_repository_id": row[1],
+            "name": row[2],
+            "maintainer": row[3],
+            "description": row[4],
+            "webui": json.loads(row[5]),
+            "image": _image,
+            "url": json.loads(row[7]),
+            "config": json.loads(row[8]),
+        }
+    
+    def get(self, id):
+        self.db_c.execute('''
+        SELECT * FROM docker_templates WHERE id = ?
+        ''', (id,))
+        row = self.db_c.fetchone()
+        return self.convertRow(row)
+    
+    def getLocations(self):
+        # select table docker_templates_loactions
+        self.db_c.execute('''
+        SELECT * FROM docker_templates_locations
+        ''')
+        rows = self.db_c.fetchall()
+
+        locationsData = []
+        for row in rows:
+            locationsData.append(
+            {
+                "id": row[0],
+                "name": row[1],
+                "url": row[2],
+                "branch": row[3]
+            })
+        return locationsData
+    
+    def addLocation(self, name, url, branch):
+        self.db_c.execute('''
+        INSERT INTO docker_templates_locations (name, url, branch) VALUES (?, ?, ?)
+        ''', (name, url, branch))
+        self.db.commit()
+    
+    def editLoaction(self, id, name, url, branch):
+        self.db_c.execute('''
+        UPDATE docker_templates_locations SET name = ?, url = ?, branch = ? WHERE id = ?
+        ''', (name, url, branch, id))
+        self.db.commit()
+    
+    def deleteLocation(self, id):
+        self.db_c.execute('''
+        DELETE FROM docker_templates_locations WHERE id = ?
+        ''', (id,))
+        self.db.commit()
+
+class dockerContainers:
+    def __init__(self):
+        self.db = sqlite3.connect('database.db')
+        self.db_c = self.db.cursor()
+
+    def convertRow(self, id):
+        _container = docker_client.containers.get(id)
+        _container_status = _container.status
+        _container_name = _container.name
+        # If the container doesn't exist in the database, mark the container as unmanaged.
+        self.db_c.execute('''
+        SELECT * FROM docker_containers WHERE id = ?
+        ''', (id,))
+        row = self.db_c.fetchone()
+        container_type = "unmanaged"
+        container_webui = {}
+        container_config = {}
+        if row:
+            container_type = row[1]
+            container_webui = json.loads(row[2])
+            container_config = json.loads(row[3])
+
+        container_dhcp_ip = None
+        if _container_status == "running":
+            try:
+                container_dhcp_ip = _container.attrs["NetworkSettings"]["Networks"][list(_container.attrs["NetworkSettings"]["Networks"].keys())[0]]["IPAddress"]
+                if container_dhcp_ip == '':
+                        container_dhcp_ip = None
+                if container_config.get("network"):
+                    container_config["network"]["dhcp_ip"] = container_dhcp_ip
+            except KeyError:
+                pass
+
+        return {
+            "id": id,
+            "container_type": container_type,
+            "status": _container_status,
+            "name": _container_name,
+            "webui": container_webui,
+            "config": container_config,
+        }
+    
+    def getAll(self):
+        # Get containers from docker api.
+        api_containers = docker_client.containers.list(all=True)
+        docker_containers = []
+        for container in api_containers:
+            api_id = container.id
+            docker_containers.append(self.convertRow(api_id))
+        return docker_containers
+    def get(self, id):
+        return self.convertRow(id)
+    
+    def add(self, id, container_type, webui, config):
+        self.db_c.execute('''
+        INSERT INTO docker_containers (id, container_type, webui, config) VALUES (?, ?, ?, ?)
+        ''', (id, container_type, webui, config))
+        self.db.commit()
+    
+    def delete(self, id):
+        self.db_c.execute('''
+        DELETE FROM docker_containers WHERE id = ?
+        ''', (id,))
+        self.db.commit()
+
 @app.get("/")
 def index():
     return FileResponse("templates/index.html")
@@ -2508,6 +2655,256 @@ async def api_networks_get(username: str = Depends(check_auth)):
         # append network dict to networks list
         networks_list.append(_network)
     return networks_list
+
+@app.get("/api/docker-manager/templates/{id}")
+async def api_docker_manager_template_get(id: int, username: str = Depends(check_auth)):
+    return dockerTemplates().get(id=id)
+
+@app.get("/api/docker-manager/templates")
+async def api_docker_manager_templates_get(username: str = Depends(check_auth)):
+    return dockerTemplates().getAll()
+
+@app.get("/api/docker-manager/template-locations")
+async def api_docker_manager_template_locations_get(username: str = Depends(check_auth)):
+    return dockerTemplates().getLocations()
+
+@app.put("/api/docker-manager/template-locations")
+async def api_docker_manager_template_locations_put(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    id = data['id']
+    name = data['name']
+    url = data['url']
+    branch = data['branch']
+    dockerTemplates().editLoaction(id=id, name=name, url=url, branch=branch)
+    return
+
+@app.delete("/api/docker-manager/template-locations")
+async def api_docker_manager_template_locations_delete(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    id = data['id']
+    dockerTemplates().deleteLocation(id=id)
+    return
+
+@app.post("/api/docker-manager/template-locations")
+async def api_docker_manager_template_locations_post(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    name = data['name']
+    url = data['url']
+    branch = data['branch']
+    dockerTemplates().addLocation(name=name, url=url, branch=branch)
+    return
+
+@app.get("/api/docker-manager/info")
+async def api_docker_manager_info_get(username: str = Depends(check_auth)):
+    docker_version = docker_client.version()
+    return docker_version
+
+
+@app.get("/api/docker-manager/images")
+async def api_docker_manager_images_get(username: str = Depends(check_auth)):
+    docker_images = docker_client.images.list()
+    docker_images_list = []
+    for image in docker_images:
+        image_id = image.short_id
+        image_tags = image.tags
+        image_size = str(round(convertSizeUnit(image.attrs['Size'], "B", "MB"))) + "MB"
+        image_created_orig = image.attrs['Created']
+        image_created_split = image_created_orig.split('.')[0]
+        image_created = image_created_split.split('T')[0] + " " + image_created_split.split('T')[1]
+        for  tag in image_tags:
+            image_repo = tag.split(':')[0]
+            image_tag = tag.split(':')[1]
+            image_dict = {
+                "uuid": image_repo + '&split' + image_id + '&split' + image_tag,
+                "repo": image_repo,
+                "tag": image_tag,
+                "id": image_id,
+                "size": image_size,
+                "created": image_created,
+            }
+            docker_images_list.append(image_dict)
+    return docker_images_list
+
+@app.post("/api/docker-manager/images/{action}")
+async def api_docker_manager_images_post(request: Request, action: str ,username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "delete":
+        for image in data['images']:
+            image_name = image['name']
+            image_tag = image['tag']
+            docker_client.images.remove(image_name + ":" + image_tag)
+        return
+    elif action == "pull":
+        docker_client.images.pull(data['image'])
+        return
+    else:
+        raise HTTPException(status_code=404, detail="Action not found")
+    
+@app.get("/api/docker-manager/containers")
+async def api_docker_manager_containers_get(username: str = Depends(check_auth)):
+    return dockerContainers().getAll()
+
+@app.get("/api/docker-manager/container/{container_id}")
+async def api_docker_manager_container_get(container_id: str, username: str = Depends(check_auth)):
+    return dockerContainers().get(id=container_id)
+
+@app.post("/api/docker-manager/container/{id}/{action}")
+async def api_docker_manager_containers_post(request: Request, id: str, action: str ,username: str = Depends(check_auth)):
+    print(f"action: {action}, id: {id}")
+    if action == "start":
+        container = docker_client.containers.get(id)
+        container.start()
+        return
+    elif action == "stop":
+        container = docker_client.containers.get(id)
+        container.stop()
+        return
+    elif action == "restart":
+        container = docker_client.containers.get(id)
+        container.restart()
+        return
+    elif action == "delete":
+        container_data = dockerContainers().get(id=id)
+        if container_data['container_type'] != "unmanaged":
+            dockerContainers().delete(id=id)
+        container = docker_client.containers.get(id)
+        container.remove()
+        return
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
+    
+@app.post("/api/docker-manager/containers")
+async def api_docker_manager_containers_create(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    print("Request to create container: ", data)
+    action = data['action']
+
+    if action == "update":
+        # Remove existing container: docker api and database
+        id = data['id']
+        container = docker_client.containers.get(id)
+        container.remove()
+        dockerContainers().delete(id=id)
+
+    # Create a new container
+    container_name = data['name']
+    container_type = data['container_type']
+    container_config = data['config']
+    container_webui = data['webui']
+    container_command=""
+
+    _container_image = container_config['repository'] + ':' + container_config['tag']
+    _container_env = {}
+    for env in container_config['env']:
+        _container_env[env['name']] = env['value']
+    _container_volumes = {}
+    for volume in container_config['volumes']:
+        # 'value' is the path on the host
+        # 'bind' is the path inside the container
+        _container_volumes[volume['value']] = {'bind': volume['bind'], 'mode': volume['mode']}
+    for command in container_config['command']:
+        container_command += command['value'] + " "
+    _container_network_name = container_config['network']['name']
+    _container_fixed_ip = None
+    if 'ip' in container_config['network']:
+        _container_fixed_ip = container_config['network']['ip']
+        _container_network_config = docker_client.api.create_networking_config({
+            _container_network_name: docker_client.api.create_endpoint_config(
+                ipv4_address=_container_fixed_ip
+            )
+        })
+    else:
+        _container_network_config = docker_client.api.create_networking_config({
+            _container_network_name: docker_client.api.create_endpoint_config()
+        })
+
+    
+    print(f"image: {_container_image}")
+    print(f"name: {container_name}")
+    print(f"env: {_container_env}")
+    print(f"volumes: {_container_volumes}")
+    print(f"command: {container_command}")
+    print(f"network: {_container_network_config}")
+    print(f"network name: {_container_network_name}")
+    print(f"fixed ip: {_container_fixed_ip}")
+
+    # Check if the container image exists
+    try:
+        docker_client.images.get(_container_image)
+        print("Image exists")
+    except docker.errors.ImageNotFound:
+        # Pull image
+        print("Pulling image")
+        docker_client.images.pull(_container_image)
+        print("Image pulled")
+
+    print("Creating container")
+    # Create container
+    docker_client_container = docker_client.api.create_container(
+        image=_container_image,
+        name=container_name,
+        environment=_container_env,
+        # volumes are the _container_volumes 
+        # volumes list is from container_config['volumes']
+        volumes=[volume['bind'] for volume in container_config['volumes']],
+        host_config=docker_client.api.create_host_config(binds=_container_volumes),
+        networking_config=_container_network_config,
+        command=container_command,
+        detach=True,
+        tty=True,
+        stdin_open=True,
+    )
+
+    print("Container created: ", docker_client_container)
+
+    print("Adding container to database")
+    # Create container in database
+    dockerContainers().add(
+        id=docker_client_container['Id'],
+        container_type=container_type,
+        webui=json.dumps(container_webui),
+        config=json.dumps(container_config),
+    )
+    print("Container added to database")
+    return
+
+@app.get("/api/docker-manager/networks")
+async def api_docker_manager_networks_get(username: str = Depends(check_auth)):
+    networks = docker_client.networks.list()
+    networks_list = []
+    for network in networks:
+        network_id = network.short_id
+        network_name = network.name
+        network_driver = network.attrs['Driver']
+        network_scope = network.attrs['Scope']
+        # Only macvlan and ipvlan networks can have containers with static IPs
+        network_custom_ip = False
+        network_subnet = ""
+        if network_driver == "macvlan" or network_driver == "ipvlan":
+            network_custom_ip = True
+        # check if network has subnet
+        if 'Config' in network.attrs['IPAM'] and len(network.attrs['IPAM']['Config']) > 0 and 'Subnet' in network.attrs['IPAM']['Config'][0]:
+            network_subnet = network.attrs['IPAM']['Config'][0]['Subnet']
+
+        network_dict = {
+            "id": network_id,
+            "name": network_name,
+            "driver": network_driver,
+            "scope": network_scope,
+            "custom_ip": network_custom_ip,
+            "subnet": network_subnet,
+        }
+        networks_list.append(network_dict)
+    return networks_list
+
+@app.delete("/api/docker-manager/network/{id}")
+async def api_docker_manager_networks_delete(id: str, username: str = Depends(check_auth)):
+    try:
+        network = docker_client.networks.get(id)
+        network.remove()
+        return
+    except docker.errors.APIError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 ### api-host-power###
 @app.post("/api/host/power/{powermsg}")

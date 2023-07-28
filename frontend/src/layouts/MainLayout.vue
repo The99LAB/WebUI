@@ -87,22 +87,24 @@
 
     <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
       <q-list>
+        <q-separator spaced="xs" color="transparent" />
         <q-item clickable tag="a" to="/dashboard">
           <q-item-section avatar>
-            <q-icon name="mdi-monitor-dashboard" />
+            <q-icon name="bi-speedometer" />
           </q-item-section>
-
           <q-item-section>
             <q-item-label>Dashboard</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item-label header> Virtual Machines </q-item-label>
+        <q-item-label header class="q-pb-none q-pt-md"
+          >Virtual Machines</q-item-label
+        >
         <q-item clickable tag="a" to="/vm-manager">
           <q-item-section avatar>
-            <q-icon name="mdi-cube" />
+            <q-icon name="ion-cube" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>Vm Manager</q-item-label>
+            <q-item-label>Virtual Machines</q-item-label>
           </q-item-section>
         </q-item>
         <q-item clickable tag="a" to="/hotplug-usb">
@@ -126,58 +128,83 @@
             <q-icon name="mdi-backup-restore" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>Backup Manager</q-item-label>
+            <q-item-label>Backups</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item-label header> Host Management </q-item-label>
+        <q-item clickable tag="a" to="/tools/download-iso">
+          <q-item-section avatar>
+            <q-icon name="mdi-disc" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Download ISO</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item-label header class="q-pb-none q-pt-md">Docker</q-item-label>
+        <q-item clickable tag="a" to="/docker-manager/containers">
+          <q-item-section avatar>
+            <q-icon name="bi-boxes" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Containers</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/docker-manager/images">
+          <q-item-section avatar>
+            <q-icon name="fa-solid fa-clone" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Images</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/docker-manager/networks">
+          <q-item-section avatar>
+            <q-icon name="mdi-lan" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Networks</q-item-label>
+          </q-item-section>
+        </q-item>
         <q-expansion-item
-          :content-inset-level="0.2"
           expand-separator
-          icon="mdi-tools"
-          label="Tools"
+          icon="bi-files"
+          label="Templates"
+          to="/docker-manager/templates"
+          :content-inset-level="0.2"
         >
-          <q-item clickable tag="a" to="/tools/system-info">
+          <q-item clickable tag="a" to="/docker-manager/templates/settings">
             <q-item-section avatar>
-              <q-icon name="mdi-monitor" />
+              <q-icon name="mdi-cog" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>System Information</q-item-label>
-            </q-item-section>
-          </q-item>
-          <q-item clickable tag="a" to="/tools/system-devices">
-            <q-item-section avatar>
-              <q-icon name="mdi-harddisk" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>System Devices</q-item-label>
-            </q-item-section>
-          </q-item>
-          <q-item clickable tag="a" to="/tools/download-iso">
-            <q-item-section avatar>
-              <q-icon name="mdi-disc" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Download ISO</q-item-label>
-            </q-item-section>
-          </q-item>
-          <q-item clickable tag="a" to="/tools/about">
-            <q-item-section avatar>
-              <q-icon name="mdi-information" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>About</q-item-label>
-            </q-item-section>
-          </q-item>
-          <q-item clickable tag="a" to="/tools/terminal">
-            <q-item-section avatar>
-              <q-icon name="mdi-console" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Terminal</q-item-label>
+              <q-item-label>Settings</q-item-label>
             </q-item-section>
           </q-item>
         </q-expansion-item>
-        <q-item clickable tag="a" to="/settings">
+        <q-item-label header class="q-pb-none q-pt-md">System</q-item-label>
+        <q-item clickable tag="a" to="/tools/system-info">
+          <q-item-section avatar>
+            <q-icon name="mdi-monitor" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>System Information</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/tools/system-devices">
+          <q-item-section avatar>
+            <q-icon name="bi-gpu-card" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>System Devices</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/tools/terminal">
+          <q-item-section avatar>
+            <q-icon name="mdi-console" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Terminal</q-item-label>
+          </q-item-section> </q-item
+        ><q-item clickable tag="a" to="/settings">
           <q-item-section avatar>
             <q-icon name="mdi-cog" />
           </q-item-section>
@@ -394,11 +421,11 @@ export default defineComponent({
     },
   },
   created() {
-    this.connectNotificationsWebsocket();
+    // this.connectNotificationsWebsocket();
   },
   unmounted() {
-    this.ws.onclose = () => {};
-    this.ws.close();
+    // this.ws.onclose = () => {};
+    // this.ws.close();
   },
 });
 </script>

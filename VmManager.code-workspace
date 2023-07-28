@@ -4,7 +4,7 @@
 			"path": "."
 		},
 		{
-			"path": "../LibvirtKVMBackup"
+			"path": "../vm-manager-docker-templates"
 		}
 	],
 	"settings": {}

@@ -58,6 +58,37 @@ const routes = [
         meta: { title: "Backup Manager" },
       },
       {
+        path: "docker-manager/containers",
+        name: "docker-manager/containers",
+        component: () => import("pages/docker-manager/ContainersPage.vue"),
+        meta: { title: "Docker Containers" },
+      },
+      {
+        path: "docker-manager/images",
+        name: "docker-manager/images",
+        component: () => import("pages/docker-manager/ImagesPage.vue"),
+        meta: { title: "Docker Images" },
+      },
+      {
+        path: "docker-manager/networks",
+        name: "docker-manager/networks",
+        component: () => import("pages/docker-manager/NetworksPage.vue"),
+        meta: { title: "Docker Networks" },
+      },
+      {
+        path: "docker-manager/templates",
+        name: "docker-manager/templates",
+        component: () => import("pages/docker-manager/TemplatesPage.vue"),
+        meta: { title: "Docker Templates" },
+      },
+      {
+        path: "docker-manager/templates/settings",
+        name: "docker-manager/templates/settings",
+        component: () =>
+          import("pages/docker-manager/TemplatesSettingsPage.vue"),
+        meta: { title: "Docker Templates Settings" },
+      },
+      {
         path: "tools/system-info",
         name: "system-info",
         component: () => import("pages/SystemInfoPage.vue"),
@@ -74,12 +105,6 @@ const routes = [
         name: "download-iso",
         component: () => import("pages/DownloadIsoPage.vue"),
         meta: { title: "Download ISO" },
-      },
-      {
-        path: "tools/about",
-        name: "about",
-        component: () => import("pages/AboutPage.vue"),
-        meta: { title: "About" },
       },
       {
         path: "tools/terminal",
