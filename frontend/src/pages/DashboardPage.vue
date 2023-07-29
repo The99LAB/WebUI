@@ -74,7 +74,7 @@
             <div class="row justify-start q-ml-lg q-my-none items-center">
               <p class="q-mr-sm text-weight-bold">Highest usage:</p>
               <p>
-                {{ cpu_thread_highest_usage.usage }}% (Thread
+                {{ cpu_thread_highest_usage.usage.toFixed(0) }}% (Thread
                 {{ cpu_thread_highest_usage.thread }})
               </p>
             </div>
