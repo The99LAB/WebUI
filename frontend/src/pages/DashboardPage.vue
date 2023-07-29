@@ -22,7 +22,7 @@
                 dense
                 round
                 icon="mdi-eye-outline"
-                @click="$router.push({ name: 'system-info' })"
+                @click="$router.push({ name: 'system/system-info' })"
               >
                 <q-tooltip>View full system information</q-tooltip>
               </q-btn>

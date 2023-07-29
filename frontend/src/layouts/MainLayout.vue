@@ -99,7 +99,7 @@
         <q-item-label header class="q-pb-none q-pt-md"
           >Virtual Machines</q-item-label
         >
-        <q-item clickable tag="a" to="/vm-manager">
+        <q-item clickable tag="a" to="/vm-manager/vms">
           <q-item-section avatar>
             <q-icon name="ion-cube" />
           </q-item-section>
@@ -107,7 +107,7 @@
             <q-item-label>Virtual Machines</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/hotplug-usb">
+        <q-item clickable tag="a" to="/vm-manager/hotplug-usb">
           <q-item-section avatar>
             <q-icon name="mdi-usb" />
           </q-item-section>
@@ -115,7 +115,7 @@
             <q-item-label>Hotplug USB</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/storage-pools">
+        <q-item clickable tag="a" to="/vm-manager/storage-pools">
           <q-item-section avatar>
             <q-icon name="mdi-server" />
           </q-item-section>
@@ -123,7 +123,7 @@
             <q-item-label>Storage Pools</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/backup-manager">
+        <q-item clickable tag="a" to="/vm-manager/backups">
           <q-item-section avatar>
             <q-icon name="mdi-backup-restore" />
           </q-item-section>
@@ -131,7 +131,7 @@
             <q-item-label>Backups</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/tools/download-iso">
+        <q-item clickable tag="a" to="/vm-manager/download-iso">
           <q-item-section avatar>
             <q-icon name="mdi-disc" />
           </q-item-section>
@@ -181,7 +181,7 @@
           </q-item>
         </q-expansion-item>
         <q-item-label header class="q-pb-none q-pt-md">System</q-item-label>
-        <q-item clickable tag="a" to="/tools/system-info">
+        <q-item clickable tag="a" to="/system/system-info">
           <q-item-section avatar>
             <q-icon name="mdi-monitor" />
           </q-item-section>
@@ -189,7 +189,7 @@
             <q-item-label>System Information</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/tools/system-devices">
+        <q-item clickable tag="a" to="/system/system-devices">
           <q-item-section avatar>
             <q-icon name="bi-gpu-card" />
           </q-item-section>
@@ -197,14 +197,14 @@
             <q-item-label>System Devices</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/tools/terminal">
+        <q-item clickable tag="a" to="/system/terminal">
           <q-item-section avatar>
             <q-icon name="mdi-console" />
           </q-item-section>
           <q-item-section>
             <q-item-label>Terminal</q-item-label>
           </q-item-section> </q-item
-        ><q-item clickable tag="a" to="/settings">
+        ><q-item clickable tag="a" to="/system/settings">
           <q-item-section avatar>
             <q-icon name="mdi-cog" />
           </q-item-section>
