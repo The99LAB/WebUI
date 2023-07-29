@@ -14,10 +14,10 @@
           </q-card-section>
           <q-card-section>
             <img
-              class="q-px-md"
+              class="q-px-xl"
               src="/src/assets/Server99-logo-full.png"
               alt="Logo"
-              style="width: 25em"
+              style="width: 22em"
             />
           </q-card-section>
         </q-card>

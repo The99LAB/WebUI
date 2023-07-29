@@ -11,13 +11,13 @@ const routes = [
       {
         path: "shutdown",
         name: "shutdown",
-        component: () => import("pages/power-state/ShutdownPage.vue"),
+        component: () => import("pages/powerstate/ShutdownPage.vue"),
         meta: { title: "Shutdown" },
       },
       {
         path: "reboot",
         name: "reboot",
-        component: () => import("pages/power-state/RebootPage.vue"),
+        component: () => import("pages/powerstate/RebootPage.vue"),
         meta: { title: "Reboot" },
       },
     ],
