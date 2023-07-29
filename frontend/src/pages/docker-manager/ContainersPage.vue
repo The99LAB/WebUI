@@ -107,7 +107,12 @@
             >
               <q-tooltip :offset="[0, 5]">WebUI</q-tooltip>
             </q-btn>
-            <q-icon name="mdi-alert" color="warning" size="xs" v-if="props.row.container_type == 'unmanaged'">
+            <q-icon
+              name="mdi-alert"
+              color="warning"
+              size="xs"
+              v-if="props.row.container_type == 'unmanaged'"
+            >
               <q-tooltip :offset="[0, 5]">
                 This container is not managed by the WebUI.
               </q-tooltip>

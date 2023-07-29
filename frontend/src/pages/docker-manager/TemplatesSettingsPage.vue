@@ -13,33 +13,33 @@
     >
       <template v-slot:top-right>
         <div class="q-gutter-sm">
-           <q-btn
-          color="primary"
-          icon="mdi-plus"
-          label="Add"
-          @click="templateAddRepoDialog = true"
-          :disable="templateRepoSelected.length != 0"
-        />
-        <q-btn
-          color="primary"
-          icon="mdi-delete"
-          label="Delete"
-          @click="
-            $refs.confirmDialog.show(
-              'Are you sure?',
-              ['Are you sure you want to delete this template repository?'],
-              templateRepoDelete,
-            )
-          "
-          :disable="!templateRepoSelected.length"
-        />
-        <q-btn
-          color="primary"
-          icon="mdi-pencil"
-          label="Edit"
-          @click="templateRepoEditDialog = true"
-          :disable="!templateRepoSelected.length"
-        />
+          <q-btn
+            color="primary"
+            icon="mdi-plus"
+            label="Add"
+            @click="templateAddRepoDialog = true"
+            :disable="templateRepoSelected.length != 0"
+          />
+          <q-btn
+            color="primary"
+            icon="mdi-delete"
+            label="Delete"
+            @click="
+              $refs.confirmDialog.show(
+                'Are you sure?',
+                ['Are you sure you want to delete this template repository?'],
+                templateRepoDelete,
+              )
+            "
+            :disable="!templateRepoSelected.length"
+          />
+          <q-btn
+            color="primary"
+            icon="mdi-pencil"
+            label="Edit"
+            @click="templateRepoEditDialog = true"
+            :disable="!templateRepoSelected.length"
+          />
         </div>
       </template>
     </q-table>

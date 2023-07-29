@@ -21,10 +21,10 @@
             :disable="selectedImage.length == 0"
           />
           <q-btn
-          color="primary"
-          icon="mdi-download"
-          label="Pull Image"
-          @click="pullImageDialog = true"
+            color="primary"
+            icon="mdi-download"
+            label="Pull Image"
+            @click="pullImageDialog = true"
           />
         </div>
       </template>
@@ -37,7 +37,13 @@
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
         <q-card-section>
-          <q-input v-model="pullImageName" label="Image name" autofocus hint="repository:tag" style="width: 25em;"/>
+          <q-input
+            v-model="pullImageName"
+            label="Image name"
+            autofocus
+            hint="repository:tag"
+            style="width: 25em"
+          />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Pull" @click="imagePull" />

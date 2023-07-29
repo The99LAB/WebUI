@@ -28,46 +28,46 @@
       </template>
     </q-table>
     <q-separator color="transparent" spaced="xl" />
-      <q-table
-        title="OVMF Paths"
-        :rows="ovmf_paths"
-        :columns="ovmf_paths_columns"
-        selection="single"
-        row-key="name"
-        v-model:selected="selected_ovmf_path"
-        :pagination="table_pagination"
-        hide-pagination
-        :loading="ovmf_paths_loading"
-        hide-bottom
-      >
-        <template v-slot:top-right>
-          <div class="q-gutter-sm">
-            <q-btn
-              color="primary"
-              label="Edit"
-              icon="mdi-pencil"
-              :disable="selected_ovmf_path.length == 0"
-              @click="editOvmfPath"
-            />
-            <q-btn
-              color="primary"
-              label="Remove"
-              icon="mdi-delete"
-              :disable="selected_ovmf_path.length == 0"
-              @click="removeOvmfPath(selected_ovmf_path[0].name)"
-            />
-            <q-btn
-              color="primary"
-              label="Add"
-              icon="mdi-plus"
-              @click="addOvmfPathDialogShow = true"
-            />
-          </div>
-        </template>
-        <template v-slot:loading>
-          <q-inner-loading showing />
-        </template>
-      </q-table>
+    <q-table
+      title="OVMF Paths"
+      :rows="ovmf_paths"
+      :columns="ovmf_paths_columns"
+      selection="single"
+      row-key="name"
+      v-model:selected="selected_ovmf_path"
+      :pagination="table_pagination"
+      hide-pagination
+      :loading="ovmf_paths_loading"
+      hide-bottom
+    >
+      <template v-slot:top-right>
+        <div class="q-gutter-sm">
+          <q-btn
+            color="primary"
+            label="Edit"
+            icon="mdi-pencil"
+            :disable="selected_ovmf_path.length == 0"
+            @click="editOvmfPath"
+          />
+          <q-btn
+            color="primary"
+            label="Remove"
+            icon="mdi-delete"
+            :disable="selected_ovmf_path.length == 0"
+            @click="removeOvmfPath(selected_ovmf_path[0].name)"
+          />
+          <q-btn
+            color="primary"
+            label="Add"
+            icon="mdi-plus"
+            @click="addOvmfPathDialogShow = true"
+          />
+        </div>
+      </template>
+      <template v-slot:loading>
+        <q-inner-loading showing />
+      </template>
+    </q-table>
   </q-page>
   <q-dialog v-model="editSettingDialogShow">
     <q-card style="min-width: 50vw">

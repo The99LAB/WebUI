@@ -11,7 +11,11 @@
     >
       <template #body="props">
         <q-tr :props="props">
-          <q-td key="iommuGroup" :props="props" class="text-weight-regular text-body2">
+          <q-td
+            key="iommuGroup"
+            :props="props"
+            class="text-weight-regular text-body2"
+          >
             <q-btn
               flat
               round
@@ -42,45 +46,45 @@
             <div class="q-gutter-sm q-ml-xs">
               <div class="row">
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
-                    Location:
-                  </p>
-                  <p class="text-body2 q-my-none">{{ props.row.path }}</p>
+                  Location:
+                </p>
+                <p class="text-body2 q-my-none">{{ props.row.path }}</p>
               </div>
               <div class="row">
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
-                    Domain:
-                  </p>
-                  <p class="text-body2 q-my-none">{{ props.row.domain }}</p>
+                  Domain:
+                </p>
+                <p class="text-body2 q-my-none">{{ props.row.domain }}</p>
               </div>
               <div class="row">
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
-                    Bus:
-                  </p>
-                  <p class="text-body2 q-my-none">{{ props.row.bus }}</p>
+                  Bus:
+                </p>
+                <p class="text-body2 q-my-none">{{ props.row.bus }}</p>
               </div>
               <div class="row">
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
-                    Slot:
-                  </p>
-                  <p class="text-body2 q-my-none">{{ props.row.slot }}</p>
+                  Slot:
+                </p>
+                <p class="text-body2 q-my-none">{{ props.row.slot }}</p>
               </div>
               <div class="row">
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
-                    Function:
-                  </p>
-                  <p class="text-body2 q-my-none">{{ props.row.function }}</p>
+                  Function:
+                </p>
+                <p class="text-body2 q-my-none">{{ props.row.function }}</p>
               </div>
               <div class="row">
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
-                    Vendor ID:
-                  </p>
-                  <p class="text-body2 q-my-none">{{ props.row.vendorid }}</p>
+                  Vendor ID:
+                </p>
+                <p class="text-body2 q-my-none">{{ props.row.vendorid }}</p>
               </div>
               <div class="row">
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
-                    Product ID:
-                  </p>
-                  <p class="text-body2 q-my-none">{{ props.row.productid }}</p>
+                  Product ID:
+                </p>
+                <p class="text-body2 q-my-none">{{ props.row.productid }}</p>
               </div>
             </div>
           </q-td>

@@ -12,11 +12,11 @@
     >
       <template v-slot:top-right>
         <q-btn
-        color="primary"
-        icon="mdi-plus"
-        label="new VM"
-        @click="createVm()"
-      />
+          color="primary"
+          icon="mdi-plus"
+          label="new VM"
+          @click="createVm()"
+        />
       </template>
       <template #body="props">
         <q-tr :props="props">

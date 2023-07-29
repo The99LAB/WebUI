@@ -12,11 +12,11 @@
     >
       <template v-slot:top-right>
         <q-btn
-        color="primary"
-        icon="mdi-plus"
-        label="Create config"
-        @click="openCreateConfigDialog"
-      />
+          color="primary"
+          icon="mdi-plus"
+          label="Create config"
+          @click="openCreateConfigDialog"
+        />
       </template>
       <template #body="props">
         <q-tr :props="props">
