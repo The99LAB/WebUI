@@ -1,7 +1,7 @@
 name: Format source code
 on: 
   push:
-    branches: [ master ]
+    branches: [ main ]
 jobs:
   run:
     name: Format
