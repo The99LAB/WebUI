@@ -1,15 +1,5 @@
 <template>
   <q-page padding>
-    <div class="row q-mb-sm">
-      <q-space />
-      <q-btn
-        class="q-ma-sm"
-        color="primary"
-        icon="mdi-download"
-        label="Pull Image"
-        @click="pullImageDialog = true"
-      />
-    </div>
     <q-table
       title="Images"
       :rows="dockerImages"
@@ -22,13 +12,21 @@
       :loading="dockerImagesLoading"
     >
       <template v-slot:top-right>
-        <q-btn
+        <div class="q-gutter-sm">
+          <q-btn
+            color="primary"
+            icon="mdi-delete"
+            label="Delete"
+            @click="imageDelete()"
+            :disable="selectedImage.length == 0"
+          />
+          <q-btn
           color="primary"
-          icon="mdi-delete"
-          label="Delete"
-          @click="imageDelete()"
-          :disable="selectedImage.length == 0"
-        />
+          icon="mdi-download"
+          label="Pull Image"
+          @click="pullImageDialog = true"
+          />
+        </div>
       </template>
     </q-table>
     <q-dialog v-model="pullImageDialog" persistent>
@@ -39,7 +37,7 @@
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
         <q-card-section>
-          <q-input v-model="pullImageName" label="Image name" autofocus />
+          <q-input v-model="pullImageName" label="Image name" autofocus style="width: 25em;"/>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Pull" @click="imagePull" />
