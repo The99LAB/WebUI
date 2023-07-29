@@ -12,13 +12,13 @@
       :loading="templateTableLoading"
     >
       <template v-slot:top-right>
-        <q-btn
+        <div class="q-gutter-sm">
+           <q-btn
           color="primary"
           icon="mdi-plus"
           label="Add"
           @click="templateAddRepoDialog = true"
           :disable="templateRepoSelected.length != 0"
-          class="q-mr-sm"
         />
         <q-btn
           color="primary"
@@ -32,7 +32,6 @@
             )
           "
           :disable="!templateRepoSelected.length"
-          class="q-mr-sm"
         />
         <q-btn
           color="primary"
@@ -40,8 +39,8 @@
           label="Edit"
           @click="templateRepoEditDialog = true"
           :disable="!templateRepoSelected.length"
-          class="q-mr-sm"
         />
+        </div>
       </template>
     </q-table>
     <ConfirmDialog ref="confirmDialog" />
