@@ -32,7 +32,7 @@
         />
         <q-card-section>
           <div class="text-h6">{{ template.name }}</div>
-          <div class="row items-center justify-center">
+          <div class="row items-center justify-center q-mb-sm">
             <q-icon name="mdi-source-repository" />
             <p class="q-ma-none">
               {{
@@ -43,7 +43,7 @@
             </p>
             <q-tooltip :offset="[0, 0]">Template Repository</q-tooltip>
           </div>
-          <p class="text-overflow">
+          <p class="ellipsis-3-lines">
             {{ template.description }}
           </p>
         </q-card-section>
@@ -139,14 +139,6 @@
 .dialog-img {
   max-width: 100px;
   max-height: 100px;
-}
-
-.text-overflow {
-  display: -webkit-box;
-  max-width: 350px;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 </style>
 
