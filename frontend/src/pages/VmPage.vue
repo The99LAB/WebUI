@@ -22,7 +22,11 @@
     >
       <template #body="props">
         <q-tr :props="props">
-          <q-td key="name" :props="props" class="text-weight-regular text-body2">
+          <q-td
+            key="name"
+            :props="props"
+            class="text-weight-regular text-body2"
+          >
             <q-btn
               flat
               round
@@ -30,7 +34,6 @@
               @click="props.expand = !props.expand"
               size="md"
               padding="none"
-
             />
             {{ props.row.name }}
           </q-td>

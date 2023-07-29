@@ -95,14 +95,12 @@ export default {
     },
     createVolume() {
       this.$api
-        .post(
-          "/storage-pools/" + this.pooluuid + "/create-volume", {
-            name: this.volumeName,
-            format: this.volumeFormat,
-            size: this.volumeSize,
-            size_unit: this.volumeSizeUnit,
-          }
-        )
+        .post("/storage-pools/" + this.pooluuid + "/create-volume", {
+          name: this.volumeName,
+          format: this.volumeFormat,
+          size: this.volumeSize,
+          size_unit: this.volumeSizeUnit,
+        })
         .then((response) => {
           this.layout = false;
           this.$emit("volume-created");

@@ -24,7 +24,11 @@
       </template>
       <template #body="props">
         <q-tr :props="props">
-          <q-td key="name" :props="props" class="text-weight-regular text-body2">
+          <q-td
+            key="name"
+            :props="props"
+            class="text-weight-regular text-body2"
+          >
             <q-btn
               flat
               round
@@ -32,7 +36,6 @@
               @click="props.row.expand = !props.row.expand"
               size="md"
               padding="none"
-
             />
             {{ props.row.name }}
           </q-td>
@@ -48,42 +51,37 @@
             :props="props"
             class="text-weight-regular text-body2"
           >
-                  <q-btn
-                    size="sm"
-                    flat
-                    round
-                    padding="xs"
-                    icon="mdi-delete"
-                    @click="deleteStoragePool(props.row.uuid)"
-                  >
-                    <q-tooltip :offset="[0, 5]">
-                      Delete pool
-                    </q-tooltip>  
-                </q-btn>
-                  <q-btn
-                  size="sm"
-                    flat
-                    round
-                    padding="xs"
-                    icon="mdi-play"
-                    v-if="props.row.state != 'active'"
-                    @click="activateStoragePool(props.row.uuid)"
-                  ><q-tooltip :offset="[0, 5]">
-                      Start pool
-                    </q-tooltip>  </q-btn>
-                  <q-btn
-                    size="sm"
-                    flat
-                    round
-                    padding="xs"
-                    icon="mdi-stop"
-                    v-if="props.row.state == 'active'"
-                    @click="deactivateStoragePool(props.row.uuid)"
-                  >
-                  <q-tooltip :offset="[0, 5]">
-                      Stop pool
-                    </q-tooltip>  
-                </q-btn>
+            <q-btn
+              size="sm"
+              flat
+              round
+              padding="xs"
+              icon="mdi-delete"
+              @click="deleteStoragePool(props.row.uuid)"
+            >
+              <q-tooltip :offset="[0, 5]"> Delete pool </q-tooltip>
+            </q-btn>
+            <q-btn
+              size="sm"
+              flat
+              round
+              padding="xs"
+              icon="mdi-play"
+              v-if="props.row.state != 'active'"
+              @click="activateStoragePool(props.row.uuid)"
+              ><q-tooltip :offset="[0, 5]"> Start pool </q-tooltip>
+            </q-btn>
+            <q-btn
+              size="sm"
+              flat
+              round
+              padding="xs"
+              icon="mdi-stop"
+              v-if="props.row.state == 'active'"
+              @click="deactivateStoragePool(props.row.uuid)"
+            >
+              <q-tooltip :offset="[0, 5]"> Stop pool </q-tooltip>
+            </q-btn>
           </q-td>
           <q-td
             key="capacity"
@@ -110,8 +108,11 @@
             key="autostart"
             :props="props"
             class="text-weight-regular text-body2"
-            >
-            <q-toggle v-model="props.row.autostart" @update:model-value="toggleAutostartStoragePool(props.row.uuid)"/>
+          >
+            <q-toggle
+              v-model="props.row.autostart"
+              @update:model-value="toggleAutostartStoragePool(props.row.uuid)"
+            />
           </q-td>
         </q-tr>
         <q-tr v-show="props.row.expand" :props="props">
@@ -125,12 +126,20 @@
             <q-tab-panels v-model="props.row.tab">
               <q-tab-panel name="overview">
                 <div class="row q-mb-sm">
-                  <p class="text-body2 text-weight-bold q-mr-sm q-my-none">Path:</p>
+                  <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
+                    Path:
+                  </p>
                   <p class="text-body2 q-my-none">{{ props.row.path }}</p>
                 </div>
                 <div class="row q-mt-none">
-                  <p class="text-body2 text-weight-bold q-mr-sm q-my-none q-py-none">Type:</p>
-                  <p class="text-body2 q-my-none q-py-none">{{ props.row.type }}</p>
+                  <p
+                    class="text-body2 text-weight-bold q-mr-sm q-my-none q-py-none"
+                  >
+                    Type:
+                  </p>
+                  <p class="text-body2 q-my-none q-py-none">
+                    {{ props.row.type }}
+                  </p>
                 </div>
               </q-tab-panel>
               <q-tab-panel name="volumes" class="q-pb-none">
@@ -205,7 +214,7 @@ const rows = [];
 const columns = [
   { label: "Name", field: "name", name: "name", align: "left" },
   { label: "State", field: "state", name: "state", align: "left" },
-  { label: "Actions", field: "actions", name:"actions", align: "left"},
+  { label: "Actions", field: "actions", name: "actions", align: "left" },
   { label: "Capacity", field: "capacity", name: "capacity", align: "left" },
   {
     label: "Allocation",
@@ -214,7 +223,7 @@ const columns = [
     align: "left",
   },
   { label: "Available", field: "available", name: "available", align: "left" },
-  { label: "Autostart", field: "autostart", name: "autostart", align: "left"}
+  { label: "Autostart", field: "autostart", name: "autostart", align: "left" },
 ];
 
 const volumeColums = [
@@ -265,7 +274,6 @@ export default {
             else {
               dataApi[i]["expand"] = false;
               dataApi[i]["tab"] = "overview";
-              
             }
             dataApi[i]["selectedVolume"] = [];
             dataApi[i]["volumesLoading"] = false;
@@ -275,7 +283,9 @@ export default {
         })
         .catch((error) => {
           let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error getting storage pools.", [errormsg]);
+          this.$refs.errorDialog.show("Error getting storage pools.", [
+            errormsg,
+          ]);
         });
     },
     removeVolume(pooluuid, volume) {
@@ -287,7 +297,7 @@ export default {
       for (let i = 0; i < volume.length; i++) {
         volumeNames.push(volume[i]["name"]);
       }
-      
+
       this.$api
         .post("/storage-pools/" + pooluuid + "/delete-volumes", volumeNames)
         .then((response) => {
@@ -315,7 +325,9 @@ export default {
         })
         .catch((error) => {
           let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error starting storage pool.", [errormsg]);
+          this.$refs.errorDialog.show("Error starting storage pool.", [
+            errormsg,
+          ]);
         });
     },
     deactivateStoragePool(pooluuid) {
@@ -326,7 +338,9 @@ export default {
         })
         .catch((error) => {
           let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error stopping storage pool.", [errormsg]);
+          this.$refs.errorDialog.show("Error stopping storage pool.", [
+            errormsg,
+          ]);
         });
     },
     deleteStoragePool(pooluuid) {
@@ -337,7 +351,9 @@ export default {
         })
         .catch((error) => {
           let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error deleting storage pool.", [errormsg]);
+          this.$refs.errorDialog.show("Error deleting storage pool.", [
+            errormsg,
+          ]);
         });
     },
     toggleAutostartStoragePool(pooluuid) {
