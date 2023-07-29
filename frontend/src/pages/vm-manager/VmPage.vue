@@ -68,7 +68,10 @@
             :props="props"
             class="text-weight-regular text-body2"
           >
-            <q-toggle v-model="props.row.autostart" @update:model-value="autostartVm(props.row.uuid)"/>
+            <q-toggle
+              v-model="props.row.autostart"
+              @update:model-value="autostartVm(props.row.uuid)"
+            />
           </q-td>
         </q-tr>
         <q-tr v-show="props.expand" :props="props">
@@ -160,9 +163,27 @@ export default {
     return {
       rows: [],
       columns: [
-        { label: "Name", field: "name", name: "name", align: "left", sortable: true },
-        { label: "State", field: "state", name: "state", align: "left", sortable: true },
-        { label: "vCPUs", field: "vcpus", name: "vcpus", align: "left", sortable: true },
+        {
+          label: "Name",
+          field: "name",
+          name: "name",
+          align: "left",
+          sortable: true,
+        },
+        {
+          label: "State",
+          field: "state",
+          name: "state",
+          align: "left",
+          sortable: true,
+        },
+        {
+          label: "vCPUs",
+          field: "vcpus",
+          name: "vcpus",
+          align: "left",
+          sortable: true,
+        },
         {
           label: "Memory min",
           field: "memory_min",
@@ -177,7 +198,12 @@ export default {
           align: "left",
           sortable: true,
         },
-        { label: "Autostart", field: "autostart", name: "autostart", align: "left"}
+        {
+          label: "Autostart",
+          field: "autostart",
+          name: "autostart",
+          align: "left",
+        },
       ],
       selected: [],
       vmTableLoading: ref(true),
@@ -280,15 +306,16 @@ export default {
         window.open(novnc_url, "_blank");
       }
     },
-    autostartVm(uuid){
+    autostartVm(uuid) {
       let autostart = this.rows.find((vm) => vm.uuid === uuid).autostart;
-      this.$api.post("vm-manager/" + uuid + "/autostart", {autostart: autostart})
-      .catch((error) => {
-        this.$refs.errorDialog.show("Error setting autostart", [
-          "vm uuid: " + uuid,
-          "Error: " + error.response.data.detail,
-        ]);
-      });
+      this.$api
+        .post("vm-manager/" + uuid + "/autostart", { autostart: autostart })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error setting autostart", [
+            "vm uuid: " + uuid,
+            "Error: " + error.response.data.detail,
+          ]);
+        });
     },
     editVm(uuid) {
       this.$refs.editVm.show(uuid);
