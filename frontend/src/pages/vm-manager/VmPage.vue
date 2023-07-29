@@ -63,8 +63,14 @@
           >
             {{ props.row.memory_max }} {{ props.row.memory_unit }}
           </q-td>
+          <q-td
+            key="autostart"
+            :props="props"
+            class="text-weight-regular text-body2"
+          >
+            <q-toggle v-model="props.row.autostart" @update:model-value="autostartVm(props.row.uuid)"/>
+          </q-td>
         </q-tr>
-
         <q-tr v-show="props.expand" :props="props">
           <q-td colspan="100%">
             <div>
@@ -149,34 +155,31 @@ import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import { useVncSettingsStore } from "stores/vncsettings";
 import { storeToRefs } from "pinia";
 
-const selected = ref();
-
-const rows = [];
-
-const columns = [
-  { label: "Name", field: "name", name: "name", align: "left" },
-  { label: "State", field: "state", name: "state", align: "left" },
-  { label: "vCPUs", field: "vcpus", name: "vcpus", align: "left" },
-  {
-    label: "Memory min",
-    field: "memory_min",
-    name: "memory_min",
-    align: "left",
-  },
-  {
-    label: "Memory max",
-    field: "memory_max",
-    name: "memory_max",
-    align: "left",
-  },
-];
-
 export default {
   data() {
     return {
-      rows,
-      columns,
-      selected,
+      rows: [],
+      columns: [
+        { label: "Name", field: "name", name: "name", align: "left", sortable: true },
+        { label: "State", field: "state", name: "state", align: "left", sortable: true },
+        { label: "vCPUs", field: "vcpus", name: "vcpus", align: "left", sortable: true },
+        {
+          label: "Memory min",
+          field: "memory_min",
+          name: "memory_min",
+          align: "left",
+          sortable: true,
+        },
+        {
+          label: "Memory max",
+          field: "memory_max",
+          name: "memory_max",
+          align: "left",
+          sortable: true,
+        },
+        { label: "Autostart", field: "autostart", name: "autostart", align: "left"}
+      ],
+      selected: [],
       vmTableLoading: ref(true),
       vmTablePagination: {
         rowsPerPage: 15,
@@ -276,6 +279,16 @@ export default {
           uuid;
         window.open(novnc_url, "_blank");
       }
+    },
+    autostartVm(uuid){
+      let autostart = this.rows.find((vm) => vm.uuid === uuid).autostart;
+      this.$api.post("vm-manager/" + uuid + "/autostart", {autostart: autostart})
+      .catch((error) => {
+        this.$refs.errorDialog.show("Error setting autostart", [
+          "vm uuid: " + uuid,
+          "Error: " + error.response.data.detail,
+        ]);
+      });
     },
     editVm(uuid) {
       this.$refs.editVm.show(uuid);

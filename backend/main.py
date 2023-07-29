@@ -135,6 +135,9 @@ def getvmresults():
             dom_memory_stat = vmmemory(dom_uuid).current(dom_memory_unit)
             dom_memory_min = dom_memory_stat[0]
             dom_memory_max = dom_memory_stat[1]
+            dom_autostart = False
+            if domain.autostart() == 1:
+                dom_autostart = True
             result = {
                 "uuid": dom_uuid,
                 "name": dom_name,
@@ -144,6 +147,7 @@ def getvmresults():
                 "vcpus": vcpus,
                 "state": dom_state,
                 "VNC": vnc_state,
+                "autostart": dom_autostart,
             }
             results.append(result)
     else:
@@ -1822,11 +1826,10 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             bios_type = os_loader_elem.text
 
         # get autostart boolean
-        autostart = domain.autostart()
-        if autostart == 1:
+        autostart = False
+        if domain.autostart() == 1:
             autostart = True
-        else:
-            autostart = False
+            
         # get memory
         meminfo = vmmemory(uuid=vmuuid).current("GB")
         minmem = meminfo[0]
@@ -1913,6 +1916,18 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             return
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+    elif action == "autostart":
+        data = await request.json()
+        value = data['autostart']
+        try:
+            if value == True:
+                domain.setAutostart(1)
+            else:
+                domain.setAutostart(0)
+            return
+        except libvirt.libvirtError as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
     elif action.startswith("edit"):
         data = await request.json()
         action = action.replace("edit-", "")
