@@ -26,6 +26,7 @@
               label="Username"
               @update:model-value="authError = ''"
               @keydown.tab.prevent="$refs.passwordInput.focus()"
+              autocapitalize="off"
             >
               <template v-slot:prepend>
                 <q-icon name="mdi-account" />
