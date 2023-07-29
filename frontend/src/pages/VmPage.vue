@@ -22,17 +22,17 @@
     >
       <template #body="props">
         <q-tr :props="props">
-          <q-td key="name" :props="props">
+          <q-td key="name" :props="props" class="text-weight-regular text-body2">
             <q-btn
               flat
-              dense
-              :ripple="false"
+              round
               :icon="props.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
               @click="props.expand = !props.expand"
-              no-caps
-              :label="props.row.name"
-              class="text-weight-regular text-body2 disable-focus-helper"
+              size="md"
+              padding="none"
+
             />
+            {{ props.row.name }}
           </q-td>
           <q-td
             key="state"
@@ -313,11 +313,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.disable-focus-helper {
-  .q-focus-helper {
-    opacity: 0 !important;
-  }
-}
-</style>

@@ -2390,8 +2390,6 @@ async def api_storage_pools(username: str = Depends(check_auth)):
             "volumes": pool_volumes
         }
         storage_pools.append(pool_result)
-    # sort storage pools by name
-    storage_pools = sorted(storage_pools, key=lambda k: k['name'])
     return storage_pools
 
 @app.post("/api/storage-pools")
@@ -2451,7 +2449,7 @@ async def api_storage_pools_actions_get(pooluuid: str, action: str, username: st
         return pool_volumes
 
 @app.post("/api/storage-pools/{pooluuid}/{action}")
-async def api_storage_pools_actions_post(pooluuid: str, action: str, username: str = Depends(check_auth)):
+async def api_storage_pools_actions_post(pooluuid: str, action: str, request: Request, username: str = Depends(check_auth)):
     try:
         pool = conn.storagePoolLookupByUUIDString(pooluuid)
         if action == "start":
@@ -2471,46 +2469,35 @@ async def api_storage_pools_actions_post(pooluuid: str, action: str, username: s
             pool.destroy()
             pool.delete()
             pool.undefine()
+        elif action == "delete-volumes":
+            data = await request.json()
+            print("deleting volumes: " + str(data))
+            for volume in data:
+                volume = pool.storageVolLookupByName(volume)
+                volume.delete()
+        elif action == "create-volume":
+            data = await request.json()
+            volume_name = data['name']
+            volume_format = data['format']
+            volume_size = data['size']
+            volume_size_unit = data['size_unit']
+            if volume_size_unit == "TB" or volume_size_unit == "GB" or volume_size_unit == "MB":
+                volume_size = convertSizeUnit(volume_size, volume_size_unit, "KB")
+            else:
+                raise HTTPException(status_code=400, detail="Unknown disk size unit")
+
+            volume_xml = f"""<volume>
+            <name>{volume_name}.{volume_format}</name>
+            <capacity>{volume_size}</capacity>
+            <allocation>0</allocation>
+            <target>
+                <format type="{volume_format}"/>
+            </target>
+            </volume>"""
+
+            pool.createXML(volume_xml)
         else:
             raise HTTPException(status_code=404, detail="Action not found")
-        return
-    except libvirt.libvirtError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-### API-STORAGE-POOL-VOLUMES ###
-@app.delete('/api/storage-pools/{pooluuid}/volume')
-async def delete_storage_pool_volumes(pooluuid: str, request: Request, username: str = Depends(check_auth)):
-    data = await request.json()
-    print("deleting volumes: " + str(data))
-    for volume in data:
-        try:
-            pool = conn.storagePoolLookupByUUIDString(pooluuid)
-            volume = pool.storageVolLookupByName(volume)
-            volume.delete()
-        except libvirt.libvirtError as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    return
-
-@app.post('/api/storage-pools/{pooluuid}/volume/{volumename}')
-async def create_storage_pool_volume(pooluuid: str, volumename: str, format: str = Form(...), size: int = Form(...), size_unit: str = Form(...), username: str = Depends(check_auth)):
-    print(f"creating volume with name: {volumename} on pool with uuid: {pooluuid}")
-    try:
-        pool = conn.storagePoolLookupByUUIDString(pooluuid)        
-        if size_unit == "TB" or size_unit == "GB" or size_unit == "MB":
-            size = convertSizeUnit(size, size_unit, "KB")
-        else:
-            raise HTTPException(status_code=400, detail="Unknown disk size unit")
-
-        volume_xml = f"""<volume>
-        <name>{volumename}.{format}</name>
-        <capacity>{size}</capacity>
-        <allocation>0</allocation>
-        <target>
-            <format type="{format}"/>
-        </target>
-        </volume>"""
-
-        pool.createXML(volume_xml)
         return
     except libvirt.libvirtError as e:
         raise HTTPException(status_code=500, detail=str(e))

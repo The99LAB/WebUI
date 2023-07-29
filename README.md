@@ -1,5 +1,5 @@
 # VmManager
-Web UI for managing libvirt based virtual machines
+WebUI for managing libvirt based virtual machines and docker containers
 
 ## Usage (production)
 - Download the latest release

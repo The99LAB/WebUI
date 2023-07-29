@@ -94,17 +94,19 @@ export default {
       this.layout = true;
     },
     createVolume() {
-      console.log("Creating volume...");
-      const formData = new FormData();
-      formData.append("format", this.volumeFormat);
-      formData.append("size", this.volumeSize);
-      formData.append("size_unit", this.volumeSizeUnit);
       this.$api
         .post(
-          "/storage-pools/" + this.pooluuid + "/volume/" + this.volumeName,
-          formData,
+          "/storage-pools/" + this.pooluuid + "/create-volume", {
+            name: this.volumeName,
+            format: this.volumeFormat,
+            size: this.volumeSize,
+            size_unit: this.volumeSizeUnit,
+          }
         )
-        .then((this.layout = false), this.$emit("volume-created"))
+        .then((response) => {
+          this.layout = false;
+          this.$emit("volume-created");
+        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error creating volume", [
             error.response.data.detail,
