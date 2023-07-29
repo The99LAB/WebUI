@@ -5,11 +5,11 @@
       :rows="dockerNetworks"
       :columns="dockerNetworksColumns"
       row-key="id"
-      hide-pagination
       :pagination="dockerNetworksPagination"
       :loading="dockerNetworksLoading"
       selection="single"
       v-model:selected="selectedNetwork"
+      hide-selected-banner
     >
       <template v-slot:top-right>
         <q-btn
@@ -64,7 +64,7 @@ export default {
       dockerNetworks: [],
       dockerNetworksPagination: {
         sortBy: "name",
-        rowsPerPage: 0,
+        rowsPerPage: 15,
       },
       selectedNetwork: [],
       dockerNetworksLoading: false,

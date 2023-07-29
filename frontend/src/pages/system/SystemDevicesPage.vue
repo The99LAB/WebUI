@@ -11,16 +11,16 @@
     >
       <template #body="props">
         <q-tr :props="props">
-          <q-td key="iommuGroup" :props="props">
+          <q-td key="iommuGroup" :props="props" class="text-weight-regular text-body2">
             <q-btn
               flat
               round
               :icon="props.row.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
               @click="props.row.expand = !props.row.expand"
-              no-caps
-              :label="props.row.iommuGroup"
-              class="text-weight-regular text-body2"
+              size="md"
+              padding="none"
             />
+            {{ props.row.iommuGroup }}
           </q-td>
           <q-td
             key="driver"
@@ -38,34 +38,50 @@
           </q-td>
         </q-tr>
         <q-tr v-show="props.row.expand" :props="props">
-          <q-td colspan="100%">
-            <div class="row q-ma-sm text-body2">
-              <p class="text-weight-bold q-mr-sm">Loaction:</p>
-              <p>{{ props.row.path }}</p>
-            </div>
-            <div class="row q-ma-sm text-body2">
-              <p class="text-weight-bold q-mr-sm">Domain:</p>
-              <p>{{ props.row.domain }}</p>
-            </div>
-            <div class="row q-ma-sm text-body2">
-              <p class="text-weight-bold q-mr-sm">Bus:</p>
-              <p>{{ props.row.bus }}</p>
-            </div>
-            <div class="row q-ma-sm text-body2">
-              <p class="text-weight-bold q-mr-sm">Slot:</p>
-              <p>{{ props.row.slot }}</p>
-            </div>
-            <div class="row q-ma-sm text-body2">
-              <p class="text-weight-bold q-mr-sm">Function:</p>
-              <p>{{ props.row.function }}</p>
-            </div>
-            <div class="row q-ma-sm text-body2">
-              <p class="text-weight-bold q-mr-sm">Vendor ID:</p>
-              <p>{{ props.row.vendorid }}</p>
-            </div>
-            <div class="row q-ma-sm text-body2">
-              <p class="text-weight-bold q-mr-sm">Product ID:</p>
-              <p>{{ props.row.productid }}</p>
+          <q-td colspan="100%" no-hover>
+            <div class="q-gutter-sm q-ml-xs">
+              <div class="row">
+                <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
+                    Location:
+                  </p>
+                  <p class="text-body2 q-my-none">{{ props.row.path }}</p>
+              </div>
+              <div class="row">
+                <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
+                    Domain:
+                  </p>
+                  <p class="text-body2 q-my-none">{{ props.row.domain }}</p>
+              </div>
+              <div class="row">
+                <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
+                    Bus:
+                  </p>
+                  <p class="text-body2 q-my-none">{{ props.row.bus }}</p>
+              </div>
+              <div class="row">
+                <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
+                    Slot:
+                  </p>
+                  <p class="text-body2 q-my-none">{{ props.row.slot }}</p>
+              </div>
+              <div class="row">
+                <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
+                    Function:
+                  </p>
+                  <p class="text-body2 q-my-none">{{ props.row.function }}</p>
+              </div>
+              <div class="row">
+                <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
+                    Vendor ID:
+                  </p>
+                  <p class="text-body2 q-my-none">{{ props.row.vendorid }}</p>
+              </div>
+              <div class="row">
+                <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
+                    Product ID:
+                  </p>
+                  <p class="text-body2 q-my-none">{{ props.row.productid }}</p>
+              </div>
             </div>
           </q-td>
         </q-tr>

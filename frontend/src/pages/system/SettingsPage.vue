@@ -23,6 +23,9 @@
           />
         </div>
       </template>
+      <template v-slot:loading>
+        <q-inner-loading showing />
+      </template>
     </q-table>
     <q-separator color="transparent" spaced="xl" />
       <q-table
@@ -60,6 +63,9 @@
               @click="addOvmfPathDialogShow = true"
             />
           </div>
+        </template>
+        <template v-slot:loading>
+          <q-inner-loading showing />
         </template>
       </q-table>
   </q-page>

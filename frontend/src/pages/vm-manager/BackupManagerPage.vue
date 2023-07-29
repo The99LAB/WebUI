@@ -1,24 +1,23 @@
 <template>
   <q-page padding>
-    <div class="row">
-      <q-space />
-      <q-btn
-        class="q-ma-sm"
-        color="primary"
-        icon="mdi-plus"
-        label="Create config"
-        @click="openCreateConfigDialog"
-      />
-    </div>
     <q-table
+      title="Backup configs"
       :loading="backupConfigTableLoading"
       :rows="backupConfigRows"
       :columns="backupConfigColumns"
       row-key="config"
       separator="none"
       no-data-label="Failed to get data from backend or no configs defined"
-      hide-pagination
+      :pagination="backupConfigTablePagination"
     >
+      <template v-slot:top-right>
+        <q-btn
+        color="primary"
+        icon="mdi-plus"
+        label="Create config"
+        @click="openCreateConfigDialog"
+      />
+      </template>
       <template #body="props">
         <q-tr :props="props">
           <q-td key="config" :props="props">
@@ -236,6 +235,11 @@ export default {
       backupConfigColumns,
       backupColumns,
       backupConfigTableLoading: ref(true),
+      backupConfigTablePagination: {
+        rowsPerPage: 15,
+        sortBy: "config",
+        descending: false,
+      },
       backupLogDialogShow: ref(false),
       backupLog: ref(""),
       createConfigDialogShow: ref(false),

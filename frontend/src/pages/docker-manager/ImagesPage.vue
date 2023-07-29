@@ -5,11 +5,11 @@
       :rows="dockerImages"
       :columns="dockerImagesColumns"
       row-key="uuid"
-      hide-pagination
       :pagination="dockerImagesPagination"
       selection="multiple"
       v-model:selected="selectedImage"
       :loading="dockerImagesLoading"
+      hide-selected-banner
     >
       <template v-slot:top-right>
         <div class="q-gutter-sm">
@@ -96,7 +96,7 @@ export default {
       dockerImages: [],
       dockerImagesPagination: {
         sortBy: "repository",
-        rowsPerPage: 0,
+        rowsPerPage: 15,
       },
       selectedImage: ref([]),
       pullImageDialog: false,

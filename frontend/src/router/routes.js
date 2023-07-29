@@ -11,13 +11,13 @@ const routes = [
       {
         path: "shutdown",
         name: "shutdown",
-        component: () => import("pages/ShutdownPage.vue"),
+        component: () => import("pages/power-state/ShutdownPage.vue"),
         meta: { title: "Shutdown" },
       },
       {
         path: "reboot",
         name: "reboot",
-        component: () => import("pages/RebootPage.vue"),
+        component: () => import("pages/power-state/RebootPage.vue"),
         meta: { title: "Reboot" },
       },
     ],
@@ -36,31 +36,31 @@ const routes = [
       {
         name: "vm-manager/vms",
         path: "vm-manager/vms",
-        component: () => import("pages/VmPage.vue"),
+        component: () => import("pages/vm-manager/VmPage.vue"),
         meta: { title: "VM Manager" },
       },
       {
         name: "vm-manager/hotplug-usb",
         path: "vm-manager/hotplug-usb",
-        component: () => import("pages/HotplugUsbPage.vue"),
+        component: () => import("pages/vm-manager/HotplugUsbPage.vue"),
         meta: { title: "Hotplug USB" },
       },
       {
         name: "vm-manager/storage-pools",
         path: "vm-manager/storage-pools",
-        component: () => import("src/pages/StoragePoolPage.vue"),
+        component: () => import("pages/vm-manager/StoragePoolPage.vue"),
         meta: { title: "Storage Pools" },
       },
       {
         path: "vm-manager/backups",
         name: "vm-manager/backups",
-        component: () => import("pages/BackupManagerPage.vue"),
+        component: () => import("pages/vm-manager/BackupManagerPage.vue"),
         meta: { title: "Backups" },
       },
       {
         path: "vm-manager/download-iso",
         name: "vm-manager/download-iso",
-        component: () => import("pages/DownloadIsoPage.vue"),
+        component: () => import("pages/vm-manager/DownloadIsoPage.vue"),
         meta: { title: "Download ISO" },
       },
       {
@@ -97,25 +97,25 @@ const routes = [
       {
         path: "system/system-info",
         name: "system/system-info",
-        component: () => import("pages/SystemInfoPage.vue"),
+        component: () => import("pages/system/SystemInfoPage.vue"),
         meta: { title: "System Info" },
       },
       {
         path: "system/system-devices",
         name: "system/system-devices",
-        component: () => import("pages/SystemDevicesPage.vue"),
+        component: () => import("pages/system/SystemDevicesPage.vue"),
         meta: { title: "System Devices" },
       },
       {
         path: "system/terminal",
         name: "system/terminal",
-        component: () => import("pages/TerminalPage.vue"),
+        component: () => import("pages/system/TerminalPage.vue"),
         meta: { title: "Terminal" },
       },
       {
         path: "system/settings",
         name: "system/settings",
-        component: () => import("pages/SettingsPage.vue"),
+        component: () => import("pages/system/SettingsPage.vue"),
         meta: { title: "Settings" },
       },
       {

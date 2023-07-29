@@ -1,23 +1,5 @@
 <template>
   <q-page padding>
-    <div class="row q-mb-sm">
-      <q-btn
-        class="q-ma-sm"
-        color="primary"
-        icon="mdi-refresh"
-        label="Refresh containers"
-        @click="containersUpdate"
-      />
-      <q-space />
-      <q-btn
-        class="q-ma-sm"
-        color="primary"
-        icon="mdi-plus"
-        label="New Custom Container"
-        @click="containerNew"
-      />
-    </div>
-
     <q-table
       title="Containers"
       :loading="containersLoading"
@@ -25,9 +7,28 @@
       :columns="containerColumns"
       row-key="id"
       no-data-label="No containers defined"
-      hide-pagination
       :pagination="containerPagination"
     >
+      <template v-slot:top-right>
+        <div class="q-gutter-sm">
+          <q-btn
+            color="primary"
+            icon="mdi-refresh"
+            label="Refresh"
+            @click="containersUpdate"
+          >
+            <q-tooltip :offset="[0, 5]">Refresh Containers</q-tooltip>
+          </q-btn>
+          <q-btn
+            color="primary"
+            icon="mdi-plus"
+            label="New Custom"
+            @click="containerNew"
+          >
+            <q-tooltip :offset="[0, 5]">New Custom Container</q-tooltip>
+          </q-btn>
+        </div>
+      </template>
       <template #body="props">
         <q-tr :props="props">
           <q-td key="name" :props="props">
@@ -106,6 +107,11 @@
             >
               <q-tooltip :offset="[0, 5]">WebUI</q-tooltip>
             </q-btn>
+            <q-icon name="mdi-alert" color="warning" size="xs" v-if="props.row.container_type == 'unmanaged'">
+              <q-tooltip :offset="[0, 5]">
+                This container is not managed by the WebUI.
+              </q-tooltip>
+            </q-icon>
           </q-td>
           <q-td
             key="network"
@@ -197,7 +203,7 @@ export default {
       ],
       containerPagination: {
         sortBy: "name",
-        rowsPerPage: 0,
+        rowsPerPage: 15,
       },
     };
   },

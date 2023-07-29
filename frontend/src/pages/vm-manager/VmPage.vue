@@ -1,25 +1,23 @@
 <template>
   <q-page padding>
-    <div class="row">
-      <q-space />
-      <q-btn
-        class="q-ma-sm"
-        color="primary"
-        icon="mdi-plus"
-        label="Create VM"
-        @click="createVm()"
-      />
-    </div>
     <q-table
+      title="Virtual Machines"
       :loading="vmTableLoading"
       :rows="rows"
       :columns="columns"
       row-key="uuid"
       separator="none"
       no-data-label="Failed to get data from backend or no vm's defined"
-      hide-pagination
       :pagination="vmTablePagination"
     >
+      <template v-slot:top-right>
+        <q-btn
+        color="primary"
+        icon="mdi-plus"
+        label="new VM"
+        @click="createVm()"
+      />
+      </template>
       <template #body="props">
         <q-tr :props="props">
           <q-td
@@ -181,7 +179,9 @@ export default {
       selected,
       vmTableLoading: ref(true),
       vmTablePagination: {
-        rowsPerPage: 0,
+        rowsPerPage: 15,
+        sortBy: "name",
+        descending: false,
       },
     };
   },

@@ -6,10 +6,10 @@
       :columns="templateTableColums"
       row-key="id"
       selection="single"
-      hide-pagination
       :pagination="templateTablePagination"
       v-model:selected="templateRepoSelected"
       :loading="templateTableLoading"
+      hide-selected-banner
     >
       <template v-slot:top-right>
         <div class="q-gutter-sm">
@@ -167,7 +167,7 @@ export default {
       ],
       templateTablePagination: {
         sortBy: "id",
-        rowsPerPage: 0,
+        rowsPerPage: 15,
       },
       templateRepoSelected: [],
       templateRepoEditDialog: false,

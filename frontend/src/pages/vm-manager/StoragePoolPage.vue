@@ -1,16 +1,7 @@
 <template>
   <q-page padding>
-    <div class="row q-mb-sm">
-      <q-space />
-      <q-btn
-        class="q-ma-sm"
-        color="primary"
-        icon="mdi-plus"
-        label="Create storage pool"
-        @click="createStoragePool()"
-      />
-    </div>
     <q-table
+      title="Storage Pools"
       :loading="storageTableLoading"
       :rows="rows"
       :columns="columns"
@@ -19,6 +10,14 @@
       no-data-label="No pools defined"
       :pagination="storageTablePagination"
     >
+      <template v-slot:top-right>
+        <q-btn
+          color="primary"
+          icon="mdi-plus"
+          label="Create storage pool"
+          @click="createStoragePool()"
+        />
+      </template>
       <template v-slot:loading>
         <q-inner-loading showing color="primary" />
       </template>
@@ -178,7 +177,7 @@
                     :loading="props.row.volumesLoading"
                   >
                     <template v-slot:loading>
-                      <q-inner-loading showing color="primary" />
+                      <q-inner-loading showing />
                     </template>
                   </q-table>
                 </div>
