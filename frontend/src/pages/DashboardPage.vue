@@ -230,10 +230,12 @@ export default {
         yaxis: {
           max: 100,
           min: 0,
-          formatter: (value) => {
-            return value.toFixed(0);
+          tickAmount: 4,
+          labels: {
+            formatter: function (value) {
+              return value.toFixed(0);
+            },
           },
-          tickAmount: 5,
         },
         loading: {
           enabled: false,
