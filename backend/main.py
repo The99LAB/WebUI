@@ -2722,8 +2722,11 @@ async def api_docker_manager_images_post(request: Request, action: str ,username
             docker_client.images.remove(image_name + ":" + image_tag)
         return
     elif action == "pull":
-        docker_client.images.pull(data['image'])
-        return
+        try:
+            docker_client.images.pull(data['image'])
+            return
+        except docker.errors.APIError as e:
+            raise HTTPException(status_code=500, detail=str(e))
     else:
         raise HTTPException(status_code=404, detail="Action not found")
     
