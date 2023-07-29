@@ -1,5 +1,5 @@
 <template>
-  <q-dialog v-model="layout" maximized>
+  <q-dialog v-model="layout" full-width full-height>
     <q-layout
       view="hHh lpR fFf"
       container

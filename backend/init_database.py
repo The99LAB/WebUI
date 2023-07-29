@@ -4,12 +4,14 @@ import datetime
 db = sqlite3.connect('database.db')
 c = db.cursor()
 
-qemu_path = input("Enter qemu path: ") # /usr/bin/qemu-system-x86_64
+# qemu_path = input("Enter qemu path: ") # /usr/bin/qemu-system-x86_64
+qemu_path = "/usr/bin/qemu-system-x86_64"
 novnc_ip = input("Enter novnc ip: ")
 novnc_port = input("Enter novnc port: ")
 novnc_protocool = input("Enter novnc protocool: ")
 novnc_path = input("Enter novnc path: ")
-libvirt_domain_logs_path = input("Enter libvirt domain logs path: ") # /var/log/libvirt/qemu
+# libvirt_domain_logs_path = input("Enter libvirt domain logs path: ") # /var/log/libvirt/qemu
+libvirt_domain_logs_path = "/var/log/libvirt/qemu"
 
 # Create table settings
 c.execute('''CREATE TABLE "settings" (
@@ -54,5 +56,33 @@ c.execute('''CREATE TABLE "notifications" (
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 c.execute(f'''INSERT INTO "notifications" ("id", "type", "timestamp", "title", "message") VALUES (1, "info", "{timestamp}", "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")''')
 
+# Create table docker_templates_locations
+c.execute('''CREATE TABLE "docker_templates_locations" (
+	"id"	INTEGER,
+	"name"	TEXT NOT NULL,
+	"url"	TEXT NOT NULL,
+    "branch" TEXT NOT NULL,
+	PRIMARY KEY("id")
+);''')
+
+# Create records in table docker_templates_locations
+c.execute('''INSERT INTO "docker_templates_locations" ("id", "name", "url", "branch") VALUES ('1', 'VmManager Official', 'https://github.com/macOS-KVM/vm-manager-docker-templates.git', 'main')''')
+
+# Create table docker_templates
+c.execute('''CREATE TABLE "docker_templates" (
+	"id"	INTEGER,
+	"template_repository_id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	"maintainer"	TEXT NOT NULL,
+	"description"	TEXT,
+	"webui"	TEXT NOT NULL,
+	"image"	BLOB,
+	"url"	TEXT NOT NULL,
+	"config"	TEXT NOT NULL,
+	PRIMARY KEY("id"),
+	FOREIGN KEY("template_repository_id") REFERENCES "docker_templates_locations"("id")
+)''')
+
 # finish work with database
 db.commit()
+db.close()

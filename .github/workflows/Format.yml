@@ -1,8 +1,7 @@
 name: Format source code
 on: 
   push:
-    branches-ignore:
-      - renovate/**
+    branches: [ master ]
 jobs:
   run:
     name: Format

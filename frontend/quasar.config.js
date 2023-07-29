@@ -45,6 +45,9 @@ module.exports = configure(function (/* ctx */) {
       "roboto-font", // optional, you are not bound to it
       "material-icons", // optional, you are not bound to it
       "mdi-v6",
+      "ionicons-v4",
+      "fontawesome-v6",
+      "bootstrap-icons",
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
@@ -65,8 +68,8 @@ module.exports = configure(function (/* ctx */) {
       publicPath: "/static/",
       // analyze: true,
       env: {
-        WEBSOCKET_ENDPOINT_DEV: "ws://192.168.0.34:8000",
-        API_ENDPOINT_DEV: "http://192.168.0.34:8000/api",
+        WEBSOCKET_ENDPOINT_DEV: "ws://192.168.0.25:8000",
+        API_ENDPOINT_DEV: "http://192.168.0.25:8000/api",
         PRODUCTION_BACKEND_PORT: 80,
       },
       // rawDefine: {}
