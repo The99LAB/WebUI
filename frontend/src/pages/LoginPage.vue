@@ -66,6 +66,7 @@
           </q-card-section>
           <q-card-actions class="q-pb-md q-px-md">
             <q-btn
+              outline
               size="lg"
               color="primary"
               class="full-width"
