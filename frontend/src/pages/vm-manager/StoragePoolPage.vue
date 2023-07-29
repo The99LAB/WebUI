@@ -187,15 +187,12 @@
         </q-tr>
       </template>
     </q-table>
-    <ErrorDialog ref="errorDialog"></ErrorDialog>
-    <CreateVolume
-      ref="createVolumeDialog"
-      @volume-created="getStoragePools"
-    ></CreateVolume>
+    <ErrorDialog ref="errorDialog" />
+    <CreateVolume ref="createVolumeDialog" @volume-created="getStoragePools" />
     <createStoragePool
       ref="createStoragePoolDialog"
       @storagepool-created="getStoragePools"
-    ></createStoragePool>
+    />
   </q-page>
 </template>
 

@@ -242,7 +242,7 @@
                 size="sm"
                 padding="none"
                 label="Dismiss"
-              ></q-btn>
+              />
               <q-space />{{ n.timestamp }}</q-item-label
             >
           </q-item-section>
@@ -254,7 +254,7 @@
             text-color="primary"
             size="sm"
             label="Dismiss All"
-          ></q-btn>
+          />
         </div>
       </q-list>
     </q-drawer>

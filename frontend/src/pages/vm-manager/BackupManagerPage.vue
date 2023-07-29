@@ -199,7 +199,7 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
-    <ErrorDialog ref="errorDialog"></ErrorDialog>
+    <ErrorDialog ref="errorDialog" />
   </q-page>
 </template>
 

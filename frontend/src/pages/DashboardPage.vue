@@ -32,26 +32,26 @@
               <p class="text-subtitle2 text-weight-bolder q-mr-xs">Version:</p>
               <p class="text-weight-regular">{{ os_name }}</p>
             </div>
-            <q-separator class="q-mb-md"></q-separator>
+            <q-separator class="q-mb-md" />
             <div class="text-left row items-center q-pl-md">
               <p class="text-subtitle2 text-weight-bolder q-mr-xs">Hostname:</p>
               <p class="text-weight-regular">{{ hostname }}</p>
             </div>
-            <q-separator class="q-mb-md"></q-separator>
+            <q-separator class="q-mb-md" />
             <div class="text-left row items-center q-pl-md">
               <p class="text-subtitle2 text-weight-bolder q-mr-xs">Uptime:</p>
               <p class="text-weight-regular">
                 {{ uptime }} at {{ loading_timestamp }}
               </p>
             </div>
-            <q-separator class="q-mb-md"></q-separator>
+            <q-separator class="q-mb-md" />
           </div>
         </div>
       </q-card>
       <q-card class="dashboard-card">
         <q-card-section class="text-left row items-center q-pb-none">
           <p class="text-h6">CPU</p>
-          <q-space></q-space>
+          <q-space />
           <p class="text-subtitle2 text-grey-8">{{ cpu_name }}</p>
         </q-card-section>
         <q-card-section class="row items-center q-py-none">
@@ -87,7 +87,7 @@
             type="bar"
             :options="cpuChartOptions"
             :series="cpuChartSeries"
-          ></apexchart>
+          />
         </q-card-section>
       </q-card>
       <q-card class="dashboard-card">
@@ -116,15 +116,15 @@
               <q-icon
                 name="fiber_manual_record"
                 class="text-primary q-mr-xs q-pa-none"
-              ></q-icon
-              >Used ({{ mem_used }} GB)
+              />
+              Used ({{ mem_used }} GB)
             </div>
             <div class="row justify-start q-ml-lg q-my-none items-center">
               <q-icon
                 name="fiber_manual_record"
                 class="text-grey-9 q-mr-xs q-pa-none"
-              ></q-icon
-              >Free ( {{ (mem_total - mem_used).toFixed(2) }} GB)
+              />
+              Free ( {{ (mem_total - mem_used).toFixed(2) }} GB)
             </div>
           </div>
           <div class="col-8">
@@ -133,17 +133,14 @@
               type="donut"
               :options="memChartOptions"
               :series="memChartSeries"
-            ></apexchart>
+            />
           </div>
         </q-card-section>
       </q-card>
     </div>
     <q-inner-loading :showing="loadingVisible" />
   </q-page>
-  <WsReconnectDialog
-    ref="wsReconnectDialog"
-    @ws-reconnect="connectWebSocket"
-  ></WsReconnectDialog>
+  <WsReconnectDialog ref="wsReconnectDialog" @ws-reconnect="connectWebSocket" />
 </template>
 
 <style lang="scss" scoped>

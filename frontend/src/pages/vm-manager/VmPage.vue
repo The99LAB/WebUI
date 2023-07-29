@@ -128,14 +128,14 @@
         </q-tr>
       </template>
     </q-table>
-    <ErrorDialog ref="errorDialog"></ErrorDialog>
-    <CreateVm ref="createVm"></CreateVm>
-    <EditVm ref="editVm"></EditVm>
-    <LogDialog ref="logDialog"></LogDialog>
+    <ErrorDialog ref="errorDialog" />
+    <CreateVm ref="createVm" />
+    <EditVm ref="editVm" />
+    <LogDialog ref="logDialog" />
     <WsReconnectDialog
       ref="wsReconnectDialog"
       @ws-reconnect="connectWebSocket"
-    ></WsReconnectDialog>
+    />
   </q-page>
 </template>
 

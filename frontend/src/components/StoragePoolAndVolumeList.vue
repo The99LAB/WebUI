@@ -33,8 +33,8 @@
           >
         </q-item-section>
       </q-item>
-    </template></q-select
-  >
+    </template>
+  </q-select>
 </template>
 
 <script>
