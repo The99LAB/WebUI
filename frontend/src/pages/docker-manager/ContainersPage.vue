@@ -266,7 +266,7 @@ export default {
         } else if (container.webui["container-port"] !== undefined) {
           let port = container.webui["container-port"];
           let protocool = container.webui.ssl ? "https://" : "http://";
-          let path = container.webui.path != null ? container.webui.path : "";
+          let path = container.webui.path != null ? container.webui.path : "/";
           let ip;
 
           if (container.config.network.ip != null) {
