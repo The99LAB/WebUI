@@ -186,8 +186,8 @@ export default {
       cpu_thread_count: null,
       cpu_thread_categories: null,
       cpu_thread_highest_usage: {
-        thread: null,
-        usage: null,
+        thread: 0,
+        usage: 0,
       },
       cpu_progress_text: "",
       mem_used: null,
