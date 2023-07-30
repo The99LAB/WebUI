@@ -129,7 +129,8 @@
             <div
               v-if="
                 props.row.container_type !== 'unmanaged' &&
-                props.row.config.network.ip != undefined
+                props.row.config.network.ip != undefined &&
+                props.row.config.network.dhcp_ip == undefined
               "
             >
               ip: {{ props.row.config.network.ip }}
