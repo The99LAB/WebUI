@@ -547,7 +547,8 @@ export default {
       if (item.regexrules == undefined && item.editable == true) {
         item.rules = this.fieldRequired;
       } else {
-        item.rules = item.regexrules.map((rule) => {
+        let regexrulesparsed = JSON.parse(JSON.stringify(item.regexrules));
+        item.rules = regexrulesparsed.map((rule) => {
           // convert regex string to regex object
           rule.regex = new RegExp(rule.regex);
           return (val) => rule.regex.test(val) || rule.message;
