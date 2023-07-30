@@ -439,6 +439,7 @@ export default {
       templateTitle: null,
     };
   },
+  emits: ["finished"],
   components: {
     ErrorDialog,
   },

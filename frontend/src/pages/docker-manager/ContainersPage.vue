@@ -155,7 +155,7 @@
         </q-tr>
       </template>
     </q-table>
-    <ContainerTemplateInstall ref="editContainer" />
+    <ContainerTemplateInstall ref="editContainer" @finished="containersUpdate"/>
     <ErrorDialog ref="errorDialog" />
   </q-page>
 </template>
