@@ -43,7 +43,9 @@ export default {
   methods: {
     connectWebSocket() {
       const jwt_token = localStorage.getItem("jwt-token");
-      this.socket = new WebSocket(this.$WS_ENDPOINT + "/terminal?token=" + jwt_token);
+      this.socket = new WebSocket(
+        this.$WS_ENDPOINT + "/terminal?token=" + jwt_token,
+      );
       this.socket.onopen = (event) => {
         this.fitTerminal();
       };
@@ -58,12 +60,17 @@ export default {
       const rowHeight = this.term._core._renderService._charSizeService.height;
       const rowWidth = this.term._core._renderService._charSizeService.width;
       // calculate rows and cols depending on row height and width
-      const rows = Math.floor(availableHeight / rowHeight );
+      const rows = Math.floor(availableHeight / rowHeight);
       const cols = Math.floor(availableWidth / rowWidth);
       // resize the terminal and send the new dimensions to the server
       this.term.resize(cols, rows);
-      this.socket.send(JSON.stringify({ type: "resize", dims: { cols: this.term.cols, rows: this.term.rows} }));
-    }
+      this.socket.send(
+        JSON.stringify({
+          type: "resize",
+          dims: { cols: this.term.cols, rows: this.term.rows },
+        }),
+      );
+    },
   },
 };
 </script>
