@@ -4,11 +4,11 @@
     <HostUsbDevicesList ref="usbDevicesList" />
     <VmList ref="vmList" />
     <q-separator color="transparent" spaced />
-    <div class="row">
-      <q-btn label="Add device to vm" color="primary" @click="addHotplugUsb" />
-      <q-separator color="transparent" spaced vertical dark />
+    <div class="row q-gutter-sm">
+      <q-btn label="Add to vm" color="primary" @click="addHotplugUsb" icon="mdi-plus"/>
       <q-btn
-        label="Remove device from vm"
+        icon="mdi-delete"
+        label="Remove from vm"
         color="primary"
         @click="removeHotplugUsb"
       />
