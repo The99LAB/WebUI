@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <div class="row justify-evenly text-center q-gutter-md">
+    <div class="row justify-center text-center q-gutter-md">
       <q-card class="dashboard-card">
         <div class="row justify-between full-height items-center q-pb-none">
           <div

@@ -19,7 +19,7 @@
         </q-item>
       </template>
     </q-select>
-    <div class="row justify-start text-center q-gutter-md">
+    <div class="row justify-center text-center q-gutter-md">
       <q-card
         v-for="template in templates"
         :key="template.id"
