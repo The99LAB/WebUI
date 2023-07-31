@@ -211,8 +211,17 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>Terminal</q-item-label>
-          </q-item-section> </q-item
-        ><q-item clickable tag="a" to="/system/settings">
+          </q-item-section> 
+        </q-item>
+        <q-item clickable tag="a" to="/system/filemanager">
+          <q-item-section avatar>
+            <q-icon name="mdi-folder-multiple-outline" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>File Manager</q-item-label>
+          </q-item-section> 
+        </q-item>
+        <q-item clickable tag="a" to="/system/settings">
           <q-item-section avatar>
             <q-icon name="mdi-cog" />
           </q-item-section>

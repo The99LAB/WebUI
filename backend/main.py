@@ -30,13 +30,15 @@ import json
 import base64
 import pwd
 import grp
+import shutil
+import math
 
 
 origins = ["*"]
 
 app = FastAPI()
 docker_client = docker.from_env()
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -926,52 +928,33 @@ class create_vm():
         conn.defineXML(self.xml)
 
 
-def convertSizeUnit(size: int, from_unit, to_unit):
-    if from_unit == "TB":
-        if to_unit == "B":
-            return size * 1024 * 1024 * 1024 * 1024
-        elif to_unit == "KB":
-            return size * 1024 * 1024 * 1024
-        elif to_unit == "MB":
-            return size * 1024 * 1024
-        elif to_unit == "GB":
-            return size * 1024
-    elif from_unit == "GB":
-        if to_unit == "B":
-            return size * 1024 * 1024 * 1024
-        elif to_unit == "KB":
-            return size * 1024 * 1024
-        elif to_unit == "MB":
-            return size * 1024
-        elif to_unit == "TB":
-            return size / 1024
-    elif from_unit == "MB":
-        if to_unit == "B":
-            return size * 1024 * 1024
-        elif to_unit == "KB":
-            return size * 1024
-        elif to_unit == "GB":
-            return size / 1024
-        elif to_unit == "TB":
-            return size / 1024 / 1024
-    elif from_unit == "KB":
-        if to_unit == "B":
-            return size * 1024
-        elif to_unit == "MB":
-            return size / 1024
-        elif to_unit == "GB":
-            return size / 1024 / 1024
-        elif to_unit == "TB":
-            return size / 1024 / 1024 / 1024
-    elif from_unit == "B":
-        if to_unit == "KB":
-            return size / 1024
-        elif to_unit == "MB":
-            return size / 1024 / 1024
-        elif to_unit == "GB":
-            return size / 1024 / 1024 / 1024
-        elif to_unit == "TB":
-            return size / 1024 / 1024 / 1024 / 1024
+def convertSizeUnit(size: int, from_unit, to_unit=None):
+    sizeUnit = {
+        "B": 0,
+        "KB": 1,
+        "MB": 2,
+        "GB": 3,
+        "TB": 4,
+    }
+
+    if to_unit == None:
+        for index, unit in enumerate(sizeUnit):
+            if size < 1024 ** sizeUnit[unit]:
+                return int(size / (1024 ** (sizeUnit[unit] - 1))), list(sizeUnit.keys())[index - 1]
+
+    if from_unit == to_unit:
+        return size
+    else:
+        # find the difference between the two units
+        difference = sizeUnit[from_unit] - sizeUnit[to_unit]
+        if difference > 0:
+            # if difference is positive, then size is being converted to a smaller unit
+            # so divide the size by 1024^difference
+            return int(size * (1024 ** difference))
+        else:
+            # if difference is negative, then size is being converted to a larger unit
+            # so multiply the size by 1024^difference
+            return int(size / (1024 ** abs(difference)))
 
 class DomainGraphics:
     def __init__(self, domuuid):
@@ -3001,6 +2984,74 @@ async def api_system_users_get(username: str = Depends(check_auth)):
                 "groups": [group.gr_name for group in grp.getgrall() if user.pw_name in group.gr_mem],
             })
     return users
+
+### API-SYSTEM-FILE-MANAGER ###
+@app.post("/api/system/file-manager")
+async def api_system_file_manager_get(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    path = data['path']
+    if os.path.isdir(path):
+        parent_dir = os.path.abspath(os.path.join(path, os.pardir))
+        files = []
+        if path != "/":
+            files.append({
+                "name": "..",
+                "parentdir": parent_dir,
+                "path": parent_dir,
+                "type": "dirparent",
+                "size": "",
+                "permissions": "",
+                "modified": "",
+            })
+        for file in os.listdir(path):
+            file_path = os.path.join(path, file)
+            file_type = "file"
+            file_size = ""
+            if os.path.isdir(file_path):
+                file_type = "dir"
+            else:
+                # calculate size of file if path is not a directory. ConvertSizeUnit returns a tuple with the size and the unit
+                file_size = convertSizeUnit(size=os.path.getsize(file_path), from_unit="B")
+                file_size = str(round(file_size[0])) + " " + file_size[1]
+
+
+            file_modified = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+            file_permissions = oct(os.stat(file_path).st_mode)[-3:]
+
+
+            files.append({
+                "name": file,
+                "path": file_path,
+                "type": file_type,
+                "size": file_size,
+                "permissions": file_permissions,
+                "modified": file_modified,
+            })
+        return { "list": files, "path": path }
+    else:
+        raise HTTPException(status_code=404, detail="Path not found")
+    
+@app.post("/api/system/file-manager/{action}")
+async def api_system_file_manager_action(action: str, request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "remove":
+        path = data['path']
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path=path)
+    elif action == "create-folder":
+        name = data['name']
+        path = data['path']
+        new_path = os.path.join(path, name)
+        os.makedirs(new_path)
+    elif action == "rename":
+        name = data['name']
+        path = data['path']
+        new_path = os.path.join(os.path.dirname(path), name)
+        os.rename(path, new_path)
+    else:
+        raise HTTPException(status_code=404, detail="Action not found")
 
 ### API-HOST-SYSTEM-DEVICES ###
 @app.get("/api/host/system-devices/{devicetype}")

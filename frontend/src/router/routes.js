@@ -119,6 +119,12 @@ const routes = [
         meta: { title: "Terminal" },
       },
       {
+        path: "system/filemanager",
+        name: "system/filemanager",
+        component: () => import("pages/system/FileManager.vue"),
+        meta: { title: "File Manager" },
+      },
+      {
         path: "system/settings",
         name: "system/settings",
         component: () => import("pages/system/SettingsPage.vue"),
