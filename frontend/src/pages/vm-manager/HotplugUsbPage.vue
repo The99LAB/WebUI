@@ -5,7 +5,12 @@
     <VmList ref="vmList" />
     <q-separator color="transparent" spaced />
     <div class="row q-gutter-sm">
-      <q-btn label="Add to vm" color="primary" @click="addHotplugUsb" icon="mdi-plus"/>
+      <q-btn
+        label="Add to vm"
+        color="primary"
+        @click="addHotplugUsb"
+        icon="mdi-plus"
+      />
       <q-btn
         icon="mdi-delete"
         label="Remove from vm"

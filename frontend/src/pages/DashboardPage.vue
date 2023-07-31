@@ -3,9 +3,7 @@
     <div class="row justify-center text-center q-gutter-md">
       <q-card class="dashboard-card">
         <div class="row justify-between full-height items-center q-pb-none">
-          <div
-            class="system-info-logo col-4 full-height q-pa-sm"
-          >
+          <div class="system-info-logo col-4 full-height q-pa-sm">
             <q-img
               src="/src/assets/Server99-logo-full.png"
               style="margin-bottom: 6em"
@@ -178,7 +176,6 @@ body.screen--xl {
 body.body--light {
   .system-info-logo {
     background-color: $grey-13;
-
   }
 }
 
@@ -187,7 +184,6 @@ body.body--dark {
     background-color: $grey-10;
   }
 }
-
 </style>
 
 <script>

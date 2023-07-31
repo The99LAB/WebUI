@@ -174,7 +174,6 @@
             <div
               v-for="(item, index) in dialogData.config.env"
               :key="item.name"
-              
             >
               <q-input
                 v-model="item.value"
