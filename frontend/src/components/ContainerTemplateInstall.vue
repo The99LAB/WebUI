@@ -46,12 +46,13 @@
             color="transparent"
             v-if="dialogMode == 'new'"
           />
-          <q-form @submit="templateSubmit" ref="form">
+          <q-form @submit="templateSubmit" ref="form" class="q-gutter-sm">
             <p class="text-h6 q-mb-none">General</p>
             <q-input
               v-model="dialogData.config.repository"
               type="text"
               label="Repository"
+              class="q-my-none"
               :readonly="dialogMode != 'new-custom'"
               :rules="[
                 (val) => !!val || 'Field is required',
@@ -62,6 +63,7 @@
               v-model="dialogData.config.tag"
               type="text"
               label="Repository Tag"
+              class="q-my-none"
               :readonly="dialogMode != 'new-custom'"
               :rules="[
                 (val) => !!val || 'Field is required',
@@ -72,6 +74,7 @@
               v-model="dialogData.name"
               type="text"
               label="Name"
+              class="q-my-none"
               :rules="[
                 (val) => !!val || 'Field is required',
                 (val) => !/\s/.test(val) || 'Field cannot contain whitespace',
@@ -82,6 +85,7 @@
               :options="networkOptions"
               label="Network"
               option-value="id"
+              class="q-my-none"
             >
               <template v-slot:option="scope">
                 <q-item v-bind="scope.itemProps">
@@ -170,6 +174,7 @@
             <div
               v-for="(item, index) in dialogData.config.env"
               :key="item.name"
+              
             >
               <q-input
                 v-model="item.value"
