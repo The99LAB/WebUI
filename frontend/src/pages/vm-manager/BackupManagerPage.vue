@@ -20,16 +20,18 @@
       </template>
       <template #body="props">
         <q-tr :props="props">
-          <q-td key="config" :props="props">
-            <q-btn
-              flat
-              round
-              :icon="props.row.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
-              @click="props.row.expand = !props.row.expand"
-              no-caps
-              :label="props.row.config"
-              class="text-weight-regular text-body2"
+          <q-td
+            key="config"
+            :props="props"
+            @click="props.row.expand = !props.row.expand"
+            class="text-weight-regular text-body2"
+            style="cursor: pointer; user-select: none"
+          >
+            <q-icon
+              :name="props.row.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
+              size="sm"
             />
+            {{ props.row.config }}
           </q-td>
           <q-td
             key="lastResult"

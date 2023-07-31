@@ -15,14 +15,12 @@
             key="iommuGroup"
             :props="props"
             class="text-weight-regular text-body2"
+            @click="props.row.expand = !props.row.expand"
+            style="cursor: pointer; user-select: none"
           >
-            <q-btn
-              flat
-              round
-              :icon="props.row.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
-              @click="props.row.expand = !props.row.expand"
-              size="md"
-              padding="none"
+            <q-icon
+              :name="props.row.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
+              size="sm"
             />
             {{ props.row.iommuGroup }}
           </q-td>

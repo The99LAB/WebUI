@@ -24,14 +24,12 @@
             key="name"
             :props="props"
             class="text-weight-regular text-body2"
+            @click="props.expand = !props.expand"
+            style="cursor: pointer; user-select: none"
           >
-            <q-btn
-              flat
-              round
-              :icon="props.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
-              @click="props.expand = !props.expand"
-              size="md"
-              padding="none"
+            <q-icon
+              :name="props.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
+              size="sm"
             />
             {{ props.row.name }}
           </q-td>
