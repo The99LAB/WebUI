@@ -197,6 +197,14 @@
             <q-item-label>System Devices</q-item-label>
           </q-item-section>
         </q-item>
+        <q-item clickable tag="a" to="/system/users">
+          <q-item-section avatar>
+            <q-icon name="mdi-account" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Users</q-item-label>
+          </q-item-section>
+        </q-item>
         <q-item clickable tag="a" to="/system/terminal">
           <q-item-section avatar>
             <q-icon name="mdi-console" />

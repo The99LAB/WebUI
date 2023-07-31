@@ -107,6 +107,12 @@ const routes = [
         meta: { title: "System Devices" },
       },
       {
+        path: "system/users",
+        name: "system/users",
+        component: () => import("pages/system/UsersPage.vue"),
+        meta: { title: "Users" },
+      },
+      {
         path: "system/terminal",
         name: "system/terminal",
         component: () => import("pages/system/TerminalPage.vue"),

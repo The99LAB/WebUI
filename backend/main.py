@@ -28,6 +28,8 @@ import humanize
 import docker
 import json
 import base64
+import pwd
+import grp
 
 
 origins = ["*"]
@@ -2982,6 +2984,23 @@ async def api_system_info_hostname_post(action: str, hostname: str = Form(...), 
             raise HTTPException(status_code=500, detail=hostname_result.stdout)
     else:
         raise HTTPException(status_code=404, detail="action not found")
+    
+# API-SYSTEM-USERS
+@app.get("/api/system/users")
+async def api_system_users_get(username: str = Depends(check_auth)):
+    users = []
+    for user in pwd.getpwall():
+        # list users with UID >= 1000 and <= 60000 or UID == 0
+        if user.pw_uid >= 1000 and user.pw_uid <= 60000 or user.pw_uid == 0:
+            users.append({
+                "name": user.pw_name,
+                "uid": user.pw_uid,
+                "gid": user.pw_gid,
+                "home": user.pw_dir,
+                "shell": user.pw_shell,
+                "groups": [group.gr_name for group in grp.getgrall() if user.pw_name in group.gr_mem],
+            })
+    return users
 
 ### API-HOST-SYSTEM-DEVICES ###
 @app.get("/api/host/system-devices/{devicetype}")
