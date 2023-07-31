@@ -4,8 +4,7 @@
       <q-card class="dashboard-card">
         <div class="row justify-between full-height items-center q-pb-none">
           <div
-            class="col-4 bg-grey-10 full-height q-pa-sm"
-            style="border-radius: 0.3em"
+            class="system-info-logo col-4 full-height q-pa-sm"
           >
             <q-img
               src="/src/assets/Server99-logo-full.png"
@@ -170,6 +169,25 @@ body.screen--xl {
     height: 400px;
   }
 }
+
+.system-info-logo {
+  border-top-left-radius: 0.2em;
+  border-bottom-left-radius: 0.2em;
+}
+
+body.body--light {
+  .system-info-logo {
+    background-color: $grey-13;
+
+  }
+}
+
+body.body--dark {
+  .system-info-logo {
+    background-color: $grey-10;
+  }
+}
+
 </style>
 
 <script>
