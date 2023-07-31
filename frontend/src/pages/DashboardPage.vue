@@ -25,23 +25,22 @@
               </q-btn>
             </div>
             <p class="text-subtitle2 text-grey-8 text-left q-pl-md">Overview</p>
-            <div class="text-left row items-center q-pl-md">
-              <p class="text-subtitle2 text-weight-bolder q-mr-xs">Version:</p>
-              <p class="text-weight-regular">{{ os_name }}</p>
+            <div class="text-left row items-center q-pl-md q-my-md">
+              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">Version:</p>
+              <p class="text-weight-regular q-mb-none">{{ os_name }}</p>
             </div>
-            <q-separator class="q-mb-md" />
-            <div class="text-left row items-center q-pl-md">
-              <p class="text-subtitle2 text-weight-bolder q-mr-xs">Hostname:</p>
-              <p class="text-weight-regular">{{ hostname }}</p>
+            <q-separator spaced="md" />
+            <div class="text-left row items-center q-pl-md q-my-md">
+              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">Hostname:</p>
+              <p class="text-weight-regular q-mb-none">{{ hostname }}</p>
             </div>
-            <q-separator class="q-mb-md" />
-            <div class="text-left row items-center q-pl-md">
-              <p class="text-subtitle2 text-weight-bolder q-mr-xs">Uptime:</p>
-              <p class="text-weight-regular">
+            <q-separator spaced="md"/>
+            <div class="text-left row items-center q-pl-md q-my-md">
+              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">Uptime:</p>
+              <p class="text-weight-regular q-mb-none">
                 {{ uptime }} at {{ loading_timestamp }}
               </p>
             </div>
-            <q-separator class="q-mb-md" />
           </div>
         </div>
       </q-card>
