@@ -1,12 +1,11 @@
 <template>
-  <q-page>
+  <q-page id="page">
     <div ref="terminal"></div>
   </q-page>
 </template>
 
 <script>
 import { Terminal } from "xterm";
-import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
 export default {
@@ -14,7 +13,6 @@ export default {
     return {
       socket: null,
       term: null,
-      fit: null,
     };
   },
   mounted() {
@@ -22,18 +20,10 @@ export default {
       cursorBlink: true,
       macOptionIsMeta: true,
     });
-
-    this.fit = new FitAddon();
-    this.term.loadAddon(this.fit);
-
     this.term.open(this.$refs.terminal);
-    this.term.resize(15, 49);
-    this.fit.fit();
-
     this.term.onData((data) => {
       this.socket.send(JSON.stringify({ type: "input", input: data }));
     });
-
     this.socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type == "pty_output") {
@@ -43,10 +33,6 @@ export default {
         this.$router.push({ path: "/login" });
       }
     };
-    window.addEventListener("resize", this.debouncedFitToscreen);
-  },
-  beforeUnmount() {
-    window.removeEventListener("resize", this.debouncedFitToscreen);
   },
   unmounted() {
     this.socket.close();
@@ -54,36 +40,35 @@ export default {
   created() {
     this.connectWebSocket();
   },
-
   methods: {
     connectWebSocket() {
       const jwt_token = localStorage.getItem("jwt-token");
-      this.socket = new WebSocket(
-        this.$WS_ENDPOINT + "/terminal?token=" + jwt_token,
-      );
+      this.socket = new WebSocket(this.$WS_ENDPOINT + "/terminal?token=" + jwt_token);
       this.socket.onopen = (event) => {
-        this.fitToscreen();
+        this.fitTerminal();
       };
     },
-    fitToscreen() {
-      this.fit.fit();
-      const dims = { cols: this.term.cols, rows: this.term.rows };
-      this.socket.send(JSON.stringify({ type: "resize", dims: dims }));
-    },
-    debounce(func, waitMs) {
-      let timeout;
-      return function (...args) {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), waitMs);
-      };
-    },
-  },
-  computed: {
-    debouncedFitToscreen() {
-      const waitMs = 50;
-      return this.debounce(this.fitToscreen, waitMs);
-    },
+    fitTerminal() {
+      // lookup qpage by id
+      const qPage = document.getElementById("page");
+      // get the available width and height of the page
+      const availableWidth = qPage.clientWidth;
+      const availableHeight = qPage.clientHeight;
+      // get the height and width of a row in pixels
+      const rowHeight = this.term._core._renderService._charSizeService.height;
+      const rowWidth = this.term._core._renderService._charSizeService.width;
+      // calculate rows and cols depending on row height and width
+      const rows = Math.floor(availableHeight / rowHeight );
+      const cols = Math.floor(availableWidth / rowWidth);
+      // resize the terminal and send the new dimensions to the server
+      this.term.resize(cols, rows);
+      this.socket.send(JSON.stringify({ type: "resize", dims: { cols: this.term.cols, rows: this.term.rows} }));
+    }
   },
 };
 </script>
+<style lang="scss" scoped>
+#page {
+  background-color: black;
+}
+</style>
