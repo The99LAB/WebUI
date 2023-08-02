@@ -52,14 +52,14 @@
             :props="props"
             class="text-weight-regular text-body2"
           >
-            {{ props.row.memory_min }} {{ props.row.memory_unit }}
+            {{ props.row.memory_min }} {{ props.row.memory_min_unit }}
           </q-td>
           <q-td
             key="memory_max"
             :props="props"
             class="text-weight-regular text-body2"
           >
-            {{ props.row.memory_max }} {{ props.row.memory_unit }}
+            {{ props.row.memory_max }} {{ props.row.memory_max_unit }}
           </q-td>
           <q-td
             key="autostart"

@@ -91,16 +91,6 @@
     </q-table>
     <q-separator color="transparent" spaced="lg" inset />
     <q-table
-      :loading="scsiTableLoading"
-      title="SCSI Devices"
-      :rows="scsiTableRows"
-      :columns="scsiTableColumns"
-      row-key="path"
-      separator="none"
-      :pagination="scsiTablePaginationOptions"
-    />
-    <q-separator color="transparent" spaced="lg" inset />
-    <q-table
       :loading="usbTableLoading"
       title="USB Devices"
       :rows="usbTableRows"
@@ -128,15 +118,6 @@ const pcieTableColumns = [
   { label: "Name", field: "productName", name: "productName", align: "left" },
 ];
 
-const scsiTableRows = [];
-
-const scsiTableColumns = [
-  { label: "Name", field: "model", name: "model", align: "left" },
-  { label: "Type", field: "type", name: "type", align: "left" },
-  { label: "Path", field: "path", name: "path", align: "left" },
-  { label: "Size", field: "capacity", name: "capacity", align: "left" },
-];
-
 const usbTableRows = [];
 
 const usbTableColumns = [
@@ -156,11 +137,6 @@ export default {
       pcieTableColumns,
       pcieTablePaginationOptions: {
         sortBy: "iommuGroup",
-      },
-      scsiTableRows,
-      scsiTableColumns,
-      scsiTablePaginationOptions: {
-        sortBy: "path",
       },
       usbTableRows,
       usbTableColumns,
@@ -185,17 +161,6 @@ export default {
           this.$refs.errorDialog.show(error.response.data.detail);
         });
     },
-    updateScsiDevices() {
-      this.$api
-        .get("/host/system-devices/scsi")
-        .then((response) => {
-          this.scsiTableRows = response.data;
-          this.scsiTableLoading = false;
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show(error.response.data.detail);
-        });
-    },
     updateUsbDevices() {
       this.$api
         .get("/host/system-devices/usb")
@@ -210,7 +175,6 @@ export default {
   },
   mounted() {
     this.updatePcieDevices();
-    this.updateScsiDevices();
     this.updateUsbDevices();
   },
   beforeUnmount() {},

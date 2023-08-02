@@ -85,7 +85,7 @@
         <q-tr
           :props="props"
           @click="clickRow(props.row)"
-          style="cursor: pointer"
+          style="cursor: pointer; user-select: none"
           v-if="props.row.name != '..'"
         >
           <q-td>
@@ -109,7 +109,7 @@
         </q-tr>
       </template>
       <template v-slot:top-row v-if="currentPath != '/'">
-        <q-tr style="cursor: pointer" @click="getPath(paths[0].parentdir)">
+        <q-tr style="cursor: pointer; user-select: none" @click="getPath(paths[0].parentdir)">
           <q-td />
           <q-td>
             <q-icon :name="icons.dirparent" size="lg" />

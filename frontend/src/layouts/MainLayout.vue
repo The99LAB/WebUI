@@ -180,6 +180,31 @@
             </q-item-section>
           </q-item>
         </q-expansion-item>
+        <q-item-label header class="q-pb-none q-pt-md">Storage Manager</q-item-label>
+        <q-item clickable tag="a" to="/storage-manager/disks">
+          <q-item-section avatar>
+            <q-icon name="bi-hdd" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Disks</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/storage-manager/raid-manager">
+          <q-item-section avatar>
+            <q-icon name="bi-hdd-stack" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>RAID Management</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/storage-manager/filesystems">
+          <q-item-section avatar>
+            <q-icon name="mdi-file-tree" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>File Systems</q-item-label>
+          </q-item-section>
+        </q-item>
         <q-item-label header class="q-pb-none q-pt-md">System</q-item-label>
         <q-item clickable tag="a" to="/system/system-info">
           <q-item-section avatar>
@@ -438,11 +463,11 @@ export default defineComponent({
     },
   },
   created() {
-    this.connectNotificationsWebsocket();
+    // this.connectNotificationsWebsocket();
   },
   unmounted() {
-    this.ws.onclose = () => {};
-    this.ws.close();
+    // this.ws.onclose = () => {};
+    // this.ws.close();
   },
 });
 </script>

@@ -10,7 +10,6 @@ import re
 import os
 from string import ascii_lowercase
 import subprocess
-from blkinfo import BlkDiskInfo
 import distro
 import requests
 import pam
@@ -31,14 +30,14 @@ import base64
 import pwd
 import grp
 import shutil
-import math
+import storage_manager
 
 
 origins = ["*"]
 
 app = FastAPI()
 docker_client = docker.from_env()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -135,19 +134,19 @@ def getvmresults():
                     if port != None:
                         vnc_state = True
 
-            dom_memory_unit = "GB"
-            dom_memory_stat = vmmemory(dom_uuid).current(dom_memory_unit)
-            dom_memory_min = dom_memory_stat[0]
-            dom_memory_max = dom_memory_stat[1]
+            dom_memory_min = storage_manager.convertSizeUnit(size=vmmemory(dom_uuid).current()[0], from_unit="KB", mode="tuple")
+            dom_memory_max = storage_manager.convertSizeUnit(size=vmmemory(dom_uuid).current()[1], from_unit="KB", mode="tuple")
+
             dom_autostart = False
             if domain.autostart() == 1:
                 dom_autostart = True
             result = {
                 "uuid": dom_uuid,
                 "name": dom_name,
-                "memory_min": dom_memory_min,
-                "memory_max": dom_memory_max,
-                "memory_unit": "GB",
+                "memory_min": dom_memory_min[0],
+                "memory_min_unit": dom_memory_min[1],
+                "memory_max": dom_memory_max[0],
+                "memory_max_unit": dom_memory_max[1],
                 "vcpus": vcpus,
                 "state": dom_state,
                 "VNC": vnc_state,
@@ -163,46 +162,14 @@ class vmmemory():
     def __init__(self, uuid):
         self.domain = conn.lookupByUUIDString(uuid)
 
-    def current(self, unit="GB"):
+    def current(self):
         maxmem = self.domain.info()[1]
         minmem = self.domain.info()[2]
-        if unit == "TB":
-            maxmem = maxmem / 1024 / 1024 / 1024
-            minmem = minmem / 1024 / 1024 / 1024
-        elif unit == "GB":
-            maxmem = maxmem / 1024 / 1024
-            minmem = minmem / 1024 / 1024
-        elif unit == "MB":
-            maxmem = maxmem / 1024
-            minmem = minmem / 1024
-        else:
-            return ("Error: Unknown unit for memory size")
-        return [float(minmem), float(maxmem)]
+        return [minmem, maxmem]
 
     def edit(self, minmem, minmemunit, maxmem, maxmemunit):
-        maxmem = int(maxmem)
-        minmem = int(minmem)
-        if minmemunit == "TB":
-            minmem = minmem * 1024 * 1024 * 1024
-        elif minmemunit == "GB":
-            minmem = minmem * 1024 * 1024
-        elif minmemunit == "MB":
-            minmem = minmem * 1024
-        elif minmemunit == "KB":
-            minmem = minmem
-        else:
-            return ("Error: Unknown unit for minmemory size")
-
-        if maxmemunit == "TB":
-            maxmem = maxmem * 1024 * 1024 * 1024
-        elif maxmemunit == "GB":
-            maxmem = maxmem * 1024 * 1024
-        elif maxmemunit == "MB":
-            maxmem = maxmem * 1024
-        elif maxmemunit == "KB":
-            maxmem = maxmem
-        else:
-            return ("Error: Unknown unit for maxmemory size")
+        maxmem = storage_manager.convertSizeUnit(size=maxmem, from_unit=maxmemunit, to_unit="KB", mode="int")
+        minmem = storage_manager.convertSizeUnit(size=minmem, from_unit=minmemunit, to_unit="KB", mode="int")
 
         if minmem > maxmem:
             return ("Error: minmemory can't be bigger than maxmemory")
@@ -361,17 +328,7 @@ class storage():
         volumename = poolStorage(pooluuid).getUnusedVolumeName(
             self.domain_uuid, disktype)
         pool = conn.storagePoolLookupByUUIDString(pooluuid)
-
-        if disksizeunit == "TB":
-            disksize = int(disksize) * 1024 * 1024 * 1024 * 1024
-        elif disksizeunit == "GB":
-            disksize = int(disksize) * 1024 * 1024 * 1024
-        elif disksizeunit == "MB":
-            disksize = int(disksize) * 1024 * 1024
-        elif disksizeunit == "KB":
-            disksize = int(disksize) * 1024
-        else:
-            return f"Error: Unsupported disk size unit"
+        disksize = storage_manager.convertSizeUnit(size=disksize, from_unit="B", to_unit=disksizeunit, mode="int")
 
         diskxml = f"""<volume>
         <name>{volumename}</name>
@@ -432,9 +389,9 @@ class poolStorage():
             else:
                 active = "No"
 
-            capacity = str(round(info[1] / 1024 / 1024 / 1024)) + "GB"
-            allocation = str(round(info[2] / 1024 / 1024 / 1024)) + "GB"
-            available = str(round(info[3] / 1024 / 1024 / 1024)) + "GB"
+            capacity = storage_manager.convertSizeUnit(size=info[1], from_unit="B", mode="str", round_state=True, round_to=None)
+            allocation = storage_manager.convertSizeUnit(size=info[2], from_unit="B", mode="str", round_state=True, round_to=None)
+            available = storage_manager.convertSizeUnit(size=info[3], from_unit="B", mode="str", round_state=True, round_to=None)
 
             poolinfo = [name, uuid, autostart, active,
                         capacity, allocation, available]
@@ -719,8 +676,8 @@ class create_vm():
         self.bios_type = bios_type
         self.min_mem_unit = mem_min_unit
         self.max_mem_unit = mem_max_unit
-        self.mem_min = convertSizeUnit(int(mem_min), mem_min_unit, "KB")
-        self.mem_max = convertSizeUnit(int(mem_max), mem_max_unit, "KB")
+        self.mem_min = storage_manager.convertSizeUnit(size=mem_min, from_unit=mem_min_unit, to_unit="KB", mode='int')
+        self.mem_max =storage_manager.convertSizeUnit(size=mem_max, from_unit=mem_max_unit, to_unit="KB", mode='int')
         self.disk = disk
         self.disk_size = disk_size
         self.disk_size_unit = disk_size_unit
@@ -756,7 +713,7 @@ class create_vm():
         
         self.creatediskxml = ""
         if self.disk:
-            disk_size = convertSizeUnit(int(disk_size), self.disk_size_unit, "B")
+            disk_size = storage_manager.convertsize.convertSizeUnit(size=disk_size, from_unit=self.disk_size_unit, to_unit="B", mode='int')
             pool = conn.storagePoolLookupByUUIDString(self.disk_pool)
             disk_volume_name = f"{self.name}-0.{self.disk_type}"
             diskxml = f"""<volume>
@@ -926,35 +883,6 @@ class create_vm():
         return self.xml
     def create(self):
         conn.defineXML(self.xml)
-
-
-def convertSizeUnit(size: int, from_unit, to_unit=None):
-    sizeUnit = {
-        "B": 0,
-        "KB": 1,
-        "MB": 2,
-        "GB": 3,
-        "TB": 4,
-    }
-
-    if to_unit == None:
-        for index, unit in enumerate(sizeUnit):
-            if size < 1024 ** sizeUnit[unit]:
-                return int(size / (1024 ** (sizeUnit[unit] - 1))), list(sizeUnit.keys())[index - 1]
-
-    if from_unit == to_unit:
-        return size
-    else:
-        # find the difference between the two units
-        difference = sizeUnit[from_unit] - sizeUnit[to_unit]
-        if difference > 0:
-            # if difference is positive, then size is being converted to a smaller unit
-            # so divide the size by 1024^difference
-            return int(size * (1024 ** difference))
-        else:
-            # if difference is negative, then size is being converted to a larger unit
-            # so multiply the size by 1024^difference
-            return int(size / (1024 ** abs(difference)))
 
 class DomainGraphics:
     def __init__(self, domuuid):
@@ -1458,7 +1386,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         if check_auth_token(token):
             sysInfo = ET.fromstring(conn.getSysinfo(0))
             cpu_name = sysInfo.find("processor/entry[@name='version']").text
-            mem_total = round(convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB"), 2)
+            mem_total = storage_manager.convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB", round_state=True, round_to=2)
             os_name = distro.name(pretty=True)
             uptime = humanize.precisedelta(datetime.now() - datetime.fromtimestamp(psutil.boot_time()), minimum_unit="minutes", format="%0.0f")
             await websocket.send_json({"type": "dashboard_init", "data": {"cpu_name": cpu_name, "mem_total": mem_total, "os_name": os_name, "uptime": uptime}})
@@ -1466,7 +1394,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             if check_auth_token(token):
                 cpu_percent = int(psutil.cpu_percent())
                 cpu_thread_data = psutil.cpu_percent(interval=1, percpu=True)
-                mem_used = round(convertSizeUnit(psutil.virtual_memory().used, from_unit="B", to_unit="GB"), 2)
+                mem_used = storage_manager.convertSizeUnit(psutil.virtual_memory().used, from_unit="B", to_unit="GB", round_state=True, round_to=2)
                 message = {"cpu_percent": cpu_percent, "cpu_thread_data": cpu_thread_data, "mem_used": mem_used}
                 await websocket.send_json({"type": "dashboard", "data": message})
                 await asyncio.sleep(1)
@@ -1816,9 +1744,14 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             autostart = True
             
         # get memory
-        meminfo = vmmemory(uuid=vmuuid).current("GB")
-        minmem = meminfo[0]
-        maxmem = meminfo[1]
+        meminfo = vmmemory(uuid=vmuuid).current()
+        minmem = storage_manager.convertSizeUnit(meminfo[0], from_unit="KB", mode="tuple")
+        maxmem = storage_manager.convertSizeUnit(meminfo[1], from_unit="KB", mode="tuple")
+        minmem_size = minmem[0]
+        minmem_unit = minmem[1]
+        maxmem_size = maxmem[0]
+        maxmem_unit = maxmem[1]
+
         # get disk
         diskinfo = storage(domain_uuid=vmuuid).get()
         networks = domainNetworkInterface(dom_uuid=vmuuid).get()
@@ -1850,10 +1783,10 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             "state": domain.state()[0],
             "machine": machine_type,
             "bios": bios_type,
-            "memory_max": maxmem,
-            "memory_max_unit": "GB",
-            "memory_min":minmem,
-            "memory_min_unit": "GB",
+            "memory_max": maxmem_size,
+            "memory_max_unit": maxmem_unit,
+            "memory_min": minmem_size,
+            "memory_min_unit": minmem_unit,
             "disks": diskinfo,
             "networks": networks,
             "sounddevices": sounddevices,
@@ -2006,40 +1939,16 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
 
         # edit-memory
         elif action == "memory":
-            memory_min = data['memory_min']
+            memory_min = int(data['memory_min'])
             memory_min_unit = data['memory_min_unit']
-            memory_max = data['memory_max']
+            memory_max = int(data['memory_max'])
             memory_max_unit = data['memory_max_unit']
-
-            memory_min = convertSizeUnit(
-                int(memory_min), memory_min_unit, "KB")
-            memory_max = convertSizeUnit(
-                int(memory_max), memory_max_unit, "KB")
             if memory_min > memory_max:
-                return ("Error: minmemory can't be bigger than maxmemory", 400)
+                raise HTTPException(status_code=400, detail="Minimum memory cannot be greater than maximum memory")
             else:
-                vm_xml = domain.XMLDesc(0)
-                try:
-                    current_min_mem = (
-                        re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vm_xml).group())
-                    current_max_mem = (
-                        re.search("<memory unit='KiB'>[0-9]+</memory>", vm_xml).group())
-                    try:
-                        output = vm_xml
-                        output = output.replace(
-                            current_max_mem, "<memory unit='KiB'>" + str(memory_max) + "</memory>")
-                        output = output.replace(
-                            current_min_mem, "<currentMemory unit='KiB'>" + str(memory_min) + "</currentMemory>")
-                        try:
-                            conn.defineXML(output)
-                            return
-                        except libvirt.libvirtError as e:
-                            raise HTTPException(status_code=500, detail=str(e))
-                    except Exception:
-                        raise HTTPException(status_code=500, detail="failed to replace minmemory and/or maxmemory!")
-                except Exception:
-                    raise HTTPException(status_code=500, detail="failed to find minmemory and maxmemory in xml!")
-        
+                vmmemory(uuid=vmuuid).edit(memory_min, memory_min_unit, memory_max, memory_max_unit)
+                return
+
         # edit-network-action
         elif action.startswith("network"):
             action = action.replace("network-", "")
@@ -2334,24 +2243,19 @@ async def api_storage_pools(username: str = Depends(check_auth)):
             pool_volumes_list = _pool.listVolumes()
             for volume in pool_volumes_list:
                 volume_info = _pool.storageVolLookupByName(volume).info()
-                volume_capacity = round(
-                    volume_info[1] / 1024 / 1024 / 1024, 2)
-                volume_allocation = round(
-                    volume_info[2] / 1024 / 1024 / 1024, 2)
+                volume_capacity = storage_manager.convertSizeUnit(size=volume_info[1], from_unit="B", mode="str", round_to=1)
+                volume_allocation = storage_manager.convertSizeUnit(size=volume_info[2], from_unit="B", mode="str", round_to=1)
                 _volume = {
                     "name": volume,
-                    "size": f"{volume_allocation}/{volume_capacity} GB",
+                    "size": f"{volume_allocation}/{volume_capacity}",
                 }
                 pool_volumes.append(_volume)
         else:
             pool_state = "inactive"
 
-        pool_capacity = str(
-            round(pool_info[1] / 1024 / 1024 / 1024)) + "GB"
-        pool_allocation = str(
-            round(pool_info[2] / 1024 / 1024 / 1024)) + "GB"
-        pool_available = str(
-            round(pool_info[3] / 1024 / 1024 / 1024)) + "GB"
+        pool_capacity = storage_manager.convertSizeUnit(size=pool_info[1], from_unit="B", mode="str", round_to=1)
+        pool_allocation = storage_manager.convertSizeUnit(size=pool_info[2], from_unit="B", mode="str", round_to=1)
+        pool_available = storage_manager.convertSizeUnit(size=pool_info[3], from_unit="B", mode="str", round_to=1)
         pool_autostart_int = pool.autostart()
         pool_type_int = pool_info[0]
         if pool_type_int == libvirt.VIR_STORAGE_VOL_FILE:
@@ -2482,7 +2386,7 @@ async def api_storage_pools_actions_post(pooluuid: str, action: str, request: Re
             volume_size = data['size']
             volume_size_unit = data['size_unit']
             if volume_size_unit == "TB" or volume_size_unit == "GB" or volume_size_unit == "MB":
-                volume_size = convertSizeUnit(volume_size, volume_size_unit, "KB")
+                volume_size = storage_manager.convertsize.convertSizeUnit(volume_size, volume_size_unit, "KB")
             else:
                 raise HTTPException(status_code=400, detail="Unknown disk size unit")
 
@@ -2519,7 +2423,7 @@ async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
         backups.sort(key=lambda x: x['name'], reverse=True)
         # convert item size in backups to GG
         for backup in backups:
-            backup['size'] = str(round(convertSizeUnit(backup['size'], "B", "GB"))) + " GB"
+            backup['size'] = storage_manager.convertSizeUnit(size=backup['size'], from_unit="B", mode="str")
 
         backup_last_result = None
         if backup_count > 0:
@@ -2694,7 +2598,7 @@ async def api_docker_manager_images_get(username: str = Depends(check_auth)):
     for image in docker_images:
         image_id = image.short_id
         image_tags = image.tags
-        image_size = str(round(convertSizeUnit(image.attrs['Size'], "B", "MB"))) + "MB"
+        image_size = storage_manager.convertSizeUnit(size=image.attrs['Size'], from_unit="B", mode="str", round_to=None)
         image_created_orig = image.attrs['Created']
         image_created_split = image_created_orig.split('.')[0]
         image_created = image_created_split.split('T')[0] + " " + image_created_split.split('T')[1]
@@ -2919,6 +2823,28 @@ async def api_host_power_post(powermsg: str, username: str = Depends(check_auth)
     else:
         raise HTTPException(status_code=404, detail="power action not found")
 
+### API-HOST-STORAGE ###
+@app.get("/api/storage/raid-manager")
+async def api_host_storage_raid_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.raid_manager.get()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/storage/disks")
+async def api_host_storage_disks_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.disk_manager.get()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/storage/filesystems")
+async def api_host_storage_filesystems_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.filesystem_manager.get()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/host/system-info/{action}")
 async def api_system_info_get(action: str, username: str = Depends(check_auth)):
     if action == "all":
@@ -3011,9 +2937,7 @@ async def api_system_file_manager_get(request: Request, username: str = Depends(
                 file_type = "dir"
             else:
                 # calculate size of file if path is not a directory. ConvertSizeUnit returns a tuple with the size and the unit
-                file_size = convertSizeUnit(size=os.path.getsize(file_path), from_unit="B")
-                file_size = str(round(file_size[0])) + " " + file_size[1]
-
+                file_size = storage_manager.convertSizeUnit(size=os.path.getsize(file_path), from_unit="B", mode="str")
 
             file_modified = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
             file_permissions = oct(os.stat(file_path).st_mode)[-3:]
@@ -3058,15 +2982,6 @@ async def api_system_file_manager_action(action: str, request: Request, username
 async def api_host_system_devices_get(devicetype: str, username: str = Depends(check_auth)):
     if devicetype == "pcie":
         return HostPcieDevices()
-    elif devicetype == "scsi":
-        disk_list = []
-        myblkd = BlkDiskInfo()
-        all_my_disks = myblkd.get_disks()
-
-        for i in all_my_disks:
-            disk_list.append(
-                {'model': i["model"], 'type': i['type'], 'path': f"/dev/{i['name']}", 'capacity': f'{round(convertSizeUnit(size=int(i["size"]), from_unit="B", to_unit="GB"))} GB'})
-        return disk_list
     elif devicetype == "usb":
         return SystemUsbDevicesList()
     else:

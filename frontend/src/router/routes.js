@@ -95,6 +95,24 @@ const routes = [
         meta: { title: "Docker Templates Settings" },
       },
       {
+        path: "storage-manager/raid-manager",
+        name: "storage-manager/raid-manager",
+        component: () => import("pages/storage-manager/RaidManagerPage.vue"),
+        meta: { title: "Raid Manager" },
+      },
+      {
+        path: "storage-manager/disks",
+        name: "storage-manager/disks",
+        component: () => import("pages/storage-manager/DisksPage.vue"),
+        meta: { title: "Disks" },
+      },
+      {
+        path: "storage-manager/filesystems",
+        name: "storage-manager/filesystems",
+        component: () => import("pages/storage-manager/FileSystemsPage.vue"),
+        meta: { title: "Filesystems" },
+      },
+      {
         path: "system/system-info",
         name: "system/system-info",
         component: () => import("pages/system/SystemInfoPage.vue"),
