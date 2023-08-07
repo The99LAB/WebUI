@@ -2823,7 +2823,7 @@ async def api_host_power_post(powermsg: str, username: str = Depends(check_auth)
     else:
         raise HTTPException(status_code=404, detail="power action not found")
 
-### API-HOST-STORAGE ###
+### API-STORAGE ###
 @app.get("/api/storage/raid-manager")
 async def api_host_storage_raid_get(username: str = Depends(check_auth)):
     try:
@@ -2831,19 +2831,78 @@ async def api_host_storage_raid_get(username: str = Depends(check_auth)):
     except storage_manager.StorageManagerException as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/storage/raid-manager/{action}")
+async def api_host_storage_raid_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "create":
+        try:
+            storage_manager.raid_manager.create(personality=data['level'], devices=data['devices'], filesystem=data['filesystem'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "delete":
+        try:
+            storage_manager.raid_manager.delete(path=data['path'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
+
 @app.get("/api/storage/disks")
 async def api_host_storage_disks_get(username: str = Depends(check_auth)):
     try:
         return storage_manager.disk_manager.get()
     except storage_manager.StorageManagerException as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-@app.get("/api/storage/filesystems")
-async def api_host_storage_filesystems_get(username: str = Depends(check_auth)):
-    try:
-        return storage_manager.filesystem_manager.get()
-    except storage_manager.StorageManagerException as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/storage/disks/disk/{action}")
+async def api_host_storage_disks_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "wipe":
+        try:
+            storage_manager.disk_manager.wipeDisk(path=data['diskpath'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
+
+@app.post("/api/storage/disks/partition/{action}")
+async def api_host_storage_disks_partition_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "delete":
+        try:
+            storage_manager.disk_manager.deletePartition(disk=data['disk'], partition=data['partition'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "create":
+        try:
+            storage_manager.disk_manager.createPartition(diskpath=data['diskpath'], fstype=data['fstype'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "mount":
+        try:
+            storage_manager.disk_manager.mountPartition(uuid=data['partition'], mountpoint=data['mountpoint'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "unmount":
+        try:
+            storage_manager.disk_manager.unmountPartition(uuid=data['partition'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "format":
+        try:
+            storage_manager.disk_manager.formatPartition(path=data['partition'], fstype=data['fstype'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
 
 @app.get("/api/host/system-info/{action}")
 async def api_system_info_get(action: str, username: str = Depends(check_auth)):

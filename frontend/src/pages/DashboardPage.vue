@@ -11,20 +11,22 @@
             <q-img src="/src/assets/Server99-base.png" />
           </div>
           <div class="col-8 self-start">
-            <div class="row items-center q-my-none q-pl-md">
-              <p class="text-h6 q-ma-none">System Information</p>
-              <q-space />
+            <p class="text-h6 q-my-none q-pl-md text-left">
+              System Information
+            </p>
+            <div class="row items-center q-my-none q-pl-md text-grey-8">
+              <p class="text-subtitle2 q-my-none">Overview</p>
               <q-btn
                 flat
                 dense
                 round
                 icon="mdi-eye-outline"
+                size="sm"
                 @click="$router.push({ name: 'system/system-info' })"
               >
                 <q-tooltip>View full system information</q-tooltip>
               </q-btn>
             </div>
-            <p class="text-subtitle2 text-grey-8 text-left q-pl-md">Overview</p>
             <div class="text-left row items-center q-pl-md q-my-md">
               <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">
                 Version:

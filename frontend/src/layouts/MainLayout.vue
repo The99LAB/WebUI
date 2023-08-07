@@ -85,7 +85,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
+    <q-drawer v-model="leftDrawerOpen" side="left" bordered>
       <q-list>
         <q-separator spaced="xs" color="transparent" />
         <q-item clickable tag="a" to="/dashboard">
@@ -180,7 +180,9 @@
             </q-item-section>
           </q-item>
         </q-expansion-item>
-        <q-item-label header class="q-pb-none q-pt-md">Storage Manager</q-item-label>
+        <q-item-label header class="q-pb-none q-pt-md"
+          >Storage Manager</q-item-label
+        >
         <q-item clickable tag="a" to="/storage-manager/disks">
           <q-item-section avatar>
             <q-icon name="bi-hdd" />
@@ -197,12 +199,12 @@
             <q-item-label>RAID Management</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/storage-manager/filesystems">
+        <q-item clickable tag="a" to="/storage-manager/sharedfolders">
           <q-item-section avatar>
-            <q-icon name="mdi-file-tree" />
+            <q-icon name="mdi-share-variant-outline" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>File Systems</q-item-label>
+            <q-item-label>Shared Folders</q-item-label>
           </q-item-section>
         </q-item>
         <q-item-label header class="q-pb-none q-pt-md">System</q-item-label>

@@ -107,10 +107,10 @@ const routes = [
         meta: { title: "Disks" },
       },
       {
-        path: "storage-manager/filesystems",
-        name: "storage-manager/filesystems",
-        component: () => import("pages/storage-manager/FileSystemsPage.vue"),
-        meta: { title: "Filesystems" },
+        path: "storage-manager/sharedfolders",
+        name: "storage-manager/sharedfolders",
+        component: () => import("pages/storage-manager/SharedfoldersPage.vue"),
+        meta: { title: "Shared Folders" },
       },
       {
         path: "system/system-info",
