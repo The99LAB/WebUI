@@ -2,6 +2,8 @@ import os
 from .storage_manager_exception import StorageManagerException
 from .disk_manager import findUsedSpace
 from .convertsize import convertSizeUnit
+from .raid_manager import get as getRaidArrays
+from .disk_manager import get as getDisks
 import shutil
 import subprocess
 
@@ -201,6 +203,34 @@ def getSmbShare(name):
             return share
     return None
 
+def getAvailableDevices():
+    # This are devices where a shared folder can be created on.
+    # It can be a disk wiht type individual
+    # Or a RAID array
+
+    # get all disks and filter out the ones with type individual
+    available_devices = []
+    disks = getDisks()
+    disks = [disk for disk in disks if disk["disktype"] == "individual"]
+    for disk in disks:
+        if len(disk['partitions']) == 1:
+            available_devices.append({
+                "name": disk["model"],
+                "type": "disk",
+                'mountpoint': disk['partitions'][0]['mount']
+            })
+
+    # get all RAID arrays
+    raid_arrays = getRaidArrays()
+    for raid_array in raid_arrays:
+        available_devices.append({
+            "name": raid_array["name"],
+            "type": "raid",
+            "mountpoint": raid_array["mountpoint"]
+        })
+    
+    return available_devices
+
 def get():
     if not os.path.exists(sharedfolderspath):
         os.makedirs(sharedfolderspath)
@@ -226,6 +256,18 @@ def get():
         # symlink_target is the mountpoint of the disk
         symlink_target = os.path.dirname(os.readlink(folderpath))
 
+        # Find which device from 'getAvailableDevices' has the symlink_target as mountpoint
+        linked_storage_name = None
+        linked_storage_type = None
+
+        for device in getAvailableDevices():
+            if device["mountpoint"] == symlink_target:
+                linked_storage_name = device["name"]
+                if device["type"] == "disk":
+                    linked_storage_name = os.path.basename(device["mountpoint"])
+                linked_storage_type = device["type"]
+                break
+
         # check if the symlink_target still exists
         if not os.path.exists(symlink_target):
             folder_active = False
@@ -244,7 +286,11 @@ def get():
             "used": used,
             "capacity": capacity,
             "free": free,
-            "smb_share": smb_share
+            "smb_share": smb_share,
+            "linked_storage": {
+                "name": linked_storage_name,
+                "type": linked_storage_type
+            }
         })
     return folders
 

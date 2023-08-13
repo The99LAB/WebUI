@@ -37,7 +37,7 @@ origins = ["*"]
 
 app = FastAPI()
 docker_client = docker.from_env()
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -2908,6 +2908,13 @@ async def api_host_storage_disks_partition_post(request: Request, action: str, u
 async def api_host_storage_sharedfolders_get(username: str = Depends(check_auth)):
     try:
         return storage_manager.shared_folders.get()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/storage/sharedfolders/availabledevices")
+async def api_host_storage_sharedfolders_availabledevices_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.shared_folders.getAvailableDevices()
     except storage_manager.StorageManagerException as e:
         raise HTTPException(status_code=500, detail=str(e))
     

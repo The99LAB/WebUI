@@ -191,7 +191,7 @@
         </q-item>
         <q-item clickable tag="a" to="/storage-manager/raid-manager">
           <q-item-section avatar>
-            <q-icon name="bi-hdd-stack" />
+            <q-icon name="mdi-database-outline" />
           </q-item-section>
           <q-item-section>
             <q-item-label>RAID Management</q-item-label>

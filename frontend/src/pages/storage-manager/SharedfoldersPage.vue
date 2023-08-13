@@ -17,7 +17,7 @@
           round
           color="primary"
           icon="mdi-plus"
-          @click="sharedFolderCreateDialog = true"
+          @click="sharedFolderCreateDialogOpen"
         >
           <q-tooltip :offset="[5, 5]"> Add a new shared folder </q-tooltip>
         </q-btn>
@@ -87,10 +87,29 @@
       </template>
       <template v-slot:body-cell-capacity="props">
         <q-td key="capacity" :props="props">
-          {{ props.row.used }} / {{ props.row.capacity }}
+          {{ props.row.free }}
           <q-tooltip :offset="[5, 5]">
-            Free space: {{ props.row.free }}
+            Used space: {{ props.row.used }} / {{ props.row.capacity }}
           </q-tooltip>
+        </q-td>
+      </template>
+      <template v-slot:body-cell-storage="props">
+        <q-td key="storage" :props="props">
+          <div class="row items-center justify-center">
+            <q-icon :name="props.row.linked_storage.type == 'raid' ? 'mdi-database-outline' : 'bi-hdd'" size="sm"/>
+            <span class="text-weight-bold text-subtitle1 q-ml-xs">
+              {{ props.row.linked_storage.name ? props.row.linked_storage.name : 'Unknown'}}
+            </span>
+            <q-tooltip :offset="[5, 5]" v-if="props.row.linked_storage.type == 'raid'">
+              This shared folder is located on the RAID array {{props.row.linked_storage.name}}
+            </q-tooltip>
+            <q-tooltip :offset="[5, 5]" v-else-if="props.row.linked_storage.type == 'disk'">
+              This shared folder is located on the disk {{props.row.linked_storage.name}}
+            </q-tooltip>
+            <q-tooltip :offset="[5, 5]" v-else>
+              This shared folder is located on a device that is not managed by the WebUI
+            </q-tooltip>
+          </div>
         </q-td>
       </template>
       <template v-slot:body-cell-path="props">
@@ -133,7 +152,7 @@
               filled
               v-model="sharedFolderCreateName"
               label="Name"
-              :rules="[(val) => !!val || 'Name is required']"
+              :rules="[(val) => !!val || 'Name is required', (val) => !val.includes(' ') || 'Name cannot contain spaces']"
             />
             <q-select
               filled
@@ -142,7 +161,42 @@
               label="Target"
               option-label="name"
               :rules="[(val) => !!val || 'Target is required']"
-            />
+            >
+            <template v-slot:option="scope">
+                <q-item v-bind="scope.itemProps">
+                  <q-item-section>
+                    <q-item-label>{{ scope.opt.name }}</q-item-label>
+                    <q-item-label caption>
+                      <span class="row justify-between">
+                        <span>
+                          {{ scope.opt.type == 'raid' ? 'RAID Array' : scope.opt.type == 'disk' ? 'Individual Disk' : '' }}
+                        </span>
+                        <span>
+                          {{ scope.opt.mountpoint }}
+                        </span>
+                      </span>
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+              </template>
+              <template v-slot:selected-item="scope">
+                <q-item v-bind="scope.itemProps" class="q-pl-none">
+                  <q-item-section>
+                    <q-item-label>{{scope.opt.name}}</q-item-label>
+                    <q-item-label caption>
+                      <span class="row justify-between">
+                        <span>
+                          {{ scope.opt.type == 'raid' ? 'RAID Array' : scope.opt.type == 'disk' ? 'Individual Disk' : '' }}
+                        </span>
+                        <span>
+                          {{ scope.opt.mountpoint }}
+                        </span>
+                      </span>
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
             <div class="row justify-end">
               <q-btn flat label="Create" type="submit" />
             </div>
@@ -286,9 +340,21 @@ export default {
           align: "center",
         },
         {
+          name: "smb",
+          label: "SMB",
+          field: "smb",
+          align: "center",
+        },
+        {
           name: "capacity",
-          label: "Capacity",
+          label: "Free Space",
           field: "capacity",
+          align: "center",
+        },
+        {
+          name: "storage",
+          label: "Storage",
+          field: "storage",
           align: "center",
         },
         {
@@ -297,12 +363,7 @@ export default {
           field: "path",
           align: "center",
         },
-        {
-          name: "smb",
-          label: "SMB",
-          field: "smb",
-          align: "center",
-        },
+        
       ],
       sharedFoldersSelected: [],
       sharedFoldersPagination: {
@@ -314,18 +375,7 @@ export default {
       sharedFolderCreateDialog: false,
       sharedFolderCreateName: "",
       sharedFolderCreateTarget: "",
-      sharedFolderCreateTargetOptions: [
-        {
-          name: "Disk 1",
-          type: "disk",
-          path: "/mnt/disk1",
-        },
-        {
-          name: "md0",
-          type: "raid",
-          path: "/mnt/md0",
-        },
-      ],
+      sharedFolderCreateTargetOptions: [],
       sharedFolderCreateLoading: false,
       sharedFolderEditDialog: false,
       sharedFolderEditDialogData: {},
@@ -399,7 +449,7 @@ export default {
       this.$api
         .post("storage/sharedfolders/create", {
           name: this.sharedFolderCreateName,
-          target: this.sharedFolderCreateTarget.path,
+          target: this.sharedFolderCreateTarget.mountpoint,
         })
         .then((response) => {
           this.fetchData();
@@ -579,6 +629,20 @@ export default {
         this.sharedFolderEditDialogSmbUsersOptions =
           this.sharedFolderEditDialogGuestOptions;
       }
+    },
+    sharedFolderCreateDialogOpen() {
+      this.sharedFolderCreateDialog = true;
+      this.sharedFolderCreateLoading = true;
+      this.$api.get('storage/sharedfolders/availabledevices')
+      .then((response) => {
+        this.sharedFolderCreateTargetOptions = response.data;
+        this.sharedFolderCreateLoading = false;
+      })
+      .catch((error) =>{
+        const errormsg = error.response ? error.response.data.detail : error;
+        this.$refs.errorDialog.show("Error getting available devices", [errormsg]);
+        this.sharedFolderCreateLoading = false;
+      })
     },
   },
   mounted() {

@@ -328,8 +328,16 @@
               v-model="mountPartitionDialogMountpoint"
               label="Mountpoint"
               lazy-rules
-              :rules="[(val) => !!val || 'Mountpoint is required']"
+              :rules="[(val) => !!val || 'Mountpoint is required', (val) => !val.includes(' ') || 'Mountpoint cannot contain spaces']"
             />
+            <div class="row items-center">
+              <q-icon name="mdi-information-outline" size="sm" /> 
+              <span class="q-ml-sm q-mb-sm">
+                This name will be used for the disk in 'Shared Folders'.
+                <br>
+                It is recommended to keep it short and simple.
+              </span>
+            </div>
             <div class="row justify-end">
               <q-btn flat label="Mount" type="submit" />
             </div>
