@@ -30,8 +30,11 @@ def formatPartition(path, fstype):
 def findUsedSpace(path):
     try:
         used_space = subprocess.check_output(['df', '-BM', path])
-        used_space = used_space.decode('utf-8').split('\n')[1].split()[2]
-        return int(used_space[:-1])
+        output = used_space.decode('utf-8')
+        used_space = output.split('\n')[1].split()[2]
+        capacity = output.split('\n')[1].split()[1]
+        free = output.split('\n')[1].split()[3]
+        return [int(used_space[:-1]), int(capacity[:-1]), int(free[:-1])]
     except subprocess.CalledProcessError as e:
         raise StorageManagerException(f"Failed to find used space for partition {path}") from e
 
@@ -234,7 +237,7 @@ def get():
                 partition_size = partition['size']
                 partition_path = f"/dev/{partition_name}"
                 partition_uuid = find_uuid(partition_path)
-                partition_used = findUsedSpace(partition_path)
+                partition_used = findUsedSpace(partition_path)[0]
                 if partition_fstype == 'linux_raid_member':
                     disk_type = 'raid_member'
                     continue

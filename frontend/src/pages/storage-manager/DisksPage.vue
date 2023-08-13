@@ -477,7 +477,6 @@ export default {
         .get("storage/disks")
         .then((response) => {
           this.disksTableData = response.data;
-          console.log("data", response.data);
           this.disksTableLoading = false;
           this.disksTableSelectedRows = [];
           this.partitionTableSelected = [];
@@ -488,7 +487,6 @@ export default {
         });
     },
     partitionDelete() {
-      console.log("delete partition", this.partitionTableSelected[0]);
       this.$api
         .post("storage/disks/partition/delete", {
           disk: this.partitionTableSelected[0].parent,
@@ -508,7 +506,7 @@ export default {
         "/mnt/" +
         this.disksTableData
           .find((item) => item.path == this.partitionTableSelected[0].parent)
-          .model.replace(" ", "_");
+          .model.replaceAll(" ", "_");
     },
     partitionMountSubmit() {
       this.mountPartitionLoading = true;

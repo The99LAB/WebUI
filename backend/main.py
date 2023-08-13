@@ -2903,6 +2903,78 @@ async def api_host_storage_disks_partition_post(request: Request, action: str, u
             raise HTTPException(status_code=500, detail=str(e))
     else:
         raise HTTPException(status_code=404, detail="action not found")
+    
+@app.get("/api/storage/sharedfolders")
+async def api_host_storage_sharedfolders_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.shared_folders.get()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/api/storage/sharedfolders/{action}")
+async def api_host_storage_sharedfolders_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "create":
+        try:
+            storage_manager.shared_folders.create(name=data['name'], target=data['target'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "delete":
+        try:
+            storage_manager.shared_folders.remove(name=data['name'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "smb-edit":
+        name = data['name']
+        smb_status = data['status']
+        if smb_status == False:
+            if storage_manager.shared_folders.getSmbShare(name=name) is not None:
+                storage_manager.shared_folders.removeSMBShare(name=name)
+            return
+        else:
+            if storage_manager.shared_folders.getSmbShare(name=name) is not None:
+                storage_manager.shared_folders.removeSMBShare(name=name)
+            smb_mode = data['mode']
+            smb_path = data['path']
+            if smb_mode == "PUBLIC":
+                storage_manager.shared_folders.createSMBShare(name=name, path=smb_path, mode="PUBLIC")
+            elif smb_mode == "PRIVATE":
+                smb_users = data['users']
+                users_list = []
+                users_write_list = []
+                users_read_list = []
+                for user in smb_users:
+                    users_list.append(user['name'])
+                    if user['mode'] == "rw":
+                        users_write_list.append(user['name'])
+                        users_read_list.append(user['name'])
+                    elif user['mode'] == "ro":
+                        users_read_list.append(user['name'])
+                storage_manager.shared_folders.createSMBShare(
+                    name=name, 
+                    path=smb_path, 
+                    mode="PRIVATE",
+                    users_list=users_list,
+                    users_write_list=users_write_list,
+                    users_read_list=users_read_list
+                )
+            elif smb_mode == "SECURE":
+                smb_users = data['users']
+                users_write_list = []
+                for user in smb_users:
+                    if user['mode'] == "rw":
+                        users_write_list.append(user['name'])
+                storage_manager.shared_folders.createSMBShare(
+                    name=name, 
+                    path=smb_path, 
+                    mode="SECURE",
+                    users_write_list=users_write_list
+                )
+                return
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
 
 @app.get("/api/host/system-info/{action}")
 async def api_system_info_get(action: str, username: str = Depends(check_auth)):

@@ -85,7 +85,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" side="left" bordered>
+    <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
       <q-list>
         <q-separator spaced="xs" color="transparent" />
         <q-item clickable tag="a" to="/dashboard">
@@ -181,7 +181,7 @@
           </q-item>
         </q-expansion-item>
         <q-item-label header class="q-pb-none q-pt-md"
-          >Storage Manager</q-item-label
+          >Storage</q-item-label
         >
         <q-item clickable tag="a" to="/storage-manager/disks">
           <q-item-section avatar>
@@ -465,11 +465,11 @@ export default defineComponent({
     },
   },
   created() {
-    // this.connectNotificationsWebsocket();
+    this.connectNotificationsWebsocket();
   },
   unmounted() {
-    // this.ws.onclose = () => {};
-    // this.ws.close();
+    this.ws.onclose = () => {};
+    this.ws.close();
   },
 });
 </script>

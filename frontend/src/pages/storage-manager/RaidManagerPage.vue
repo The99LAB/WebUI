@@ -290,6 +290,7 @@ export default {
       createArrayFilesystem: "ext4",
       createArrayFilesystemOptions: ["ext4", "xfs"],
       createArrayLoading: false,
+      fetchTimeout: null,
     };
   },
   components: {
@@ -304,7 +305,7 @@ export default {
         .then((response) => {
           this.data = response.data;
           this.tableLoading = false;
-          setTimeout(this.fetchData, 5000);
+          this.fetchTimeout = setTimeout(this.fetchData, 5000);
         })
         .catch((error) => {
           const errormsg = error.response ? error.response.data.detail : error;
@@ -364,6 +365,9 @@ export default {
   },
   mounted() {
     this.fetchData();
+  },
+  unmounted() {
+    clearTimeout(this.fetchTimeout);
   },
 };
 </script>
