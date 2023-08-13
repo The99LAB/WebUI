@@ -96,18 +96,38 @@
       <template v-slot:body-cell-storage="props">
         <q-td key="storage" :props="props">
           <div class="row items-center justify-center">
-            <q-icon :name="props.row.linked_storage.type == 'raid' ? 'mdi-database-outline' : 'bi-hdd'" size="sm"/>
+            <q-icon
+              :name="
+                props.row.linked_storage.type == 'raid'
+                  ? 'mdi-database-outline'
+                  : 'bi-hdd'
+              "
+              size="sm"
+            />
             <span class="text-weight-bold text-subtitle1 q-ml-xs">
-              {{ props.row.linked_storage.name ? props.row.linked_storage.name : 'Unknown'}}
+              {{
+                props.row.linked_storage.name
+                  ? props.row.linked_storage.name
+                  : "Unknown"
+              }}
             </span>
-            <q-tooltip :offset="[5, 5]" v-if="props.row.linked_storage.type == 'raid'">
-              This shared folder is located on the RAID array {{props.row.linked_storage.name}}
+            <q-tooltip
+              :offset="[5, 5]"
+              v-if="props.row.linked_storage.type == 'raid'"
+            >
+              This shared folder is located on the RAID array
+              {{ props.row.linked_storage.name }}
             </q-tooltip>
-            <q-tooltip :offset="[5, 5]" v-else-if="props.row.linked_storage.type == 'disk'">
-              This shared folder is located on the disk {{props.row.linked_storage.name}}
+            <q-tooltip
+              :offset="[5, 5]"
+              v-else-if="props.row.linked_storage.type == 'disk'"
+            >
+              This shared folder is located on the disk
+              {{ props.row.linked_storage.name }}
             </q-tooltip>
             <q-tooltip :offset="[5, 5]" v-else>
-              This shared folder is located on a device that is not managed by the WebUI
+              This shared folder is located on a device that is not managed by
+              the WebUI
             </q-tooltip>
           </div>
         </q-td>
@@ -152,7 +172,10 @@
               filled
               v-model="sharedFolderCreateName"
               label="Name"
-              :rules="[(val) => !!val || 'Name is required', (val) => !val.includes(' ') || 'Name cannot contain spaces']"
+              :rules="[
+                (val) => !!val || 'Name is required',
+                (val) => !val.includes(' ') || 'Name cannot contain spaces',
+              ]"
             />
             <q-select
               filled
@@ -162,14 +185,20 @@
               option-label="name"
               :rules="[(val) => !!val || 'Target is required']"
             >
-            <template v-slot:option="scope">
+              <template v-slot:option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section>
                     <q-item-label>{{ scope.opt.name }}</q-item-label>
                     <q-item-label caption>
                       <span class="row justify-between">
                         <span>
-                          {{ scope.opt.type == 'raid' ? 'RAID Array' : scope.opt.type == 'disk' ? 'Individual Disk' : '' }}
+                          {{
+                            scope.opt.type == "raid"
+                              ? "RAID Array"
+                              : scope.opt.type == "disk"
+                              ? "Individual Disk"
+                              : ""
+                          }}
                         </span>
                         <span>
                           {{ scope.opt.mountpoint }}
@@ -182,11 +211,17 @@
               <template v-slot:selected-item="scope">
                 <q-item v-bind="scope.itemProps" class="q-pl-none">
                   <q-item-section>
-                    <q-item-label>{{scope.opt.name}}</q-item-label>
+                    <q-item-label>{{ scope.opt.name }}</q-item-label>
                     <q-item-label caption>
                       <span class="row justify-between">
                         <span>
-                          {{ scope.opt.type == 'raid' ? 'RAID Array' : scope.opt.type == 'disk' ? 'Individual Disk' : '' }}
+                          {{
+                            scope.opt.type == "raid"
+                              ? "RAID Array"
+                              : scope.opt.type == "disk"
+                              ? "Individual Disk"
+                              : ""
+                          }}
                         </span>
                         <span>
                           {{ scope.opt.mountpoint }}
@@ -363,7 +398,6 @@ export default {
           field: "path",
           align: "center",
         },
-        
       ],
       sharedFoldersSelected: [],
       sharedFoldersPagination: {
@@ -633,16 +667,19 @@ export default {
     sharedFolderCreateDialogOpen() {
       this.sharedFolderCreateDialog = true;
       this.sharedFolderCreateLoading = true;
-      this.$api.get('storage/sharedfolders/availabledevices')
-      .then((response) => {
-        this.sharedFolderCreateTargetOptions = response.data;
-        this.sharedFolderCreateLoading = false;
-      })
-      .catch((error) =>{
-        const errormsg = error.response ? error.response.data.detail : error;
-        this.$refs.errorDialog.show("Error getting available devices", [errormsg]);
-        this.sharedFolderCreateLoading = false;
-      })
+      this.$api
+        .get("storage/sharedfolders/availabledevices")
+        .then((response) => {
+          this.sharedFolderCreateTargetOptions = response.data;
+          this.sharedFolderCreateLoading = false;
+        })
+        .catch((error) => {
+          const errormsg = error.response ? error.response.data.detail : error;
+          this.$refs.errorDialog.show("Error getting available devices", [
+            errormsg,
+          ]);
+          this.sharedFolderCreateLoading = false;
+        });
     },
   },
   mounted() {
