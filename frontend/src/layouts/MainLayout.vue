@@ -180,9 +180,7 @@
             </q-item-section>
           </q-item>
         </q-expansion-item>
-        <q-item-label header class="q-pb-none q-pt-md"
-          >Storage</q-item-label
-        >
+        <q-item-label header class="q-pb-none q-pt-md">Storage</q-item-label>
         <q-item clickable tag="a" to="/storage-manager/disks">
           <q-item-section avatar>
             <q-icon name="bi-hdd" />
