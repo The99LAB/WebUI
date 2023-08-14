@@ -11,6 +11,9 @@
       :loading="sharedFoldersLoading"
       row-key="name"
     >
+      <template v-slot:loading>
+        <q-inner-loading showing />
+      </template>
       <template v-slot:top-right>
         <q-btn
           flat
