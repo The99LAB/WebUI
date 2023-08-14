@@ -138,7 +138,7 @@
     <ErrorDialog ref="errorDialog" />
     <CreateVm ref="createVm" />
     <EditVm ref="editVm" />
-    <LogDialog ref="logDialog" />
+    <LogDialog ref="logVm" />
     <WsReconnectDialog
       ref="wsReconnectDialog"
       @ws-reconnect="connectWebSocket"
@@ -153,8 +153,6 @@ import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";
 import LogDialog from "src/components/LogDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
-import { useVncSettingsStore } from "stores/vncsettings";
-import { storeToRefs } from "pinia";
 
 export default {
   data() {
@@ -210,13 +208,8 @@ export default {
         sortBy: "name",
         descending: false,
       },
-    };
-  },
-  setup() {
-    const store = useVncSettingsStore();
-    const { getVncSettings } = storeToRefs(store);
-    return {
-      vncSettings: getVncSettings,
+      logDialog: false,
+      logDialogContent: "",
     };
   },
   components: {
@@ -259,7 +252,7 @@ export default {
       this.$api
         .get("vm-manager/" + uuid + "/logs")
         .then((response) => {
-          this.$refs.logDialog.show("VM Logs", response.data.log);
+          this.$refs.logVm.show(response.data.log);
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting logs", [
@@ -279,30 +272,18 @@ export default {
     },
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid);
-      if (
-        this.vncSettings.protocool == null ||
-        this.vncSettings.ip == null ||
-        this.vncSettings.port == null ||
-        this.vncSettings.path == null
-      ) {
-        this.$refs.errorDialog.show("Error getting VNC settings", [
-          "Error: VNC settings not set",
-          "Please set VNC settings in the settings page.",
-        ]);
-        return;
-      } else {
-        const novnc_url =
-          this.vncSettings.protocool +
-          "://" +
-          this.vncSettings.ip +
-          ":" +
-          this.vncSettings.port +
-          "/" +
-          this.vncSettings.path +
-          "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
-          uuid;
-        window.open(novnc_url, "_blank");
-      }
+      const novnc_url =
+        this.vncSettings.protocool +
+        "://" +
+        this.vncSettings.ip +
+        ":" +
+        this.vncSettings.port +
+        "/" +
+        this.vncSettings.path +
+        "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
+        uuid;
+      window.open(novnc_url, "_blank");
+      
     },
     autostartVm(uuid) {
       let autostart = this.rows.find((vm) => vm.uuid === uuid).autostart;
@@ -320,6 +301,18 @@ export default {
     },
     createVm() {
       this.$refs.createVm.show();
+    },
+    getVncSettings(){
+      this.vmTableLoading = true;
+      this.$api.get("host/settings/vnc")
+      .then((response) => {
+        this.vncSettings = response.data;
+        this.vmTableLoading = false;
+      })
+      .catch((error) => {
+        const errormsg = error.response ? error.response.data.detail : error;
+        this.$refs.errorDialog.show("Error getting VNC settings", [errormsg]);
+      })
     },
     connectWebSocket() {
       const jwt_token = localStorage.getItem("jwt-token");
@@ -346,7 +339,9 @@ export default {
   created() {
     this.connectWebSocket();
   },
-  mounted() {},
+  mounted() {
+    this.getVncSettings();
+  },
   unmounted() {
     this.vmTableLoading = false;
     this.ws.onclose = () => {};

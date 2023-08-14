@@ -1700,7 +1700,7 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
         domain_log_path = os.path.join(libvirt_domain_logs_path, domain_name + ".log")
         if os.path.exists(domain_log_path):
             with open(domain_log_path, "r") as f:
-                return { "log": f.readlines() }
+                return { "log": f.read() }
         else:
             raise HTTPException(status_code=404, detail="Log file not found")
         
