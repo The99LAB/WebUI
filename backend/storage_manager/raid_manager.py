@@ -7,6 +7,14 @@ from blkinfo import BlkDiskInfo
 import os
 import time
 
+def getFsType(path):
+    try:
+        fstype_process = subprocess.check_output(['df', '-T', path])
+        fstype = fstype_process.decode('utf-8').split('\n')[1].split()[1]
+        return fstype
+    except subprocess.CalledProcessError as e:
+        raise StorageManagerException(f"Failed to get fstype for RAID array {path}") from e
+
 def get():
     output = mdstat.parse()
     raid_arrays = []
@@ -20,6 +28,7 @@ def get():
         if _blk_info == None:
             raise StorageManagerException(f"Failed to get information for RAID array {device}")
         _devicepath = f"/dev/{device}"
+        _fstype = getFsType(_devicepath)
         _active = output['devices'][device]['active']
         _personality = output['devices'][device]['personality']
         _disks = [disk for disk in output['devices'][device]['disks'].keys()]
@@ -44,6 +53,7 @@ def get():
             'name': device,
             "path": _devicepath,
             'uuid': _uuid,
+            'fstype': _fstype,
             'active': _active,
             'personality': _personality,
             'disks': _disks,

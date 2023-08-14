@@ -13,6 +13,17 @@
       <template v-slot:loading>
         <q-inner-loading showing />
       </template>
+      <template v-slot:top-left>
+        <q-btn
+          round
+          flat
+          color="primary"
+          icon="mdi-refresh"
+          @click="fetchData"
+        >
+          <q-tooltip :offset="[5, 5]">Refresh RAID Arrays information</q-tooltip>
+        </q-btn>
+      </template>
       <template v-slot:top-right>
         <q-btn
           round
@@ -248,6 +259,12 @@ export default {
           align: "left",
         },
         {
+          name: "filesystem",
+          label: "Filesystem",
+          field: "fstype",
+          align: "left",
+        },
+        {
           name: "mountpoint",
           label: "Mountpoint",
           field: "mountpoint",
@@ -290,7 +307,6 @@ export default {
       createArrayFilesystem: "ext4",
       createArrayFilesystemOptions: ["ext4", "xfs"],
       createArrayLoading: false,
-      fetchTimeout: null,
     };
   },
   components: {
@@ -305,7 +321,6 @@ export default {
         .then((response) => {
           this.data = response.data;
           this.tableLoading = false;
-          this.fetchTimeout = setTimeout(this.fetchData, 5000);
         })
         .catch((error) => {
           const errormsg = error.response ? error.response.data.detail : error;
@@ -365,9 +380,6 @@ export default {
   },
   mounted() {
     this.fetchData();
-  },
-  unmounted() {
-    clearTimeout(this.fetchTimeout);
   },
 };
 </script>
