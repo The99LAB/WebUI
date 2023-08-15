@@ -283,7 +283,6 @@ export default {
         "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
         uuid;
       window.open(novnc_url, "_blank");
-      
     },
     autostartVm(uuid) {
       let autostart = this.rows.find((vm) => vm.uuid === uuid).autostart;
@@ -302,17 +301,18 @@ export default {
     createVm() {
       this.$refs.createVm.show();
     },
-    getVncSettings(){
+    getVncSettings() {
       this.vmTableLoading = true;
-      this.$api.get("host/settings/vnc")
-      .then((response) => {
-        this.vncSettings = response.data;
-        this.vmTableLoading = false;
-      })
-      .catch((error) => {
-        const errormsg = error.response ? error.response.data.detail : error;
-        this.$refs.errorDialog.show("Error getting VNC settings", [errormsg]);
-      })
+      this.$api
+        .get("host/settings/vnc")
+        .then((response) => {
+          this.vncSettings = response.data;
+          this.vmTableLoading = false;
+        })
+        .catch((error) => {
+          const errormsg = error.response ? error.response.data.detail : error;
+          this.$refs.errorDialog.show("Error getting VNC settings", [errormsg]);
+        });
     },
     connectWebSocket() {
       const jwt_token = localStorage.getItem("jwt-token");

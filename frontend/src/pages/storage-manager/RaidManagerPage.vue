@@ -14,14 +14,10 @@
         <q-inner-loading showing />
       </template>
       <template v-slot:top-left>
-        <q-btn
-          round
-          flat
-          color="primary"
-          icon="mdi-refresh"
-          @click="fetchData"
-        >
-          <q-tooltip :offset="[5, 5]">Refresh RAID Arrays information</q-tooltip>
+        <q-btn round flat color="primary" icon="mdi-refresh" @click="fetchData">
+          <q-tooltip :offset="[5, 5]"
+            >Refresh RAID Arrays information</q-tooltip
+          >
         </q-btn>
       </template>
       <template v-slot:top-right>
