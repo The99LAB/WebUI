@@ -135,7 +135,11 @@
             </div>
             <div class="row">
               <div class="col">
-                <DirectoryList v-model="disk_location" label="Disk Location" selectiontype="dir"/>
+                <DirectoryList
+                  v-model="disk_location"
+                  label="Disk Location"
+                  selectiontype="dir"
+                />
               </div>
             </div>
           </q-tab-panel>
@@ -275,14 +279,14 @@ export default {
     createVm() {
       if (this.disk_location == null) {
         this.$refs.errorDialog.show("Invalid disk location", [
-          "Please a valid directory where the vm disk can be stored"
+          "Please a valid directory where the vm disk can be stored",
         ]);
         return;
       }
 
       if (this.cdrom_location == null) {
         this.$refs.errorDialog.show("Invalid cdrom location", [
-          "Please a valid directory where the vm cdrom can be stored"
+          "Please a valid directory where the vm cdrom can be stored",
         ]);
         return;
       }
@@ -311,7 +315,7 @@ export default {
       formData.append("disk_type", this.disk_type);
       formData.append("disk_bus", this.disk_bus);
       formData.append("disk_location", this.disk_location);
-      formData.append("cdrom_location" ,this.cdrom_location);
+      formData.append("cdrom_location", this.cdrom_location);
       formData.append(
         "network_source",
         this.$refs.networkSource.getSelectedNetwork(),

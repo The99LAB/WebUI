@@ -267,8 +267,8 @@
                 </div>
                 <div class="row" v-if="disk.sourcefile != null">
                   <div class="col">
-                    <DirectoryList 
-                      label="Source File" 
+                    <DirectoryList
+                      label="Source File"
                       v-model="disk.sourcefile"
                     >
                       <template v-slot:append>
@@ -345,7 +345,7 @@
                       round
                       @click="diskDelete(disk.number)"
                     >
-                      <q-tooltip :offset="[5,5]">Delete Disk</q-tooltip>
+                      <q-tooltip :offset="[5, 5]">Delete Disk</q-tooltip>
                     </q-btn>
                   </div>
                 </div>

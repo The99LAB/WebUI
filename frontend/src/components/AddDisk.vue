@@ -7,7 +7,7 @@
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
       <q-separator color="transparent" spaced="lg" inset />
-      <q-card-section class="q-pt-none" style="width: 35em;">
+      <q-card-section class="q-pt-none" style="width: 35em">
         <q-select
           v-model="diskType"
           :options="diskTypeOptions"
@@ -82,7 +82,7 @@ export default {
     },
     addDisk() {
       if (this.diskType == "file") {
-        if (this.volumePath == null){
+        if (this.volumePath == null) {
           this.$refs.errorDialog.show("Error adding disk", [
             "Please select a volume",
           ]);
