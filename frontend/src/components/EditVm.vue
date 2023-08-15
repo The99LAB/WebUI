@@ -214,9 +214,8 @@
             <q-tab-panel name="disk">
               <div v-for="disk in diskList" :key="disk">
                 <q-separator
-                  color="transparent"
+                  color="primary"
                   spaced="lg"
-                  inset
                   v-if="disk.number != 0"
                 />
                 <div class="row">
@@ -268,15 +267,11 @@
                 </div>
                 <div class="row" v-if="disk.sourcefile != null">
                   <div class="col">
-                    <q-input label="Source File" v-model="disk.sourcefile">
+                    <DirectoryList 
+                      label="Source File" 
+                      v-model="disk.sourcefile"
+                    >
                       <template v-slot:append>
-                        <q-btn
-                          round
-                          dense
-                          flat
-                          icon="mdi-eye"
-                          @click="diskShowSourceFileDialog(disk.number)"
-                        />
                         <q-btn
                           round
                           dense
@@ -285,9 +280,11 @@
                           @click="
                             diskChangeSourceFile(disk.number, disk.sourcefile)
                           "
-                        />
+                        >
+                          <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
+                        </q-btn>
                       </template>
-                    </q-input>
+                    </DirectoryList>
                   </div>
                 </div>
                 <div class="row" v-if="disk.sourcedev != null">
@@ -324,7 +321,9 @@
                           @click="
                             diskChangeBootorder(disk.number, disk.bootorder)
                           "
-                        />
+                        >
+                          <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
+                        </q-btn>
                       </template>
                     </q-input>
                   </div>
@@ -342,8 +341,12 @@
                     <q-btn
                       color="primary"
                       icon="delete"
+                      flat
+                      round
                       @click="diskDelete(disk.number)"
-                    />
+                    >
+                      <q-tooltip :offset="[5,5]">Delete Disk</q-tooltip>
+                    </q-btn>
                   </div>
                 </div>
               </div>
@@ -636,10 +639,6 @@
   <ErrorDialog ref="errorDialog" />
   <ConfirmDialog ref="confirmDialog" />
   <AddDisk ref="addDisk" @disk-add-finished="refreshData()" />
-  <sourceFileDialog
-    ref="sourceFileDialog"
-    @sourcefile-add-finished="refreshData()"
-  />
   <AddNetwork ref="addNetwork" @network-add-finished="refreshData()" />
   <AddUsbDevice ref="addUsbDevice" @usb-device-add-finished="refreshData()" />
   <AddPcieDevice
@@ -656,13 +655,13 @@ import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import ConfirmDialog from "src/components/ConfirmDialog.vue";
 import AddDisk from "src/components/AddDisk.vue";
-import sourceFileDialog from "src/components/SourceFileDialog.vue";
 import AddNetwork from "src/components/AddNetwork.vue";
 import AddUsbDevice from "src/components/AddUsbDevice.vue";
 import AddPcieDevice from "src/components/AddPcieDevice.vue";
 import AddGraphics from "src/components/AddGraphics.vue";
 import AddVideo from "src/components/AddVideo.vue";
 import AddSound from "src/components/AddSound.vue";
+import DirectoryList from "./DirectoryList.vue";
 
 export default {
   data() {
@@ -716,7 +715,7 @@ export default {
     ErrorDialog,
     ConfirmDialog,
     AddDisk,
-    sourceFileDialog,
+    DirectoryList,
     AddNetwork,
     AddUsbDevice,
     AddPcieDevice,
@@ -922,9 +921,6 @@ export default {
           ]);
         });
     },
-    diskShowSourceFileDialog(disknumber) {
-      this.$refs.sourceFileDialog.show(disknumber, this.uuid);
-    },
     diskChangeBootorder(disknumber, value) {
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-bootorder", {
@@ -945,7 +941,7 @@ export default {
         "Delete disk",
         [
           "Are you sure you want to delete this disk?",
-          "This only removes the disk from the vm, not from the storage pool.",
+          "This only removes the disk from the vm, not the file itself.",
         ],
         this.diskDeleteConfirm,
       );

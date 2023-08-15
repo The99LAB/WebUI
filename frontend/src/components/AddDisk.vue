@@ -7,15 +7,16 @@
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
       <q-separator color="transparent" spaced="lg" inset />
-      <q-card-section class="q-pt-none q-px-xl">
+      <q-card-section class="q-pt-none" style="width: 35em;">
         <q-select
           v-model="diskType"
           :options="diskTypeOptions"
           label="Disk Type"
         />
-        <StoragePoolAndVolumeList
-          ref="storagePoolVolumeList"
+        <DirectoryList
+          v-model="volumePath"
           v-if="diskType == 'file'"
+          label="Volume"
         />
         <q-select
           v-model="deviceType"
@@ -48,7 +49,7 @@
 
 <script>
 import { ref } from "vue";
-import StoragePoolAndVolumeList from "src/components/StoragePoolAndVolumeList.vue";
+import DirectoryList from "src/components/DirectoryList.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 
 export default {
@@ -71,7 +72,7 @@ export default {
   },
   emits: ["disk-add-finished"],
   components: {
-    StoragePoolAndVolumeList,
+    DirectoryList,
     ErrorDialog,
   },
   methods: {
@@ -80,10 +81,13 @@ export default {
       console.log("UUID: " + this.uuid);
     },
     addDisk() {
-      this.volumePath = null;
       if (this.diskType == "file") {
-        this.volumePath =
-          this.$refs.storagePoolVolumeList.getSelectedVolumePath();
+        if (this.volumePath == null){
+          this.$refs.errorDialog.show("Error adding disk", [
+            "Please select a volume",
+          ]);
+          return;
+        }
       }
 
       this.$api

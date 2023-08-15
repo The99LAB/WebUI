@@ -670,23 +670,22 @@ class domainNetworkInterface():
 
 
 class create_vm():
-    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_pool=None, iso=False, iso_pool=None, iso_volume=None, network=False, network_source=None, network_model=None, ovmf_name=None):
+    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_location=None, iso=False, iso_location=None, network=False, network_source=None, network_model=None, ovmf_name=None):
         self.name = name
         self.machine_type = machine_type
         self.bios_type = bios_type
         self.min_mem_unit = mem_min_unit
         self.max_mem_unit = mem_max_unit
-        self.mem_min = storage_manager.convertSizeUnit(size=mem_min, from_unit=mem_min_unit, to_unit="KB", mode='int')
-        self.mem_max =storage_manager.convertSizeUnit(size=mem_max, from_unit=mem_max_unit, to_unit="KB", mode='int')
+        self.mem_min = storage_manager.convertSizeUnit(size=int(mem_min), from_unit=mem_min_unit, to_unit="KB", mode='int')
+        self.mem_max =storage_manager.convertSizeUnit(size=int(mem_max), from_unit=mem_max_unit, to_unit="KB", mode='int')
         self.disk = disk
         self.disk_size = disk_size
         self.disk_size_unit = disk_size_unit
         self.disk_type = disk_type
         self.disk_bus = disk_bus
-        self.disk_pool = disk_pool
+        self.disk_location = disk_location
         self.iso = iso
-        self.iso_pool = iso_pool
-        self.iso_volume = iso_volume
+        self.iso_location = iso_location
         self.network = network
         self.network_source = network_source
         self.network_model = network_model
@@ -700,36 +699,26 @@ class create_vm():
         
         self.createisoxml = ""
         if self.iso:
-            iso = poolStorage(pooluuid=self.iso_pool)
-            isopath = iso.getVolumePath(poolvolume=self.iso_volume)
-
             self.createisoxml = f"""<disk type='file' device='cdrom'>
                             <driver name='qemu' type='raw'/>
-                            <source file='{isopath}'/>
+                            <source file='{iso_location}'/>
                             <target dev='sda' bus='sata'/>
                             <boot order='2'/>
                             "<readonly/>
                             </disk>"""
-        
         self.creatediskxml = ""
         if self.disk:
-            disk_size = storage_manager.convertsize.convertSizeUnit(size=disk_size, from_unit=self.disk_size_unit, to_unit="B", mode='int')
-            pool = conn.storagePoolLookupByUUIDString(self.disk_pool)
+            disk_size = storage_manager.convertsize.convertSizeUnit(size=int(disk_size), from_unit=self.disk_size_unit, to_unit="B", mode='int')
             disk_volume_name = f"{self.name}-0.{self.disk_type}"
-            diskxml = f"""<volume>
-            <name>{disk_volume_name}</name>
-            <capacity>{disk_size}</capacity>
-            <allocation>0</allocation>
-            <target>
-                <format type="{self.disk_type}"/>
-            </target>
-            </volume>"""
-            pool.createXML(diskxml)
-            diskvolumepath = poolStorage(
-                self.disk_pool).getVolumePath(disk_volume_name)
+            disk_location = os.path.join(self.disk_location, disk_volume_name)
+            try:
+                subprocess.check_output(["qemu-img", "create", "-f", self.disk_type, disk_location, f"{disk_size}B"])
+            except subprocess.CalledProcessError as e:
+                raise Exception(f"Error: Creating disk failed with error: {e}")
+
             self.creatediskxml = f"""<disk type='file' device='disk'>
                             <driver name='qemu' type='{self.disk_type}'/>
-                            <source file='{diskvolumepath}'/>
+                            <source file='{disk_location}'/>
                             <target dev='{"vda" if self.disk_bus == "virtio" else "sdb"}' bus='{self.disk_bus}'/>
                             <boot order='1'/>
                             </disk>"""
@@ -1621,10 +1610,9 @@ async def post_vm_manager(request: Request, action: str, username: str = Depends
         disk_size_unit = form_data.get('disk_size_unit')
         disk_type = form_data.get('disk_type')
         disk_bus = form_data.get('disk_bus')
-        disk_pool = form_data.get('disk_pool')
+        disk_location = form_data.get('disk_location')
         iso = True
-        cdrom_pool = form_data.get('cdrom_pool')
-        cdrom_volume = form_data.get('cdrom_volume')
+        cdrom_location = form_data.get('cdrom_location')
         network = True
         network_source = form_data.get('network_source')
         network_model = form_data.get('network_model')
@@ -1642,17 +1630,16 @@ async def post_vm_manager(request: Request, action: str, username: str = Depends
         print("disk_size_unit: " + disk_size_unit)
         print("disk_type: " + disk_type)
         print("disk_bus: " + disk_bus)
-        print("disk_pool: " + disk_pool)
+        print("disk_location: " + disk_location)
         print("iso: " + str(iso))
-        print("cdrom_pool: " + cdrom_pool)
-        print("cdrom_volume: " + cdrom_volume)
+        print("cdrom_location: " + cdrom_location)
         print("network: " + str(network))
         print("network_source: " + network_source)
         print("network_model: " + network_model)
 
         try:
             vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
-                        disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model, ovmf_name=ovmf_name)
+                        disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_location=disk_location, iso=iso, iso_location=cdrom_location, network=network, network_source=network_source, network_model=network_model, ovmf_name=ovmf_name)
             if os == "Microsoft Windows 11":
                 vm.windows(version="11")
             elif os == "Microsoft Windows 10":
@@ -3157,6 +3144,16 @@ async def api_system_file_manager_action(action: str, request: Request, username
         path = data['path']
         new_path = os.path.join(os.path.dirname(path), name)
         os.rename(path, new_path)
+    elif action == "validate-path":
+        path = data['path']
+        # if directory, return dir, if file return file, if not found return not found
+        if os.path.isdir(path):
+            return JSONResponse(content={"type": "dir"})
+        elif os.path.isfile(path):
+            parent = os.path.dirname(path)
+            return JSONResponse(content={"type": "file", "parent": parent})
+        else:
+            raise HTTPException(status_code=500, detail="not found")
     else:
         raise HTTPException(status_code=404, detail="Action not found")
 

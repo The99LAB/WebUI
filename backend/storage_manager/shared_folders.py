@@ -43,8 +43,11 @@ def setSMBPermissions(path):
     if selinux_context is not None and 'samba_share_t' in selinux_context:
         return
 
+    # Set the selinux context to public_content_t.
+    # This makes sure that different processes can access the files. (samba, libvirt, docker, ...)
+    # Security wise this is not the best option, but it is the easiest.
     try:
-        subprocess.check_output(["semanage", "fcontext", "-a", "-t", "samba_share_t", f"{path}(/.*)?"])
+        subprocess.check_output(["semanage", "fcontext", "-a", "-t", "public_content_t", f"{path}(/.*)?"])
     except subprocess.CalledProcessError as e:
         raise StorageManagerException(f"Failed to set samba permissions for {path}") from e
     try:
