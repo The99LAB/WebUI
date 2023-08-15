@@ -3039,8 +3039,10 @@ async def api_system_users_get(username: str = Depends(check_auth)):
     for user in pwd.getpwall():
         # list users with UID >= 1000 and <= 60000 or UID == 0
         if user.pw_uid >= 1000 and user.pw_uid <= 60000 or user.pw_uid == 0:
+            smb_user = storage_manager.smbusers.lookup(name=user.pw_name)
             users.append({
                 "name": user.pw_name,
+                "smb_user": smb_user,
                 "uid": user.pw_uid,
                 "gid": user.pw_gid,
                 "home": user.pw_dir,
@@ -3048,6 +3050,49 @@ async def api_system_users_get(username: str = Depends(check_auth)):
                 "groups": [group.gr_name for group in grp.getgrall() if user.pw_name in group.gr_mem],
             })
     return users
+
+@app.post("/api/system/users/change-password")
+async def api_system_users_change_password(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    username = data['username']
+    password = data['password']
+    try:
+        subprocess.check_output(["passwd", username, "--stdin"], input=password.encode())
+        return
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=e)
+    
+@app.post("/api/system/users/remove-user")
+async def api_system_users_remove_user(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    username = data['username']
+    try:
+        subprocess.check_output(["userdel", username])
+        return
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=e)
+
+@app.post("/api/system/users/change-smb-password")
+async def api_system_users_change_smb_password(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    username = data['username']
+    password = data['password']
+    try:
+        storage_manager.smbusers.reset_password(username, password)
+        return
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/system/users/remove-smb-user")
+async def api_system_users_remove_smb_user(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    username = data['username']
+    try:
+        if storage_manager.smbusers.lookup(name=username) is not None:
+            storage_manager.smbusers.delete(name=username)
+        return
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 ### API-SYSTEM-FILE-MANAGER ###
 @app.post("/api/system/file-manager")

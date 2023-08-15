@@ -4,6 +4,7 @@ from .disk_manager import findUsedSpace
 from .convertsize import convertSizeUnit
 from .raid_manager import get as getRaidArrays
 from .disk_manager import get as getDisks
+from .smbusers import get as get_smb_users
 import shutil
 import subprocess
 
@@ -27,20 +28,6 @@ def remove_selinux_context(path):
         subprocess.check_output(['restorecon', '-R', '-v', path])
     except subprocess.CalledProcessError as e:
         pass
-
-def get_smb_users():
-    try:
-        output = subprocess.check_output(['pdbedit', '-L'])
-        output = output.decode("utf-8")
-        lines = output.split("\n")
-        users = []
-        for line in lines:
-            if line.strip() == "":
-                continue
-            users.append(line.split(":")[0])
-        return users
-    except subprocess.CalledProcessError as e:
-        return []
 
 def setSMBPermissions(path):
     # chmod 777 {path}
