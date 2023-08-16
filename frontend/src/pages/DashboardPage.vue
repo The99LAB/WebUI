@@ -24,7 +24,7 @@
                 size="sm"
                 @click="$router.push({ name: 'system/system-info' })"
               >
-                <q-tooltip>View full system information</q-tooltip>
+                <q-tooltip :offset="[5,5]">View full system information</q-tooltip>
               </q-btn>
             </div>
             <div class="text-left row items-center q-pl-md q-my-md">

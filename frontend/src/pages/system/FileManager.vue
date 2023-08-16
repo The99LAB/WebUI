@@ -12,43 +12,47 @@
       hide-selected-banner
     >
       <template v-slot:top-right>
-        <div class="q-gutter-sm">
-          <q-btn
-            color="primary"
-            icon="mdi-form-textbox"
-            :disable="selected.length == 0 || selected.length > 1"
-            @click="
-              renameDialogItem = JSON.parse(JSON.stringify(selected[0]));
-              renameDialog = true;
-            "
-          >
-            <q-tooltip :offset="[0, 5]"> Rename </q-tooltip>
-          </q-btn>
-          <q-btn
-            color="primary"
-            icon="mdi-folder-plus-outline"
-            @click="folderDialog = true"
-          >
-            <q-tooltip :offset="[0, 5]"> Add Folder </q-tooltip>
-          </q-btn>
-          <q-btn
-            color="primary"
-            icon="mdi-delete-outline"
-            :disable="selected.length == 0"
-            @click="
-              this.$refs.confirmDialog.show(
-                'Are you sure?',
-                [
-                  'Do you really want to remove this?',
-                  'This action is not reversable!',
-                ],
-                removePath,
-              )
-            "
-          >
-            <q-tooltip :offset="[0, 5]"> Remove </q-tooltip>
-          </q-btn>
-        </div>
+        <q-btn
+          flat
+          round
+          color="primary"
+          icon="mdi-form-textbox"
+          :disable="selected.length == 0 || selected.length > 1"
+          @click="
+            renameDialogItem = JSON.parse(JSON.stringify(selected[0]));
+            renameDialog = true;
+          "
+        >
+          <q-tooltip :offset="[0, 5]"> Rename </q-tooltip>
+        </q-btn>
+        <q-btn
+          flat
+          round
+          color="primary"
+          icon="mdi-folder-plus-outline"
+          @click="folderDialog = true"
+        >
+          <q-tooltip :offset="[0, 5]"> Add Folder </q-tooltip>
+        </q-btn>
+        <q-btn
+          flat
+          round
+          color="primary"
+          icon="mdi-delete-outline"
+          :disable="selected.length == 0"
+          @click="
+            this.$refs.confirmDialog.show(
+              'Are you sure?',
+              [
+                'Do you really want to remove this?',
+                'This action is not reversable!',
+              ],
+              removePath,
+            )
+          "
+        >
+          <q-tooltip :offset="[0, 5]"> Remove </q-tooltip>
+        </q-btn>
       </template>
       <template v-slot:top-left>
         <div v-for="(item, index) in currentPath.split('/')" :key="index">
@@ -160,8 +164,9 @@
               label="Folder name"
               autofocus
               style="width: 25em"
+              :rules="[val => !!val || 'Cannot be empty']"
             />
-            <p class="q-pt-md">Folder will be created at: {{ currentPath }}</p>
+            <p class="q-mb-none q-mt-sm">Folder will be created at: {{ currentPath }}</p>
             <div class="row justify-end">
               <q-btn flat label="Create" type="submit" />
             </div>

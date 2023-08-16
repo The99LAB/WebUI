@@ -12,18 +12,23 @@
       hide-selected-banner
     >
       <template v-slot:top-right>
-        <div class="q-gutter-sm">
           <q-btn
             color="primary"
             icon="mdi-plus"
-            label="Add"
+            round
+            flat
             @click="templateAddRepoDialog = true"
             :disable="templateRepoSelected.length != 0"
-          />
+          >
+            <q-tooltip :offset="[5,5]">
+              Add template repository
+            </q-tooltip>
+          </q-btn>
           <q-btn
             color="primary"
+            round
+            flat
             icon="mdi-delete"
-            label="Delete"
             @click="
               $refs.confirmDialog.show(
                 'Are you sure?',
@@ -32,15 +37,24 @@
               )
             "
             :disable="!templateRepoSelected.length"
-          />
+          >
+            <q-tooltip :offset="[5,5]">
+              Delete template repository
+            </q-tooltip>
+          </q-btn>
           <q-btn
             color="primary"
+            round
+            flat
             icon="mdi-pencil"
-            label="Edit"
             @click="templateRepoEditDialog = true"
             :disable="!templateRepoSelected.length"
-          />
-        </div>
+          >
+            <q-tooltip :offset="[5,5]">
+              Edit template repository
+            </q-tooltip>
+          </q-btn>
+
       </template>
     </q-table>
     <ConfirmDialog ref="confirmDialog" />

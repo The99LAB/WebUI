@@ -15,18 +15,25 @@
         <q-btn
           color="primary"
           icon="mdi-delete"
-          label="Delete"
-          @click="networkDelete()"
+          round
+          flat
+          @click="$refs.confirmDialog.show('Delete Network', ['Are you sure you want to delete this network?'], networkDelete)"
           :disable="selectedNetwork.length == 0"
-        />
+        >
+          <q-tooltip :offset="[5, 5]">
+            Delete Network
+          </q-tooltip>
+        </q-btn>
       </template>
     </q-table>
     <errorDialog ref="errorDialog" />
+    <ConfirmDialog ref="confirmDialog" />
   </q-page>
 </template>
 
 <script>
 import errorDialog from "src/components/ErrorDialog.vue";
+import ConfirmDialog from "src/components/ConfirmDialog.vue";
 
 export default {
   data() {
@@ -72,6 +79,7 @@ export default {
   },
   components: {
     errorDialog,
+    ConfirmDialog,
   },
   methods: {
     getdockerNetworks() {

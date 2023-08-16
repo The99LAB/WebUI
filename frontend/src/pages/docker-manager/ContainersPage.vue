@@ -10,11 +10,11 @@
       :pagination="containerPagination"
     >
       <template v-slot:top-right>
-        <div class="q-gutter-sm">
           <q-btn
             color="primary"
             icon="mdi-refresh"
-            label="Refresh"
+            flat
+            round
             @click="containersUpdate"
           >
             <q-tooltip :offset="[0, 5]">Refresh Containers</q-tooltip>
@@ -22,12 +22,12 @@
           <q-btn
             color="primary"
             icon="mdi-plus"
-            label="New Custom"
+            flat
+            round
             @click="containerNew"
           >
             <q-tooltip :offset="[0, 5]">New Custom Container</q-tooltip>
           </q-btn>
-        </div>
       </template>
       <template #body="props">
         <q-tr :props="props">

@@ -11,6 +11,9 @@
       row-key="name"
       :loading="table_loading"
     >
+      <template v-slot:loading>
+        <q-inner-loading showing />
+      </template>
       <template v-slot:top-right>
         <q-btn
           round
@@ -21,7 +24,9 @@
             table_selected.length === 0 || table_selected[0].name === 'root'
           "
           @click="editUserDialogShow"
-        />
+        >
+          <q-tooltip :offset="[5,5]">Edit User</q-tooltip>
+        </q-btn>
         <q-btn
           round
           flat
@@ -37,7 +42,9 @@
               removeUser,
             )
           "
-        />
+        >
+          <q-tooltip :offset="[5,5]">Remove User</q-tooltip>
+        </q-btn>
       </template>
       <template v-slot:body-cell-smb="props">
         <q-td key="smb" :props="props">

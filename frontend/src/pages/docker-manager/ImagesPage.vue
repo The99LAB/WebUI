@@ -12,21 +12,25 @@
       hide-selected-banner
     >
       <template v-slot:top-right>
-        <div class="q-gutter-sm">
           <q-btn
             color="primary"
             icon="mdi-delete"
-            label="Delete"
-            @click="imageDelete()"
+            round
+            flat
+            @click="$refs.confirmDialog.show('Delete Image(s)', ['Are you sure you want to delete the selected image(s)?'], imageDelete)"
             :disable="selectedImage.length == 0"
-          />
+          >
+            <q-tooltip :offset="[5,5]">Delete Image</q-tooltip>
+          </q-btn>
           <q-btn
             color="primary"
             icon="mdi-download"
-            label="Pull Image"
+            round
+            flat
             @click="pullImageDialog = true"
-          />
-        </div>
+          >
+            <q-tooltip :offset="[5,5]">Pull Image</q-tooltip>
+          </q-btn>
       </template>
     </q-table>
     <q-dialog v-model="pullImageDialog" persistent>
@@ -37,27 +41,36 @@
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
         <q-card-section>
-          <q-input
-            v-model="pullImageName"
-            label="Image name"
-            autofocus
-            hint="repository:tag"
-            style="width: 25em"
-          />
+          <q-form @submit="imagePull">
+            <q-input
+              v-model="pullImageName"
+              label="Image name"
+              autofocus
+              hint="repository:tag"
+              style="width: 25em"
+              :rules="[val => !!val || 'Image name is required']"
+            />
+            <div class="row justify-end">
+              <q-btn
+                type="submit"
+                label="Pull"
+                flat
+              />
+            </div>
+          </q-form>
         </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Pull" @click="imagePull" />
-        </q-card-actions>
         <q-inner-loading :showing="pullImageLoading" />
       </q-card>
     </q-dialog>
     <errorDialog ref="errorDialog" />
+    <ConfirmDialog ref="confirmDialog" />
   </q-page>
 </template>
 
 <script>
 import { ref } from "vue";
 import errorDialog from "src/components/ErrorDialog.vue";
+import ConfirmDialog from "src/components/ConfirmDialog.vue";
 
 export default {
   data() {
@@ -113,6 +126,7 @@ export default {
   },
   components: {
     errorDialog,
+    ConfirmDialog,
   },
   methods: {
     getDockerImages() {
