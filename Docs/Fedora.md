@@ -58,7 +58,8 @@ bridge-slave-enp37s0  5f9b861e-b09c-4e08-b7e7-17171cb5f5fa  ethernet  --
 - ``systemctl enable docker``
 #### Create macvlan network
 - ``docker network create -d macvlan --subnet=$subnet --gateway= $gateway -o parent=br0 br0``
-
+#### Fix docker breaking KVM bridged nedwork
+- https://wiki.archlinux.org/title/Docker#Starting_Docker_breaks_KVM_bridged_networking
 
 ## Samba
 - Copy the smb.conf file to ``/etc/samba/smb.conf``
