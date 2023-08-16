@@ -12,7 +12,11 @@
         <q-input v-model="fileName" label="File Name" />
       </q-card-section>
       <q-card-section>
-        <DirectoryList v-model="directory" label="Directory" selectiontype="dir" />
+        <DirectoryList
+          v-model="directory"
+          label="Directory"
+          selectiontype="dir"
+        />
       </q-card-section>
       <q-card-section>
         <q-btn color="primary" label="Download" @click="downloadIso()" />
@@ -59,9 +63,11 @@ export default {
   },
   methods: {
     downloadIso() {
-      if (this.directory == null){
-        this.$refs.errorDialog.show("Error Downloading ISO", ["Please select a directory"]);
-        return
+      if (this.directory == null) {
+        this.$refs.errorDialog.show("Error Downloading ISO", [
+          "Please select a directory",
+        ]);
+        return;
       }
       const jwt_token = localStorage.getItem("jwt-token");
       this.ws = new WebSocket(
