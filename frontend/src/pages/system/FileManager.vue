@@ -164,9 +164,11 @@
               label="Folder name"
               autofocus
               style="width: 25em"
-              :rules="[val => !!val || 'Cannot be empty']"
+              :rules="[(val) => !!val || 'Cannot be empty']"
             />
-            <p class="q-mb-none q-mt-sm">Folder will be created at: {{ currentPath }}</p>
+            <p class="q-mb-none q-mt-sm">
+              Folder will be created at: {{ currentPath }}
+            </p>
             <div class="row justify-end">
               <q-btn flat label="Create" type="submit" />
             </div>

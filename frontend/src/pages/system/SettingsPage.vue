@@ -13,19 +13,16 @@
       hide-bottom
     >
       <template v-slot:top-right>
-        
-          <q-btn
-            color="primary"
-            flat
-            round
-            icon="mdi-pencil"
-            :disable="selected_setting.length == 0"
-            @click="editSetting"
-          >
-            <q-tooltip :offset="[5, 5]">
-              Edit Setting
-            </q-tooltip>
-          </q-btn>
+        <q-btn
+          color="primary"
+          flat
+          round
+          icon="mdi-pencil"
+          :disable="selected_setting.length == 0"
+          @click="editSetting"
+        >
+          <q-tooltip :offset="[5, 5]"> Edit Setting </q-tooltip>
+        </q-btn>
       </template>
       <template v-slot:loading>
         <q-inner-loading showing />
@@ -45,41 +42,35 @@
       hide-bottom
     >
       <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            round
-            flat
-            icon="mdi-pencil"
-            :disable="selected_ovmf_path.length == 0"
-            @click="editOvmfPath"
-          >
-            <q-tooltip :offset="[5, 5]">
-              Edit OVMF Path
-            </q-tooltip>
-          </q-btn>
-          <q-btn
-            color="primary"
-            round
-            flat
-            icon="mdi-delete"
-            :disable="selected_ovmf_path.length == 0"
-            @click="removeOvmfPath(selected_ovmf_path[0].name)"
-          >
-            <q-tooltip :offset="[5, 5]">
-              Remove OVMF Path
-            </q-tooltip>
-          </q-btn>
-          <q-btn
-            color="primary"
-            round
-            flat
-            icon="mdi-plus"
-            @click="addOvmfPathDialogShow = true"
-          >
-            <q-tooltip :offset="[5, 5]">
-              Add OVMF Path
-            </q-tooltip>
-          </q-btn>
+        <q-btn
+          color="primary"
+          round
+          flat
+          icon="mdi-pencil"
+          :disable="selected_ovmf_path.length == 0"
+          @click="editOvmfPath"
+        >
+          <q-tooltip :offset="[5, 5]"> Edit OVMF Path </q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
+          round
+          flat
+          icon="mdi-delete"
+          :disable="selected_ovmf_path.length == 0"
+          @click="removeOvmfPath(selected_ovmf_path[0].name)"
+        >
+          <q-tooltip :offset="[5, 5]"> Remove OVMF Path </q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
+          round
+          flat
+          icon="mdi-plus"
+          @click="addOvmfPathDialogShow = true"
+        >
+          <q-tooltip :offset="[5, 5]"> Add OVMF Path </q-tooltip>
+        </q-btn>
       </template>
       <template v-slot:loading>
         <q-inner-loading showing />

@@ -25,7 +25,7 @@
           "
           @click="editUserDialogShow"
         >
-          <q-tooltip :offset="[5,5]">Edit User</q-tooltip>
+          <q-tooltip :offset="[5, 5]">Edit User</q-tooltip>
         </q-btn>
         <q-btn
           round
@@ -43,7 +43,7 @@
             )
           "
         >
-          <q-tooltip :offset="[5,5]">Remove User</q-tooltip>
+          <q-tooltip :offset="[5, 5]">Remove User</q-tooltip>
         </q-btn>
       </template>
       <template v-slot:body-cell-smb="props">

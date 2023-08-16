@@ -17,12 +17,16 @@
           icon="mdi-delete"
           round
           flat
-          @click="$refs.confirmDialog.show('Delete Network', ['Are you sure you want to delete this network?'], networkDelete)"
+          @click="
+            $refs.confirmDialog.show(
+              'Delete Network',
+              ['Are you sure you want to delete this network?'],
+              networkDelete,
+            )
+          "
           :disable="selectedNetwork.length == 0"
         >
-          <q-tooltip :offset="[5, 5]">
-            Delete Network
-          </q-tooltip>
+          <q-tooltip :offset="[5, 5]"> Delete Network </q-tooltip>
         </q-btn>
       </template>
     </q-table>

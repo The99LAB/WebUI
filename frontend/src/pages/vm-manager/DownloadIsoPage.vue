@@ -4,15 +4,15 @@
       <q-card-section>
         <div class="text-h6 q-mb-md">Download ISO</div>
         <q-form @submit="downloadIso">
-          <q-input 
-            v-model="url" 
-            label="URL" 
-            :rules="[val => !!val || 'URL cannot be empty']"
+          <q-input
+            v-model="url"
+            label="URL"
+            :rules="[(val) => !!val || 'URL cannot be empty']"
           />
-          <q-input 
-            v-model="fileName" 
-            label="File Name" 
-            :rules="[val => !!val || 'File Name cannot be empty']"
+          <q-input
+            v-model="fileName"
+            label="File Name"
+            :rules="[(val) => !!val || 'File Name cannot be empty']"
           />
           <DirectoryList
             v-model="directory"

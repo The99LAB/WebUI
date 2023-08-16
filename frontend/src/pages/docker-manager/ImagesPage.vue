@@ -12,25 +12,31 @@
       hide-selected-banner
     >
       <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon="mdi-delete"
-            round
-            flat
-            @click="$refs.confirmDialog.show('Delete Image(s)', ['Are you sure you want to delete the selected image(s)?'], imageDelete)"
-            :disable="selectedImage.length == 0"
-          >
-            <q-tooltip :offset="[5,5]">Delete Image</q-tooltip>
-          </q-btn>
-          <q-btn
-            color="primary"
-            icon="mdi-download"
-            round
-            flat
-            @click="pullImageDialog = true"
-          >
-            <q-tooltip :offset="[5,5]">Pull Image</q-tooltip>
-          </q-btn>
+        <q-btn
+          color="primary"
+          icon="mdi-delete"
+          round
+          flat
+          @click="
+            $refs.confirmDialog.show(
+              'Delete Image(s)',
+              ['Are you sure you want to delete the selected image(s)?'],
+              imageDelete,
+            )
+          "
+          :disable="selectedImage.length == 0"
+        >
+          <q-tooltip :offset="[5, 5]">Delete Image</q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
+          icon="mdi-download"
+          round
+          flat
+          @click="pullImageDialog = true"
+        >
+          <q-tooltip :offset="[5, 5]">Pull Image</q-tooltip>
+        </q-btn>
       </template>
     </q-table>
     <q-dialog v-model="pullImageDialog" persistent>
@@ -48,14 +54,10 @@
               autofocus
               hint="repository:tag"
               style="width: 25em"
-              :rules="[val => !!val || 'Image name is required']"
+              :rules="[(val) => !!val || 'Image name is required']"
             />
             <div class="row justify-end">
-              <q-btn
-                type="submit"
-                label="Pull"
-                flat
-              />
+              <q-btn type="submit" label="Pull" flat />
             </div>
           </q-form>
         </q-card-section>

@@ -12,49 +12,42 @@
       hide-selected-banner
     >
       <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon="mdi-plus"
-            round
-            flat
-            @click="templateAddRepoDialog = true"
-            :disable="templateRepoSelected.length != 0"
-          >
-            <q-tooltip :offset="[5,5]">
-              Add template repository
-            </q-tooltip>
-          </q-btn>
-          <q-btn
-            color="primary"
-            round
-            flat
-            icon="mdi-delete"
-            @click="
-              $refs.confirmDialog.show(
-                'Are you sure?',
-                ['Are you sure you want to delete this template repository?'],
-                templateRepoDelete,
-              )
-            "
-            :disable="!templateRepoSelected.length"
-          >
-            <q-tooltip :offset="[5,5]">
-              Delete template repository
-            </q-tooltip>
-          </q-btn>
-          <q-btn
-            color="primary"
-            round
-            flat
-            icon="mdi-pencil"
-            @click="templateRepoEditDialog = true"
-            :disable="!templateRepoSelected.length"
-          >
-            <q-tooltip :offset="[5,5]">
-              Edit template repository
-            </q-tooltip>
-          </q-btn>
-
+        <q-btn
+          color="primary"
+          icon="mdi-plus"
+          round
+          flat
+          @click="templateAddRepoDialog = true"
+          :disable="templateRepoSelected.length != 0"
+        >
+          <q-tooltip :offset="[5, 5]"> Add template repository </q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
+          round
+          flat
+          icon="mdi-delete"
+          @click="
+            $refs.confirmDialog.show(
+              'Are you sure?',
+              ['Are you sure you want to delete this template repository?'],
+              templateRepoDelete,
+            )
+          "
+          :disable="!templateRepoSelected.length"
+        >
+          <q-tooltip :offset="[5, 5]"> Delete template repository </q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
+          round
+          flat
+          icon="mdi-pencil"
+          @click="templateRepoEditDialog = true"
+          :disable="!templateRepoSelected.length"
+        >
+          <q-tooltip :offset="[5, 5]"> Edit template repository </q-tooltip>
+        </q-btn>
       </template>
     </q-table>
     <ConfirmDialog ref="confirmDialog" />
