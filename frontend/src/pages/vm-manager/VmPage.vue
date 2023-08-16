@@ -10,13 +10,13 @@
       no-data-label="Failed to get data from backend or no vm's defined"
       :pagination="vmTablePagination"
     >
+      <template v-slot:loading>
+        <q-inner-loading showing />
+      </template>
       <template v-slot:top-right>
-        <q-btn
-          color="primary"
-          icon="mdi-plus"
-          label="new VM"
-          @click="createVm()"
-        />
+        <q-btn color="primary" icon="mdi-plus" round flat @click="createVm()">
+          <q-tooltip :offset="[5, 5]">Create new VM</q-tooltip>
+        </q-btn>
       </template>
       <template #body="props">
         <q-tr :props="props">
@@ -202,7 +202,7 @@ export default {
         },
       ],
       selected: [],
-      vmTableLoading: ref(true),
+      vmTableLoading: false,
       vmTablePagination: {
         rowsPerPage: 15,
         sortBy: "name",
@@ -285,14 +285,19 @@ export default {
       window.open(novnc_url, "_blank");
     },
     autostartVm(uuid) {
+      this.vmTableLoading = true;
       let autostart = this.rows.find((vm) => vm.uuid === uuid).autostart;
       this.$api
         .post("vm-manager/" + uuid + "/autostart", { autostart: autostart })
+        .then((response) => {
+          this.vmTableLoading = false;
+        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error setting autostart", [
             "vm uuid: " + uuid,
             "Error: " + error.response.data.detail,
           ]);
+          this.vmTableLoading = false;
         });
     },
     editVm(uuid) {
@@ -324,7 +329,6 @@ export default {
           if (data.data != null) {
             this.rows = data.data;
           }
-          this.vmTableLoading = false;
         } else if (data.type == "auth_error") {
           localStorage.setItem("jwt-token", "");
           this.$router.push({ path: "/login" });
