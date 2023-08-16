@@ -268,6 +268,7 @@ class storage():
     #                 return f'Error: {e}'
     #             break
 
+    
     def add_xml(self, disktype, targetbus, devicetype, drivertype, sourcefile=None, sourcedev=None, bootorder=None):
         tree = ET.fromstring(self.vmXml)
         disks = tree.findall('./devices/disk')
@@ -308,47 +309,35 @@ class storage():
         else:
             return
         # add the disk to xml
-        diskxml = f"""<disk type='{disktype}' device='{devicetype}'>
+        self.diskxml = f"""<disk type='{disktype}' device='{devicetype}'>
         <driver name='qemu' type='{drivertype}'/>
         {source_file_string if disktype == "file" else ''}
         {source_dev_string if disktype == "block" else ''}
         <target dev='{FreeTargetDev}' bus='{targetbus}'/>
         {bootorderstring}
         </disk>"""
-        return diskxml
 
-    def add(self, targetbus, devicetype, sourcefile, drivertype, readonly="", bootorder=None):
-        diskxml = self.add_xml(targetbus=targetbus, devicetype=devicetype, sourcefile=sourcefile,
-                               drivertype=drivertype, readonly=readonly, bootorder=bootorder)
-        self.domain.attachDeviceFlags(
-            diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        self.add_xml_to_vm()
+        return self.diskxml
 
+    def add_xml_to_vm(self):
+        self.domain.attachDeviceFlags(self.diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
-    def createnew(self, pooluuid, disksize, disksizeunit, disktype, diskbus, bootorder=None):
-        volumename = poolStorage(pooluuid).getUnusedVolumeName(
-            self.domain_uuid, disktype)
-        pool = conn.storagePoolLookupByUUIDString(pooluuid)
-        disksize = storage_manager.convertSizeUnit(size=disksize, from_unit="B", to_unit=disksizeunit, mode="int")
-
-        diskxml = f"""<volume>
-        <name>{volumename}</name>
-        <capacity>{disksize}</capacity>
-        <allocation>0</allocation>
-        <target>
-            <format type="{disktype}"/>
-        </target>
-        </volume>"""
-
+    def createnew(self, directory, disksize, disksizeunit, disktype, diskbus):
+        disksize = storage_manager.convertSizeUnit(size=int(disksize), from_unit=disksizeunit, to_unit="B", mode="int")
+        available_disk_number = len(self.get())
+        disk_path = os.path.join(directory, f"{self.domain.name()}-{available_disk_number}.{disktype}")
         try:
-            pool.createXML(diskxml)
-        except libvirt.libvirtError as e:
-            return f"Error: Creating volume on pool with uuid: {pooluuid} failed with error: {e}"
-
-        volumepath = poolStorage(pooluuid).getVolumePath(volumename)
-        
-        storage(self.domain_uuid).add(
-            diskbus, "disk", volumepath, disktype, bootorder=bootorder)
-        
+            subprocess.check_output(["qemu-img", "create", "-f", disktype, disk_path, f"{disksize}B"])
+        except subprocess.CalledProcessError as e:
+            raise Exception(f"Error: Creating disk failed with error: {e}")
+        self.add_xml(
+            disktype="file",
+            devicetype="disk",
+            targetbus=diskbus,
+            drivertype=disktype,
+            sourcefile=disk_path,
+        )
 
 
 class poolStorage():
@@ -1966,24 +1955,64 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         # edit-disk-action
         elif action.startswith("disk"):
             action = action.replace("disk-", "")
-            if action != "add":
+            if action != "add" and action != "create":
                 disknumber = data['number']
                 xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
                 xml = ET.fromstring(xml_orig)
+
             if action == "add":
+                formDeviceType = data['deviceType']
+                if formDeviceType == "cdrom" or formDeviceType == "existingvdisk":
+                    formDeviceType = "disk" if formDeviceType == "existingvdisk" else "cdrom"
+                    cdrompath = data['volumePath']
+                    cdrombus = data['diskBus']
+                    try:
+                        storage(domain_uuid=vmuuid).add_xml(
+                            disktype="file",
+                            targetbus=cdrombus,
+                            devicetype=formDeviceType,
+                            drivertype="raw",
+                            sourcefile=cdrompath
+                        )
+                        return
+                    except libvirt.libvirtError as e:
+                        raise HTTPException(status_code=500, detail=str(e))
                 
-                volume_path = data['volumePath']
-                device_type = data['deviceType']
-                disk_driver_type = data['diskDriverType']
-                disk_bus = data['diskBus']
-                disk_type = data['diskType']
-                source_device = data['sourceDevice']
-                diskxml = storage(domain_uuid=vmuuid).add_xml(disktype=disk_type, targetbus=disk_bus, devicetype=device_type, sourcefile=volume_path, sourcedev=source_device, drivertype=disk_driver_type)
-                try:
-                    domain.attachDeviceFlags(diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
+                elif formDeviceType == "createvdisk":
+                    directory = data['vdiskDirectory']
+                    disksize = data['diskSize']
+                    disksizeunit = data['diskSizeUnit']
+                    diskType = data['diskDriverType']
+                    diskBus = data['diskBus']
+                    try:
+                        storage(domain_uuid=vmuuid).createnew(
+                            directory=directory,
+                            disksize=disksize,
+                            disksizeunit=disksizeunit,
+                            disktype=diskType,
+                            diskbus=diskBus
+                        )
+                        return
+                    except libvirt.libvirtError as e:
+                        raise HTTPException(status_code=500, detail=str(e))
+                    
+                elif formDeviceType == "block":
+                    blockdev = data['sourceDevice']
+                    diskBus = data['diskBus']
+                    try:
+                        storage(domain_uuid=vmuuid).add_xml(
+                            disktype="block",
+                            targetbus=diskBus,
+                            devicetype="disk",
+                            drivertype="raw",
+                            sourcedev=blockdev
+                        )
+                        return
+                    except libvirt.libvirtError as e:
+                        raise HTTPException(status_code=500, detail=str(e))
+                
+                else:
+                    raise HTTPException(status_code=400, detail="Invalid device type")
 
             elif action == "type":
                 value = data['value']

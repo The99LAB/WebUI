@@ -218,126 +218,88 @@
                   spaced="lg"
                   v-if="disk.number != 0"
                 />
-                <div class="row">
-                  <div class="col">
-                    <q-input
-                      label="Disk Number"
-                      v-model="disk.number"
-                      type="number"
-                      min="1"
-                      readonly
-                    />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <q-select
-                      label="Device Type"
-                      v-model="disk.devicetype"
-                      :options="diskTypeOptions"
-                      @update:model-value="
-                        (val) => diskChangeType(disk.number, val)
+                <q-select
+                  label="Device Type"
+                  v-model="disk.devicetype"
+                  :options="diskTypeOptions"
+                  @update:model-value="
+                    (val) => diskChangeType(disk.number, val)
+                  "
+                />
+                <q-select
+                  label="Driver Type"
+                  v-model="disk.drivertype"
+                  :options="diskDriverTypeOptions"
+                  @update:model-value="
+                    (val) => diskChangeDriverType(disk.number, val)
+                  "
+                />
+                <q-select
+                  label="Bus Format"
+                  v-model="disk.busformat"
+                  :options="diskBusOptions"
+                  @update:model-value="
+                    (val) => diskChangeBus(disk.number, val)
+                  "
+                />
+                <DirectoryList
+                  label="Source File"
+                  v-model="disk.sourcefile"
+                >
+                  <template v-slot:append>
+                    <q-btn
+                      round
+                      dense
+                      flat
+                      icon="mdi-check"
+                      @click="
+                        diskChangeSourceFile(disk.number, disk.sourcefile)
                       "
-                    />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <q-select
-                      label="Driver Type"
-                      v-model="disk.drivertype"
-                      :options="diskDriverTypeOptions"
-                      @update:model-value="
-                        (val) => diskChangeDriverType(disk.number, val)
-                      "
-                    />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <q-select
-                      label="Bus Format"
-                      v-model="disk.busformat"
-                      :options="diskBusOptions"
-                      @update:model-value="
-                        (val) => diskChangeBus(disk.number, val)
-                      "
-                    />
-                  </div>
-                </div>
-                <div class="row" v-if="disk.sourcefile != null">
-                  <div class="col">
-                    <DirectoryList
-                      label="Source File"
-                      v-model="disk.sourcefile"
                     >
-                      <template v-slot:append>
-                        <q-btn
-                          round
-                          dense
-                          flat
-                          icon="mdi-check"
-                          @click="
-                            diskChangeSourceFile(disk.number, disk.sourcefile)
-                          "
-                        >
-                          <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
-                        </q-btn>
-                      </template>
-                    </DirectoryList>
-                  </div>
-                </div>
-                <div class="row" v-if="disk.sourcedev != null">
-                  <div class="col">
-                    <q-input label="Source Device" v-model="disk.sourcedev">
-                      <template v-slot:append>
-                        <q-btn
-                          round
-                          dense
-                          flat
-                          icon="mdi-check"
-                          @click="
-                            diskChangeSourceDev(disk.number, disk.sourcedev)
-                          "
-                        />
-                      </template>
-                    </q-input>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <q-input
-                      label="Boot order"
-                      v-model="disk.bootorder"
-                      type="number"
-                      min="1"
+                      <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
+                    </q-btn>
+                  </template>
+                </DirectoryList>
+                <q-input label="Source Device" v-model="disk.sourcedev" v-if="disk.sourcedev != null">
+                  <template v-slot:append>
+                    <q-btn
+                      round
+                      dense
+                      flat
+                      icon="mdi-check"
+                      @click="
+                        diskChangeSourceDev(disk.number, disk.sourcedev)
+                      "
+                    />
+                  </template>
+                </q-input>
+                <q-input
+                  label="Boot order"
+                  v-model="disk.bootorder"
+                  type="number"
+                  min="1"
+                >
+                  <template v-slot:append>
+                    <q-btn
+                      round
+                      dense
+                      flat
+                      icon="mdi-check"
+                      @click="
+                        diskChangeBootorder(disk.number, disk.bootorder)
+                      "
                     >
-                      <template v-slot:append>
-                        <q-btn
-                          round
-                          dense
-                          flat
-                          icon="mdi-check"
-                          @click="
-                            diskChangeBootorder(disk.number, disk.bootorder)
-                          "
-                        >
-                          <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
-                        </q-btn>
-                      </template>
-                    </q-input>
-                  </div>
-                </div>
-                <q-separator color="transparent" inset vertical />
-                <div class="row">
-                  <div class="col">
+                      <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
+                    </q-btn>
+                  </template>
+                </q-input>
+                <div class="row q-mt-xs">
                     <q-toggle
                       label="Read Only"
                       v-model="disk.readonly"
                       disable
                     />
-                  </div>
-                  <div class="col-md-auto">
+                    <q-space />
                     <q-btn
                       color="primary"
                       icon="delete"
@@ -347,7 +309,6 @@
                     >
                       <q-tooltip :offset="[5, 5]">Delete Disk</q-tooltip>
                     </q-btn>
-                  </div>
                 </div>
               </div>
             </q-tab-panel>

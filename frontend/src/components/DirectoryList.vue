@@ -26,6 +26,9 @@
       />
       <slot name="append"></slot>
     </template>
+    <template v-slot:after>
+        <slot name="after"></slot>
+    </template>
     <template v-slot:hint>
       <q-menu
         v-model="focused"
@@ -85,7 +88,7 @@ export default {
     },
     selectiontype: {
       type: String,
-      default: "file",
+      default: "file", // file, dir
     },
     startpath: {
       type: String,
