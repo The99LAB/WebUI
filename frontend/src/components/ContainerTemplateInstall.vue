@@ -219,15 +219,17 @@
               v-for="(item, index) in dialogData.config.volumes"
               :key="item.name"
             >
-              <q-input
+              <DirectoryList
+                class="q-mb-md"
                 v-model="item.value"
-                type="text"
                 :label="item.bind"
-                :hint="item.description"
                 v-if="item.editable"
               >
                 <template v-slot:counter>
                   <p>mode: {{ item.mode }}</p>
+                </template>
+                <template v-slot:hint>
+                  {{ item.description }}
                 </template>
                 <template
                   v-slot:append
@@ -242,7 +244,7 @@
                   />
                   <q-tooltip :offset="[0, 0]">Remove field</q-tooltip>
                 </template>
-              </q-input>
+              </DirectoryList>
             </div>
             <q-separator
               spaced="xl"
@@ -410,6 +412,7 @@
 
 <script>
 import ErrorDialog from "/src/components/ErrorDialog.vue";
+import DirectoryList from "/src/components/DirectoryList.vue";
 export default {
   data() {
     return {
@@ -446,6 +449,7 @@ export default {
   emits: ["finished"],
   components: {
     ErrorDialog,
+    DirectoryList,
   },
   methods: {
     showDialog(id = null, mode) {
