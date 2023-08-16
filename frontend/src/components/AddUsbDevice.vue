@@ -6,8 +6,7 @@
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
-      <q-separator color="transparent" spaced="lg" inset />
-      <q-card-section class="q-pt-none q-px-xl">
+      <q-card-section style="width: 30em">
         <HostUsbDevicesList ref="hostUsbDevicesList" />
       </q-card-section>
       <q-card-actions align="right">
