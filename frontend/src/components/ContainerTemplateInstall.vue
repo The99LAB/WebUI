@@ -468,6 +468,7 @@ export default {
           },
         };
         this.dialogShown = true;
+        this.fetchNetworks();
       } else {
         this.fetchTemplate();
       }
