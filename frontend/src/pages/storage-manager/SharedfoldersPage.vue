@@ -180,7 +180,14 @@
                 (val) => !val.includes(' ') || 'Name cannot contain spaces',
               ]"
             />
+            <q-toggle v-model="sharedFolderCreateCustom" label="Custom Path" class="q-mt-none" />
+            <DirectoryList
+              v-if="sharedFolderCreateCustom"
+              v-model="sharedFolderCreateCustomPath"
+              selectiontype="dir"
+            />
             <q-select
+              v-else
               filled
               v-model="sharedFolderCreateTarget"
               :options="sharedFolderCreateTargetOptions"
@@ -358,6 +365,7 @@
 <script>
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import DirectoryList from "src/components/DirectoryList.vue";
 
 export default {
   data() {
@@ -414,6 +422,8 @@ export default {
       sharedFolderCreateTarget: "",
       sharedFolderCreateTargetOptions: [],
       sharedFolderCreateLoading: false,
+      sharedFolderCreateCustom: false,
+      sharedFolderCreateCustomPath: null,
       sharedFolderEditDialog: false,
       sharedFolderEditDialogData: {},
       sharedFolderEditLoading: false,
@@ -462,6 +472,7 @@ export default {
   components: {
     ErrorDialog,
     ConfirmDialog,
+    DirectoryList,
   },
   methods: {
     fetchData() {
@@ -483,10 +494,24 @@ export default {
     },
     sharedFolderCreate() {
       this.sharedFolderCreateLoading = true;
+      let target;
+      if(this.sharedFolderCreateCustom){
+        target = this.sharedFolderCreateCustomPath;
+        if (target == null){
+          this.sharedFolderCreateLoading = false;
+          this.$refs.errorDialog.show("Error creating shared folder", [
+            "Path is required",
+          ]);
+          return;
+        }
+      } else {
+        target = this.sharedFolderCreateTarget.mountpoint;
+      }
+
       this.$api
         .post("storage/sharedfolders/create", {
           name: this.sharedFolderCreateName,
-          target: this.sharedFolderCreateTarget.mountpoint,
+          target: target,
         })
         .then((response) => {
           this.fetchData();
