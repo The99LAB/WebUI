@@ -180,7 +180,11 @@
                 (val) => !val.includes(' ') || 'Name cannot contain spaces',
               ]"
             />
-            <q-toggle v-model="sharedFolderCreateCustom" label="Custom Path" class="q-mt-none" />
+            <q-toggle
+              v-model="sharedFolderCreateCustom"
+              label="Custom Path"
+              class="q-mt-none"
+            />
             <DirectoryList
               v-if="sharedFolderCreateCustom"
               v-model="sharedFolderCreateCustomPath"
@@ -495,9 +499,9 @@ export default {
     sharedFolderCreate() {
       this.sharedFolderCreateLoading = true;
       let target;
-      if(this.sharedFolderCreateCustom){
+      if (this.sharedFolderCreateCustom) {
         target = this.sharedFolderCreateCustomPath;
-        if (target == null){
+        if (target == null) {
           this.sharedFolderCreateLoading = false;
           this.$refs.errorDialog.show("Error creating shared folder", [
             "Path is required",
