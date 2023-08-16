@@ -34,7 +34,16 @@
 
       <q-page-container>
         <q-page padding>
-          <q-tab-panels v-model="tab">
+          <q-tab-panels
+            v-model="tab"
+            @before-transition="
+              (newval, oldval) => {
+                if (newval == 'xml') {
+                  getXml();
+                }
+              }
+            "
+          >
             <q-tab-panel name="general">
               <q-input label="Name" v-model="general_name">
                 <template v-slot:append>
@@ -44,7 +53,9 @@
                     flat
                     icon="mdi-check"
                     @click="generalChangeName(general_name)"
-                  />
+                  >
+                    <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
+                  </q-btn>
                 </template>
               </q-input>
               <q-select label="Machine" v-model="general_machine" disable />
@@ -176,41 +187,33 @@
               </div>
             </q-tab-panel>
             <q-tab-panel name="memory">
-              <div class="row">
-                <div class="col">
-                  <q-input
-                    label="Memory minimum"
-                    v-model="memory_minMemory"
-                    type="number"
-                    min="1"
-                  />
-                </div>
-                <div class="col-md-auto">
+              <q-input
+                label="Memory minimum"
+                v-model="memory_minMemory"
+                type="number"
+                min="1"
+              >
+                <template v-slot:append>
                   <q-select
                     v-model="memory_minMemoryUnit"
                     :options="memoryUnitOptions"
                   />
-                </div>
-              </div>
-              <div class="row">
-                <div class="col">
-                  <q-input
-                    label="Memory maximum"
-                    v-model="memory_maxMemory"
-                    type="number"
-                    min="1"
-                  />
-                </div>
-                <div class="col-md-auto">
+                </template>
+              </q-input>
+              <q-input
+                label="Memory maximum"
+                v-model="memory_maxMemory"
+                type="number"
+                min="1"
+              >
+                <template v-slot:append>
                   <q-select
                     v-model="memory_maxMemoryUnit"
                     :options="memoryUnitOptions"
                   />
-                </div>
-                <q-space />
-              </div>
+                </template>
+              </q-input>
             </q-tab-panel>
-
             <q-tab-panel name="disk">
               <div v-for="disk in diskList" :key="disk">
                 <q-separator
@@ -238,14 +241,9 @@
                   label="Bus Format"
                   v-model="disk.busformat"
                   :options="diskBusOptions"
-                  @update:model-value="
-                    (val) => diskChangeBus(disk.number, val)
-                  "
+                  @update:model-value="(val) => diskChangeBus(disk.number, val)"
                 />
-                <DirectoryList
-                  label="Source File"
-                  v-model="disk.sourcefile"
-                >
+                <DirectoryList label="Source File" v-model="disk.sourcefile">
                   <template v-slot:append>
                     <q-btn
                       round
@@ -260,16 +258,18 @@
                     </q-btn>
                   </template>
                 </DirectoryList>
-                <q-input label="Source Device" v-model="disk.sourcedev" v-if="disk.sourcedev != null">
+                <q-input
+                  label="Source Device"
+                  v-model="disk.sourcedev"
+                  v-if="disk.sourcedev != null"
+                >
                   <template v-slot:append>
                     <q-btn
                       round
                       dense
                       flat
                       icon="mdi-check"
-                      @click="
-                        diskChangeSourceDev(disk.number, disk.sourcedev)
-                      "
+                      @click="diskChangeSourceDev(disk.number, disk.sourcedev)"
                     />
                   </template>
                 </q-input>
@@ -285,88 +285,67 @@
                       dense
                       flat
                       icon="mdi-check"
-                      @click="
-                        diskChangeBootorder(disk.number, disk.bootorder)
-                      "
+                      @click="diskChangeBootorder(disk.number, disk.bootorder)"
                     >
                       <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>
                 <div class="row q-mt-xs">
-                    <q-toggle
-                      label="Read Only"
-                      v-model="disk.readonly"
-                      disable
-                    />
-                    <q-space />
-                    <q-btn
-                      color="primary"
-                      icon="delete"
-                      flat
-                      round
-                      @click="diskDelete(disk.number)"
-                    >
-                      <q-tooltip :offset="[5, 5]">Delete Disk</q-tooltip>
-                    </q-btn>
+                  <q-toggle label="Read Only" v-model="disk.readonly" disable />
+                  <q-space />
+                  <q-btn
+                    color="primary"
+                    icon="delete"
+                    flat
+                    round
+                    @click="diskDelete(disk.number)"
+                  >
+                    <q-tooltip :offset="[5, 5]">Delete Disk</q-tooltip>
+                  </q-btn>
                 </div>
               </div>
             </q-tab-panel>
             <q-tab-panel name="network">
               <div v-for="network in networkList" :key="network">
                 <q-separator
-                  color="transparent"
+                  color="primary"
                   spaced="lg"
-                  inset
                   v-if="network.number != 0"
                 />
-                <div class="row">
-                  <div class="col">
-                    <q-input
-                      label="Interface Number"
-                      v-model="network.number"
-                      type="number"
-                      min="1"
-                      readonly
+                <q-input
+                  label="Interface Number"
+                  v-model="network.number"
+                  type="number"
+                  min="1"
+                  readonly
+                >
+                  <template v-slot:append>
+                    <q-btn
+                      flat
+                      round
+                      color="primary"
+                      icon="mdi-delete"
+                      @click="networkDelete(network.number)"
                     >
-                      <template v-slot:after>
-                        <q-btn
-                          color="primary"
-                          icon="delete"
-                          @click="networkDelete(network.number)"
-                        />
-                      </template>
-                    </q-input>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <q-input
-                      label="MAC Address"
-                      v-model="network.mac_addr"
-                      readonly
-                    />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <q-input label="Source" v-model="network.source" readonly />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <q-input label="Model" v-model="network.model" readonly />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <q-input
-                      label="Boot order"
-                      v-model="network.bootorder"
-                      readonly
-                    />
-                  </div>
-                </div>
+                      <q-tooltip :offset="[5, 5]"
+                        >Delete Network Interface</q-tooltip
+                      >
+                    </q-btn>
+                  </template>
+                </q-input>
+                <q-input
+                  label="MAC Address"
+                  v-model="network.mac_addr"
+                  readonly
+                />
+                <q-input label="Source" v-model="network.source" readonly />
+                <q-input label="Model" v-model="network.model" readonly />
+                <q-input
+                  label="Boot order"
+                  v-model="network.bootorder"
+                  readonly
+                />
               </div>
             </q-tab-panel>
             <q-tab-panel name="graphics">
@@ -381,14 +360,18 @@
                   v-if="graphicsdevice.index != 0"
                 />
                 <q-input label="Device Type" model-value="Graphics" readonly>
-                  <template v-slot:after>
+                  <template v-slot:append>
                     <q-btn
-                      icon="delete"
+                      icon="mdi-delete"
+                      color="primary"
                       round
-                      dense
                       flat
                       @click="graphicsDelete(graphicsdevice.index)"
-                    />
+                    >
+                      <q-tooltip :offset="[5, 5]"
+                        >Delete Graphics Device</q-tooltip
+                      >
+                    </q-btn>
                   </template>
                 </q-input>
                 <q-input
@@ -416,11 +399,16 @@
                   >
                     <q-btn
                       icon="mdi-delete"
+                      color="primary"
                       round
                       dense
                       flat
                       @click="videoDelete(videodevice.index)"
-                    />
+                    >
+                      <q-tooltip :offset="[5, 5]"
+                        >Delete Video Device</q-tooltip
+                      >
+                    </q-btn>
                   </template>
                 </q-input>
                 <q-input
@@ -546,7 +534,7 @@
             </q-tab-panel>
           </q-tab-panels>
         </q-page>
-        <q-footer reveal bordered>
+        <q-footer bordered>
           <q-toolbar>
             <q-space />
             <q-btn flat label="Add" @click="diskAdd()" v-if="tab == 'disk'" />
@@ -596,6 +584,7 @@
         </q-footer>
       </q-page-container>
     </q-layout>
+    <q-inner-loading :showing="loading" />
   </q-dialog>
   <ErrorDialog ref="errorDialog" />
   <ConfirmDialog ref="confirmDialog" />
@@ -628,6 +617,7 @@ export default {
   data() {
     return {
       layout: ref(false),
+      loading: false,
       tab: ref("general"),
       general_name: null,
       general_machine: null,
@@ -690,6 +680,8 @@ export default {
       this.refreshData();
     },
     refreshData() {
+      this.loading = true;
+      this.layout = true;
       this.$api
         .get("/vm-manager/" + this.uuid + "/data")
         .then((response) => {
@@ -716,18 +708,22 @@ export default {
           this.graphicsdevicesList = response.data.graphicsdevices;
           this.videodevicesList = response.data.videodevices;
           this.sounddevicesList = response.data.sounddevices;
-          this.layout = true;
+          this.loading = false;
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error loading VM data.", [
             error.response.data.detail,
           ]);
+          this.loading = false;
         });
-
+    },
+    getXml() {
+      this.loading = true;
       this.$api
         .get("/vm-manager/" + this.uuid + "/xml")
         .then((response) => {
           this.xml = response.data.xml;
+          this.loading = false;
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error loading VM XML.", [
@@ -736,6 +732,7 @@ export default {
         });
     },
     applyEdits() {
+      this.loading = true;
       if (this.tab == "memory") {
         this.$api
           .post("/vm-manager/" + this.uuid + "/edit-memory", {
@@ -784,6 +781,7 @@ export default {
             xml: this.xml,
           })
           .then((response) => {
+            this.getXml();
             this.refreshData();
           })
           .catch((error) => {
@@ -794,6 +792,7 @@ export default {
       }
     },
     generalChangeName(value) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-general-name", {
           value: value,
@@ -808,6 +807,7 @@ export default {
         });
     },
     diskChangeType(disknumber, value) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-type", {
           number: disknumber,
@@ -823,6 +823,7 @@ export default {
         });
     },
     diskChangeDriverType(disknumber, value) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-driver-type", {
           number: disknumber,
@@ -838,6 +839,7 @@ export default {
         });
     },
     diskChangeBus(disknumber, value) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-bus", {
           number: disknumber,
@@ -853,6 +855,7 @@ export default {
         });
     },
     diskChangeSourceFile(disknumber, value) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-source-file", {
           number: disknumber,
@@ -868,6 +871,7 @@ export default {
         });
     },
     diskChangeSourceDev(disknumber, value) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-source-dev", {
           number: disknumber,
@@ -883,6 +887,7 @@ export default {
         });
     },
     diskChangeBootorder(disknumber, value) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-bootorder", {
           number: disknumber,
@@ -909,6 +914,7 @@ export default {
       this.diskDeleteNumber = disknumber;
     },
     diskDeleteConfirm() {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
           number: this.diskDeleteNumber,
@@ -931,15 +937,13 @@ export default {
     networkDelete(networknumber) {
       this.$refs.confirmDialog.show(
         "Delete network",
-        [
-          "Are you sure you want to delete this network?",
-          "This only removes the network from the vm, not from the network pool.",
-        ],
+        ["Are you sure you want to delete this network?"],
         this.networkDeleteConfirm,
       );
       this.networkDeleteNumber = networknumber;
     },
     networkDeleteConfirm() {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-network-delete", {
           number: this.networkDeleteNumber,
@@ -962,6 +966,7 @@ export default {
       this.currentVcpu = this.vcpu;
     },
     toggleAutostart() {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-general-autostart", {
           value: this.general_autostart,
@@ -979,6 +984,7 @@ export default {
       this.$refs.addUsbDevice.show(this.uuid);
     },
     usbdeviceDelete(productid, vendorid) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-usb-delete", {
           productid: productid,
@@ -997,6 +1003,7 @@ export default {
       this.$refs.addPcieDevice.show(this.uuid);
     },
     pciedeviceDelete(device_domain, device_bus, device_slot, device_function) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-pcie-delete", {
           domain: device_domain,
@@ -1014,6 +1021,7 @@ export default {
         });
     },
     pcieChangeRomFile(xml, romfile) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-pcie-romfile", {
           xml: xml,
@@ -1037,6 +1045,7 @@ export default {
       this.$refs.addGraphics.show(this.uuid);
     },
     graphicsDelete(index) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
           index: index,
@@ -1054,6 +1063,7 @@ export default {
       this.$refs.addVideo.show(this.uuid);
     },
     videoDelete(index) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
           index: index,
@@ -1068,6 +1078,7 @@ export default {
         });
     },
     soundDelete(index) {
+      this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
           index: index,
