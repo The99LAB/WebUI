@@ -115,14 +115,6 @@
             <q-item-label>Hotplug USB</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/vm-manager/storage-pools">
-          <q-item-section avatar>
-            <q-icon name="mdi-server" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Storage Pools</q-item-label>
-          </q-item-section>
-        </q-item>
         <q-item clickable tag="a" to="/vm-manager/backups">
           <q-item-section avatar>
             <q-icon name="mdi-backup-restore" />

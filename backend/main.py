@@ -256,19 +256,6 @@ class storage():
     def getxml(self, disknumber):
         return self.get()[int(disknumber)]["xml"]
 
-    # def remove(self, disknumber):
-    #     # tree = ET.fromstring(self.vmXml)
-    #     for idx, disk in enumerate(self.get()):
-    #         if idx == int(disknumber):
-    #             try:
-    #                 self.domain.detachDeviceFlags(
-    #                     disk[6]["xml"], libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-    #                 return 'Succeed'
-    #             except libvirt.libvirtError as e:
-    #                 return f'Error: {e}'
-    #             break
-
-    
     def add_xml(self, disktype, targetbus, devicetype, drivertype, sourcefile=None, sourcedev=None, bootorder=None):
         tree = ET.fromstring(self.vmXml)
         disks = tree.findall('./devices/disk')
@@ -338,69 +325,6 @@ class storage():
             drivertype=disktype,
             sourcefile=disk_path,
         )
-
-
-class poolStorage():
-    def __init__(self, pooluuid):
-        self.pooluuid = pooluuid
-
-    def getUnusedVolumeName(self, vmuuid, vdisktype):
-        domainName = conn.lookupByUUIDString(vmuuid).name()
-        volname = f"{domainName}.{vdisktype}"
-        sp = conn.storagePoolLookupByUUIDString(self.pooluuid)
-        stgvols = sp.listVolumes()
-
-        count = 0
-        while True:
-            if volname in stgvols:
-                count += 1
-                volname = f"{domainName}-{count}.{vdisktype}"
-            else:
-                break
-        return volname
-
-    @classmethod
-    @property
-    def list(self):
-        pools = conn.listAllStoragePools()
-        poollist = []
-        for pool in pools:
-            info = pool.info()
-            name = pool.name()
-            uuid = pool.UUIDString()
-            if pool.autostart() == 1:
-                autostart = "Yes"
-            else:
-                autostart = "No"
-
-            if pool.isActive() == 1:
-                active = "Yes"
-            else:
-                active = "No"
-
-            capacity = storage_manager.convertSizeUnit(size=info[1], from_unit="B", mode="str", round_state=True, round_to=None)
-            allocation = storage_manager.convertSizeUnit(size=info[2], from_unit="B", mode="str", round_state=True, round_to=None)
-            available = storage_manager.convertSizeUnit(size=info[3], from_unit="B", mode="str", round_state=True, round_to=None)
-
-            poolinfo = [name, uuid, autostart, active,
-                        capacity, allocation, available]
-            poollist.append(poolinfo)
-        return poollist
-
-    def getVolumePath(self, poolvolume):
-        pool = conn.storagePoolLookupByUUIDString(self.pooluuid)
-        definedxml = pool.storageVolLookupByName(poolvolume).XMLDesc()
-        root = ET.fromstring(definedxml)
-        key = root.find('key')
-        voluempath = key.text
-        return voluempath
-
-    def getVolumeFormat(self, poolvolume):
-        pool = conn.storagePoolLookupByUUIDString(self.pooluuid)
-        definedxml = pool.storageVolLookupByName(poolvolume).XMLDesc()
-        root = ET.fromstring(definedxml)
-        format = root.find('target').find('format').get('type')
-        return format
 
 
 def SystemUsbDevicesList():
@@ -1950,7 +1874,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         # edit-disk-action
         elif action.startswith("disk"):
             action = action.replace("disk-", "")
-            if action != "add" and action != "create":
+            if action != "add":
                 disknumber = data['number']
                 xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
                 xml = ET.fromstring(xml_orig)
@@ -2239,183 +2163,6 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
     else:
         raise HTTPException(status_code=404, detail="Action not found")
 
-### API-STORAGE-POOL ###
-@app.get("/api/storage-pools")
-async def api_storage_pools(username: str = Depends(check_auth)):
-    storage_pools = []
-    for pool in conn.listAllStoragePools():
-        pool_name = pool.name()
-        pool_uuid = pool.UUIDString()
-        _pool = conn.storagePoolLookupByUUIDString(pool_uuid)
-        pool_info = pool.info()
-        pool_volumes = []
-        if pool.isActive():
-            pool_state = "active"
-            pool_volumes_list = _pool.listVolumes()
-            for volume in pool_volumes_list:
-                volume_info = _pool.storageVolLookupByName(volume).info()
-                volume_capacity = storage_manager.convertSizeUnit(size=volume_info[1], from_unit="B", mode="str", round_to=1)
-                volume_allocation = storage_manager.convertSizeUnit(size=volume_info[2], from_unit="B", mode="str", round_to=1)
-                _volume = {
-                    "name": volume,
-                    "size": f"{volume_allocation}/{volume_capacity}",
-                }
-                pool_volumes.append(_volume)
-        else:
-            pool_state = "inactive"
-
-        pool_capacity = storage_manager.convertSizeUnit(size=pool_info[1], from_unit="B", mode="str", round_to=1)
-        pool_allocation = storage_manager.convertSizeUnit(size=pool_info[2], from_unit="B", mode="str", round_to=1)
-        pool_available = storage_manager.convertSizeUnit(size=pool_info[3], from_unit="B", mode="str", round_to=1)
-        pool_autostart_int = pool.autostart()
-        pool_type_int = pool_info[0]
-        if pool_type_int == libvirt.VIR_STORAGE_VOL_FILE:
-            pool_type = "file"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_BLOCK:
-            pool_type = "block"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_DIR:
-            pool_type = "dir"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETWORK:
-            pool_type = "network"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETDIR:
-            pool_type = "netdir"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_PLOOP:
-            pool_type = "ploop"
-        else:
-            pool_type = "unknown"
-
-        pool_path = ET.fromstring(
-            _pool.XMLDesc(0)).find('target/path').text
-
-        if pool_autostart_int == 1:
-            pool_autostart = True
-        else:
-            pool_autostart = False
-
-        pool_result = {
-            "name": pool_name,
-            "uuid": pool_uuid,
-            "state": pool_state,
-            "type": pool_type,
-            "path": pool_path,
-            "capacity": pool_capacity,
-            "allocation": pool_allocation,
-            "available": pool_available,
-            "autostart": pool_autostart,
-            "volumes": pool_volumes
-        }
-        storage_pools.append(pool_result)
-    return storage_pools
-
-@app.post("/api/storage-pools")
-async def api_storage_pools_create(request: Request, username: str = Depends(check_auth)):
-    data = await request.json()
-    pool_name = data['name']
-    pool_type = data['type']
-    pool_path = data['path']
-
-    if not os.path.exists(pool_path):
-        os.makedirs(pool_path)
-
-    if pool_type == "dir":
-        pool_xml = f"""<pool type='dir'>
-            <name>{pool_name}</name>
-            <target>
-            <path>{pool_path}</path>
-            </target>
-        </pool>"""
-        try:
-            conn.storagePoolDefineXML(pool_xml, 0)
-            pool = conn.storagePoolLookupByName(pool_name)
-            pool.create()
-            pool.setAutostart(1)
-
-            return
-        except libvirt.libvirtError as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    else:
-        raise HTTPException(status_code=400, detail="Pool type not allowed")
-
-### API-STORAGE-POOL-ACTIONS ###
-@app.get("/api/storage-pools/{pooluuid}/{action}")
-async def api_storage_pools_actions_get(pooluuid: str, action: str, username: str = Depends(check_auth)):
-    if action == "volumes":
-        pool = conn.storagePoolLookupByUUIDString(pooluuid)
-        pool_volumes = []
-        if pool.isActive():
-            pool_volumes_list = pool.listVolumes()
-            for volume in pool_volumes_list:
-                volume_info = pool.storageVolLookupByName(volume).info()
-                volume_capacity = round(
-                    volume_info[1] / 1024 / 1024 / 1024)
-                volume_allocation = round(
-                    volume_info[2] / 1024 / 1024 / 1024)
-                volume_xml = ET.fromstring(pool.storageVolLookupByName(volume).XMLDesc(0))
-                volume_format = volume_xml.find('target/format').get('type')
-                volume_path = volume_xml.find('target/path').text
-                _volume = {
-                    "name": volume,
-                    "format": volume_format,
-                    "capacity": volume_capacity,
-                    "allocation": volume_allocation,
-                    "path": volume_path,
-                }
-                pool_volumes.append(_volume)
-        return pool_volumes
-
-@app.post("/api/storage-pools/{pooluuid}/{action}")
-async def api_storage_pools_actions_post(pooluuid: str, action: str, request: Request, username: str = Depends(check_auth)):
-    try:
-        pool = conn.storagePoolLookupByUUIDString(pooluuid)
-        if action == "start":
-            pool.create()
-        elif action == "stop":
-            print("stopping pool with uuid" +
-                    pooluuid + "..." + pool.name())
-            pool.destroy()
-        elif action == "toggle-autostart":
-            if pool.autostart() == 1:
-                pool.setAutostart(0)
-            else:
-                pool.setAutostart(1)
-        elif action == "delete":
-            print("deleting pool with uuid" +
-                    pooluuid + "..." + pool.name())
-            pool.destroy()
-            pool.delete()
-            pool.undefine()
-        elif action == "delete-volumes":
-            data = await request.json()
-            print("deleting volumes: " + str(data))
-            for volume in data:
-                volume = pool.storageVolLookupByName(volume)
-                volume.delete()
-        elif action == "create-volume":
-            data = await request.json()
-            volume_name = data['name']
-            volume_format = data['format']
-            volume_size = data['size']
-            volume_size_unit = data['size_unit']
-            if volume_size_unit == "TB" or volume_size_unit == "GB" or volume_size_unit == "MB":
-                volume_size = storage_manager.convertsize.convertSizeUnit(volume_size, volume_size_unit, "KB")
-            else:
-                raise HTTPException(status_code=400, detail="Unknown disk size unit")
-
-            volume_xml = f"""<volume>
-            <name>{volume_name}.{volume_format}</name>
-            <capacity>{volume_size}</capacity>
-            <allocation>0</allocation>
-            <target>
-                <format type="{volume_format}"/>
-            </target>
-            </volume>"""
-
-            pool.createXML(volume_xml)
-        else:
-            raise HTTPException(status_code=404, detail="Action not found")
-        return
-    except libvirt.libvirtError as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 #TODO: API-BACKUP-MANAGER
 @app.get("/api/backup-manager/configs")

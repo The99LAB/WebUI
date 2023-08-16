@@ -46,12 +46,6 @@ const routes = [
         meta: { title: "Hotplug USB" },
       },
       {
-        name: "vm-manager/storage-pools",
-        path: "vm-manager/storage-pools",
-        component: () => import("pages/vm-manager/StoragePoolPage.vue"),
-        meta: { title: "Storage Pools" },
-      },
-      {
         path: "vm-manager/backups",
         name: "vm-manager/backups",
         component: () => import("pages/vm-manager/BackupManagerPage.vue"),
