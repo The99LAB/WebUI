@@ -40,7 +40,9 @@
 
         <DirectoryList
           v-model="volumePath"
-          v-if="deviceType.value == 'existingvdisk' || deviceType.value == 'cdrom'"
+          v-if="
+            deviceType.value == 'existingvdisk' || deviceType.value == 'cdrom'
+          "
           selectiontype="file"
           label="vDisk Path"
         >
@@ -48,8 +50,8 @@
             <q-icon name="mdi-help-circle-outline">
               <q-tooltip :offset="[5, 5]">
                 <div v-if="deviceType.value == 'existingvdisk'">
-                  Select the vdisk file to add to the VM.
-                  Usual file extensions are qcow2 and raw.
+                  Select the vdisk file to add to the VM. Usual file extensions
+                  are qcow2 and raw.
                 </div>
                 <div v-else-if="deviceType.value == 'cdrom'">
                   Select the iso file to add to the VM.
@@ -82,9 +84,9 @@
             <q-icon name="mdi-help-circle-outline">
               <q-tooltip :offset="[5, 5]">
                 Select the driver type for the disk.
-                <br>
+                <br />
                 RAW is the fastest, but does not support snapshots.
-                <br>
+                <br />
                 QCOW2 is slower, but supports snapshots.
               </q-tooltip>
             </q-icon>
@@ -99,25 +101,23 @@
             <q-icon name="mdi-help-circle-outline">
               <q-tooltip :offset="[5, 5]">
                 Select the block device to add to the VM.
-                <br>
-                This can be a physical device like a HDD or SSD. It can also be a partition of a physical device.
-                <br>
+                <br />
+                This can be a physical device like a HDD or SSD. It can also be
+                a partition of a physical device.
+                <br />
                 For example: /dev/sda or /dev/sda1
               </q-tooltip>
             </q-icon>
           </template>
         </q-input>
-        <q-select
-          v-model="diskBus"
-          :options="diskBusOptions"
-          label="Bus"
-        > 
+        <q-select v-model="diskBus" :options="diskBusOptions" label="Bus">
           <template v-slot:after>
             <q-icon name="mdi-help-circle-outline">
               <q-tooltip :offset="[5, 5]">
                 Select the bus type for the disk.
-                <br>
-                This is how the disk will be seen in the vm, for example as a SATA or USB disk.
+                <br />
+                This is how the disk will be seen in the vm, for example as a
+                SATA or USB disk.
               </q-tooltip>
             </q-icon>
           </template>
@@ -127,7 +127,7 @@
         <q-btn flat label="Finish" @click="addDisk()" />
       </q-card-actions>
     </q-card>
-    <q-inner-loading :showing="dialogLoading"/>
+    <q-inner-loading :showing="dialogLoading" />
   </q-dialog>
   <ErrorDialog ref="errorDialog" />
 </template>
@@ -145,28 +145,29 @@ export default {
         {
           label: "New vdisk",
           value: "createvdisk",
-          comment: "Create a new vdisk file. (qcow2, raw)"
+          comment: "Create a new vdisk file. (qcow2, raw)",
         },
         {
           label: "Existing vdisk",
           value: "existingvdisk",
-          comment: "Add an existing vdisk file. (qcow2, raw)"
+          comment: "Add an existing vdisk file. (qcow2, raw)",
         },
         {
           label: "CD-ROM",
           value: "cdrom",
-          comment: "Add a CD-ROM device. (iso, raw)"
+          comment: "Add a CD-ROM device. (iso, raw)",
         },
         {
           label: "Block device",
           value: "block",
-          comment: "A block device is a physical device like a HDD or SSD. It can also be a partition of a physical device."
-        }
+          comment:
+            "A block device is a physical device like a HDD or SSD. It can also be a partition of a physical device.",
+        },
       ],
       deviceType: {
-          label: "New vdisk",
-          value: "createvdisk",
-          comment: "Create a new vdisk. (qcow2, raw)"
+        label: "New vdisk",
+        value: "createvdisk",
+        comment: "Create a new vdisk. (qcow2, raw)",
       },
       sourceDevice: "/dev/sda",
       volumePath: null,
@@ -189,10 +190,14 @@ export default {
   methods: {
     show(uuid) {
       this.dialogVisible = true;
-      this.uuid = uuid
+      this.uuid = uuid;
     },
     addDisk() {
-      if (this.deviceType == 'createvdisk' || this.deviceType == 'existingvdisk' || this.deviceType == 'cdrom'){
+      if (
+        this.deviceType == "createvdisk" ||
+        this.deviceType == "existingvdisk" ||
+        this.deviceType == "cdrom"
+      ) {
         if (this.volumePath == null) {
           this.$refs.errorDialog.show("Error adding disk", [
             "Please select a vdisk path of file",
@@ -203,26 +208,26 @@ export default {
 
       this.dialogLoading = true;
       this.$api
-      .post("/vm-manager/" + this.uuid + "/edit-disk-add", {
-        deviceType: this.deviceType.value,
-        sourceDevice: this.sourceDevice,
-        volumePath: this.volumePath,
-        vdiskDirectory: this.vdiskDirectory,
-        diskDriverType: this.diskDriverType,
-        diskBus: this.diskBus,
-        diskSize: this.diskSize,
-        diskSizeUnit: this.diskSizeUnit,
-      })
-      .then((response) => {
-        this.$emit("disk-add-finished");
-        this.dialogLoading = false;
-        this.dialogVisible = false;
-      })
-      .catch((error) => {
-        const errormsg = error.response ? error.response.data.detail : error;
-        this.$refs.errorDialog.show("Error creating disk", [errormsg]);
-        this.dialogLoading = false;
-      });
+        .post("/vm-manager/" + this.uuid + "/edit-disk-add", {
+          deviceType: this.deviceType.value,
+          sourceDevice: this.sourceDevice,
+          volumePath: this.volumePath,
+          vdiskDirectory: this.vdiskDirectory,
+          diskDriverType: this.diskDriverType,
+          diskBus: this.diskBus,
+          diskSize: this.diskSize,
+          diskSizeUnit: this.diskSizeUnit,
+        })
+        .then((response) => {
+          this.$emit("disk-add-finished");
+          this.dialogLoading = false;
+          this.dialogVisible = false;
+        })
+        .catch((error) => {
+          const errormsg = error.response ? error.response.data.detail : error;
+          this.$refs.errorDialog.show("Error creating disk", [errormsg]);
+          this.dialogLoading = false;
+        });
     },
   },
 };
