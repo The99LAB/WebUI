@@ -135,12 +135,16 @@
             </div>
             <div class="row">
               <div class="col">
-                <StoragePoolList ref="diskPool" />
+                <DirectoryList
+                  v-model="disk_location"
+                  label="Disk Location"
+                  selectiontype="dir"
+                />
               </div>
             </div>
           </q-tab-panel>
           <q-tab-panel name="cdrom" v-show="tab == 'cdrom'">
-            <StoragePoolAndVolumeList ref="cdromPoolVolume" />
+            <DirectoryList v-model="cdrom_location" label="CD-ROM Location" />
             <q-select
               label="Bus"
               v-model="cdrom_bus"
@@ -183,8 +187,7 @@
 <script>
 import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
-import StoragePoolList from "src/components/StoragePoolList.vue";
-import StoragePoolAndVolumeList from "src/components/StoragePoolAndVolumeList.vue";
+import DirectoryList from "src/components/DirectoryList.vue";
 import NetworkList from "src/components/NetworkList.vue";
 
 export default {
@@ -232,8 +235,10 @@ export default {
       diskTypeOptions: ["raw", "qcow2"],
       disk_type: ref("raw"),
       disk_bus: ref("sata"),
+      disk_location: "",
       diskBusOptions: ["sata", "scsi", "virtio", "usb"],
       cdrom_bus: ref("sata"),
+      cdrom_location: "",
       cdromBusOptions: ["sata", "scsi", "virtio", "usb"],
       network_model: ref("virtio"),
       networkModelOptions: ["virtio", "e1000", "rtl8139"],
@@ -241,8 +246,7 @@ export default {
   },
   components: {
     ErrorDialog,
-    StoragePoolList,
-    StoragePoolAndVolumeList,
+    DirectoryList,
     NetworkList,
   },
   methods: {
@@ -273,25 +277,16 @@ export default {
       });
     },
     createVm() {
-      if (this.$refs.diskPool.getSelectedPool() == null) {
-        this.$refs.errorDialog.show("No storage pool selected", [
-          "Please select a storage pool",
-          "Create a storage pool if you don't have one",
+      if (this.disk_location == null) {
+        this.$refs.errorDialog.show("Invalid disk location", [
+          "Please a valid directory where the vm disk can be stored",
         ]);
         return;
       }
 
-      if (this.$refs.cdromPoolVolume.getSelectedPool() == null) {
-        this.$refs.errorDialog.show("Please select a storage pool", [
-          "Please select a storage pool",
-          "Create a storage pool if you don't have one",
-        ]);
-        return;
-      }
-      if (this.$refs.cdromPoolVolume.getSelectedVolume() == null) {
-        this.$refs.errorDialog.show("Please select a storage volume", [
-          "Please select a storage volume",
-          "Create a storage volume if you don't have one",
+      if (this.cdrom_location == null) {
+        this.$refs.errorDialog.show("Invalid cdrom location", [
+          "Please a valid directory where the vm cdrom can be stored",
         ]);
         return;
       }
@@ -319,15 +314,8 @@ export default {
       formData.append("disk_size_unit", this.disk_size_unit);
       formData.append("disk_type", this.disk_type);
       formData.append("disk_bus", this.disk_bus);
-      formData.append("disk_pool", this.$refs.diskPool.getSelectedPool());
-      formData.append(
-        "cdrom_pool",
-        this.$refs.cdromPoolVolume.getSelectedPool(),
-      );
-      formData.append(
-        "cdrom_volume",
-        this.$refs.cdromPoolVolume.getSelectedVolume(),
-      );
+      formData.append("disk_location", this.disk_location);
+      formData.append("cdrom_location", this.cdrom_location);
       formData.append(
         "network_source",
         this.$refs.networkSource.getSelectedNetwork(),

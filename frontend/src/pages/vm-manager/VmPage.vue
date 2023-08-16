@@ -10,13 +10,13 @@
       no-data-label="Failed to get data from backend or no vm's defined"
       :pagination="vmTablePagination"
     >
+      <template v-slot:loading>
+        <q-inner-loading showing />
+      </template>
       <template v-slot:top-right>
-        <q-btn
-          color="primary"
-          icon="mdi-plus"
-          label="new VM"
-          @click="createVm()"
-        />
+        <q-btn color="primary" icon="mdi-plus" round flat @click="createVm()">
+          <q-tooltip :offset="[5, 5]">Create new VM</q-tooltip>
+        </q-btn>
       </template>
       <template #body="props">
         <q-tr :props="props">
@@ -52,14 +52,14 @@
             :props="props"
             class="text-weight-regular text-body2"
           >
-            {{ props.row.memory_min }} {{ props.row.memory_unit }}
+            {{ props.row.memory_min }} {{ props.row.memory_min_unit }}
           </q-td>
           <q-td
             key="memory_max"
             :props="props"
             class="text-weight-regular text-body2"
           >
-            {{ props.row.memory_max }} {{ props.row.memory_unit }}
+            {{ props.row.memory_max }} {{ props.row.memory_max_unit }}
           </q-td>
           <q-td
             key="autostart"
@@ -138,7 +138,7 @@
     <ErrorDialog ref="errorDialog" />
     <CreateVm ref="createVm" />
     <EditVm ref="editVm" />
-    <LogDialog ref="logDialog" />
+    <LogDialog ref="logVm" />
     <WsReconnectDialog
       ref="wsReconnectDialog"
       @ws-reconnect="connectWebSocket"
@@ -153,8 +153,6 @@ import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";
 import LogDialog from "src/components/LogDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
-import { useVncSettingsStore } from "stores/vncsettings";
-import { storeToRefs } from "pinia";
 
 export default {
   data() {
@@ -204,19 +202,14 @@ export default {
         },
       ],
       selected: [],
-      vmTableLoading: ref(true),
+      vmTableLoading: false,
       vmTablePagination: {
         rowsPerPage: 15,
         sortBy: "name",
         descending: false,
       },
-    };
-  },
-  setup() {
-    const store = useVncSettingsStore();
-    const { getVncSettings } = storeToRefs(store);
-    return {
-      vncSettings: getVncSettings,
+      logDialog: false,
+      logDialogContent: "",
     };
   },
   components: {
@@ -259,7 +252,7 @@ export default {
       this.$api
         .get("vm-manager/" + uuid + "/logs")
         .then((response) => {
-          this.$refs.logDialog.show("VM Logs", response.data.log);
+          this.$refs.logVm.show(response.data.log);
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error getting logs", [
@@ -279,40 +272,32 @@ export default {
     },
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid);
-      if (
-        this.vncSettings.protocool == null ||
-        this.vncSettings.ip == null ||
-        this.vncSettings.port == null ||
-        this.vncSettings.path == null
-      ) {
-        this.$refs.errorDialog.show("Error getting VNC settings", [
-          "Error: VNC settings not set",
-          "Please set VNC settings in the settings page.",
-        ]);
-        return;
-      } else {
-        const novnc_url =
-          this.vncSettings.protocool +
-          "://" +
-          this.vncSettings.ip +
-          ":" +
-          this.vncSettings.port +
-          "/" +
-          this.vncSettings.path +
-          "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
-          uuid;
-        window.open(novnc_url, "_blank");
-      }
+      const novnc_url =
+        this.vncSettings.protocool +
+        "://" +
+        this.vncSettings.ip +
+        ":" +
+        this.vncSettings.port +
+        "/" +
+        this.vncSettings.path +
+        "?autoconnect=true&?reconnect=true&?resize=scale&?path=?token=" +
+        uuid;
+      window.open(novnc_url, "_blank");
     },
     autostartVm(uuid) {
+      this.vmTableLoading = true;
       let autostart = this.rows.find((vm) => vm.uuid === uuid).autostart;
       this.$api
         .post("vm-manager/" + uuid + "/autostart", { autostart: autostart })
+        .then((response) => {
+          this.vmTableLoading = false;
+        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error setting autostart", [
             "vm uuid: " + uuid,
             "Error: " + error.response.data.detail,
           ]);
+          this.vmTableLoading = false;
         });
     },
     editVm(uuid) {
@@ -320,6 +305,19 @@ export default {
     },
     createVm() {
       this.$refs.createVm.show();
+    },
+    getVncSettings() {
+      this.vmTableLoading = true;
+      this.$api
+        .get("host/settings/vnc")
+        .then((response) => {
+          this.vncSettings = response.data;
+          this.vmTableLoading = false;
+        })
+        .catch((error) => {
+          const errormsg = error.response ? error.response.data.detail : error;
+          this.$refs.errorDialog.show("Error getting VNC settings", [errormsg]);
+        });
     },
     connectWebSocket() {
       const jwt_token = localStorage.getItem("jwt-token");
@@ -331,7 +329,6 @@ export default {
           if (data.data != null) {
             this.rows = data.data;
           }
-          this.vmTableLoading = false;
         } else if (data.type == "auth_error") {
           localStorage.setItem("jwt-token", "");
           this.$router.push({ path: "/login" });
@@ -346,7 +343,9 @@ export default {
   created() {
     this.connectWebSocket();
   },
-  mounted() {},
+  mounted() {
+    this.getVncSettings();
+  },
   unmounted() {
     this.vmTableLoading = false;
     this.ws.onclose = () => {};

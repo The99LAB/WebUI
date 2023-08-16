@@ -1,47 +1,30 @@
 <template>
-  <q-dialog v-model="alert">
-    <q-layout
-      view="hHh lpR fFf"
-      container
-      :class="{ 'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive }"
-    >
-      <q-header bordered>
-        <q-toolbar>
-          <q-toolbar-title>{{ title }}</q-toolbar-title>
-          <q-space />
-          <q-btn icon="close" flat round dense v-close-popup />
-        </q-toolbar>
-      </q-header>
-      <q-separator color="transparent" spaced />
-      <q-page-container>
-        <q-page padding>
-          <p v-for="item in content" :key="item">
-            {{ item }}
-          </p>
-        </q-page>
-      </q-page-container>
-    </q-layout>
+  <q-dialog v-model="alert" full-width full-height>
+    <q-card full-height>
+      <q-card-section class="row items-center q-pb-none">
+        <div class="text-h6">VM Logs</div>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup />
+      </q-card-section>
+      <q-card-section class="q-pt-sm">
+        <q-input filled v-model="content" type="textarea" autogrow />
+      </q-card-section>
+    </q-card>
   </q-dialog>
 </template>
 
 <script>
-import { ref } from "vue";
-
 export default {
   data() {
     return {
-      alert: ref(false),
+      alert: false,
+      content: "",
     };
   },
   methods: {
-    // Usage: show("Title", ["Content line 1", "Contnent line 2"])
-    show(title, content) {
-      this.title = title;
+    show(content) {
       this.content = content;
       this.alert = true;
-    },
-    hide() {
-      this.alert = false;
     },
   },
 };

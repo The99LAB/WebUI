@@ -12,7 +12,11 @@
         <q-input v-model="fileName" label="File Name" />
       </q-card-section>
       <q-card-section>
-        <StoragePoolList ref="storagePool" />
+        <DirectoryList
+          v-model="directory"
+          label="Directory"
+          selectiontype="dir"
+        />
       </q-card-section>
       <q-card-section>
         <q-btn color="primary" label="Download" @click="downloadIso()" />
@@ -40,9 +44,8 @@
 </template>
 
 <script>
-import StoragePoolList from "src/components/StoragePoolList.vue";
+import DirectoryList from "src/components/DirectoryList.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
-import { ref } from "vue";
 
 export default {
   data() {
@@ -51,14 +54,21 @@ export default {
       fileName: "archlinux-x86_64.iso",
       showProgressBar: false,
       progress: 0,
+      directory: null,
     };
   },
   components: {
-    StoragePoolList,
+    DirectoryList,
     ErrorDialog,
   },
   methods: {
     downloadIso() {
+      if (this.directory == null) {
+        this.$refs.errorDialog.show("Error Downloading ISO", [
+          "Please select a directory",
+        ]);
+        return;
+      }
       const jwt_token = localStorage.getItem("jwt-token");
       this.ws = new WebSocket(
         this.$WS_ENDPOINT + "/downloadiso?token=" + jwt_token,
@@ -68,15 +78,16 @@ export default {
           JSON.stringify({
             url: this.url,
             fileName: this.fileName,
-            storagePool: this.$refs.storagePool.getSelectedPool(),
+            directory: this.directory,
           }),
         );
       };
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("new data from ws", data);
         if (data.event == "downloadISOError") {
           this.$refs.errorDialog.show("Error Downloading ISO", [data.message]);
+          this.showProgressBar = false;
+          this.progress = 0;
         } else if (data.event == "downloadISOProgress") {
           this.showProgressBar = true;
           this.progress = data.percentage / 100;

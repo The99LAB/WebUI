@@ -46,12 +46,6 @@ const routes = [
         meta: { title: "Hotplug USB" },
       },
       {
-        name: "vm-manager/storage-pools",
-        path: "vm-manager/storage-pools",
-        component: () => import("pages/vm-manager/StoragePoolPage.vue"),
-        meta: { title: "Storage Pools" },
-      },
-      {
         path: "vm-manager/backups",
         name: "vm-manager/backups",
         component: () => import("pages/vm-manager/BackupManagerPage.vue"),
@@ -93,6 +87,24 @@ const routes = [
         component: () =>
           import("pages/docker-manager/TemplatesSettingsPage.vue"),
         meta: { title: "Docker Templates Settings" },
+      },
+      {
+        path: "storage-manager/raid-manager",
+        name: "storage-manager/raid-manager",
+        component: () => import("pages/storage-manager/RaidManagerPage.vue"),
+        meta: { title: "Raid Manager" },
+      },
+      {
+        path: "storage-manager/disks",
+        name: "storage-manager/disks",
+        component: () => import("pages/storage-manager/DisksPage.vue"),
+        meta: { title: "Disks" },
+      },
+      {
+        path: "storage-manager/sharedfolders",
+        name: "storage-manager/sharedfolders",
+        component: () => import("pages/storage-manager/SharedfoldersPage.vue"),
+        meta: { title: "Shared Folders" },
       },
       {
         path: "system/system-info",

@@ -9,3 +9,5 @@ LibvirtKVMBackup
 python-jose[cryptography]
 python-multipart
 uvicorn[standard]
+pyfstab
+mdstat

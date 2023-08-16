@@ -1,13 +1,19 @@
-## Diable cockpit
+# Install VMManager on Fedora Server
+
+## Preparation
+#### Diable cockpit
 - ``systemctl disable --now cockpit.socket``
+#### Install packages
+```dnf install gcc python3-devel python3-pip qemu-kvm bridge-utils libvirt libvirt-devel dnf-plugins-core samba```
+#### Disable firewall
+- ``systemctl disable --now firewalld``
+(It is recommended to keep the firewall enabled and configure it to allow the required ports)
 
-## Install packages
-```dnf install gcc python3-devel python3-pip qemu-kvm bridge-utils libvirt libvirt-devel dnf-plugins-core```
 
-## Enable libvirt
+## Libvirt
+#### Enable libvirt
 - ``systemctl enable --now libvirtd``
-
-## Create network bridge (networkManager)
+#### Create network bridge (networkManager)
 - Create br0 bridge ``nmcli con add ifname br0 type bridge con-name br0``
 - Find the name of the ethernet interface ``nmcli con show``. In this case it is ``enp37s0``
 ```nmcli con show
@@ -30,9 +36,8 @@ bridge-slave-enp37s0  5f9b861e-b09c-4e08-b7e7-17171cb5f5fa  ethernet  --
 - Enable the new connection ``nmcli con up br0``
 - Refresh the dhcp lease ``dhclient -r br0`` and ``dhclient br0``
 - Show the ip settings ``ip a s`` (``br0`` should have an ip address) 
-
-## Add network bridge to libvirt
-- ``nano /tmp/br0.xml``
+#### Add network bridge to libvirt
+- Create ``tmp/br0.xml`` with the following content:
 ``` 
 <network>
   <name>br0</name>
@@ -41,29 +46,50 @@ bridge-slave-enp37s0  5f9b861e-b09c-4e08-b7e7-17171cb5f5fa  ethernet  --
 </network>
 ```
 - ``virsh net-define /tmp/br0.xml``
-- ``virsh net-start br0``
-- ``virsh net-autostart br0``
+- Start the network: ``virsh net-start br0``
+- Autostart the network: ``virsh net-autostart br0``
 
-## Install docker
+## Docker
+#### Installation
+( https://docs.docker.com/engine/install/fedora/ )
 - ``dnf config-manager --add-repo=https://download.docker.com/linux/fedora/docker-ce.repo``
 - ``dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin``
 - ``systemctl start docker``
 - ``systemctl enable docker``
-
-# Create docker macvlan network
+#### Create macvlan network
 - ``docker network create -d macvlan --subnet=$subnet --gateway= $gateway -o parent=br0 br0``
 
-## Download VmManager
-- ``wget https://github.com/macOS-KVM/VmManager/releases/download/1.0/VmManager-build.zip``
-Note: replace the link with the latest release
+
+## Samba
+- Copy the smb.conf file to ``/etc/samba/smb.conf``
+- Create an empty samba-shares.conf file ```touch /etc/samba/samba-shares.conf```
+- Enable samba: ``systemctl enable --now smb``
+
+
+## VMManager Installation
+#### Install custom blkinfo Python module
+- Download from GitHub:
+```
+curl -s https://api.github.com/repos/macOS-KVM/blkinfo/releases/latest \
+| grep "browser_download_url.*tar.gz" \
+| cut -d : -f 2,3 \
+| tr -d \" \
+| wget -qi -
+```
+- Install the module: ``pip3 install blkinfo-*.tar.gz``
+
+#### Download VmManager
+- Download the latest release from GitHub:
+```
+curl -s https://api.github.com/repos/macOS-KVM/VmManager/releases/latest \
+| grep "browser_download_url.*zip" \
+| cut -d : -f 2,3 \
+| tr -d \" \
+| wget -qi -
+```
 - ``unzip VmManager-build.zip``
 - ``cd VmManager-build``
-
-## Install python modules
+#### Install python modules
 - ``pip3 install -r requirements.txt``
-
-## Disable firewall
-- ``systemctl disable --now firewalld``
-
-## Done
+#### Run VmManager
 - Follow the instructions in the README.md file to run VmManager

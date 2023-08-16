@@ -10,7 +10,6 @@ import re
 import os
 from string import ascii_lowercase
 import subprocess
-from blkinfo import BlkDiskInfo
 import distro
 import requests
 import pam
@@ -31,7 +30,7 @@ import base64
 import pwd
 import grp
 import shutil
-import math
+import storage_manager
 
 
 origins = ["*"]
@@ -135,19 +134,19 @@ def getvmresults():
                     if port != None:
                         vnc_state = True
 
-            dom_memory_unit = "GB"
-            dom_memory_stat = vmmemory(dom_uuid).current(dom_memory_unit)
-            dom_memory_min = dom_memory_stat[0]
-            dom_memory_max = dom_memory_stat[1]
+            dom_memory_min = storage_manager.convertSizeUnit(size=vmmemory(dom_uuid).current()[0], from_unit="KB", mode="tuple")
+            dom_memory_max = storage_manager.convertSizeUnit(size=vmmemory(dom_uuid).current()[1], from_unit="KB", mode="tuple")
+
             dom_autostart = False
             if domain.autostart() == 1:
                 dom_autostart = True
             result = {
                 "uuid": dom_uuid,
                 "name": dom_name,
-                "memory_min": dom_memory_min,
-                "memory_max": dom_memory_max,
-                "memory_unit": "GB",
+                "memory_min": dom_memory_min[0],
+                "memory_min_unit": dom_memory_min[1],
+                "memory_max": dom_memory_max[0],
+                "memory_max_unit": dom_memory_max[1],
                 "vcpus": vcpus,
                 "state": dom_state,
                 "VNC": vnc_state,
@@ -163,46 +162,14 @@ class vmmemory():
     def __init__(self, uuid):
         self.domain = conn.lookupByUUIDString(uuid)
 
-    def current(self, unit="GB"):
+    def current(self):
         maxmem = self.domain.info()[1]
         minmem = self.domain.info()[2]
-        if unit == "TB":
-            maxmem = maxmem / 1024 / 1024 / 1024
-            minmem = minmem / 1024 / 1024 / 1024
-        elif unit == "GB":
-            maxmem = maxmem / 1024 / 1024
-            minmem = minmem / 1024 / 1024
-        elif unit == "MB":
-            maxmem = maxmem / 1024
-            minmem = minmem / 1024
-        else:
-            return ("Error: Unknown unit for memory size")
-        return [float(minmem), float(maxmem)]
+        return [minmem, maxmem]
 
     def edit(self, minmem, minmemunit, maxmem, maxmemunit):
-        maxmem = int(maxmem)
-        minmem = int(minmem)
-        if minmemunit == "TB":
-            minmem = minmem * 1024 * 1024 * 1024
-        elif minmemunit == "GB":
-            minmem = minmem * 1024 * 1024
-        elif minmemunit == "MB":
-            minmem = minmem * 1024
-        elif minmemunit == "KB":
-            minmem = minmem
-        else:
-            return ("Error: Unknown unit for minmemory size")
-
-        if maxmemunit == "TB":
-            maxmem = maxmem * 1024 * 1024 * 1024
-        elif maxmemunit == "GB":
-            maxmem = maxmem * 1024 * 1024
-        elif maxmemunit == "MB":
-            maxmem = maxmem * 1024
-        elif maxmemunit == "KB":
-            maxmem = maxmem
-        else:
-            return ("Error: Unknown unit for maxmemory size")
+        maxmem = storage_manager.convertSizeUnit(size=maxmem, from_unit=maxmemunit, to_unit="KB", mode="int")
+        minmem = storage_manager.convertSizeUnit(size=minmem, from_unit=minmemunit, to_unit="KB", mode="int")
 
         if minmem > maxmem:
             return ("Error: minmemory can't be bigger than maxmemory")
@@ -289,18 +256,6 @@ class storage():
     def getxml(self, disknumber):
         return self.get()[int(disknumber)]["xml"]
 
-    # def remove(self, disknumber):
-    #     # tree = ET.fromstring(self.vmXml)
-    #     for idx, disk in enumerate(self.get()):
-    #         if idx == int(disknumber):
-    #             try:
-    #                 self.domain.detachDeviceFlags(
-    #                     disk[6]["xml"], libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-    #                 return 'Succeed'
-    #             except libvirt.libvirtError as e:
-    #                 return f'Error: {e}'
-    #             break
-
     def add_xml(self, disktype, targetbus, devicetype, drivertype, sourcefile=None, sourcedev=None, bootorder=None):
         tree = ET.fromstring(self.vmXml)
         disks = tree.findall('./devices/disk')
@@ -341,120 +296,35 @@ class storage():
         else:
             return
         # add the disk to xml
-        diskxml = f"""<disk type='{disktype}' device='{devicetype}'>
+        self.diskxml = f"""<disk type='{disktype}' device='{devicetype}'>
         <driver name='qemu' type='{drivertype}'/>
         {source_file_string if disktype == "file" else ''}
         {source_dev_string if disktype == "block" else ''}
         <target dev='{FreeTargetDev}' bus='{targetbus}'/>
         {bootorderstring}
         </disk>"""
-        return diskxml
 
-    def add(self, targetbus, devicetype, sourcefile, drivertype, readonly="", bootorder=None):
-        diskxml = self.add_xml(targetbus=targetbus, devicetype=devicetype, sourcefile=sourcefile,
-                               drivertype=drivertype, readonly=readonly, bootorder=bootorder)
-        self.domain.attachDeviceFlags(
-            diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        self.add_xml_to_vm()
+        return self.diskxml
 
+    def add_xml_to_vm(self):
+        self.domain.attachDeviceFlags(self.diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
-    def createnew(self, pooluuid, disksize, disksizeunit, disktype, diskbus, bootorder=None):
-        volumename = poolStorage(pooluuid).getUnusedVolumeName(
-            self.domain_uuid, disktype)
-        pool = conn.storagePoolLookupByUUIDString(pooluuid)
-
-        if disksizeunit == "TB":
-            disksize = int(disksize) * 1024 * 1024 * 1024 * 1024
-        elif disksizeunit == "GB":
-            disksize = int(disksize) * 1024 * 1024 * 1024
-        elif disksizeunit == "MB":
-            disksize = int(disksize) * 1024 * 1024
-        elif disksizeunit == "KB":
-            disksize = int(disksize) * 1024
-        else:
-            return f"Error: Unsupported disk size unit"
-
-        diskxml = f"""<volume>
-        <name>{volumename}</name>
-        <capacity>{disksize}</capacity>
-        <allocation>0</allocation>
-        <target>
-            <format type="{disktype}"/>
-        </target>
-        </volume>"""
-
+    def createnew(self, directory, disksize, disksizeunit, disktype, diskbus):
+        disksize = storage_manager.convertSizeUnit(size=int(disksize), from_unit=disksizeunit, to_unit="B", mode="int")
+        available_disk_number = len(self.get())
+        disk_path = os.path.join(directory, f"{self.domain.name()}-{available_disk_number}.{disktype}")
         try:
-            pool.createXML(diskxml)
-        except libvirt.libvirtError as e:
-            return f"Error: Creating volume on pool with uuid: {pooluuid} failed with error: {e}"
-
-        volumepath = poolStorage(pooluuid).getVolumePath(volumename)
-        
-        storage(self.domain_uuid).add(
-            diskbus, "disk", volumepath, disktype, bootorder=bootorder)
-        
-
-
-class poolStorage():
-    def __init__(self, pooluuid):
-        self.pooluuid = pooluuid
-
-    def getUnusedVolumeName(self, vmuuid, vdisktype):
-        domainName = conn.lookupByUUIDString(vmuuid).name()
-        volname = f"{domainName}.{vdisktype}"
-        sp = conn.storagePoolLookupByUUIDString(self.pooluuid)
-        stgvols = sp.listVolumes()
-
-        count = 0
-        while True:
-            if volname in stgvols:
-                count += 1
-                volname = f"{domainName}-{count}.{vdisktype}"
-            else:
-                break
-        return volname
-
-    @classmethod
-    @property
-    def list(self):
-        pools = conn.listAllStoragePools()
-        poollist = []
-        for pool in pools:
-            info = pool.info()
-            name = pool.name()
-            uuid = pool.UUIDString()
-            if pool.autostart() == 1:
-                autostart = "Yes"
-            else:
-                autostart = "No"
-
-            if pool.isActive() == 1:
-                active = "Yes"
-            else:
-                active = "No"
-
-            capacity = str(round(info[1] / 1024 / 1024 / 1024)) + "GB"
-            allocation = str(round(info[2] / 1024 / 1024 / 1024)) + "GB"
-            available = str(round(info[3] / 1024 / 1024 / 1024)) + "GB"
-
-            poolinfo = [name, uuid, autostart, active,
-                        capacity, allocation, available]
-            poollist.append(poolinfo)
-        return poollist
-
-    def getVolumePath(self, poolvolume):
-        pool = conn.storagePoolLookupByUUIDString(self.pooluuid)
-        definedxml = pool.storageVolLookupByName(poolvolume).XMLDesc()
-        root = ET.fromstring(definedxml)
-        key = root.find('key')
-        voluempath = key.text
-        return voluempath
-
-    def getVolumeFormat(self, poolvolume):
-        pool = conn.storagePoolLookupByUUIDString(self.pooluuid)
-        definedxml = pool.storageVolLookupByName(poolvolume).XMLDesc()
-        root = ET.fromstring(definedxml)
-        format = root.find('target').find('format').get('type')
-        return format
+            subprocess.check_output(["qemu-img", "create", "-f", disktype, disk_path, f"{disksize}B"])
+        except subprocess.CalledProcessError as e:
+            raise Exception(f"Error: Creating disk failed with error: {e}")
+        self.add_xml(
+            disktype="file",
+            devicetype="disk",
+            targetbus=diskbus,
+            drivertype=disktype,
+            sourcefile=disk_path,
+        )
 
 
 def SystemUsbDevicesList():
@@ -713,23 +583,22 @@ class domainNetworkInterface():
 
 
 class create_vm():
-    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_pool=None, iso=False, iso_pool=None, iso_volume=None, network=False, network_source=None, network_model=None, ovmf_name=None):
+    def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_location=None, iso=False, iso_location=None, network=False, network_source=None, network_model=None, ovmf_name=None):
         self.name = name
         self.machine_type = machine_type
         self.bios_type = bios_type
         self.min_mem_unit = mem_min_unit
         self.max_mem_unit = mem_max_unit
-        self.mem_min = convertSizeUnit(int(mem_min), mem_min_unit, "KB")
-        self.mem_max = convertSizeUnit(int(mem_max), mem_max_unit, "KB")
+        self.mem_min = storage_manager.convertSizeUnit(size=int(mem_min), from_unit=mem_min_unit, to_unit="KB", mode='int')
+        self.mem_max =storage_manager.convertSizeUnit(size=int(mem_max), from_unit=mem_max_unit, to_unit="KB", mode='int')
         self.disk = disk
         self.disk_size = disk_size
         self.disk_size_unit = disk_size_unit
         self.disk_type = disk_type
         self.disk_bus = disk_bus
-        self.disk_pool = disk_pool
+        self.disk_location = disk_location
         self.iso = iso
-        self.iso_pool = iso_pool
-        self.iso_volume = iso_volume
+        self.iso_location = iso_location
         self.network = network
         self.network_source = network_source
         self.network_model = network_model
@@ -743,36 +612,26 @@ class create_vm():
         
         self.createisoxml = ""
         if self.iso:
-            iso = poolStorage(pooluuid=self.iso_pool)
-            isopath = iso.getVolumePath(poolvolume=self.iso_volume)
-
             self.createisoxml = f"""<disk type='file' device='cdrom'>
                             <driver name='qemu' type='raw'/>
-                            <source file='{isopath}'/>
+                            <source file='{iso_location}'/>
                             <target dev='sda' bus='sata'/>
                             <boot order='2'/>
                             "<readonly/>
                             </disk>"""
-        
         self.creatediskxml = ""
         if self.disk:
-            disk_size = convertSizeUnit(int(disk_size), self.disk_size_unit, "B")
-            pool = conn.storagePoolLookupByUUIDString(self.disk_pool)
+            disk_size = storage_manager.convertsize.convertSizeUnit(size=int(disk_size), from_unit=self.disk_size_unit, to_unit="B", mode='int')
             disk_volume_name = f"{self.name}-0.{self.disk_type}"
-            diskxml = f"""<volume>
-            <name>{disk_volume_name}</name>
-            <capacity>{disk_size}</capacity>
-            <allocation>0</allocation>
-            <target>
-                <format type="{self.disk_type}"/>
-            </target>
-            </volume>"""
-            pool.createXML(diskxml)
-            diskvolumepath = poolStorage(
-                self.disk_pool).getVolumePath(disk_volume_name)
+            disk_location = os.path.join(self.disk_location, disk_volume_name)
+            try:
+                subprocess.check_output(["qemu-img", "create", "-f", self.disk_type, disk_location, f"{disk_size}B"])
+            except subprocess.CalledProcessError as e:
+                raise Exception(f"Error: Creating disk failed with error: {e}")
+
             self.creatediskxml = f"""<disk type='file' device='disk'>
                             <driver name='qemu' type='{self.disk_type}'/>
-                            <source file='{diskvolumepath}'/>
+                            <source file='{disk_location}'/>
                             <target dev='{"vda" if self.disk_bus == "virtio" else "sdb"}' bus='{self.disk_bus}'/>
                             <boot order='1'/>
                             </disk>"""
@@ -926,35 +785,6 @@ class create_vm():
         return self.xml
     def create(self):
         conn.defineXML(self.xml)
-
-
-def convertSizeUnit(size: int, from_unit, to_unit=None):
-    sizeUnit = {
-        "B": 0,
-        "KB": 1,
-        "MB": 2,
-        "GB": 3,
-        "TB": 4,
-    }
-
-    if to_unit == None:
-        for index, unit in enumerate(sizeUnit):
-            if size < 1024 ** sizeUnit[unit]:
-                return int(size / (1024 ** (sizeUnit[unit] - 1))), list(sizeUnit.keys())[index - 1]
-
-    if from_unit == to_unit:
-        return size
-    else:
-        # find the difference between the two units
-        difference = sizeUnit[from_unit] - sizeUnit[to_unit]
-        if difference > 0:
-            # if difference is positive, then size is being converted to a smaller unit
-            # so divide the size by 1024^difference
-            return int(size * (1024 ** difference))
-        else:
-            # if difference is negative, then size is being converted to a larger unit
-            # so multiply the size by 1024^difference
-            return int(size / (1024 ** abs(difference)))
 
 class DomainGraphics:
     def __init__(self, domuuid):
@@ -1458,7 +1288,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         if check_auth_token(token):
             sysInfo = ET.fromstring(conn.getSysinfo(0))
             cpu_name = sysInfo.find("processor/entry[@name='version']").text
-            mem_total = round(convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB"), 2)
+            mem_total = storage_manager.convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB", round_state=True, round_to=2)
             os_name = distro.name(pretty=True)
             uptime = humanize.precisedelta(datetime.now() - datetime.fromtimestamp(psutil.boot_time()), minimum_unit="minutes", format="%0.0f")
             await websocket.send_json({"type": "dashboard_init", "data": {"cpu_name": cpu_name, "mem_total": mem_total, "os_name": os_name, "uptime": uptime}})
@@ -1466,7 +1296,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             if check_auth_token(token):
                 cpu_percent = int(psutil.cpu_percent())
                 cpu_thread_data = psutil.cpu_percent(interval=1, percpu=True)
-                mem_used = round(convertSizeUnit(psutil.virtual_memory().used, from_unit="B", to_unit="GB"), 2)
+                mem_used = storage_manager.convertSizeUnit(psutil.virtual_memory().used, from_unit="B", to_unit="GB", round_state=True, round_to=2)
                 message = {"cpu_percent": cpu_percent, "cpu_thread_data": cpu_thread_data, "mem_used": mem_used}
                 await websocket.send_json({"type": "dashboard", "data": message})
                 await asyncio.sleep(1)
@@ -1501,22 +1331,18 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     if check_auth_token(token):
-        # wait for message
         data = await websocket.receive_json()
-        print("webscket data", data)
-        # extract data
         url = data["url"]
         filename = data["fileName"]
-        pool = data["storagePool"]
-        
-        storagePool = conn.storagePoolLookupByUUIDString(pool)
-        poolpath = storagePool.XMLDesc(0).split("<path>")[1].split("</path>")[0]
-        poolName = storagePool.name()
-        filepath = os.path.join(poolpath, filename)
+        directory = data["directory"]
+        filepath = os.path.join(directory, filename)
+
+        # use websocket events to send progress and errors
+        # downloadISOError: on error
+        # downloadISOProgress: on progress
+        # downloadISOComplete: on complete
 
         if (os.path.isfile(filepath)):
-            # send the event "downloadISOError"
-            print("file already exists")
             await websocket.send_json({"event": "downloadISOError", "message": f"{filename} already exists in pool {poolName}"})
             return
         
@@ -1540,9 +1366,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                     if prev_percentage != percentage:
                         await websocket.send_json({"event": "downloadISOProgress", "percentage": percentage})
                         if percentage == 100:
-                            storagePool.refresh(0)
                             print("download complete")
-                            await websocket.send_json({"event": "downloadISOComplete", "message": ["ISO Download Complete", f"ISO File: {filename}", f"Storage Pool: {poolName}"]})
+                            await websocket.send_json({"event": "downloadISOComplete", "message": ["ISO Download Complete", f"ISO File: {filename}", f"Directory: {directory}"]})
                     f.write(data)
                     await asyncio.sleep(0) # allow the websocket to send the message before continuing
         except Exception as e:
@@ -1693,10 +1518,9 @@ async def post_vm_manager(request: Request, action: str, username: str = Depends
         disk_size_unit = form_data.get('disk_size_unit')
         disk_type = form_data.get('disk_type')
         disk_bus = form_data.get('disk_bus')
-        disk_pool = form_data.get('disk_pool')
+        disk_location = form_data.get('disk_location')
         iso = True
-        cdrom_pool = form_data.get('cdrom_pool')
-        cdrom_volume = form_data.get('cdrom_volume')
+        cdrom_location = form_data.get('cdrom_location')
         network = True
         network_source = form_data.get('network_source')
         network_model = form_data.get('network_model')
@@ -1714,17 +1538,16 @@ async def post_vm_manager(request: Request, action: str, username: str = Depends
         print("disk_size_unit: " + disk_size_unit)
         print("disk_type: " + disk_type)
         print("disk_bus: " + disk_bus)
-        print("disk_pool: " + disk_pool)
+        print("disk_location: " + disk_location)
         print("iso: " + str(iso))
-        print("cdrom_pool: " + cdrom_pool)
-        print("cdrom_volume: " + cdrom_volume)
+        print("cdrom_location: " + cdrom_location)
         print("network: " + str(network))
         print("network_source: " + network_source)
         print("network_model: " + network_model)
 
         try:
             vm = create_vm(name=name, machine_type=machine_type, bios_type=bios_type, mem_min=min_mem, mem_min_unit=mim_mem_unit, mem_max=max_mem, mem_max_unit=max_mem_unit, disk=disk,
-                        disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_pool=disk_pool, iso=iso, iso_pool=cdrom_pool, iso_volume=cdrom_volume,network=network, network_source=network_source, network_model=network_model, ovmf_name=ovmf_name)
+                        disk_size=disk_size, disk_size_unit=disk_size_unit, disk_type=disk_type, disk_bus=disk_bus, disk_location=disk_location, iso=iso, iso_location=cdrom_location, network=network, network_source=network_source, network_model=network_model, ovmf_name=ovmf_name)
             if os == "Microsoft Windows 11":
                 vm.windows(version="11")
             elif os == "Microsoft Windows 10":
@@ -1772,7 +1595,7 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
         domain_log_path = os.path.join(libvirt_domain_logs_path, domain_name + ".log")
         if os.path.exists(domain_log_path):
             with open(domain_log_path, "r") as f:
-                return { "log": f.readlines() }
+                return { "log": f.read() }
         else:
             raise HTTPException(status_code=404, detail="Log file not found")
         
@@ -1816,9 +1639,14 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             autostart = True
             
         # get memory
-        meminfo = vmmemory(uuid=vmuuid).current("GB")
-        minmem = meminfo[0]
-        maxmem = meminfo[1]
+        meminfo = vmmemory(uuid=vmuuid).current()
+        minmem = storage_manager.convertSizeUnit(meminfo[0], from_unit="KB", mode="tuple")
+        maxmem = storage_manager.convertSizeUnit(meminfo[1], from_unit="KB", mode="tuple")
+        minmem_size = minmem[0]
+        minmem_unit = minmem[1]
+        maxmem_size = maxmem[0]
+        maxmem_unit = maxmem[1]
+
         # get disk
         diskinfo = storage(domain_uuid=vmuuid).get()
         networks = domainNetworkInterface(dom_uuid=vmuuid).get()
@@ -1850,10 +1678,10 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             "state": domain.state()[0],
             "machine": machine_type,
             "bios": bios_type,
-            "memory_max": maxmem,
-            "memory_max_unit": "GB",
-            "memory_min":minmem,
-            "memory_min_unit": "GB",
+            "memory_max": maxmem_size,
+            "memory_max_unit": maxmem_unit,
+            "memory_min": minmem_size,
+            "memory_min_unit": minmem_unit,
             "disks": diskinfo,
             "networks": networks,
             "sounddevices": sounddevices,
@@ -2006,40 +1834,16 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
 
         # edit-memory
         elif action == "memory":
-            memory_min = data['memory_min']
+            memory_min = int(data['memory_min'])
             memory_min_unit = data['memory_min_unit']
-            memory_max = data['memory_max']
+            memory_max = int(data['memory_max'])
             memory_max_unit = data['memory_max_unit']
-
-            memory_min = convertSizeUnit(
-                int(memory_min), memory_min_unit, "KB")
-            memory_max = convertSizeUnit(
-                int(memory_max), memory_max_unit, "KB")
             if memory_min > memory_max:
-                return ("Error: minmemory can't be bigger than maxmemory", 400)
+                raise HTTPException(status_code=400, detail="Minimum memory cannot be greater than maximum memory")
             else:
-                vm_xml = domain.XMLDesc(0)
-                try:
-                    current_min_mem = (
-                        re.search("<currentMemory unit='KiB'>[0-9]+</currentMemory>", vm_xml).group())
-                    current_max_mem = (
-                        re.search("<memory unit='KiB'>[0-9]+</memory>", vm_xml).group())
-                    try:
-                        output = vm_xml
-                        output = output.replace(
-                            current_max_mem, "<memory unit='KiB'>" + str(memory_max) + "</memory>")
-                        output = output.replace(
-                            current_min_mem, "<currentMemory unit='KiB'>" + str(memory_min) + "</currentMemory>")
-                        try:
-                            conn.defineXML(output)
-                            return
-                        except libvirt.libvirtError as e:
-                            raise HTTPException(status_code=500, detail=str(e))
-                    except Exception:
-                        raise HTTPException(status_code=500, detail="failed to replace minmemory and/or maxmemory!")
-                except Exception:
-                    raise HTTPException(status_code=500, detail="failed to find minmemory and maxmemory in xml!")
-        
+                vmmemory(uuid=vmuuid).edit(memory_min, memory_min_unit, memory_max, memory_max_unit)
+                return
+
         # edit-network-action
         elif action.startswith("network"):
             action = action.replace("network-", "")
@@ -2074,20 +1878,60 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 disknumber = data['number']
                 xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
                 xml = ET.fromstring(xml_orig)
+
             if action == "add":
+                formDeviceType = data['deviceType']
+                if formDeviceType == "cdrom" or formDeviceType == "existingvdisk":
+                    formDeviceType = "disk" if formDeviceType == "existingvdisk" else "cdrom"
+                    cdrompath = data['volumePath']
+                    cdrombus = data['diskBus']
+                    try:
+                        storage(domain_uuid=vmuuid).add_xml(
+                            disktype="file",
+                            targetbus=cdrombus,
+                            devicetype=formDeviceType,
+                            drivertype="raw",
+                            sourcefile=cdrompath
+                        )
+                        return
+                    except libvirt.libvirtError as e:
+                        raise HTTPException(status_code=500, detail=str(e))
                 
-                volume_path = data['volumePath']
-                device_type = data['deviceType']
-                disk_driver_type = data['diskDriverType']
-                disk_bus = data['diskBus']
-                disk_type = data['diskType']
-                source_device = data['sourceDevice']
-                diskxml = storage(domain_uuid=vmuuid).add_xml(disktype=disk_type, targetbus=disk_bus, devicetype=device_type, sourcefile=volume_path, sourcedev=source_device, drivertype=disk_driver_type)
-                try:
-                    domain.attachDeviceFlags(diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
+                elif formDeviceType == "createvdisk":
+                    directory = data['vdiskDirectory']
+                    disksize = data['diskSize']
+                    disksizeunit = data['diskSizeUnit']
+                    diskType = data['diskDriverType']
+                    diskBus = data['diskBus']
+                    try:
+                        storage(domain_uuid=vmuuid).createnew(
+                            directory=directory,
+                            disksize=disksize,
+                            disksizeunit=disksizeunit,
+                            disktype=diskType,
+                            diskbus=diskBus
+                        )
+                        return
+                    except libvirt.libvirtError as e:
+                        raise HTTPException(status_code=500, detail=str(e))
+                    
+                elif formDeviceType == "block":
+                    blockdev = data['sourceDevice']
+                    diskBus = data['diskBus']
+                    try:
+                        storage(domain_uuid=vmuuid).add_xml(
+                            disktype="block",
+                            targetbus=diskBus,
+                            devicetype="disk",
+                            drivertype="raw",
+                            sourcedev=blockdev
+                        )
+                        return
+                    except libvirt.libvirtError as e:
+                        raise HTTPException(status_code=500, detail=str(e))
+                
+                else:
+                    raise HTTPException(status_code=400, detail="Invalid device type")
 
             elif action == "type":
                 value = data['value']
@@ -2319,188 +2163,6 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
     else:
         raise HTTPException(status_code=404, detail="Action not found")
 
-### API-STORAGE-POOL ###
-@app.get("/api/storage-pools")
-async def api_storage_pools(username: str = Depends(check_auth)):
-    storage_pools = []
-    for pool in conn.listAllStoragePools():
-        pool_name = pool.name()
-        pool_uuid = pool.UUIDString()
-        _pool = conn.storagePoolLookupByUUIDString(pool_uuid)
-        pool_info = pool.info()
-        pool_volumes = []
-        if pool.isActive():
-            pool_state = "active"
-            pool_volumes_list = _pool.listVolumes()
-            for volume in pool_volumes_list:
-                volume_info = _pool.storageVolLookupByName(volume).info()
-                volume_capacity = round(
-                    volume_info[1] / 1024 / 1024 / 1024, 2)
-                volume_allocation = round(
-                    volume_info[2] / 1024 / 1024 / 1024, 2)
-                _volume = {
-                    "name": volume,
-                    "size": f"{volume_allocation}/{volume_capacity} GB",
-                }
-                pool_volumes.append(_volume)
-        else:
-            pool_state = "inactive"
-
-        pool_capacity = str(
-            round(pool_info[1] / 1024 / 1024 / 1024)) + "GB"
-        pool_allocation = str(
-            round(pool_info[2] / 1024 / 1024 / 1024)) + "GB"
-        pool_available = str(
-            round(pool_info[3] / 1024 / 1024 / 1024)) + "GB"
-        pool_autostart_int = pool.autostart()
-        pool_type_int = pool_info[0]
-        if pool_type_int == libvirt.VIR_STORAGE_VOL_FILE:
-            pool_type = "file"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_BLOCK:
-            pool_type = "block"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_DIR:
-            pool_type = "dir"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETWORK:
-            pool_type = "network"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_NETDIR:
-            pool_type = "netdir"
-        elif pool_type_int == libvirt.VIR_STORAGE_VOL_PLOOP:
-            pool_type = "ploop"
-        else:
-            pool_type = "unknown"
-
-        pool_path = ET.fromstring(
-            _pool.XMLDesc(0)).find('target/path').text
-
-        if pool_autostart_int == 1:
-            pool_autostart = True
-        else:
-            pool_autostart = False
-
-        pool_result = {
-            "name": pool_name,
-            "uuid": pool_uuid,
-            "state": pool_state,
-            "type": pool_type,
-            "path": pool_path,
-            "capacity": pool_capacity,
-            "allocation": pool_allocation,
-            "available": pool_available,
-            "autostart": pool_autostart,
-            "volumes": pool_volumes
-        }
-        storage_pools.append(pool_result)
-    return storage_pools
-
-@app.post("/api/storage-pools")
-async def api_storage_pools_create(request: Request, username: str = Depends(check_auth)):
-    data = await request.json()
-    pool_name = data['name']
-    pool_type = data['type']
-    pool_path = data['path']
-
-    if not os.path.exists(pool_path):
-        os.makedirs(pool_path)
-
-    if pool_type == "dir":
-        pool_xml = f"""<pool type='dir'>
-            <name>{pool_name}</name>
-            <target>
-            <path>{pool_path}</path>
-            </target>
-        </pool>"""
-        try:
-            conn.storagePoolDefineXML(pool_xml, 0)
-            pool = conn.storagePoolLookupByName(pool_name)
-            pool.create()
-            pool.setAutostart(1)
-
-            return
-        except libvirt.libvirtError as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    else:
-        raise HTTPException(status_code=400, detail="Pool type not allowed")
-
-### API-STORAGE-POOL-ACTIONS ###
-@app.get("/api/storage-pools/{pooluuid}/{action}")
-async def api_storage_pools_actions_get(pooluuid: str, action: str, username: str = Depends(check_auth)):
-    if action == "volumes":
-        pool = conn.storagePoolLookupByUUIDString(pooluuid)
-        pool_volumes = []
-        if pool.isActive():
-            pool_volumes_list = pool.listVolumes()
-            for volume in pool_volumes_list:
-                volume_info = pool.storageVolLookupByName(volume).info()
-                volume_capacity = round(
-                    volume_info[1] / 1024 / 1024 / 1024)
-                volume_allocation = round(
-                    volume_info[2] / 1024 / 1024 / 1024)
-                volume_xml = ET.fromstring(pool.storageVolLookupByName(volume).XMLDesc(0))
-                volume_format = volume_xml.find('target/format').get('type')
-                volume_path = volume_xml.find('target/path').text
-                _volume = {
-                    "name": volume,
-                    "format": volume_format,
-                    "capacity": volume_capacity,
-                    "allocation": volume_allocation,
-                    "path": volume_path,
-                }
-                pool_volumes.append(_volume)
-        return pool_volumes
-
-@app.post("/api/storage-pools/{pooluuid}/{action}")
-async def api_storage_pools_actions_post(pooluuid: str, action: str, request: Request, username: str = Depends(check_auth)):
-    try:
-        pool = conn.storagePoolLookupByUUIDString(pooluuid)
-        if action == "start":
-            pool.create()
-        elif action == "stop":
-            print("stopping pool with uuid" +
-                    pooluuid + "..." + pool.name())
-            pool.destroy()
-        elif action == "toggle-autostart":
-            if pool.autostart() == 1:
-                pool.setAutostart(0)
-            else:
-                pool.setAutostart(1)
-        elif action == "delete":
-            print("deleting pool with uuid" +
-                    pooluuid + "..." + pool.name())
-            pool.destroy()
-            pool.delete()
-            pool.undefine()
-        elif action == "delete-volumes":
-            data = await request.json()
-            print("deleting volumes: " + str(data))
-            for volume in data:
-                volume = pool.storageVolLookupByName(volume)
-                volume.delete()
-        elif action == "create-volume":
-            data = await request.json()
-            volume_name = data['name']
-            volume_format = data['format']
-            volume_size = data['size']
-            volume_size_unit = data['size_unit']
-            if volume_size_unit == "TB" or volume_size_unit == "GB" or volume_size_unit == "MB":
-                volume_size = convertSizeUnit(volume_size, volume_size_unit, "KB")
-            else:
-                raise HTTPException(status_code=400, detail="Unknown disk size unit")
-
-            volume_xml = f"""<volume>
-            <name>{volume_name}.{volume_format}</name>
-            <capacity>{volume_size}</capacity>
-            <allocation>0</allocation>
-            <target>
-                <format type="{volume_format}"/>
-            </target>
-            </volume>"""
-
-            pool.createXML(volume_xml)
-        else:
-            raise HTTPException(status_code=404, detail="Action not found")
-        return
-    except libvirt.libvirtError as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 #TODO: API-BACKUP-MANAGER
 @app.get("/api/backup-manager/configs")
@@ -2519,7 +2181,7 @@ async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
         backups.sort(key=lambda x: x['name'], reverse=True)
         # convert item size in backups to GG
         for backup in backups:
-            backup['size'] = str(round(convertSizeUnit(backup['size'], "B", "GB"))) + " GB"
+            backup['size'] = storage_manager.convertSizeUnit(size=backup['size'], from_unit="B", mode="str")
 
         backup_last_result = None
         if backup_count > 0:
@@ -2694,7 +2356,7 @@ async def api_docker_manager_images_get(username: str = Depends(check_auth)):
     for image in docker_images:
         image_id = image.short_id
         image_tags = image.tags
-        image_size = str(round(convertSizeUnit(image.attrs['Size'], "B", "MB"))) + "MB"
+        image_size = storage_manager.convertSizeUnit(size=image.attrs['Size'], from_unit="B", mode="str", round_to=None)
         image_created_orig = image.attrs['Created']
         image_created_split = image_created_orig.split('.')[0]
         image_created = image_created_split.split('T')[0] + " " + image_created_split.split('T')[1]
@@ -2919,6 +2581,166 @@ async def api_host_power_post(powermsg: str, username: str = Depends(check_auth)
     else:
         raise HTTPException(status_code=404, detail="power action not found")
 
+### API-STORAGE ###
+@app.get("/api/storage/raid-manager")
+async def api_host_storage_raid_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.raid_manager.get()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/storage/raid-manager/{action}")
+async def api_host_storage_raid_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "create":
+        try:
+            storage_manager.raid_manager.create(personality=data['level'], devices=data['devices'], filesystem=data['filesystem'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "delete":
+        try:
+            storage_manager.raid_manager.delete(path=data['path'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
+
+@app.get("/api/storage/disks")
+async def api_host_storage_disks_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.disk_manager.get()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/storage/disks/disk/{action}")
+async def api_host_storage_disks_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "wipe":
+        try:
+            storage_manager.disk_manager.wipeDisk(path=data['diskpath'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
+
+@app.post("/api/storage/disks/partition/{action}")
+async def api_host_storage_disks_partition_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "delete":
+        try:
+            storage_manager.disk_manager.deletePartition(disk=data['disk'], partition=data['partition'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "create":
+        try:
+            storage_manager.disk_manager.createPartition(diskpath=data['diskpath'], fstype=data['fstype'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "mount":
+        try:
+            storage_manager.disk_manager.mountPartition(uuid=data['partition'], mountpoint=data['mountpoint'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "unmount":
+        try:
+            storage_manager.disk_manager.unmountPartition(uuid=data['partition'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "format":
+        try:
+            storage_manager.disk_manager.formatPartition(path=data['partition'], fstype=data['fstype'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
+    
+@app.get("/api/storage/sharedfolders")
+async def api_host_storage_sharedfolders_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.shared_folders.get()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/storage/sharedfolders/availabledevices")
+async def api_host_storage_sharedfolders_availabledevices_get(username: str = Depends(check_auth)):
+    try:
+        return storage_manager.shared_folders.getAvailableDevices()
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/api/storage/sharedfolders/{action}")
+async def api_host_storage_sharedfolders_post(request: Request, action: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    if action == "create":
+        try:
+            storage_manager.shared_folders.create(name=data['name'], target=data['target'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "delete":
+        try:
+            storage_manager.shared_folders.remove(name=data['name'])
+            return
+        except storage_manager.StorageManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    elif action == "smb-edit":
+        name = data['name']
+        smb_status = data['status']
+        if smb_status == False:
+            if storage_manager.shared_folders.getSmbShare(name=name) is not None:
+                storage_manager.shared_folders.removeSMBShare(name=name)
+            return
+        else:
+            if storage_manager.shared_folders.getSmbShare(name=name) is not None:
+                storage_manager.shared_folders.removeSMBShare(name=name)
+            smb_mode = data['mode']
+            smb_path = data['path']
+            if smb_mode == "PUBLIC":
+                storage_manager.shared_folders.createSMBShare(name=name, path=smb_path, mode="PUBLIC")
+            elif smb_mode == "PRIVATE":
+                smb_users = data['users']
+                users_list = []
+                users_write_list = []
+                users_read_list = []
+                for user in smb_users:
+                    users_list.append(user['name'])
+                    if user['mode'] == "rw":
+                        users_write_list.append(user['name'])
+                        users_read_list.append(user['name'])
+                    elif user['mode'] == "ro":
+                        users_read_list.append(user['name'])
+                storage_manager.shared_folders.createSMBShare(
+                    name=name, 
+                    path=smb_path, 
+                    mode="PRIVATE",
+                    users_list=users_list,
+                    users_write_list=users_write_list,
+                    users_read_list=users_read_list
+                )
+            elif smb_mode == "SECURE":
+                smb_users = data['users']
+                users_write_list = []
+                for user in smb_users:
+                    if user['mode'] == "rw":
+                        users_write_list.append(user['name'])
+                storage_manager.shared_folders.createSMBShare(
+                    name=name, 
+                    path=smb_path, 
+                    mode="SECURE",
+                    users_write_list=users_write_list
+                )
+                return
+    else:
+        raise HTTPException(status_code=404, detail="action not found")
+
 @app.get("/api/host/system-info/{action}")
 async def api_system_info_get(action: str, username: str = Depends(check_auth)):
     if action == "all":
@@ -2975,8 +2797,10 @@ async def api_system_users_get(username: str = Depends(check_auth)):
     for user in pwd.getpwall():
         # list users with UID >= 1000 and <= 60000 or UID == 0
         if user.pw_uid >= 1000 and user.pw_uid <= 60000 or user.pw_uid == 0:
+            smb_user = storage_manager.smbusers.lookup(name=user.pw_name)
             users.append({
                 "name": user.pw_name,
+                "smb_user": smb_user,
                 "uid": user.pw_uid,
                 "gid": user.pw_gid,
                 "home": user.pw_dir,
@@ -2984,6 +2808,49 @@ async def api_system_users_get(username: str = Depends(check_auth)):
                 "groups": [group.gr_name for group in grp.getgrall() if user.pw_name in group.gr_mem],
             })
     return users
+
+@app.post("/api/system/users/change-password")
+async def api_system_users_change_password(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    username = data['username']
+    password = data['password']
+    try:
+        subprocess.check_output(["passwd", username, "--stdin"], input=password.encode())
+        return
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=e)
+    
+@app.post("/api/system/users/remove-user")
+async def api_system_users_remove_user(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    username = data['username']
+    try:
+        subprocess.check_output(["userdel", username])
+        return
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=e)
+
+@app.post("/api/system/users/change-smb-password")
+async def api_system_users_change_smb_password(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    username = data['username']
+    password = data['password']
+    try:
+        storage_manager.smbusers.reset_password(username, password)
+        return
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/system/users/remove-smb-user")
+async def api_system_users_remove_smb_user(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    username = data['username']
+    try:
+        if storage_manager.smbusers.lookup(name=username) is not None:
+            storage_manager.smbusers.delete(name=username)
+        return
+    except storage_manager.StorageManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 ### API-SYSTEM-FILE-MANAGER ###
 @app.post("/api/system/file-manager")
@@ -3011,9 +2878,7 @@ async def api_system_file_manager_get(request: Request, username: str = Depends(
                 file_type = "dir"
             else:
                 # calculate size of file if path is not a directory. ConvertSizeUnit returns a tuple with the size and the unit
-                file_size = convertSizeUnit(size=os.path.getsize(file_path), from_unit="B")
-                file_size = str(round(file_size[0])) + " " + file_size[1]
-
+                file_size = storage_manager.convertSizeUnit(size=os.path.getsize(file_path), from_unit="B", mode="str")
 
             file_modified = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
             file_permissions = oct(os.stat(file_path).st_mode)[-3:]
@@ -3050,6 +2915,16 @@ async def api_system_file_manager_action(action: str, request: Request, username
         path = data['path']
         new_path = os.path.join(os.path.dirname(path), name)
         os.rename(path, new_path)
+    elif action == "validate-path":
+        path = data['path']
+        # if directory, return dir, if file return file, if not found return not found
+        if os.path.isdir(path):
+            return JSONResponse(content={"type": "dir"})
+        elif os.path.isfile(path):
+            parent = os.path.dirname(path)
+            return JSONResponse(content={"type": "file", "parent": parent})
+        else:
+            raise HTTPException(status_code=500, detail="not found")
     else:
         raise HTTPException(status_code=404, detail="Action not found")
 
@@ -3058,15 +2933,6 @@ async def api_system_file_manager_action(action: str, request: Request, username
 async def api_host_system_devices_get(devicetype: str, username: str = Depends(check_auth)):
     if devicetype == "pcie":
         return HostPcieDevices()
-    elif devicetype == "scsi":
-        disk_list = []
-        myblkd = BlkDiskInfo()
-        all_my_disks = myblkd.get_disks()
-
-        for i in all_my_disks:
-            disk_list.append(
-                {'model': i["model"], 'type': i['type'], 'path': f"/dev/{i['name']}", 'capacity': f'{round(convertSizeUnit(size=int(i["size"]), from_unit="B", to_unit="GB"))} GB'})
-        return disk_list
     elif devicetype == "usb":
         return SystemUsbDevicesList()
     else:

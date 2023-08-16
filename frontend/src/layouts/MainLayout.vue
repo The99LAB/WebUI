@@ -115,14 +115,6 @@
             <q-item-label>Hotplug USB</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/vm-manager/storage-pools">
-          <q-item-section avatar>
-            <q-icon name="mdi-server" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Storage Pools</q-item-label>
-          </q-item-section>
-        </q-item>
         <q-item clickable tag="a" to="/vm-manager/backups">
           <q-item-section avatar>
             <q-icon name="mdi-backup-restore" />
@@ -180,6 +172,31 @@
             </q-item-section>
           </q-item>
         </q-expansion-item>
+        <q-item-label header class="q-pb-none q-pt-md">Storage</q-item-label>
+        <q-item clickable tag="a" to="/storage-manager/disks">
+          <q-item-section avatar>
+            <q-icon name="bi-hdd" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Disks</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/storage-manager/raid-manager">
+          <q-item-section avatar>
+            <q-icon name="mdi-database-outline" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>RAID Management</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" to="/storage-manager/sharedfolders">
+          <q-item-section avatar>
+            <q-icon name="mdi-share-variant-outline" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Shared Folders</q-item-label>
+          </q-item-section>
+        </q-item>
         <q-item-label header class="q-pb-none q-pt-md">System</q-item-label>
         <q-item clickable tag="a" to="/system/system-info">
           <q-item-section avatar>
