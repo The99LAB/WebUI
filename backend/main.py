@@ -1407,22 +1407,18 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     if check_auth_token(token):
-        # wait for message
         data = await websocket.receive_json()
-        print("webscket data", data)
-        # extract data
         url = data["url"]
         filename = data["fileName"]
-        pool = data["storagePool"]
-        
-        storagePool = conn.storagePoolLookupByUUIDString(pool)
-        poolpath = storagePool.XMLDesc(0).split("<path>")[1].split("</path>")[0]
-        poolName = storagePool.name()
-        filepath = os.path.join(poolpath, filename)
+        directory = data["directory"]
+        filepath = os.path.join(directory, filename)
+
+        # use websocket events to send progress and errors
+        # downloadISOError: on error
+        # downloadISOProgress: on progress
+        # downloadISOComplete: on complete
 
         if (os.path.isfile(filepath)):
-            # send the event "downloadISOError"
-            print("file already exists")
             await websocket.send_json({"event": "downloadISOError", "message": f"{filename} already exists in pool {poolName}"})
             return
         
@@ -1446,9 +1442,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                     if prev_percentage != percentage:
                         await websocket.send_json({"event": "downloadISOProgress", "percentage": percentage})
                         if percentage == 100:
-                            storagePool.refresh(0)
                             print("download complete")
-                            await websocket.send_json({"event": "downloadISOComplete", "message": ["ISO Download Complete", f"ISO File: {filename}", f"Storage Pool: {poolName}"]})
+                            await websocket.send_json({"event": "downloadISOComplete", "message": ["ISO Download Complete", f"ISO File: {filename}", f"Directory: {directory}"]})
                     f.write(data)
                     await asyncio.sleep(0) # allow the websocket to send the message before continuing
         except Exception as e:
