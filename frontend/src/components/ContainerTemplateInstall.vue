@@ -602,6 +602,7 @@ export default {
         .then((response) => {
           this.dialogLoading = false;
           this.dialogShown = false;
+          this.$emit("finished");
         })
         .catch((error) => {
           let errormsg =
