@@ -12,14 +12,14 @@
     <template v-slot:append>
       <q-btn
         icon="mdi-menu-down"
-        class="q-pa-none"
+        round
         flat
         @click="focused = true"
         v-if="focused == false"
       />
       <q-btn
         icon="mdi-menu-up"
-        class="q-pa-none"
+        round
         flat
         @click="focused = false"
         v-if="focused == true"
@@ -27,10 +27,17 @@
       <slot name="append"></slot>
     </template>
     <template v-slot:after>
-        <slot name="after"></slot>
+      <slot name="after"></slot>
+    </template>
+    <template v-slot:counter>
+      <slot name="counter"></slot>
     </template>
     <template v-slot:hint>
+      <slot name="hint"></slot>
       <q-menu
+        :offset="[0, 0]"
+        anchor="top left"
+        self="top left"
         v-model="focused"
         fit
         class="q-my-none q-py-none"
@@ -40,7 +47,7 @@
         "
       >
         <q-list
-          class="q-my-none q-py-none dropdown shadow-3"
+          class="q-my-none q-py-none shadow-3"
           :class="{
             'bg-dark': $q.dark.isActive,
             'bg-white': !$q.dark.isActive,
