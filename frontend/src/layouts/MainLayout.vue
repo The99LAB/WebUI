@@ -87,7 +87,6 @@
 
     <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
       <q-list>
-        <q-separator spaced="xs" color="transparent" />
         <q-item clickable tag="a" to="/dashboard">
           <q-item-section avatar>
             <q-icon name="bi-speedometer" />
