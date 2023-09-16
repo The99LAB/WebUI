@@ -13,7 +13,6 @@ import subprocess
 import distro
 import requests
 import pam
-import LibvirtKVMBackup
 import sqlite3
 import select
 import termios
@@ -31,13 +30,15 @@ import pwd
 import grp
 import shutil
 import storage_manager
+from notifications import NotificationManager, NotificationType, NotificationTimeType
+import vm_backups
 
 
 origins = ["*"]
 
 app = FastAPI()
 docker_client = docker.from_env()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -54,6 +55,8 @@ fd = None
 child_pid = None
 system_status = 'running'
 conn = libvirt.open('qemu:///system')
+notification_manager = NotificationManager()
+vm_backup_manager = vm_backups.BackupJobManager()
 
 # check if the user is authenticated
 def check_auth(request: Request):
@@ -1060,56 +1063,6 @@ class settings_ovmfpaths:
         ''', (path, name))
         self.db.commit()
 
-class notifications:
-    def __init__(self):
-        self.db = sqlite3.connect('database.db')
-        self.db_c = self.db.cursor()
-
-    def getAll(self):
-        self.db_c.execute('''
-        SELECT * FROM notifications
-        ''')
-        rows = self.db_c.fetchall()
-
-
-        notificationsData = []
-
-        for row in rows:
-            id = row[0]
-            notification_type = row[1]
-            timestamp = row[2]
-            title = row[3]
-            message = row[4]
-            notificationsData.append(
-            {
-                "id": id,
-                "type": notification_type,
-                "timestamp": timestamp,
-                "title": title,
-                "message": message
-            })
-
-        return notificationsData
-    
-    def add(self, notification_type, notification_title, notification_message):
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.db_c.execute('''
-        INSERT INTO notifications (type, timestamp, title, message) VALUES (?, ?, ?, ?)
-        ''', (notification_type, timestamp, notification_title, notification_message))
-        self.db.commit()
-    
-    def delete(self, id):
-        self.db_c.execute('''
-        DELETE FROM notifications WHERE id = ?
-        ''', (id,))
-        self.db.commit()
-    
-    def deleteAll(self):
-        self.db_c.execute('''
-        DELETE FROM notifications
-        ''')
-        self.db.commit()
-
 class dockerTemplates:
     def __init__(self):
         self.db = sqlite3.connect('database.db')
@@ -1264,11 +1217,11 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     notifications_list = None
     try:
         if check_auth_token(token):
-            notifications_list = notifications().getAll()
+            notifications_list = notification_manager.get_notifications()
             await websocket.send_json({"type": "notifications_init", "data": notifications_list})
         while True:
             if check_auth_token(token):
-                new_notifications_list = notifications().getAll()
+                new_notifications_list = notification_manager.get_notifications()
                 if notifications_list != new_notifications_list:
                     new_notifications = [x for x in new_notifications_list if x not in notifications_list]
                     notifications_list = new_notifications_list
@@ -2234,10 +2187,13 @@ async def api_backup_manager_config_get(config: str, action: str, username: str 
     elif action == "create-backup":
         try:
             print("creating backup")
-
             ret =  LibvirtKVMBackup.backup(config=config)
             if ret != 0:
-                notifications.add(notification_type="error", notification_title="Backup Error", notification_message=f"Backup of {config} failed. See log for details.")
+                notification_manager.create_notification(
+                    type=NotificationType.ERROR,
+                    title="Backup Error",
+                    message=f"Backup of {config} failed. See log for details."
+                )
             return
         except LibvirtKVMBackup.backupError as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -2257,7 +2213,11 @@ async def api_backup_manager_actions_post(config: str, backup: str, action: str,
         try:
             ret = LibvirtKVMBackup.restore(config=config, backup=backup)
             if ret != 0:
-                notifications.add(notification_type="error", notification_title="Restore Error", notification_message=f"Restore of {config} failed. See log for details.")
+                notification_manager.create_notification(
+                    type=NotificationType.ERROR,
+                    title="Restore Error",
+                    message=f"Restore of {config} failed. See log for details."
+                )
             return
         except LibvirtKVMBackup.restoreError as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -2990,14 +2950,14 @@ async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str,
 @app.get("/api/notifications")
 async def api_notifications_get(username: str = Depends(check_auth)):
     print("get notifications")
-    return notifications().getAll()
+    return notification_manager.get_notifications()
 
 @app.delete("/api/notifications/{id}")
 async def api_notifications_delete(id: int, username: str = Depends(check_auth)):
     if id == -1:
-        notifications().deleteAll()
+        notification_manager.delete_all_notifications()
     else:
-        notifications().delete(id)
+        notification_manager.delete_notification(id)
     return
 
 @app.post("/api/notifications")
@@ -3005,7 +2965,21 @@ async def api_notifications_post(request: Request, username: str = Depends(check
     data = await request.json()
     for notification in data:
         notification_type = notification['type']
+        if notification_type == "error":
+            notification_type = NotificationType.ERROR
+        elif notification_type == "warning":
+            notification_type = NotificationType.WARNING
+        elif notification_type == "success":
+            notification_type = NotificationType.SUCCESS
+        else:
+            notification_type = NotificationType.INFO
+        
         notification_title = notification['title']
         notification_message = notification['message']
-        notifications().add(notification_type=notification_type, notification_title=notification_title, notification_message=notification_message)
+        notification_manager.create_notification(
+            type = notification_type,
+            title = notification_title,
+            message = notification_message,
+        )
+    
     return

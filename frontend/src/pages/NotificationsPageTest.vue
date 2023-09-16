@@ -5,11 +5,26 @@
     <q-btn label="Add 2 error" @click="AddTwo('error')" />
     <q-btn label="Add 2 info" @click="AddTwo('info')" />
     <q-btn label="Add 2 success" @click="AddTwo('success')" />
+    <q-separator spaced />
+    <directory-list v-model="pathValue">
+      <template v-slot:hint> ABC </template>
+    </directory-list>
+    <p class="q-mt-lg">path: {{ pathValue }}</p>
   </q-page>
 </template>
 
 <script>
+import DirectoryList from "src/components/DirectoryList.vue";
+
 export default {
+  data() {
+    return {
+      pathValue: "",
+    };
+  },
+  components: {
+    DirectoryList,
+  },
   methods: {
     AddOne() {
       this.$api

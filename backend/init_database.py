@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+from notifications import NotificationManager, NotificationType
 
 db = sqlite3.connect('database.db')
 c = db.cursor()
@@ -42,19 +43,8 @@ c.execute('''CREATE TABLE "settings_ovmfpaths" (
 c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (1, "OVMF", "/usr/share/OVMF/OVMF_CODE.fd")''')
 c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (2, "OVMF Secureboot", "/usr/share/OVMF/OVMF_CODE.secboot.fd")''')
 
-# Create table notifications
-c.execute('''CREATE TABLE "notifications" (
-	"id"	INTEGER,
-	"type"	TEXT,
-	"timestamp"	TEXT,
-	"title"	TEXT,
-	"message"	TEXT,
-	PRIMARY KEY("id")
-    )''')
-
-# insert notification
-timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-c.execute(f'''INSERT INTO "notifications" ("id", "type", "timestamp", "title", "message") VALUES (1, "info", "{timestamp}", "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")''')
+# Create welcome notification
+NotificationManager.create_notification(NotificationType.INFO, "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")
 
 # Create table docker_templates_locations
 c.execute('''CREATE TABLE "docker_templates_locations" (

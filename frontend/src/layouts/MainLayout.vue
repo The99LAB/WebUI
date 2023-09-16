@@ -454,11 +454,11 @@ export default defineComponent({
     },
   },
   created() {
-    this.connectNotificationsWebsocket();
+    // this.connectNotificationsWebsocket();
   },
   unmounted() {
-    this.ws.onclose = () => {};
-    this.ws.close();
+    // this.ws.onclose = () => {};
+    // this.ws.close();
   },
 });
 </script>

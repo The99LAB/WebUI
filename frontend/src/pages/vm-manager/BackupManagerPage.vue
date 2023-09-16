@@ -1,7 +1,6 @@
 <template>
   <q-page padding>
     <q-table
-      title="Backups"
       :loading="backupConfigTableLoading"
       :rows="backupConfigRows"
       :columns="backupConfigColumns"
@@ -10,10 +9,12 @@
       no-data-label="No configs defined"
       :pagination="backupConfigTablePagination"
     >
-      <template v-slot:top-right>
+      <!-- <template v-slot:top-left>
         <q-btn flat color="primary" round icon="mdi-refresh" @click="getData">
           <q-tooltip :offset="[5, 5]"> Refresh Backups </q-tooltip>
         </q-btn>
+      </template> -->
+      <template v-slot:top-right>
         <q-btn
           flat
           color="primary"

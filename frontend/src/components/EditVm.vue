@@ -427,14 +427,19 @@
                   v-if="sounddevice.index != 0"
                 />
                 <q-input label="Device Type" model-value="Sound" readonly>
-                  <template v-slot:after>
+                  <template v-slot:append>
                     <q-btn
                       icon="delete"
+                      color="primary"
                       round
                       dense
                       flat
                       @click="soundDelete(sounddevice.index)"
-                    />
+                    >
+                      <q-tooltip :offset="[5, 5]"
+                        >Delete Sound Device</q-tooltip
+                      >
+                    </q-btn>
                   </template>
                 </q-input>
                 <q-input
@@ -447,14 +452,20 @@
             <q-tab-panel name="passthrough">
               <div v-for="usbdevice in usbdevicesList" :key="usbdevice">
                 <q-input model-value="USB Device" label="Type" readonly>
-                  <template v-slot:after>
+                  <template v-slot:append>
                     <q-btn
+                      flat
+                      round
                       color="primary"
                       icon="delete"
                       @click="
                         usbdeviceDelete(usbdevice.productid, usbdevice.vendorid)
                       "
-                    />
+                    >
+                      <q-tooltip :offset="[5, 5]"
+                        >Delete USB Device</q-tooltip
+                      >
+                    </q-btn>
                   </template>
                 </q-input>
                 <q-input v-model="usbdevice.name" label="Name" readonly />
@@ -472,10 +483,12 @@
               </div>
               <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
                 <q-input model-value="PCI Device" label="Type" readonly>
-                  <template v-slot:after>
+                  <template v-slot:append>
                     <q-btn
                       color="primary"
                       icon="delete"
+                      round
+                      flat
                       @click="
                         pciedeviceDelete(
                           pcidevice.domain,
@@ -484,7 +497,11 @@
                           pcidevice.function,
                         )
                       "
-                    />
+                    >
+                      <q-tooltip :offset="[5, 5]"
+                        >Delete PCI Device</q-tooltip
+                      >
+                    </q-btn>
                   </template>
                 </q-input>
                 <q-input
