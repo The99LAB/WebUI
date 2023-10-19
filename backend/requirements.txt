@@ -1,5 +1,6 @@
 psutil
 fastapi
+uvicorn
 asyncio
 libvirt-python
 blkinfo
@@ -7,6 +8,7 @@ distro
 python-pam
 python-jose[cryptography]
 python-multipart
+pyyaml
 uvicorn[standard]
 pyfstab
 mdstat
