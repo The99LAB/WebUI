@@ -1296,7 +1296,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         # downloadISOComplete: on complete
 
         if (os.path.isfile(filepath)):
-            await websocket.send_json({"event": "downloadISOError", "message": f"{filename} already exists in pool {poolName}"})
+            await websocket.send_json({"event": "downloadISOError", "message": f"{filename} already exists in {directory}"})
             return
         
         try:
