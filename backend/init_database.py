@@ -1,5 +1,4 @@
 import sqlite3
-import datetime
 from notifications import NotificationManager, NotificationType
 
 db = sqlite3.connect('database.db')
@@ -10,7 +9,7 @@ qemu_path = "/usr/bin/qemu-system-x86_64"
 novnc_ip = input("Enter novnc ip: ")
 novnc_port = input("Enter novnc port: ")
 novnc_protocool = input("Enter novnc protocool: ")
-novnc_path = input("Enter novnc path: ")
+novnc_path = input("Enter novnc path: ") # vnc.html
 # libvirt_domain_logs_path = input("Enter libvirt domain logs path: ") # /var/log/libvirt/qemu
 libvirt_domain_logs_path = "/var/log/libvirt/qemu"
 
@@ -43,9 +42,6 @@ c.execute('''CREATE TABLE "settings_ovmfpaths" (
 c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (1, "OVMF", "/usr/share/OVMF/OVMF_CODE.fd")''')
 c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (2, "OVMF Secureboot", "/usr/share/OVMF/OVMF_CODE.secboot.fd")''')
 
-# Create welcome notification
-NotificationManager.create_notification(NotificationType.INFO, "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")
-
 # Create table docker_templates_locations
 c.execute('''CREATE TABLE "docker_templates_locations" (
 	"id"	INTEGER,
@@ -76,3 +72,6 @@ c.execute('''CREATE TABLE "docker_templates" (
 # finish work with database
 db.commit()
 db.close()
+
+# Create welcome notification
+NotificationManager().create_notification(NotificationType.INFO, "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")
