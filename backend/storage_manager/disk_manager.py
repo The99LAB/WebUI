@@ -256,7 +256,7 @@ def get():
                     "path": partition_path,
                     "parent": diskpath,
                     "used": None if partition_used == 0 else convertSizeUnit(size=partition_used, from_unit="MB", mode="str", round_state=True, round_to=None),
-                    "size": convertSizeUnit(size=int(partition_size), from_unit="B", mode="str", round_state=True, round_to=None),
+                    "size": "0B" if partition_size == 0 else convertSizeUnit(size=int(partition_size), from_unit="B", mode="str", round_state=True, round_to=None),
                     })
 
             disk_list.append({
