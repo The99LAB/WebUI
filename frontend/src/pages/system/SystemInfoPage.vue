@@ -57,7 +57,7 @@
         <q-separator color="transparent" spaced="xs" />
         <div class="row items-start">
           <p class="col text-right q-mr-sm text-weight-bold">Version:</p>
-          <p class="col">1.2</p>
+          <p class="col">2.0</p>
         </div>
       </q-card-section>
       <q-card-section>
