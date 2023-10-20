@@ -11,6 +11,11 @@ import subprocess
 sharedfolderspath = "/mnt/sharedfolders"
 smbsharesconfig = "/etc/samba/smb-shares.conf"
 
+# if smb-shares.conf does not exist, create it
+if not os.path.exists(smbsharesconfig):
+    with open(smbsharesconfig, "w") as f:
+        f.write("")
+
 def get_selinux_context(path):
     try:
         output = subprocess.check_output(['stat', '-c', '%C', path])
