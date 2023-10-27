@@ -216,6 +216,8 @@ export default {
   },
   mounted() {
     this.templateLocationsFetch();
+    // Check if "/mnt/sharedfolders/docker_data" exists using system/file-manager/validate-path
+    // if not, the user will be prompted to create it
   },
 };
 </script>

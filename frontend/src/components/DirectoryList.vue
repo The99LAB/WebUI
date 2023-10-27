@@ -89,6 +89,7 @@ export default {
     };
   },
   props: {
+    // add prop which bypasses the validation
     modelValue: {
       type: String,
       default: null,
@@ -157,6 +158,7 @@ export default {
       this.getData(this.currentPath);
       return;
     }
+    // bypass the validation if the prop is set
     this.$api
       .post("system/file-manager/validate-path", {
         path: this.modelValue,

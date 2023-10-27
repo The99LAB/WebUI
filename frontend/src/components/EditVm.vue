@@ -462,9 +462,7 @@
                         usbdeviceDelete(usbdevice.productid, usbdevice.vendorid)
                       "
                     >
-                      <q-tooltip :offset="[5, 5]"
-                        >Delete USB Device</q-tooltip
-                      >
+                      <q-tooltip :offset="[5, 5]">Delete USB Device</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>
@@ -498,9 +496,7 @@
                         )
                       "
                     >
-                      <q-tooltip :offset="[5, 5]"
-                        >Delete PCI Device</q-tooltip
-                      >
+                      <q-tooltip :offset="[5, 5]">Delete PCI Device</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>

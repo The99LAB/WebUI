@@ -20,7 +20,7 @@
           @click="templateAddRepoDialog = true"
           :disable="templateRepoSelected.length != 0"
         >
-          <q-tooltip :offset="[5, 5]"> Add template repository </q-tooltip>
+          <q-tooltip :offset="[5, 5]">Add template repository</q-tooltip>
         </q-btn>
         <q-btn
           color="primary"
@@ -36,7 +36,7 @@
           "
           :disable="!templateRepoSelected.length"
         >
-          <q-tooltip :offset="[5, 5]"> Delete template repository </q-tooltip>
+          <q-tooltip :offset="[5, 5]">Delete template repository</q-tooltip>
         </q-btn>
         <q-btn
           color="primary"
@@ -46,7 +46,17 @@
           @click="templateRepoEditDialog = true"
           :disable="!templateRepoSelected.length"
         >
-          <q-tooltip :offset="[5, 5]"> Edit template repository </q-tooltip>
+          <q-tooltip :offset="[5, 5]">Edit template repository</q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
+          round
+          flat
+          icon="mdi-download"
+          @click="templateRepoUpdate"
+          :disable="!templateRepoSelected.length"
+        >
+          <q-tooltip :offset="[5, 5]">Update template repository</q-tooltip>
         </q-btn>
       </template>
     </q-table>
@@ -171,6 +181,13 @@ export default {
           align: "left",
           sortable: true,
         },
+        {
+          name: "last_updated",
+          label: "Last Updated",
+          field: "last_update",
+          align: "left",
+          sortable: false,
+        },
       ],
       templateTablePagination: {
         sortBy: "id",
@@ -255,6 +272,19 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error deleting template repository", [
+            error.response.data.message,
+          ]);
+        });
+    },
+    templateRepoUpdate() {
+      console.log("Update template repo", this.templateRepoSelected[0]);
+      this.$api
+        .post(
+          "docker-manager/template-locations/update",
+          this.templateRepoSelected[0],
+        )
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error updating template repository", [
             error.response.data.message,
           ]);
         });

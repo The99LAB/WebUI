@@ -32,6 +32,7 @@ import shutil
 import storage_manager
 from notifications import NotificationManager, NotificationType, NotificationTimeType
 import vm_backups
+from docker_manager import Templates, Containers
 
 
 origins = ["*"]
@@ -57,6 +58,8 @@ system_status = 'running'
 conn = libvirt.open('qemu:///system')
 notification_manager = NotificationManager()
 vm_backup_manager = vm_backups.BackupJobManager()
+docker_templates = Templates()
+docker_containers = Containers()
 
 # check if the user is authenticated
 def check_auth(request: Request):
@@ -1063,84 +1066,6 @@ class settings_ovmfpaths:
         ''', (path, name))
         self.db.commit()
 
-class dockerTemplates:
-    def __init__(self):
-        self.db = sqlite3.connect('database.db')
-        self.db_c = self.db.cursor()
-    
-    def getAll(self):
-        self.db_c.execute('''
-        SELECT * FROM docker_templates
-        ''')
-        rows = self.db_c.fetchall()
-        
-        templatesData = []
-        for row in rows:
-            _image = row[6]
-            if _image:
-                _image = base64.b64encode(_image).decode("utf-8")
-            templatesData.append(self.convertRow(row))
-        return templatesData
-    
-    def convertRow(slef, row):
-        _image = row[6]
-        if _image:
-            _image = base64.b64encode(_image).decode("utf-8")
-        return {
-            "id": row[0],
-            "template_repository_id": row[1],
-            "name": row[2],
-            "maintainer": row[3],
-            "description": row[4],
-            "webui": json.loads(row[5]),
-            "image": _image,
-            "url": json.loads(row[7]),
-            "config": json.loads(row[8]),
-        }
-    
-    def get(self, id):
-        self.db_c.execute('''
-        SELECT * FROM docker_templates WHERE id = ?
-        ''', (id,))
-        row = self.db_c.fetchone()
-        return self.convertRow(row)
-    
-    def getLocations(self):
-        # select table docker_templates_loactions
-        self.db_c.execute('''
-        SELECT * FROM docker_templates_locations
-        ''')
-        rows = self.db_c.fetchall()
-
-        locationsData = []
-        for row in rows:
-            locationsData.append(
-            {
-                "id": row[0],
-                "name": row[1],
-                "url": row[2],
-                "branch": row[3]
-            })
-        return locationsData
-    
-    def addLocation(self, name, url, branch):
-        self.db_c.execute('''
-        INSERT INTO docker_templates_locations (name, url, branch) VALUES (?, ?, ?)
-        ''', (name, url, branch))
-        self.db.commit()
-    
-    def editLoaction(self, id, name, url, branch):
-        self.db_c.execute('''
-        UPDATE docker_templates_locations SET name = ?, url = ?, branch = ? WHERE id = ?
-        ''', (name, url, branch, id))
-        self.db.commit()
-    
-    def deleteLocation(self, id):
-        self.db_c.execute('''
-        DELETE FROM docker_templates_locations WHERE id = ?
-        ''', (id,))
-        self.db.commit()
-
 class dockerContainers:
     def __init__(self):
         self.db = sqlite3.connect('database.db')
@@ -2117,118 +2042,118 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         raise HTTPException(status_code=404, detail="Action not found")
 
 
-#TODO: API-BACKUP-MANAGER
-@app.get("/api/backup-manager/configs")
-async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
-    print("getting backup manager configs...")
-    configs = []
-    for config in LibvirtKVMBackup.configManager.list():
-        backups = LibvirtKVMBackup.configManager(config=config).listBackups()
-        backup_count = len(backups)
-        backup_config_data = LibvirtKVMBackup.configManager(config=config).data()
-        backup_destination = backup_config_data['Destination']
-        backup_auto_shutdown = backup_config_data['AutoShutdown']
-        backup_disks = backup_config_data['Disks']
+# #TODO: API-BACKUP-MANAGER
+# @app.get("/api/backup-manager/configs")
+# async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
+#     print("getting backup manager configs...")
+#     configs = []
+#     for config in LibvirtKVMBackup.configManager.list():
+#         backups = LibvirtKVMBackup.configManager(config=config).listBackups()
+#         backup_count = len(backups)
+#         backup_config_data = LibvirtKVMBackup.configManager(config=config).data()
+#         backup_destination = backup_config_data['Destination']
+#         backup_auto_shutdown = backup_config_data['AutoShutdown']
+#         backup_disks = backup_config_data['Disks']
         
-        # sort backups by latest first
-        backups.sort(key=lambda x: x['name'], reverse=True)
-        # convert item size in backups to GG
-        for backup in backups:
-            backup['size'] = storage_manager.convertSizeUnit(size=backup['size'], from_unit="B", mode="str")
+#         # sort backups by latest first
+#         backups.sort(key=lambda x: x['name'], reverse=True)
+#         # convert item size in backups to GG
+#         for backup in backups:
+#             backup['size'] = storage_manager.convertSizeUnit(size=backup['size'], from_unit="B", mode="str")
 
-        backup_last_result = None
-        if backup_count > 0:
-            backup_last_result = backups[0]['status']
+#         backup_last_result = None
+#         if backup_count > 0:
+#             backup_last_result = backups[0]['status']
             
-        configs.append({
-            "config": config,
-            "lastResult": backup_last_result,
-            "backupCount": backup_count,
-            "destination": backup_destination,
-            "autoShutdown": backup_auto_shutdown,
-            "disks": backup_disks,
-            "backups": backups,
-        })
-    return configs
+#         configs.append({
+#             "config": config,
+#             "lastResult": backup_last_result,
+#             "backupCount": backup_count,
+#             "destination": backup_destination,
+#             "autoShutdown": backup_auto_shutdown,
+#             "disks": backup_disks,
+#             "backups": backups,
+#         })
+#     return configs
 
-@app.post("/api/backup-manager/configs")
-async def api_backup_manager_configs_post(request: Request, username: str = Depends(check_auth)):
-    data = await request.json()
-    try:
-        config_name = data['configName']
-        vm_name = data['vmName']
-        destination = data['destination']
-        auto_shutdown = data['autoShutdown']
-        disks = data['disks']
-    except KeyError:
-        raise HTTPException(status_code=400, detail="Missing required data")
-    try:
-        config_data = {
-            'DomainName': vm_name, 
-            'Disks': disks, 
-            'Destination': destination, 
-            'AutoShutdown': auto_shutdown
-        }
-        LibvirtKVMBackup.configManager(config=config_name).create(configdata=config_data)
-        return
-    except LibvirtKVMBackup.configError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @app.post("/api/backup-manager/configs")
+# async def api_backup_manager_configs_post(request: Request, username: str = Depends(check_auth)):
+#     data = await request.json()
+#     try:
+#         config_name = data['configName']
+#         vm_name = data['vmName']
+#         destination = data['destination']
+#         auto_shutdown = data['autoShutdown']
+#         disks = data['disks']
+#     except KeyError:
+#         raise HTTPException(status_code=400, detail="Missing required data")
+#     try:
+#         config_data = {
+#             'DomainName': vm_name, 
+#             'Disks': disks, 
+#             'Destination': destination, 
+#             'AutoShutdown': auto_shutdown
+#         }
+#         LibvirtKVMBackup.configManager(config=config_name).create(configdata=config_data)
+#         return
+#     except LibvirtKVMBackup.configError as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
-#TODO
-### API-BACKUP-CONFIG ###
-@app.post("/api/backup-manager/config/{config}/{action}")
-async def api_backup_manager_config_get(config: str, action: str, username: str = Depends(check_auth)):
-    if action == "delete":
-        try:
-            LibvirtKVMBackup.configManager(config=config).delete()
-            return
-        except LibvirtKVMBackup.configError as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    elif action == "create-backup":
-        try:
-            print("creating backup")
-            ret =  LibvirtKVMBackup.backup(config=config)
-            if ret != 0:
-                notification_manager.create_notification(
-                    type=NotificationType.ERROR,
-                    title="Backup Error",
-                    message=f"Backup of {config} failed. See log for details."
-                )
-            return
-        except LibvirtKVMBackup.backupError as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    else:
-        raise HTTPException(status_code=404, detail="action not found")
+# #TODO
+# ### API-BACKUP-CONFIG ###
+# @app.post("/api/backup-manager/config/{config}/{action}")
+# async def api_backup_manager_config_get(config: str, action: str, username: str = Depends(check_auth)):
+#     if action == "delete":
+#         try:
+#             LibvirtKVMBackup.configManager(config=config).delete()
+#             return
+#         except LibvirtKVMBackup.configError as e:
+#             raise HTTPException(status_code=500, detail=str(e))
+#     elif action == "create-backup":
+#         try:
+#             print("creating backup")
+#             ret =  LibvirtKVMBackup.backup(config=config)
+#             if ret != 0:
+#                 notification_manager.create_notification(
+#                     type=NotificationType.ERROR,
+#                     title="Backup Error",
+#                     message=f"Backup of {config} failed. See log for details."
+#                 )
+#             return
+#         except LibvirtKVMBackup.backupError as e:
+#             raise HTTPException(status_code=500, detail=str(e))
+#     else:
+#         raise HTTPException(status_code=404, detail="action not found")
     
 
-### API-BACKUP-ACTIONS ###
-@app.post("/api/backup-manager/{config}/{backup}/{action}")
-async def api_backup_manager_actions_post(config: str, backup: str, action: str, username: str = Depends(check_auth)):
-    if action == "log":
-        try:
-            return LibvirtKVMBackup.configManager(config).backupLog(backup)
-        except LibvirtKVMBackup.configError as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    elif action == "restore":
-        try:
-            ret = LibvirtKVMBackup.restore(config=config, backup=backup)
-            if ret != 0:
-                notification_manager.create_notification(
-                    type=NotificationType.ERROR,
-                    title="Restore Error",
-                    message=f"Restore of {config} failed. See log for details."
-                )
-            return
-        except LibvirtKVMBackup.restoreError as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    elif action == "delete":
-        try:
-            LibvirtKVMBackup.configManager(config=config).backupDelete(backup=backup)
-            return
-        except LibvirtKVMBackup.configError as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    else:
-        raise HTTPException(status_code=404, detail="action not found")
+# ### API-BACKUP-ACTIONS ###
+# @app.post("/api/backup-manager/{config}/{backup}/{action}")
+# async def api_backup_manager_actions_post(config: str, backup: str, action: str, username: str = Depends(check_auth)):
+#     if action == "log":
+#         try:
+#             return LibvirtKVMBackup.configManager(config).backupLog(backup)
+#         except LibvirtKVMBackup.configError as e:
+#             raise HTTPException(status_code=500, detail=str(e))
+#     elif action == "restore":
+#         try:
+#             ret = LibvirtKVMBackup.restore(config=config, backup=backup)
+#             if ret != 0:
+#                 notification_manager.create_notification(
+#                     type=NotificationType.ERROR,
+#                     title="Restore Error",
+#                     message=f"Restore of {config} failed. See log for details."
+#                 )
+#             return
+#         except LibvirtKVMBackup.restoreError as e:
+#             raise HTTPException(status_code=500, detail=str(e))
+#     elif action == "delete":
+#         try:
+#             LibvirtKVMBackup.configManager(config=config).backupDelete(backup=backup)
+#             return
+#         except LibvirtKVMBackup.configError as e:
+#             raise HTTPException(status_code=500, detail=str(e))
+#     else:
+#         raise HTTPException(status_code=404, detail="action not found")
     
 
 ### API-NETWORKS ###
@@ -2267,15 +2192,25 @@ async def api_networks_get(username: str = Depends(check_auth)):
 
 @app.get("/api/docker-manager/templates/{id}")
 async def api_docker_manager_template_get(id: int, username: str = Depends(check_auth)):
-    return dockerTemplates().get(id=id)
+    return docker_templates.getTemplate(id=id)
 
 @app.get("/api/docker-manager/templates")
 async def api_docker_manager_templates_get(username: str = Depends(check_auth)):
-    return dockerTemplates().getAll()
+    return docker_templates.getTemplates()
 
 @app.get("/api/docker-manager/template-locations")
 async def api_docker_manager_template_locations_get(username: str = Depends(check_auth)):
-    return dockerTemplates().getLocations()
+    template_locations = docker_templates.getLocations()
+    for template_location in template_locations:
+        print(template_location['last_update'])
+    return template_locations
+
+@app.post("/api/docker-manager/template-locations/update")
+async def api_docker_manager_template_locations_update_post(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    id = data['id']
+    docker_templates.updateLocation(id=id)
+    return
 
 @app.put("/api/docker-manager/template-locations")
 async def api_docker_manager_template_locations_put(request: Request, username: str = Depends(check_auth)):
@@ -2284,14 +2219,14 @@ async def api_docker_manager_template_locations_put(request: Request, username: 
     name = data['name']
     url = data['url']
     branch = data['branch']
-    dockerTemplates().editLoaction(id=id, name=name, url=url, branch=branch)
+    docker_templates.editLocation(id=id, name=name, url=url, branch=branch)
     return
 
 @app.delete("/api/docker-manager/template-locations")
 async def api_docker_manager_template_locations_delete(request: Request, username: str = Depends(check_auth)):
     data = await request.json()
     id = data['id']
-    dockerTemplates().deleteLocation(id=id)
+    docker_templates.deleteLocation(id=id)
     return
 
 @app.post("/api/docker-manager/template-locations")
@@ -2300,14 +2235,13 @@ async def api_docker_manager_template_locations_post(request: Request, username:
     name = data['name']
     url = data['url']
     branch = data['branch']
-    dockerTemplates().addLocation(name=name, url=url, branch=branch)
+    docker_templates.addLocation(name=name, url=url, branch=branch)
     return
 
 @app.get("/api/docker-manager/info")
 async def api_docker_manager_info_get(username: str = Depends(check_auth)):
     docker_version = docker_client.version()
     return docker_version
-
 
 @app.get("/api/docker-manager/images")
 async def api_docker_manager_images_get(username: str = Depends(check_auth)):

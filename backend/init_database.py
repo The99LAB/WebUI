@@ -42,33 +42,6 @@ c.execute('''CREATE TABLE "settings_ovmfpaths" (
 c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (1, "OVMF", "/usr/share/OVMF/OVMF_CODE.fd")''')
 c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (2, "OVMF Secureboot", "/usr/share/OVMF/OVMF_CODE.secboot.fd")''')
 
-# Create table docker_templates_locations
-c.execute('''CREATE TABLE "docker_templates_locations" (
-	"id"	INTEGER,
-	"name"	TEXT NOT NULL,
-	"url"	TEXT NOT NULL,
-    "branch" TEXT NOT NULL,
-	PRIMARY KEY("id")
-);''')
-
-# Create records in table docker_templates_locations
-c.execute('''INSERT INTO "docker_templates_locations" ("id", "name", "url", "branch") VALUES ('1', 'VmManager Official', 'https://github.com/macOS-KVM/vm-manager-docker-templates.git', 'main')''')
-
-# Create table docker_templates
-c.execute('''CREATE TABLE "docker_templates" (
-	"id"	INTEGER,
-	"template_repository_id"	INTEGER NOT NULL,
-	"name"	TEXT NOT NULL,
-	"maintainer"	TEXT NOT NULL,
-	"description"	TEXT,
-	"webui"	TEXT NOT NULL,
-	"image"	BLOB,
-	"url"	TEXT NOT NULL,
-	"config"	TEXT NOT NULL,
-	PRIMARY KEY("id"),
-	FOREIGN KEY("template_repository_id") REFERENCES "docker_templates_locations"("id")
-)''')
-
 # finish work with database
 db.commit()
 db.close()
