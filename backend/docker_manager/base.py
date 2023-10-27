@@ -39,5 +39,15 @@ def database():
         PRIMARY KEY("id"),
         FOREIGN KEY("template_repository_id") REFERENCES "docker_templates_locations"("id")
     );''')
+
+    # Create table docker_containers if not exists
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS "docker_containers" (
+        "id"	TEXT,
+        "container_type"	TEXT NOT NULL,
+        "webui"	TEXT NOT NULL,
+        "config"	TEXT NOT NULL,
+        PRIMARY KEY("id")
+    );''')
     conn.commit()
     return conn
