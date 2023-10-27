@@ -89,7 +89,10 @@ export default {
     };
   },
   props: {
-    // add prop which bypasses the validation
+    validate: {
+      type: Boolean,
+      default: true,
+    },
     modelValue: {
       type: String,
       default: null,
@@ -158,7 +161,6 @@ export default {
       this.getData(this.currentPath);
       return;
     }
-    // bypass the validation if the prop is set
     this.$api
       .post("system/file-manager/validate-path", {
         path: this.modelValue,
@@ -173,9 +175,12 @@ export default {
         }
       })
       .catch((error) => {
-        this.$emit("update:modelValue", null);
-        this.currentPath = this.startpath;
-        this.getData(this.currentPath);
+        // bypass the validation if the prop is set
+        if (this.validate){
+          this.$emit("update:modelValue", null);
+          this.currentPath = this.startpath;
+          this.getData(this.currentPath);
+        }
       });
   },
 };

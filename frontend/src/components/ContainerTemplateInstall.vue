@@ -220,16 +220,17 @@
               :key="item.name"
             >
               <DirectoryList
-                class="q-mb-md"
+                class="q-mb-lg"
                 v-model="item.value"
-                :label="item.bind"
+                :label="item.description"
+                :validate="item.createdir ? false: true"
                 v-if="item.editable"
               >
                 <template v-slot:counter>
                   <p>mode: {{ item.mode }}</p>
                 </template>
                 <template v-slot:hint>
-                  {{ item.description }}
+                  Container Path: {{ item.bind }}
                 </template>
                 <template
                   v-slot:append
