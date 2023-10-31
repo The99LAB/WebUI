@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import docker
 
 def database():
     database_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database.db')
@@ -51,3 +52,6 @@ def database():
     );''')
     conn.commit()
     return conn
+
+def docker_client():
+    return docker.from_env()

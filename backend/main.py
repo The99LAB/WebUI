@@ -23,22 +23,19 @@ import signal
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import humanize
-import docker
 import json
-import base64
 import pwd
 import grp
 import shutil
 import storage_manager
 from notifications import NotificationManager, NotificationType, NotificationTimeType
 import vm_backups
-from docker_manager import Templates, Containers
+from docker_manager import Templates, Containers, Networks, Images, General
 
 
 origins = ["*"]
 
 app = FastAPI()
-docker_client = docker.from_env()
 # app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(
     CORSMiddleware,
@@ -58,8 +55,11 @@ system_status = 'running'
 conn = libvirt.open('qemu:///system')
 notification_manager = NotificationManager()
 vm_backup_manager = vm_backups.BackupJobManager()
-docker_templates = Templates()
-docker_containers = Containers()
+dockerTemplates = Templates()
+dockerContainers = Containers()
+dockerNetworks = Networks()
+dockerImages = Images()
+dockerGeneral = General()
 
 # check if the user is authenticated
 def check_auth(request: Request):
@@ -1064,71 +1064,6 @@ class settings_ovmfpaths:
         self.db_c.execute('''
         UPDATE settings_ovmfpaths SET path = ? WHERE name = ?
         ''', (path, name))
-        self.db.commit()
-
-class dockerContainers:
-    def __init__(self):
-        self.db = sqlite3.connect('database.db')
-        self.db_c = self.db.cursor()
-
-    def convertRow(self, id):
-        _container = docker_client.containers.get(id)
-        _container_status = _container.status
-        _container_name = _container.name
-        # If the container doesn't exist in the database, mark the container as unmanaged.
-        self.db_c.execute('''
-        SELECT * FROM docker_containers WHERE id = ?
-        ''', (id,))
-        row = self.db_c.fetchone()
-        container_type = "unmanaged"
-        container_webui = {}
-        container_config = {}
-        if row:
-            container_type = row[1]
-            container_webui = json.loads(row[2])
-            container_config = json.loads(row[3])
-
-        container_dhcp_ip = None
-        if _container_status == "running":
-            try:
-                container_dhcp_ip = _container.attrs["NetworkSettings"]["Networks"][list(_container.attrs["NetworkSettings"]["Networks"].keys())[0]]["IPAddress"]
-                if container_dhcp_ip == '':
-                        container_dhcp_ip = None
-                if container_config.get("network"):
-                    container_config["network"]["dhcp_ip"] = container_dhcp_ip
-            except KeyError:
-                pass
-
-        return {
-            "id": id,
-            "container_type": container_type,
-            "status": _container_status,
-            "name": _container_name,
-            "webui": container_webui,
-            "config": container_config,
-        }
-    
-    def getAll(self):
-        # Get containers from docker api.
-        api_containers = docker_client.containers.list(all=True)
-        docker_containers = []
-        for container in api_containers:
-            api_id = container.id
-            docker_containers.append(self.convertRow(api_id))
-        return docker_containers
-    def get(self, id):
-        return self.convertRow(id)
-    
-    def add(self, id, container_type, webui, config):
-        self.db_c.execute('''
-        INSERT INTO docker_containers (id, container_type, webui, config) VALUES (?, ?, ?, ?)
-        ''', (id, container_type, webui, config))
-        self.db.commit()
-    
-    def delete(self, id):
-        self.db_c.execute('''
-        DELETE FROM docker_containers WHERE id = ?
-        ''', (id,))
         self.db.commit()
 
 @app.get("/")
@@ -2192,15 +2127,15 @@ async def api_networks_get(username: str = Depends(check_auth)):
 
 @app.get("/api/docker-manager/templates/{id}")
 async def api_docker_manager_template_get(id: int, username: str = Depends(check_auth)):
-    return docker_templates.getTemplate(id=id)
+    return dockerTemplates.getTemplate(id=id)
 
 @app.get("/api/docker-manager/templates")
 async def api_docker_manager_templates_get(username: str = Depends(check_auth)):
-    return docker_templates.getTemplates()
+    return dockerTemplates.getTemplates()
 
 @app.get("/api/docker-manager/template-locations")
 async def api_docker_manager_template_locations_get(username: str = Depends(check_auth)):
-    template_locations = docker_templates.getLocations()
+    template_locations = dockerTemplates.getLocations()
     for template_location in template_locations:
         print(template_location['last_update'])
     return template_locations
@@ -2209,7 +2144,7 @@ async def api_docker_manager_template_locations_get(username: str = Depends(chec
 async def api_docker_manager_template_locations_update_post(request: Request, username: str = Depends(check_auth)):
     data = await request.json()
     id = data['id']
-    docker_templates.updateLocation(id=id)
+    dockerTemplates.updateLocation(id=id)
     return
 
 @app.put("/api/docker-manager/template-locations")
@@ -2219,14 +2154,14 @@ async def api_docker_manager_template_locations_put(request: Request, username: 
     name = data['name']
     url = data['url']
     branch = data['branch']
-    docker_templates.editLocation(id=id, name=name, url=url, branch=branch)
+    dockerTemplates.editLocation(id=id, name=name, url=url, branch=branch)
     return
 
 @app.delete("/api/docker-manager/template-locations")
 async def api_docker_manager_template_locations_delete(request: Request, username: str = Depends(check_auth)):
     data = await request.json()
     id = data['id']
-    docker_templates.deleteLocation(id=id)
+    dockerTemplates.deleteLocation(id=id)
     return
 
 @app.post("/api/docker-manager/template-locations")
@@ -2235,38 +2170,16 @@ async def api_docker_manager_template_locations_post(request: Request, username:
     name = data['name']
     url = data['url']
     branch = data['branch']
-    docker_templates.addLocation(name=name, url=url, branch=branch)
+    dockerTemplates.addLocation(name=name, url=url, branch=branch)
     return
 
 @app.get("/api/docker-manager/info")
 async def api_docker_manager_info_get(username: str = Depends(check_auth)):
-    docker_version = docker_client.version()
-    return docker_version
+    return dockerGeneral.version()
 
 @app.get("/api/docker-manager/images")
 async def api_docker_manager_images_get(username: str = Depends(check_auth)):
-    docker_images = docker_client.images.list()
-    docker_images_list = []
-    for image in docker_images:
-        image_id = image.short_id
-        image_tags = image.tags
-        image_size = storage_manager.convertSizeUnit(size=image.attrs['Size'], from_unit="B", mode="str", round_to=None)
-        image_created_orig = image.attrs['Created']
-        image_created_split = image_created_orig.split('.')[0]
-        image_created = image_created_split.split('T')[0] + " " + image_created_split.split('T')[1]
-        for  tag in image_tags:
-            image_repo = tag.split(':')[0]
-            image_tag = tag.split(':')[1]
-            image_dict = {
-                "uuid": image_repo + '&split' + image_id + '&split' + image_tag,
-                "repo": image_repo,
-                "tag": image_tag,
-                "id": image_id,
-                "size": image_size,
-                "created": image_created,
-            }
-            docker_images_list.append(image_dict)
-    return docker_images_list
+    return dockerImages.getAll()
 
 @app.post("/api/docker-manager/images/{action}")
 async def api_docker_manager_images_post(request: Request, action: str ,username: str = Depends(check_auth)):
@@ -2275,46 +2188,39 @@ async def api_docker_manager_images_post(request: Request, action: str ,username
         for image in data['images']:
             image_name = image['name']
             image_tag = image['tag']
-            docker_client.images.remove(image_name + ":" + image_tag)
+            dockerImages.remove(image_name + ":" + image_tag)
         return
     elif action == "pull":
-        try:
-            docker_client.images.pull(data['image'])
-            return
-        except docker.errors.APIError as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        dockerImages.pull(image=data['image'])
     else:
         raise HTTPException(status_code=404, detail="Action not found")
     
 @app.get("/api/docker-manager/containers")
 async def api_docker_manager_containers_get(username: str = Depends(check_auth)):
-    return dockerContainers().getAll()
+    return dockerContainers.getAll()
 
 @app.get("/api/docker-manager/container/{container_id}")
 async def api_docker_manager_container_get(container_id: str, username: str = Depends(check_auth)):
-    return dockerContainers().get(id=container_id)
+    return dockerContainers.get(id=container_id)
 
 @app.post("/api/docker-manager/container/{id}/{action}")
 async def api_docker_manager_containers_post(request: Request, id: str, action: str ,username: str = Depends(check_auth)):
     print(f"action: {action}, id: {id}")
     if action == "start":
-        container = docker_client.containers.get(id)
-        container.start()
+        dockerContainers.start(id=id)
         return
     elif action == "stop":
-        container = docker_client.containers.get(id)
-        container.stop()
+        dockerContainers.stop(id=id)
         return
     elif action == "restart":
-        container = docker_client.containers.get(id)
-        container.restart()
+        dockerContainers.restart(id=id)
         return
     elif action == "delete":
         container_data = dockerContainers().get(id=id)
         if container_data['container_type'] != "unmanaged":
-            dockerContainers().delete(id=id)
-        container = docker_client.containers.get(id)
-        container.remove()
+            dockerContainers.delete(id=id, api_only=True)
+        else:
+            dockerContainers.delete(id=id)
         return
     else:
         raise HTTPException(status_code=404, detail="action not found")
@@ -2328,9 +2234,7 @@ async def api_docker_manager_containers_create(request: Request, username: str =
     if action == "update":
         # Remove existing container: docker api and database
         id = data['id']
-        container = docker_client.containers.get(id)
-        container.remove()
-        dockerContainers().delete(id=id)
+        dockerContainers.delete(id=id)
 
     # Create a new container
     container_name = data['name']
@@ -2416,41 +2320,12 @@ async def api_docker_manager_containers_create(request: Request, username: str =
 
 @app.get("/api/docker-manager/networks")
 async def api_docker_manager_networks_get(username: str = Depends(check_auth)):
-    networks = docker_client.networks.list()
-    networks_list = []
-    for network in networks:
-        network_id = network.short_id
-        network_name = network.name
-        network_driver = network.attrs['Driver']
-        network_scope = network.attrs['Scope']
-        # Only macvlan and ipvlan networks can have containers with static IPs
-        network_custom_ip = False
-        network_subnet = ""
-        if network_driver == "macvlan" or network_driver == "ipvlan":
-            network_custom_ip = True
-        # check if network has subnet
-        if 'Config' in network.attrs['IPAM'] and len(network.attrs['IPAM']['Config']) > 0 and 'Subnet' in network.attrs['IPAM']['Config'][0]:
-            network_subnet = network.attrs['IPAM']['Config'][0]['Subnet']
-
-        network_dict = {
-            "id": network_id,
-            "name": network_name,
-            "driver": network_driver,
-            "scope": network_scope,
-            "custom_ip": network_custom_ip,
-            "subnet": network_subnet,
-        }
-        networks_list.append(network_dict)
-    return networks_list
+    return dockerNetworks.getAll()
 
 @app.delete("/api/docker-manager/network/{id}")
 async def api_docker_manager_networks_delete(id: str, username: str = Depends(check_auth)):
-    try:
-        network = docker_client.networks.get(id)
-        network.remove()
-        return
-    except docker.errors.APIError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    dockerNetworks.delete(id=id)
+    return
 
 ### api-host-power###
 @app.post("/api/host/power/{powermsg}")
