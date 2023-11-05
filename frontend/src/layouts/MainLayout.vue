@@ -258,26 +258,39 @@
           </div>
         </q-item-label>
         <q-item v-for="n in notifications" :key="n.id" clickable>
-          <q-item-section avatar>
-            <q-icon
-              :name="notificationIcon[n.type]"
-              :color="notificationColor[n.type]"
-            />
+            <q-item-section avatar>
+              <q-circular-progress
+                :show-value="n.progress != -1"
+                size="lg"
+                :class="'text-' + notificationColor[n.type]"
+                :color="notificationColor[n.type]"
+                track-color="grey-9"
+                :value="n.progress"
+                :indeterminate="n.progress == -1"
+                v-if="n.type == 'progress'"
+                />
+              <q-icon
+                :name="notificationIcon[n.type]"
+                :color="notificationColor[n.type]"
+                size="lg"
+                v-else
+              />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ n.title }}</q-item-label>
             <q-item-label caption>{{ n.message }}</q-item-label>
-            <q-item-label caption class="row"
-              ><q-btn
+            <q-item-label caption class="row">
+              <q-btn
                 @click="NotificationDelete(n.id)"
                 flat
                 text-color="primary"
                 size="sm"
                 padding="none"
                 label="Dismiss"
+                v-if="n.type != 'progress'"
               />
-              <q-space />{{ n.timestamp }}</q-item-label
-            >
+              <q-space />{{ n.timestamp }}
+            </q-item-label>
           </q-item-section>
         </q-item>
         <div class="row justify-center" v-if="notifications.length != 0">
@@ -291,7 +304,6 @@
         </div>
       </q-list>
     </q-drawer>
-
     <q-page-container>
       <router-view />
       <ErrorDialog ref="errorDialog" />
@@ -327,12 +339,14 @@ export default defineComponent({
         warning: "mdi-alert-circle",
         success: "mdi-check-circle",
         info: "mdi-information",
+        progress: "mdi-progress-helper"
       },
       notificationColor: {
         error: "red",
         warning: "orange",
         success: "green",
         info: "white",
+        progress: "blue",
       },
     };
   },
@@ -357,7 +371,7 @@ export default defineComponent({
     },
     NotificationDelete(id) {
       if (id == -1) {
-        this.notifications = [];
+        this.notifications = this.notifications.filter((n) => n.type == 'progress')
       } else {
         this.notifications = this.notifications.filter((n) => n.id != id);
       }
@@ -454,11 +468,11 @@ export default defineComponent({
     },
   },
   created() {
-    // this.connectNotificationsWebsocket();
+    this.connectNotificationsWebsocket();
   },
   unmounted() {
-    // this.ws.onclose = () => {};
-    // this.ws.close();
+    this.ws.onclose = () => {};
+    this.ws.close();
   },
 });
 </script>

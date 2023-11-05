@@ -8,6 +8,7 @@ class NotificationType(Enum):
     WARNING = 'warning'
     SUCCESS = 'success'
     INFO = 'info'
+    PROGRESS = 'progress' # Progress: value from 0 to 100 or -1 for indeterminate
 
 class NotificationTimeType(Enum):
     STRING = 'string'
@@ -32,19 +33,25 @@ class NotificationManager:
                 type TEXT,
                 timestamp TEXT,
                 title TEXT,
-                message TEXT
+                message TEXT,
+                progress INTEGER
             )
         ''')
         conn.commit()
         return conn
         
-    def create_notification(self, type:NotificationType, title, message):
+    def create_notification(self, type:NotificationType, title, message, progress=None):
+        if type == NotificationType.PROGRESS:
+            if progress is None:
+                raise Exception('Progress must be specified when creating a progress notification')
+        else:
+            progress = 0
         cursor = self.conn.cursor()
         timestamp = datetime.now().strftime(self.datetime_format)
         cursor.execute('''
-            INSERT INTO notifications (type, timestamp, title, message)
-            VALUES (?, ?, ?, ?)
-        ''', (type.value, timestamp, title, message))
+            INSERT INTO notifications (type, timestamp, title, message, progress)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (type.value, timestamp, title, message, progress))
         self.conn.commit()
 
     def get_notifications(self, time_type=NotificationTimeType.STRING):
@@ -65,5 +72,6 @@ class NotificationManager:
     
     def delete_all_notifications(self):
         cursor = self.conn.cursor()
-        cursor.execute('DELETE FROM notifications')
+        # Delete all notifications except the ones with type "progress"
+        cursor.execute("DELETE FROM notifications WHERE type != ?", ('progress',))
         self.conn.commit()

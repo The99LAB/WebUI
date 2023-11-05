@@ -28,7 +28,7 @@ import pwd
 import grp
 import shutil
 import storage_manager
-from notifications import NotificationManager, NotificationType, NotificationTimeType
+from notifications import NotificationManager, NotificationType
 import vm_backups
 from docker_manager import Templates, Containers, Networks, Images, General
 
@@ -2767,28 +2767,4 @@ async def api_notifications_delete(id: int, username: str = Depends(check_auth))
         notification_manager.delete_all_notifications()
     else:
         notification_manager.delete_notification(id)
-    return
-
-@app.post("/api/notifications")
-async def api_notifications_post(request: Request, username: str = Depends(check_auth)):
-    data = await request.json()
-    for notification in data:
-        notification_type = notification['type']
-        if notification_type == "error":
-            notification_type = NotificationType.ERROR
-        elif notification_type == "warning":
-            notification_type = NotificationType.WARNING
-        elif notification_type == "success":
-            notification_type = NotificationType.SUCCESS
-        else:
-            notification_type = NotificationType.INFO
-        
-        notification_title = notification['title']
-        notification_message = notification['message']
-        notification_manager.create_notification(
-            type = notification_type,
-            title = notification_title,
-            message = notification_message,
-        )
-    
     return
