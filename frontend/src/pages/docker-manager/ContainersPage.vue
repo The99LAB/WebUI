@@ -142,9 +142,9 @@
             key="image"
             :props="props"
             class="text-weight-regular text-body2"
-            v-if="props.row.container_type !== 'unmanaged'"
           >
-            {{ props.row.config.repository }}:{{ props.row.config.tag }}
+            <span v-if="props.row.container_type !== 'unmanaged'">{{ props.row.config.repository }}:{{ props.row.config.tag }}</span>
+            <span v-else></span>
           </q-td>
         </q-tr>
       </template>
