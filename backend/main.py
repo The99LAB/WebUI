@@ -1083,9 +1083,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             if check_auth_token(token):
                 new_notifications_list = notification_manager.get_notifications()
                 if notifications_list != new_notifications_list:
-                    new_notifications = [x for x in new_notifications_list if x not in notifications_list]
                     notifications_list = new_notifications_list
-                    await websocket.send_json({"type": "notifications", "data": new_notifications})
+                    await websocket.send_json({"type": "notifications", "data": new_notifications_list})
                 await asyncio.sleep(1)
             else:
                 await websocket.send_json({"type": "auth_error"})

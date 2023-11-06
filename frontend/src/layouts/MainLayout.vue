@@ -339,7 +339,6 @@ export default defineComponent({
         warning: "mdi-alert-circle",
         success: "mdi-check-circle",
         info: "mdi-information",
-        progress: "mdi-progress-helper"
       },
       notificationColor: {
         error: "red",
@@ -394,20 +393,7 @@ export default defineComponent({
         if (data.type == "notifications_init") {
           this.notifications = data.data;
         } else if (data.type == "notifications") {
-          let newNotifications = data.data;
-          for (let i = 0; i < newNotifications.length; i++) {
-            this.notifications.push(newNotifications[i]);
-            Notify.create({
-              progress: true,
-              message: newNotifications[i].title,
-              caption: newNotifications[i].message,
-              position: "bottom",
-              icon: this.notificationIcon[newNotifications[i].type],
-              timeout: 2000,
-              color: this.notificationColor[newNotifications[i].type],
-              textColor: "black",
-            });
-          }
+          this.notifications = data.data;
         } else if (data.type == "auth_error") {
           localStorage.setItem("jwt-token", "");
           this.$router.push({ path: "/login" });
