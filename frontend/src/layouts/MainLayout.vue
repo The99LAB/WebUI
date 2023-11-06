@@ -258,23 +258,23 @@
           </div>
         </q-item-label>
         <q-item v-for="n in notifications" :key="n.id" clickable>
-            <q-item-section avatar>
-              <q-circular-progress
-                :show-value="n.progress != -1"
-                size="lg"
-                :class="'text-' + notificationColor[n.type]"
-                :color="notificationColor[n.type]"
-                track-color="grey-9"
-                :value="n.progress"
-                :indeterminate="n.progress == -1"
-                v-if="n.type == 'progress'"
-                />
-              <q-icon
-                :name="notificationIcon[n.type]"
-                :color="notificationColor[n.type]"
-                size="lg"
-                v-else
-              />
+          <q-item-section avatar>
+            <q-circular-progress
+              :show-value="n.progress != -1"
+              size="lg"
+              :class="'text-' + notificationColor[n.type]"
+              :color="notificationColor[n.type]"
+              track-color="grey-9"
+              :value="n.progress"
+              :indeterminate="n.progress == -1"
+              v-if="n.type == 'progress'"
+            />
+            <q-icon
+              :name="notificationIcon[n.type]"
+              :color="notificationColor[n.type]"
+              size="lg"
+              v-else
+            />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ n.title }}</q-item-label>
@@ -370,7 +370,9 @@ export default defineComponent({
     },
     NotificationDelete(id) {
       if (id == -1) {
-        this.notifications = this.notifications.filter((n) => n.type == 'progress')
+        this.notifications = this.notifications.filter(
+          (n) => n.type == "progress",
+        );
       } else {
         this.notifications = this.notifications.filter((n) => n.id != id);
       }

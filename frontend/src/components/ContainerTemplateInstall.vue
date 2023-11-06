@@ -223,7 +223,7 @@
                 class="q-mb-lg"
                 v-model="item.value"
                 :label="item.description"
-                :validate="item.createdir ? false: true"
+                :validate="item.createdir ? false : true"
                 v-if="item.editable"
               >
                 <template v-slot:counter>

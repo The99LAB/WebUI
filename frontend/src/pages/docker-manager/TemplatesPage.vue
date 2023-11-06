@@ -217,16 +217,19 @@ export default {
   mounted() {
     // Check if "/mnt/sharedfolders/docker_data" exists using system/file-manager/validate-path
     // if not, the user will be prompted to create it
-    this.$api.post("system/file-manager/validate-path", {
-      path: "/mnt/sharedfolders/docker_data",
-    })
-    .then((response) => {
-      this.templateLocationsFetch();
-    })
-    .catch((error) => {
-      this.$refs.errorDialog.show("Shared folder docker_data not found", ["Please create the shared folder docker_data before installing templates."]);
-      this.templateLoading = false;
-    });
+    this.$api
+      .post("system/file-manager/validate-path", {
+        path: "/mnt/sharedfolders/docker_data",
+      })
+      .then((response) => {
+        this.templateLocationsFetch();
+      })
+      .catch((error) => {
+        this.$refs.errorDialog.show("Shared folder docker_data not found", [
+          "Please create the shared folder docker_data before installing templates.",
+        ]);
+        this.templateLoading = false;
+      });
   },
 };
 </script>

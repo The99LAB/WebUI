@@ -176,7 +176,7 @@ export default {
       })
       .catch((error) => {
         // bypass the validation if the prop is set
-        if (this.validate){
+        if (this.validate) {
           this.$emit("update:modelValue", null);
           this.currentPath = this.startpath;
           this.getData(this.currentPath);
