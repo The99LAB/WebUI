@@ -1,6 +1,7 @@
 from .base import docker_client
 from storage_manager import convertSizeUnit
 import docker
+from notifications import NotificationManager, NotificationType
 
 class Images:
     def __init__(self):
@@ -34,14 +35,16 @@ class Images:
         image = self.docker_client.images.get(name)
         image.remove()
     
-    def pull(self, name, notify=True):
-        # Create "progress" notification that the image is being pulled
+    def pull(self, name):
+        # Create progress notification that the image is being pulled
+        notification_manager = NotificationManager()
+        progress_notification_id = notification_manager.create_notification(type=NotificationType.PROGRESS, title="Pulling docker image", message=name, progress=-1)
         try:
             self.docker_client.images.get(name)
-            print("Image already exists")
-            # Mark the "progress" notification as error, with the message "Image already exists"
+            notification_manager.delete_notification(progress_notification_id)
+            notification_manager.create_notification(type=NotificationType.ERROR, title="Error pulling docker image", message=f"Image {name} already exists")
         except docker.errors.ImageNotFound:
-            print("Image does not yet exist")
             # Pull the image
             self.docker_client.images.pull(name)
-            # Mark the "progress" notification as complete
+            # Mark the progress notification as complete
+            notification_manager.update_notification(progress_notification_id, 100)

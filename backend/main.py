@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, Request, Form, WebSocketDisconnect, HTTPException, Depends
+from fastapi import FastAPI, WebSocket, Request, Form, WebSocketDisconnect, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import psutil
@@ -2181,7 +2181,7 @@ async def api_docker_manager_images_get(username: str = Depends(check_auth)):
     return dockerImages.getAll()
 
 @app.post("/api/docker-manager/images/{action}")
-async def api_docker_manager_images_post(request: Request, action: str ,username: str = Depends(check_auth)):
+async def api_docker_manager_images_post(request: Request, action: str, background_tasks: BackgroundTasks, username: str = Depends(check_auth)):
     data = await request.json()
     if action == "delete":
         for image in data['images']:
@@ -2190,7 +2190,8 @@ async def api_docker_manager_images_post(request: Request, action: str ,username
             dockerImages.remove(image_name + ":" + image_tag)
         return
     elif action == "pull":
-        dockerImages.pull(image=data['image'])
+        background_tasks.add_task(dockerImages.pull, data['image'])
+        return
     else:
         raise HTTPException(status_code=404, detail="Action not found")
     

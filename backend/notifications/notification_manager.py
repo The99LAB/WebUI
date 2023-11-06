@@ -54,6 +54,14 @@ class NotificationManager:
         ''', (type.value, timestamp, title, message, progress))
         self.conn.commit()
 
+        # Return the id of the notification
+        return cursor.lastrowid
+    
+    def update_notification(self, notification_id, progress):
+        cursor = self.conn.cursor()
+        cursor.execute('UPDATE notifications SET progress = ? WHERE id = ?', (progress, notification_id))
+        self.conn.commit()
+    
     def get_notifications(self, time_type=NotificationTimeType.STRING):
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM notifications')
@@ -72,6 +80,7 @@ class NotificationManager:
     
     def delete_all_notifications(self):
         cursor = self.conn.cursor()
-        # Delete all notifications except the ones with type "progress"
-        cursor.execute("DELETE FROM notifications WHERE type != ?", ('progress',))
+        # Delete all notifications except the ones with type progress which are completed (progress != 100)
+        cursor.execute('DELETE FROM notifications WHERE type != ?', (NotificationType.PROGRESS.value,))
+        cursor.execute('DELETE FROM notifications WHERE type = ? AND progress == ?', (NotificationType.PROGRESS.value, 100))
         self.conn.commit()
