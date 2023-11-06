@@ -10,9 +10,38 @@ class NotificationType(Enum):
     INFO = 'info'
     PROGRESS = 'progress' # Progress: value from 0 to 100 or -1 for indeterminate
 
-class NotificationTimeType(Enum):
-    STRING = 'string'
-    DATETIME = 'datetime'
+class Notification:
+    def __init__(self, type:NotificationType, title, message, id=None, timestamp=None, progress=-1):
+        self.id = id
+        self.type = type
+        self.timestamp = timestamp
+        if timestamp is None:
+            self.timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.title = title
+        self.message = message
+        self.progress = progress
+    
+    @property
+    def json(self):
+        return {
+            'id': self.id,
+            'type': self.type.value,
+            'timestamp': self.timestamp,
+            'title': self.title,
+            'message': self.message,
+            'progress': self.progress
+        }
+    
+    @classmethod
+    def from_json(cls, data):
+        return cls(
+            id=data['id'],
+            type=NotificationType(data['type']),
+            timestamp=data['timestamp'],
+            title=data['title'],
+            message=data['message'],
+            progress=data['progress']
+        )
 
 class NotificationManager:
     def __init__(self):
@@ -40,42 +69,48 @@ class NotificationManager:
         conn.commit()
         return conn
         
-    def create_notification(self, type:NotificationType, title, message, progress=None):
-        if type == NotificationType.PROGRESS:
-            if progress is None:
-                raise Exception('Progress must be specified when creating a progress notification')
-        else:
-            progress = 0
+    def create_notification(self, notification:Notification):
         cursor = self.conn.cursor()
-        timestamp = datetime.now().strftime(self.datetime_format)
         cursor.execute('''
             INSERT INTO notifications (type, timestamp, title, message, progress)
             VALUES (?, ?, ?, ?, ?)
-        ''', (type.value, timestamp, title, message, progress))
+        ''', (notification.type.value, notification.timestamp, notification.title, notification.message, notification.progress))
         self.conn.commit()
-
         # Return the id of the notification
         return cursor.lastrowid
     
-    def update_notification(self, notification_id, progress):
+    def update_notification(self, notification:Notification):
         cursor = self.conn.cursor()
-        cursor.execute('UPDATE notifications SET progress = ? WHERE id = ?', (progress, notification_id))
+        cursor.execute('''
+            UPDATE notifications
+            SET type = ?,
+                timestamp = ?,
+                title = ?,
+                message = ?,
+                progress = ?
+            WHERE id = ?
+        ''', (notification.type.value, notification.timestamp, notification.title, notification.message, notification.progress, notification.id))
         self.conn.commit()
     
-    def get_notifications(self, time_type=NotificationTimeType.STRING):
+    def get_notifications(self):
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM notifications')
-        notifications = [dict(row) for row in cursor.fetchall()]
-
-        if time_type == NotificationTimeType.DATETIME:
-            for notification in notifications:
-                notification['timestamp'] = datetime.strptime(notification['timestamp'], self.datetime_format)
-
+        notifications = []
+        for row in cursor.fetchall():
+            notifications.append(Notification.from_json(row))
         return notifications
     
-    def delete_notification(self, notification_id):
+    def get_notification(self, notification_id):
         cursor = self.conn.cursor()
-        cursor.execute('DELETE FROM notifications WHERE id = ?', (notification_id,))
+        cursor.execute('SELECT * FROM notifications WHERE id = ?', (notification_id,))
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        return Notification.from_json(row)
+    
+    def delete_notification(self, notification:Notification):
+        cursor = self.conn.cursor()
+        cursor.execute('DELETE FROM notifications WHERE id = ?', (notification.id,))
         self.conn.commit()
     
     def delete_all_notifications(self):

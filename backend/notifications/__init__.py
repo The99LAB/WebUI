@@ -1,1 +1,1 @@
-from .notification_manager import NotificationManager, NotificationType, NotificationTimeType
+from .notification_manager import NotificationManager, NotificationType, Notification

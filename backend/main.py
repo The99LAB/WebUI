@@ -1077,14 +1077,14 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     notifications_list = None
     try:
         if check_auth_token(token):
-            notifications_list = notification_manager.get_notifications()
+            notifications_list = [x.json for x in notification_manager.get_notifications()]
             await websocket.send_json({"type": "notifications_init", "data": notifications_list})
         while True:
             if check_auth_token(token):
                 new_notifications_list = notification_manager.get_notifications()
                 if notifications_list != new_notifications_list:
                     notifications_list = new_notifications_list
-                    await websocket.send_json({"type": "notifications", "data": new_notifications_list})
+                    await websocket.send_json({"type": "notifications", "data": [x.json for x in notifications_list]})
                 await asyncio.sleep(1)
             else:
                 await websocket.send_json({"type": "auth_error"})
@@ -2758,13 +2758,14 @@ async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str,
 ### API-NOTIFICATIONS ###
 @app.get("/api/notifications")
 async def api_notifications_get(username: str = Depends(check_auth)):
-    print("get notifications")
-    return notification_manager.get_notifications()
+    return [notification.json for notification in notification_manager.get_notifications()]
 
 @app.delete("/api/notifications/{id}")
 async def api_notifications_delete(id: int, username: str = Depends(check_auth)):
     if id == -1:
         notification_manager.delete_all_notifications()
     else:
-        notification_manager.delete_notification(id)
+        notification = notification_manager.get_notification(id)
+        if notification is not None:
+            notification_manager.delete_notification(notification)
     return
