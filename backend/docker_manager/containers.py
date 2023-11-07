@@ -1,5 +1,11 @@
 from .base import database, docker_client
+from .images import Images
 import json
+from enum import Enum
+
+class ContainerType(Enum):
+    UNMANAGED = 'unmanaged'
+    MANAGED = 'managed'
 
 class Containers:
     def __init__(self):
@@ -50,9 +56,69 @@ class Containers:
             "config": container_config,
         }
     
-    def create(self, name, type, config, webui, command):
-        return
+    def create(self, name, type, webui, config):
+        container_image = config['repository'] + ':' + config['tag']
+        config_env = config['env']
+        config_ports = config['ports']
+        config_volumes = config['volumes']
+        config_network = config['network']
+        container_env = {}
+        container_volumes = {}
+        container_command = ""
+        container_network_name = config_network['name']
+        container_network_fixed_ip = None
+        for env in config_env:
+            container_env[env['name']] = env['value']
+        for volume in config_volumes:
+            # 'value' is the path on the host machine
+            # 'bind' is the path inside the container
+            container_volumes[volume['value']] = {'bind': volume['bind'], 'mode': volume['mode']}
+        for command in config['command']:
+            container_command += command + " "
+        if 'ip' in config_network:
+            container_network_fixed_ip = config_network['ip']
+            container_network_config = self.docker_client.api.create_networking_config({
+                container_network_name: docker_client.api.create_endpoint_config(
+                    ipv4_address=container_network_fixed_ip
+                )
+            })
+        else:
+            container_network_config = self.docker_client.api.create_networking_config({
+                container_network_name: docker_client.api.create_endpoint_config()
+            })
     
+        # Pull the image
+        dockerImages = Images()
+        dockerImages.pull(container_image)
+
+        # Create the container
+        container = self.docker_client.api.create_container(
+            image=container_image,
+            name=name,
+            environment=container_env,
+            # volumes are the _container_volumes 
+            # volumes list is from container_config['volumes']
+            volumes=[volume['bind'] for volume in container_volumes],
+            host_config=docker_client.api.create_host_config(binds=container_volumes),
+            networking_config=container_network_config,
+            command=container_command,
+            detach=True,
+            tty=True,
+            stdin_open=True,
+        )
+
+        print("Created container " + container.id)
+
+        # Add the container to the database
+        self.db_cursor.execute('INSERT INTO docker_containers (id, container_type, webui, config) VALUES (?, ?, ?, ?)', 
+            (container['Id'], type, json.dumps(webui), json.dumps(config)))        
+        self.db_conn.commit()
+
+        print("Added container to database")
+
+        # Return the container id
+        return container['Id']
+
     def delete(self, id, api_only=False):
         container = self.docker_client.containers.get(id)
         container.remove()

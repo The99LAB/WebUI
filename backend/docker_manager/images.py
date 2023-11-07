@@ -35,19 +35,22 @@ class Images:
         image = self.docker_client.images.get(name)
         image.remove()
     
-    def pull(self, name):
+    def pull(self, name, notify=True):
         # Create progress notification that the image is being pulled
-        notification_manager = NotificationManager()
-        progress_notification_id = notification_manager.create_notification(Notification(NotificationType.PROGRESS, 'Pulling docker image', name, progress=-1))
-        progress_notification = notification_manager.get_notification(progress_notification_id)
+        if notify:
+            notification_manager = NotificationManager()
+            progress_notification_id = notification_manager.create_notification(Notification(NotificationType.PROGRESS, 'Pulling docker image', name, progress=-1))
+            progress_notification = notification_manager.get_notification(progress_notification_id)
 
         try:
             self.docker_client.images.get(name)
-            notification_manager.delete_notification(progress_notification)
-            notification_manager.create_notification(Notification(NotificationType.ERROR, 'Error pulling docker image', f"Image {name} already exists"))
+            if notify:
+                notification_manager.delete_notification(progress_notification)
+                notification_manager.create_notification(Notification(NotificationType.ERROR, 'Error pulling docker image', f"Image {name} already exists"))
         except docker.errors.ImageNotFound:
             # Pull the image
             self.docker_client.images.pull(name)
             # Mark the progress notification as complete
-            progress_notification.progress = 100
-            notification_manager.update_notification(progress_notification)
+            if notify:
+                progress_notification.progress = 100
+                notification_manager.update_notification(progress_notification)

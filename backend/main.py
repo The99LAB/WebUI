@@ -1975,123 +1975,8 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
     else:
         raise HTTPException(status_code=404, detail="Action not found")
 
-
-# #TODO: API-BACKUP-MANAGER
-# @app.get("/api/backup-manager/configs")
-# async def api_backup_manager_configs_get(username: str = Depends(check_auth)):
-#     print("getting backup manager configs...")
-#     configs = []
-#     for config in LibvirtKVMBackup.configManager.list():
-#         backups = LibvirtKVMBackup.configManager(config=config).listBackups()
-#         backup_count = len(backups)
-#         backup_config_data = LibvirtKVMBackup.configManager(config=config).data()
-#         backup_destination = backup_config_data['Destination']
-#         backup_auto_shutdown = backup_config_data['AutoShutdown']
-#         backup_disks = backup_config_data['Disks']
-        
-#         # sort backups by latest first
-#         backups.sort(key=lambda x: x['name'], reverse=True)
-#         # convert item size in backups to GG
-#         for backup in backups:
-#             backup['size'] = storage_manager.convertSizeUnit(size=backup['size'], from_unit="B", mode="str")
-
-#         backup_last_result = None
-#         if backup_count > 0:
-#             backup_last_result = backups[0]['status']
-            
-#         configs.append({
-#             "config": config,
-#             "lastResult": backup_last_result,
-#             "backupCount": backup_count,
-#             "destination": backup_destination,
-#             "autoShutdown": backup_auto_shutdown,
-#             "disks": backup_disks,
-#             "backups": backups,
-#         })
-#     return configs
-
-# @app.post("/api/backup-manager/configs")
-# async def api_backup_manager_configs_post(request: Request, username: str = Depends(check_auth)):
-#     data = await request.json()
-#     try:
-#         config_name = data['configName']
-#         vm_name = data['vmName']
-#         destination = data['destination']
-#         auto_shutdown = data['autoShutdown']
-#         disks = data['disks']
-#     except KeyError:
-#         raise HTTPException(status_code=400, detail="Missing required data")
-#     try:
-#         config_data = {
-#             'DomainName': vm_name, 
-#             'Disks': disks, 
-#             'Destination': destination, 
-#             'AutoShutdown': auto_shutdown
-#         }
-#         LibvirtKVMBackup.configManager(config=config_name).create(configdata=config_data)
-#         return
-#     except LibvirtKVMBackup.configError as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-# #TODO
-# ### API-BACKUP-CONFIG ###
-# @app.post("/api/backup-manager/config/{config}/{action}")
-# async def api_backup_manager_config_get(config: str, action: str, username: str = Depends(check_auth)):
-#     if action == "delete":
-#         try:
-#             LibvirtKVMBackup.configManager(config=config).delete()
-#             return
-#         except LibvirtKVMBackup.configError as e:
-#             raise HTTPException(status_code=500, detail=str(e))
-#     elif action == "create-backup":
-#         try:
-#             print("creating backup")
-#             ret =  LibvirtKVMBackup.backup(config=config)
-#             if ret != 0:
-#                 notification_manager.create_notification(
-#                     type=NotificationType.ERROR,
-#                     title="Backup Error",
-#                     message=f"Backup of {config} failed. See log for details."
-#                 )
-#             return
-#         except LibvirtKVMBackup.backupError as e:
-#             raise HTTPException(status_code=500, detail=str(e))
-#     else:
-#         raise HTTPException(status_code=404, detail="action not found")
-    
-
-# ### API-BACKUP-ACTIONS ###
-# @app.post("/api/backup-manager/{config}/{backup}/{action}")
-# async def api_backup_manager_actions_post(config: str, backup: str, action: str, username: str = Depends(check_auth)):
-#     if action == "log":
-#         try:
-#             return LibvirtKVMBackup.configManager(config).backupLog(backup)
-#         except LibvirtKVMBackup.configError as e:
-#             raise HTTPException(status_code=500, detail=str(e))
-#     elif action == "restore":
-#         try:
-#             ret = LibvirtKVMBackup.restore(config=config, backup=backup)
-#             if ret != 0:
-#                 notification_manager.create_notification(
-#                     type=NotificationType.ERROR,
-#                     title="Restore Error",
-#                     message=f"Restore of {config} failed. See log for details."
-#                 )
-#             return
-#         except LibvirtKVMBackup.restoreError as e:
-#             raise HTTPException(status_code=500, detail=str(e))
-#     elif action == "delete":
-#         try:
-#             LibvirtKVMBackup.configManager(config=config).backupDelete(backup=backup)
-#             return
-#         except LibvirtKVMBackup.configError as e:
-#             raise HTTPException(status_code=500, detail=str(e))
-#     else:
-#         raise HTTPException(status_code=404, detail="action not found")
-    
-
 ### API-NETWORKS ###
-@app.get("/api/networks")
+@app.get("/api/vm-manager/networks")
 async def api_networks_get(username: str = Depends(check_auth)):
     # get all networks from libvirt
     networks = conn.listAllNetworks()
@@ -2216,8 +2101,8 @@ async def api_docker_manager_containers_post(request: Request, id: str, action: 
         dockerContainers.restart(id=id)
         return
     elif action == "delete":
-        container_data = dockerContainers().get(id=id)
-        if container_data['container_type'] != "unmanaged":
+        container_data = dockerContainers.get(id=id)
+        if container_data['container_type'] == "unmanaged":
             dockerContainers.delete(id=id, api_only=True)
         else:
             dockerContainers.delete(id=id)
@@ -2230,92 +2115,26 @@ async def api_docker_manager_containers_create(request: Request, username: str =
     data = await request.json()
     print("Request to create container: ", data)
     action = data['action']
+    print("Action: ", action)
 
     if action == "update":
         # Remove existing container: docker api and database
         id = data['id']
         dockerContainers.delete(id=id)
 
-    # Create a new container
+    # # Create a new container
     container_name = data['name']
     container_type = data['container_type']
-    container_config = data['config']
     container_webui = data['webui']
-    container_command=""
+    container_config = data['config']
 
-    _container_image = container_config['repository'] + ':' + container_config['tag']
-    _container_env = {}
-    for env in container_config['env']:
-        _container_env[env['name']] = env['value']
-    _container_volumes = {}
-    for volume in container_config['volumes']:
-        # 'value' is the path on the host
-        # 'bind' is the path inside the container
-        _container_volumes[volume['value']] = {'bind': volume['bind'], 'mode': volume['mode']}
-    for command in container_config['command']:
-        container_command += command['value'] + " "
-    _container_network_name = container_config['network']['name']
-    _container_fixed_ip = None
-    if 'ip' in container_config['network']:
-        _container_fixed_ip = container_config['network']['ip']
-        _container_network_config = docker_client.api.create_networking_config({
-            _container_network_name: docker_client.api.create_endpoint_config(
-                ipv4_address=_container_fixed_ip
-            )
-        })
-    else:
-        _container_network_config = docker_client.api.create_networking_config({
-            _container_network_name: docker_client.api.create_endpoint_config()
-        })
-
-    
-    print(f"image: {_container_image}")
-    print(f"name: {container_name}")
-    print(f"env: {_container_env}")
-    print(f"volumes: {_container_volumes}")
-    print(f"command: {container_command}")
-    print(f"network: {_container_network_config}")
-    print(f"network name: {_container_network_name}")
-    print(f"fixed ip: {_container_fixed_ip}")
-
-    # Check if the container image exists
-    try:
-        docker_client.images.get(_container_image)
-        print("Image exists")
-    except docker.errors.ImageNotFound:
-        # Pull image
-        print("Pulling image")
-        docker_client.images.pull(_container_image)
-        print("Image pulled")
-
-    print("Creating container")
-    # Create container
-    docker_client_container = docker_client.api.create_container(
-        image=_container_image,
+    dockerContainers.create(
         name=container_name,
-        environment=_container_env,
-        # volumes are the _container_volumes 
-        # volumes list is from container_config['volumes']
-        volumes=[volume['bind'] for volume in container_config['volumes']],
-        host_config=docker_client.api.create_host_config(binds=_container_volumes),
-        networking_config=_container_network_config,
-        command=container_command,
-        detach=True,
-        tty=True,
-        stdin_open=True,
+        type=container_type,
+        webui=container_webui,
+        config=container_config
     )
 
-    print("Container created: ", docker_client_container)
-
-    print("Adding container to database")
-    # Create container in database
-    dockerContainers().add(
-        id=docker_client_container['Id'],
-        container_type=container_type,
-        webui=json.dumps(container_webui),
-        config=json.dumps(container_config),
-    )
-    print("Container added to database")
     return
 
 @app.get("/api/docker-manager/networks")
