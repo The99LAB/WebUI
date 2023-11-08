@@ -3,10 +3,6 @@ from .images import Images
 import json
 from enum import Enum
 
-class ContainerType(Enum):
-    UNMANAGED = 'unmanaged'
-    MANAGED = 'managed'
-
 class Containers:
     def __init__(self):
         self.db_conn = database()
@@ -74,22 +70,22 @@ class Containers:
             # 'bind' is the path inside the container
             container_volumes[volume['value']] = {'bind': volume['bind'], 'mode': volume['mode']}
         for command in config['command']:
-            container_command += command + " "
+            container_command += command['value'] + " "
         if 'ip' in config_network:
             container_network_fixed_ip = config_network['ip']
             container_network_config = self.docker_client.api.create_networking_config({
-                container_network_name: docker_client.api.create_endpoint_config(
+                container_network_name: self.docker_client.api.create_endpoint_config(
                     ipv4_address=container_network_fixed_ip
                 )
             })
         else:
             container_network_config = self.docker_client.api.create_networking_config({
-                container_network_name: docker_client.api.create_endpoint_config()
+                container_network_name: self.docker_client.api.create_endpoint_config()
             })
     
         # Pull the image
         dockerImages = Images()
-        dockerImages.pull(container_image)
+        dockerImages.pull(container_image, notify=False)
 
         # Create the container
         container = self.docker_client.api.create_container(
@@ -99,7 +95,7 @@ class Containers:
             # volumes are the _container_volumes 
             # volumes list is from container_config['volumes']
             volumes=[volume['bind'] for volume in container_volumes],
-            host_config=docker_client.api.create_host_config(binds=container_volumes),
+            host_config=self.docker_client.api.create_host_config(binds=container_volumes),
             networking_config=container_network_config,
             command=container_command,
             detach=True,
@@ -107,14 +103,10 @@ class Containers:
             stdin_open=True,
         )
 
-        print("Created container " + container.id)
-
         # Add the container to the database
         self.db_cursor.execute('INSERT INTO docker_containers (id, container_type, webui, config) VALUES (?, ?, ?, ?)', 
             (container['Id'], type, json.dumps(webui), json.dumps(config)))        
         self.db_conn.commit()
-
-        print("Added container to database")
 
         # Return the container id
         return container['Id']
