@@ -596,7 +596,7 @@ export default {
       } else if (this.dialogMode.startsWith("edit")) {
         data.id = this.dialogId;
       }
-      data.action = this.dialogMode == "new" ? "create" : "update";
+      data.action = this.dialogMode.startsWith("new") ? "create" : "update";
       console.log("submit form data", data);
       this.dialogLoading = true;
       this.$api
