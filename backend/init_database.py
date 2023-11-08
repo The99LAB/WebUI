@@ -1,50 +1,38 @@
-import sqlite3
 from notifications import NotificationManager, NotificationType
+from settings import SettingsManager, Setting, OvmfPath
 
-db = sqlite3.connect('database.db')
-c = db.cursor()
-
-# qemu_path = input("Enter qemu path: ") # /usr/bin/qemu-system-x86_64
 qemu_path = "/usr/bin/qemu-system-x86_64"
 novnc_ip = input("Enter novnc ip: ")
-novnc_port = input("Enter novnc port: ")
-novnc_protocool = input("Enter novnc protocool: ")
-novnc_path = input("Enter novnc path: ") # vnc.html
-# libvirt_domain_logs_path = input("Enter libvirt domain logs path: ") # /var/log/libvirt/qemu
+novnc_port = "6080"
+novnc_protocool = "http"
+novnc_path = "vnc.html"
 libvirt_domain_logs_path = "/var/log/libvirt/qemu"
 
-# Create table settings
-c.execute('''CREATE TABLE "settings" (
-	"id"	INTEGER,
-	"name"	TEXT,
-	"value"	TEXT,
-	PRIMARY KEY("id")
-    )''')
+settings_manager = SettingsManager()
 
-# Create records in table settings
-c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (1, "qemu path", "{qemu_path}")''')
-c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (2, "novnc ip", "{novnc_ip}")''')
-c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (3, "novnc port", "{novnc_port}")''')
-c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (4, "novnc protocool", "{novnc_protocool}")''')
-c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (5, "novnc path", "{novnc_path}")''')
-c.execute(f'''INSERT INTO "settings" ("id", "name", "value") VALUES (6, "libvirt domain logs path", "{libvirt_domain_logs_path}")''')
-c.execute('''INSERT INTO "settings" ("id", "name", "value") VALUES (7, "login token expire", "3600")''')
+# Create settings
+qemu_path_setting = Setting("qemu_path", qemu_path, "Path to qemu binary", verifyPath=True)
+novnc_ip_setting = Setting("novnc_ip", novnc_ip, "IP address of novnc server", regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$", regex_description="Only IP address allowed")
+novnc_port_setting = Setting("novnc_port", novnc_port, "Port of novnc server", regex="^[0-9]+$", regex_description="Only numbers allowed")
+novnc_protocool_setting = Setting("novnc_protocool", novnc_protocool, "Protocool of novnc server", regex="^(http|https)$", regex_description="Only http or https allowed")
+novnc_path_setting = Setting("novnc_path", novnc_path, "Path to novnc server")
+libvirt_domain_logs_path_setting = Setting("libvirt_domain_logs", libvirt_domain_logs_path, "Path to libvirt domain logs", verifyPath=True)
+login_token_expire_setting = Setting("login_token_expire", "3600", "Login token expire time in seconds", regex="^[0-9]+$", regex_description="Only numbers allowed")
+settings_manager.create_setting(qemu_path_setting)
+settings_manager.create_setting(novnc_ip_setting)
+settings_manager.create_setting(novnc_port_setting)
+settings_manager.create_setting(novnc_protocool_setting)
+settings_manager.create_setting(novnc_path_setting)
+settings_manager.create_setting(libvirt_domain_logs_path_setting)
+settings_manager.create_setting(login_token_expire_setting)
 
-# Create table settings_ovmfpaths
-c.execute('''CREATE TABLE "settings_ovmfpaths" (
-	"id"	INTEGER,
-	"name"	TEXT,
-	"path"	TEXT,
-	PRIMARY KEY("id")
-    )''')
-
-# Create records in table settings_ovmfpaths
-c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (1, "OVMF", "/usr/share/OVMF/OVMF_CODE.fd")''')
-c.execute('''INSERT INTO "settings_ovmfpaths" ("id", "name", "path") VALUES (2, "OVMF Secureboot", "/usr/share/OVMF/OVMF_CODE.secboot.fd")''')
-
-# finish work with database
-db.commit()
-db.close()
+# Create ovmf paths
+ovmf_path = "/usr/share/OVMF/OVMF_CODE.fd"
+ovmf_secureboot_path = "/usr/share/OVMF/OVMF_CODE.secboot.fd"
+ovmf_path_setting = OvmfPath("OVMF", ovmf_path)
+ovmf_secureboot_path_setting = OvmfPath("OVMF_Secureboot", ovmf_secureboot_path)
+settings_manager.create_ovmf_path(ovmf_path_setting)
+settings_manager.create_ovmf_path(ovmf_secureboot_path_setting)
 
 # Create welcome notification
 NotificationManager().create_notification(NotificationType.INFO, "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")

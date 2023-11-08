@@ -31,6 +31,7 @@ import storage_manager
 from notifications import NotificationManager, NotificationType
 import vm_backups
 from docker_manager import Templates, Containers, Networks, Images, General, DockerManagerException
+from settings import SettingsManager, Setting, OvmfPath, SettingsException
 
 
 origins = ["*"]
@@ -60,6 +61,7 @@ dockerContainers = Containers()
 dockerNetworks = Networks()
 dockerImages = Images()
 dockerGeneral = General()
+settings_manager = SettingsManager()
 
 # check if the user is authenticated
 def check_auth(request: Request):
@@ -609,9 +611,9 @@ class create_vm():
         self.network_source = network_source
         self.network_model = network_model
         if ovmf_name:
-            self.ovmf_path = settings_ovmfpaths().get(ovmf_name)
+            self.ovmf_path = settings_manager.get_ovmf_path(ovmf_name).path
             self.ovmf_string = f"<loader readonly='yes' type='pflash'>{self.ovmf_path}</loader>"
-        self.qemu_path = settings().get("qemu path")
+        self.qemu_path = settings_manager.get_setting("qemu_path").value
         self.networkstring = ""
         if self.network:
             self.networkstring = f"<interface type='network'><source network='{conn.networkLookupByUUIDString(self.network_source).name()}'/><model type='{self.network_model}'/></interface>"
@@ -976,96 +978,6 @@ def getGuestMachineTypes():
     machine_types.sort()
     return machine_types
 
-class settings:
-    def __init__(self):
-        self.db = sqlite3.connect('database.db')
-        self.db_c = self.db.cursor()
-
-    def getAll(self):
-        self.db_c.execute('''
-        SELECT * FROM settings
-        ''')
-        rows = self.db_c.fetchall()
-
-        settingsData = []
-
-        for row in rows:
-            name = row[1]
-            value = row[2]
-            settingsData.append(
-            {
-                "name": name,
-                "value": value
-            })
-
-        return settingsData
-    
-    # get value of setting by setting name
-    def get(self, name):
-        self.db_c.execute('''
-        SELECT * FROM settings WHERE name = ?
-        ''', (name,))
-        row = self.db_c.fetchone()
-
-        return row[2]
-    
-    def set(self, name, value):
-        self.db_c.execute('''
-        UPDATE settings SET value = ? WHERE name = ?
-        ''', (value, name))
-        self.db.commit()
-
-class settings_ovmfpaths:
-    def __init__(self):
-        self.db = sqlite3.connect('database.db')
-        self.db_c = self.db.cursor()
-
-    def getAll(self):
-        self.db_c.execute('''
-        SELECT * FROM settings_ovmfpaths
-        ''')
-        rows = self.db_c.fetchall()
-
-        settingsData = []
-
-        for row in rows:
-            name = row[1]
-            path = row[2]
-            settingsData.append(
-            {
-                "name": name,
-                "path": path
-            })
-
-        return settingsData
-
-    # get path of ovmf by name
-    def get(self, name):
-        self.db_c.execute('''
-        SELECT * FROM settings_ovmfpaths WHERE name = ?
-        ''', (name,))
-        row = self.db_c.fetchone()
-
-        return row[2]
-    
-    def delete(self, name):
-        self.db_c.execute('''
-        DELETE FROM settings_ovmfpaths WHERE name = ?
-        ''', (name,))
-        self.db.commit()
-
-    def add(self, name, path):
-        self.db_c.execute('''
-        INSERT INTO settings_ovmfpaths (name, path) VALUES (?, ?)
-        ''', (name, path))
-        self.db.commit()
-
-    def set(self, name, path):
-        self.db_c.execute('''
-        UPDATE settings_ovmfpaths SET path = ? WHERE name = ?
-        ''', (path, name))
-        self.db.commit()
-
 @app.get("/")
 def index():
     return FileResponse("templates/index.html")
@@ -1282,7 +1194,7 @@ async def login(request: Request):
         return HTTPException(status_code=400, detail="Password is required")
     
     if pam.authenticate(username, password):
-        expire_time_seconds = int(settings().get("login token expire"))
+        expire_time_seconds = int(settings_manager.get_setting("login_token_expire_").value)
         expires_delta = timedelta(seconds=expire_time_seconds)
         expire = datetime.utcnow() + expires_delta
         token = jwt.encode({"username": username, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM, )
@@ -1403,7 +1315,7 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             return {"error": f"{e}"}
     elif action == "logs":
         domain_name = domain.name()
-        libvirt_domain_logs_path = settings().get("libvirt domain logs path")
+        libvirt_domain_logs_path = settings_manager.get_setting("libvirt_domain_logs").value
         domain_log_path = os.path.join(libvirt_domain_logs_path, domain_name + ".log")
         if os.path.exists(domain_log_path):
             with open(domain_log_path, "r") as f:
@@ -2528,53 +2440,76 @@ async def api_host_system_devices_get(devicetype: str, username: str = Depends(c
     else:
         raise HTTPException(status_code=404, detail="Device type not found")
 
-### API-HOST-SETTINGS-ACTIONS ###
-@app.get("/api/host/settings/{action}")
-async def api_host_settings_get(action: str, username: str = Depends(check_auth)):
-    if action == "all":
-        return settings().getAll()
-    elif action == "vnc":
-        vnc_settings = { 
-            "port": settings().get("novnc port"), 
-            "protocool": settings().get("novnc protocool"), 
-            "path": settings().get("novnc path"),
-            "ip": settings().get("novnc ip")
-        }
-        return vnc_settings
-    else:
-        raise HTTPException(status_code=404, detail="Action not found")
-    
-@app.post("/api/host/settings/{action}")
-async def api_host_settings_post(request: Request, action: str, username: str = Depends(check_auth)):
-    if action == "edit":
-        data = await request.json()
-        setting = data['setting']
-        value = data['value']
-        settings().set(setting, value)
+### API-SETTINGS-ACTIONS ###
+@app.get("/api/settings")
+async def api_host_settings_get(username: str = Depends(check_auth)):
+    return settings_manager.get_settings()
+
+@app.get("/api/setting/{setting}")
+async def api_host_settings_get(setting: str, username: str = Depends(check_auth)):
+    try:
+        if setting == "vnc":
+            vnc_settings = { 
+                "ip": settings_manager.get_setting("novnc_ip").value,
+                "port": settings_manager.get_setting("novnc_port").value,
+                "protocool": settings_manager.get_setting("novnc_protocol").value,
+                "path": settings_manager.get_setting("novnc_path").value,
+            }
+            return vnc_settings
+        else:
+            return settings_manager.get_setting(setting)
+    except SettingsException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/setting/{setting}")
+async def api_host_settings_post(request: Request, setting: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    value = data['value']
+    try:
+        _setting = settings_manager.get_setting(setting)
+        _setting.value = value
+        settings_manager.update_setting(_setting)
         return
-    
-@app.get("/api/vm-manager/settings/ovmf-paths/{action}")
-async def api_vm_manager_settings_ovmf_paths_get(action: str, username: str = Depends(check_auth)):
-    if action == "all":
-        return settings_ovmfpaths().getAll()
-    
-@app.post("/api/vm-manager/settings/ovmf-paths/{action}")
-async def api_vm_manager_settings_ovmf_paths_post(request: Request, action: str, username: str = Depends(check_auth)):
+    except SettingsException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/settings/ovmf-paths")
+async def api_settings_ovmf_paths_get(username: str = Depends(check_auth)):
+    try:
+        return settings_manager.get_ovmf_paths()
+    except SettingsException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/settings/ovmf-paths")
+async def api_settings_ovmf_paths_put(request: Request, username: str = Depends(check_auth)):
     data = await request.json()
     name = data['name']
-    if action == "edit":
-        path = data['path']
-        settings_ovmfpaths().set(name, path)
+    path = data['path']
+    try:
+        ovmfpath = OvmfPath(name=name, path=path)
+        settings_manager.create_ovmf_path(ovmfpath)
         return
-    elif action == "delete":
-        settings_ovmfpaths().delete(name)
+    except SettingsException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.put("/api/settings/ovmf-path/{name}")
+async def api_settings_ovmf_path_put(request: Request, name: str, username: str = Depends(check_auth)):
+    data = await request.json()
+    path = data['path']
+    try:
+        ovmfpath = OvmfPath(name=name, path=path)
+        settings_manager.update_ovmf_path(ovmfpath)
         return
-    elif action == "add":
-        path = data['path']
-        settings_ovmfpaths().add(name, path)
+    except SettingsException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.delete("/api/settings/ovmf-path/{name}")
+async def api_settings_ovmf_path_delete(name: str, username: str = Depends(check_auth)):
+    try:
+        settings_manager.delete_ovmf_path(name=name)
         return
-    else:
-        raise HTTPException(status_code=404, detail="Action not found")
+    except SettingsException as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 ### API-NOTIFICATIONS ###
 @app.get("/api/notifications")
