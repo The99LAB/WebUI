@@ -30,7 +30,7 @@ import shutil
 import storage_manager
 from notifications import NotificationManager, NotificationType
 import vm_backups
-from docker_manager import Templates, Containers, Networks, Images, General
+from docker_manager import Templates, Containers, Networks, Images, General, DockerManagerException
 
 
 origins = ["*"]
