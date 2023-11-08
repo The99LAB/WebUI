@@ -14,6 +14,24 @@
       <template v-slot:top-right>
         <q-btn
           color="primary"
+          icon="mdi-refresh"
+          round
+          flat
+          @click="getDockerImages"
+        >
+          <q-tooltip :offset="[5, 5]">Refresh Images</q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
+          icon="mdi-download"
+          round
+          flat
+          :disable="selectedImage.length == 0"
+        >
+          <q-tooltip :offset="[5, 5]">Update Image</q-tooltip>
+        </q-btn>
+        <q-btn
+          color="primary"
           icon="mdi-delete"
           round
           flat
@@ -30,7 +48,7 @@
         </q-btn>
         <q-btn
           color="primary"
-          icon="mdi-download"
+          icon="mdi-plus"
           round
           flat
           @click="pullImageDialog = true"
