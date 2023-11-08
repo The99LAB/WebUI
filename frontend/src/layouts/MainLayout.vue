@@ -287,7 +287,10 @@
                 size="sm"
                 padding="none"
                 label="Dismiss"
-                v-if="n.type != 'progress' || n.type == 'progress' && n.progress == 100"
+                v-if="
+                  n.type != 'progress' ||
+                  (n.type == 'progress' && n.progress == 100)
+                "
               />
               <q-space />{{ n.timestamp }}
             </q-item-label>

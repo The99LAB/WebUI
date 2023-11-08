@@ -408,7 +408,7 @@
       </q-card>
     </q-dialog>
   </q-dialog>
-<ErrorDialog ref="errorDialog" />
+  <ErrorDialog ref="errorDialog" />
 </template>
 
 <script>
