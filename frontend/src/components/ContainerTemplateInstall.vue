@@ -314,7 +314,6 @@
       </q-page-container>
     </q-layout>
     <q-inner-loading :showing="dialogLoading" />
-    <ErrorDialog ref="errorDialog" />
     <q-dialog v-model="customFieldDialog">
       <q-card style="width: 40em">
         <q-card-section class="row items-center q-pb-none">
@@ -409,6 +408,7 @@
       </q-card>
     </q-dialog>
   </q-dialog>
+<ErrorDialog ref="errorDialog" />
 </template>
 
 <script>
