@@ -2125,15 +2125,17 @@ async def api_docker_manager_containers_create(request: Request, username: str =
     # # Create a new container
     container_name = data['name']
     container_type = data['container_type']
-    container_webui = data['webui']
+    container_webui = data['webui'] if 'webui' in data else {"enable": False}
     container_config = data['config']
-
-    dockerContainers.create(
-        name=container_name,
-        type=container_type,
-        webui=container_webui,
-        config=container_config
-    )
+    try:
+        dockerContainers.create(
+            name=container_name,
+            type=container_type,
+            webui=container_webui,
+            config=container_config
+        )
+    except DockerManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     return
 
