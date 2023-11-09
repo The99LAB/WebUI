@@ -55,6 +55,7 @@ class OvmfPath:
 class SettingsManager:
     def __init__(self):
         self.conn = self._initialize_database()
+
     def _initialize_database(self):
         database_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database.db')
         conn = sqlite3.connect(database_path)
@@ -62,20 +63,25 @@ class SettingsManager:
         # Set row_factory to return a dictionary
         conn.row_factory = sqlite3.Row
 
+         # Register boolean adapter and converter
+        sqlite3.register_adapter(bool, lambda b: int(b))
+        sqlite3.register_converter("BOOLEAN", lambda v: bool(int(v)))
+
         cursor = conn.cursor()
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS settings (
+            CREATE TABLE IF NOT EXISTS "settings" (
                 name TEXT PRIMARY KEY,
                 value TEXT,
-                description TEXT
+                description TEXT,
                 regex TEXT,
                 regex_description TEXT,
                 verifyPath BOOLEAN
-            ),
-            CREATE TABLE IF NOT EXISTS settings_ovmfpaths (
+            )''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS "settings_ovmfpaths" (
                 name TEXT PRIMARY KEY,
                 path TEXT
-        ''')
+            )''')
         conn.commit()
         return conn
     
@@ -159,4 +165,4 @@ class SettingsManager:
         self.conn.commit()
 
     def verify_path(self, path):
-        return os.path.exists(path) and os.path.isfile(path)
+        return os.path.exists(path) or os.path.isfile(path)

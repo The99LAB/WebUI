@@ -1194,7 +1194,7 @@ async def login(request: Request):
         return HTTPException(status_code=400, detail="Password is required")
     
     if pam.authenticate(username, password):
-        expire_time_seconds = int(settings_manager.get_setting("login_token_expire_").value)
+        expire_time_seconds = int(settings_manager.get_setting("login_token_expire").value)
         expires_delta = timedelta(seconds=expire_time_seconds)
         expire = datetime.utcnow() + expires_delta
         token = jwt.encode({"username": username, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM, )

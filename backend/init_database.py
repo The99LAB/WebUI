@@ -1,4 +1,4 @@
-from notifications import NotificationManager, NotificationType
+from notifications import NotificationManager, NotificationType, Notification
 from settings import SettingsManager, Setting, OvmfPath
 
 qemu_path = "/usr/bin/qemu-system-x86_64"
@@ -37,4 +37,4 @@ settings_manager.create_ovmf_path(ovmf_path_setting)
 settings_manager.create_ovmf_path(ovmf_secureboot_path_setting)
 
 # Create welcome notification
-NotificationManager().create_notification(NotificationType.INFO, "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99")
+NotificationManager().create_notification(Notification(NotificationType.INFO, "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99"))
