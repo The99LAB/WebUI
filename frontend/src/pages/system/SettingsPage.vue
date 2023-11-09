@@ -19,7 +19,7 @@
           round
           icon="mdi-pencil"
           :disable="selected_setting.length == 0"
-          @click="editSetting"
+          @click="editSettingDialogShow = true"
         >
           <q-tooltip :offset="[5, 5]"> Edit Setting </q-tooltip>
         </q-btn>
@@ -48,7 +48,7 @@
           flat
           icon="mdi-pencil"
           :disable="selected_ovmf_path.length == 0"
-          @click="editOvmfPath"
+          @click="editOvmfPathDialogShow = true"
         >
           <q-tooltip :offset="[5, 5]"> Edit OVMF Path </q-tooltip>
         </q-btn>
@@ -58,7 +58,11 @@
           flat
           icon="mdi-delete"
           :disable="selected_ovmf_path.length == 0"
-          @click="removeOvmfPath(selected_ovmf_path[0].name)"
+          @click="$refs.confirmDialog.show(
+            'Are you sure?',
+            ['Are you sure you want to remove this OVMF path?'],
+            () => { removeOvmfPath() }
+          )"
         >
           <q-tooltip :offset="[5, 5]"> Remove OVMF Path </q-tooltip>
         </q-btn>
@@ -80,30 +84,46 @@
   <q-dialog v-model="editSettingDialogShow">
     <q-card style="min-width: 50vw">
       <q-card-section class="row items-center q-pb-none">
-        <div class="text-h6">Edit setting</div>
+        <div class="text-h6">Edit Setting</div>
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
-      <q-separator color="transparent" spaced="lg" inset />
-      <q-card-section class="q-pt-none">
-        <p>Target: {{ this.editSettingDialogTarget }}</p>
+      <q-card-section class="q-pt-sm">
         <q-input
-          v-model="editSettingDialogValue"
+          v-model="selected_setting[0].value"
           type="text"
-          :label="this.editSettingDialogName"
+          :label="selected_setting[0].name"
+        />
+        <p class="q-mt-md">{{ selected_setting[0].description }}</p>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn
+          flat
+          label="Edit"
+          @click="editSetting"
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="editOvmfPathDialogShow">
+    <q-card style="min-width: 50vw">
+      <q-card-section class="row items-center q-pb-none">
+        <div class="text-h6">Edit OVMF Path</div>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup />
+      </q-card-section>
+      <q-card-section class="q-pt-sm">
+        <q-input
+          v-model="selected_ovmf_path[0].path"
+          type="text"
+          :label="selected_ovmf_path[0].name"
         />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn
           flat
           label="Edit"
-          @click="
-            editSettingDialogSave(
-              this.editSettingDialogTarget,
-              this.editSettingDialogName,
-              this.editSettingDialogValue,
-            )
-          "
+          @click="editOvmfPath"
         />
       </q-card-actions>
     </q-card>
@@ -121,7 +141,10 @@
           v-model="addOvmfPathDialogName"
           type="text"
           label="Name"
-          :rules="[(val) => val.length > 0 || 'Name is required']"
+          :rules="[
+            (val) => val.length > 0 || 'Name is required',
+            (val) => !val.includes(' ') || 'No spaces allowed',
+          ]"
         />
         <q-input
           v-model="addOvmfPathDialogPath"
@@ -134,89 +157,86 @@
         <q-btn
           flat
           label="Add"
-          @click="
-            addOvmfPath(this.addOvmfPathDialogName, this.addOvmfPathDialogPath);
-            addOvmfPathDialogShow = false;
-          "
+          @click="addOvmfPath"
         />
       </q-card-actions>
     </q-card>
   </q-dialog>
   <ErrorDialog ref="errorDialog" />
+  <ConfirmDialog ref="confirmDialog" />
 </template>
 <script>
 import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
-const ovmf_paths_columns = [
-  {
-    name: "name",
-    label: "name",
-    field: "name",
-    align: "left",
-    sortable: true,
-  },
-  {
-    name: "path",
-    label: "path",
-    field: "path",
-    align: "left",
-    sortable: true,
-  },
-];
-
-const settings_columns = [
-  {
-    name: "name",
-    label: "name",
-    field: "name",
-    align: "left",
-    sortable: true,
-  },
-  {
-    name: "value",
-    label: "value",
-    field: "value",
-    align: "left",
-    sortable: true,
-  },
-];
+import ConfirmDialog from "src/components/ConfirmDialog.vue";
 
 export default {
   data() {
     return {
-      novnc_path: ref(null),
-      novnc_port: ref(null),
-      novnc_protocool: ref(null),
-      qemu_path: ref(null),
-      protocool_options: ["http", "https"],
-      ovmf_paths: ref([]),
-      ovmf_paths_columns,
-      settings: ref([]),
-      settings_columns,
-      selected_setting: ref([]),
-      selected_ovmf_path: ref([]),
-      editSettingDialogShow: ref(false),
-      editSettingDialogValue: ref(null),
-      editSettingDialogName: ref(null),
-      editSettingDialogTarget: ref(null),
-      addOvmfPathDialogShow: ref(false),
-      addOvmfPathDialogName: ref("OVMF name"),
-      addOvmfPathDialogPath: ref("/path/to/ovmf"),
+      ovmf_paths: [],
+      ovmf_paths_columns:  [
+        {
+          name: "name",
+          label: "Name",
+          field: "name",
+          align: "left",
+          sortable: true,
+        },
+        {
+          name: "path",
+          label: "Path",
+          field: "path",
+          align: "left",
+          sortable: true,
+        },
+      ],
+      settings: [],
+      settings_columns: [
+        {
+          name: "name",
+          label: "Name",
+          field: "name",
+          align: "left",
+          sortable: true,
+        },
+        {
+          name: "value",
+          label: "Value",
+          field: "value",
+          align: "left",
+          sortable: true,
+        },
+        {
+          name: "description",
+          label: "Description",
+          field: "description",
+          align: "left",
+          sortable: true,
+        }
+      ],
+      selected_setting: [],
+      selected_ovmf_path: [],
+      editSettingDialogShow: false,
+      editOvmfPathDialogShow: false,
+      addOvmfPathDialogShow: false,
+      addOvmfPathDialogName: "OVMF_name",
+      addOvmfPathDialogPath: "/path/to/ovmf",
       table_pagination: {
         sortBy: "name",
         rowsPerPage: 0,
       },
-      settings_loading: ref(true),
-      ovmf_paths_loading: ref(true),
+      settings_loading: true,
+      ovmf_paths_loading: true,
     };
   },
   components: {
     ErrorDialog,
+    ConfirmDialog,
   },
   methods: {
     getData() {
       this.$api
-        .get("/host/settings/all")
+        .get("/settings")
         .then((response) => {
           this.settings = response.data;
           this.settings_loading = false;
@@ -227,7 +247,7 @@ export default {
           ]);
         });
       this.$api
-        .get("/vm-manager/settings/ovmf-paths/all")
+        .get("/settings/ovmf-paths")
         .then((response) => {
           this.ovmf_paths = response.data;
           this.ovmf_paths_loading = false;
@@ -238,77 +258,54 @@ export default {
           ]);
         });
     },
+
     editSetting() {
-      const name = this.selected_setting[0].name;
-      const value = this.selected_setting[0].value;
-      this.showEditSettingDialog("general", name, value);
+      this.$api
+        .put("/setting/" + this.selected_setting.name, {
+          value: this.selected_setting.value,
+        })
+        .then((response) => {
+          this.getData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error editing setting", [
+            error.response.data.detail,
+          ]);
+        });
     },
 
     editOvmfPath() {
-      const name = this.selected_ovmf_path[0].name;
-      const value = this.selected_ovmf_path[0].path;
-      this.showEditSettingDialog("ovmf paths", name, value);
-    },
-
-    showEditSettingDialog(target, name, value) {
-      this.editSettingDialogTarget = target;
-      this.editSettingDialogName = name;
-      this.editSettingDialogValue = value;
-      this.editSettingDialogShow = true;
-    },
-
-    changeSetting(setting, value) {
       this.$api
-        .post("/host/settings/edit", {
-          setting: setting,
-          value: value,
+        .put("/settings/ovmf-paths/" + this.selected_ovmf_path.name, {
+          path: this.selected_ovmf_path.path,
         })
         .then((response) => {
           this.getData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error changing setting", [
+          this.$refs.errorDialog.show("Error editing OVMF path", [
             error.response.data.detail,
           ]);
         });
     },
 
-    changeOvmfPath(name, value) {
+    removeOvmfPath() {
       this.$api
-        .post("/vm-manager/settings/ovmf-paths/edit", {
-          name: name,
-          path: value,
-        })
+        .delete("/settings/ovmf-paths/" + this.selected_ovmf_path.name)
         .then((response) => {
           this.getData();
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error changing OVMF path", [
+          this.$refs.errorDialog.show("Error removing OVMF path", [
             error.response.data.detail,
           ]);
         });
     },
 
-    removeOvmfPath(name) {
+    addOvmfPath() {
       this.$api
-        .post("/vm-manager/settings/ovmf-paths/delete", {
-          name: name,
-        })
-        .then((response) => {
-          this.getData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting OVMF path", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-
-    addOvmfPath(name, path) {
-      this.$api
-        .post("/vm-manager/settings/ovmf-paths/add", {
-          name: name,
-          path: path,
+        .post("/settings/ovmf-paths/" + this.addOvmfPathDialogName, {
+          path: this.addOvmfPathDialogPath,
         })
         .then((response) => {
           this.getData();
@@ -318,15 +315,6 @@ export default {
             error.response.data.detail,
           ]);
         });
-    },
-
-    editSettingDialogSave(target, name, value) {
-      if (target == "general") {
-        this.changeSetting(name, value);
-      } else if (target == "ovmf paths") {
-        this.changeOvmfPath(name, value);
-      }
-      this.editSettingDialogShow = false;
     },
   },
   mounted() {

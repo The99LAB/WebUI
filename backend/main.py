@@ -2443,7 +2443,10 @@ async def api_host_system_devices_get(devicetype: str, username: str = Depends(c
 ### API-SETTINGS-ACTIONS ###
 @app.get("/api/settings")
 async def api_host_settings_get(username: str = Depends(check_auth)):
-    return settings_manager.get_settings()
+    try:
+        return settings_manager.get_settings()
+    except SettingsException as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/setting/{setting}")
 async def api_host_settings_get(setting: str, username: str = Depends(check_auth)):
@@ -2480,10 +2483,9 @@ async def api_settings_ovmf_paths_get(username: str = Depends(check_auth)):
     except SettingsException as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.put("/api/settings/ovmf-paths")
-async def api_settings_ovmf_paths_put(request: Request, username: str = Depends(check_auth)):
+@app.post("/api/settings/ovmf-paths/{name}")
+async def api_settings_ovmf_paths_post(name: str, request: Request, username: str = Depends(check_auth)):
     data = await request.json()
-    name = data['name']
     path = data['path']
     try:
         ovmfpath = OvmfPath(name=name, path=path)
@@ -2492,8 +2494,8 @@ async def api_settings_ovmf_paths_put(request: Request, username: str = Depends(
     except SettingsException as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.put("/api/settings/ovmf-path/{name}")
-async def api_settings_ovmf_path_put(request: Request, name: str, username: str = Depends(check_auth)):
+@app.put("/api/settings/ovmf-paths/{name}")
+async def api_settings_ovmf_paths_put(request: Request, name: str, username: str = Depends(check_auth)):
     data = await request.json()
     path = data['path']
     try:
@@ -2503,8 +2505,8 @@ async def api_settings_ovmf_path_put(request: Request, name: str, username: str 
     except SettingsException as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.delete("/api/settings/ovmf-path/{name}")
-async def api_settings_ovmf_path_delete(name: str, username: str = Depends(check_auth)):
+@app.delete("/api/settings/ovmf-paths/{name}")
+async def api_settings_ovmf_paths_delete(name: str, username: str = Depends(check_auth)):
     try:
         settings_manager.delete_ovmf_path(name=name)
         return
