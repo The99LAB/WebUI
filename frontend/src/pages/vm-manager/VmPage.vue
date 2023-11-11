@@ -273,7 +273,7 @@ export default {
     vncVm(uuid) {
       console.log("vnc vm with uuid", uuid);
       const novnc_url =
-        this.vncSettings.protocool +
+        this.vncSettings.protocol +
         "://" +
         this.vncSettings.ip +
         ":" +
@@ -309,7 +309,7 @@ export default {
     getVncSettings() {
       this.vmTableLoading = true;
       this.$api
-        .get("host/settings/vnc")
+        .get("setting/vnc")
         .then((response) => {
           this.vncSettings = response.data;
           this.vmTableLoading = false;

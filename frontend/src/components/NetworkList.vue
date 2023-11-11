@@ -26,9 +26,8 @@ export default {
   },
   methods: {
     updateNetworkList() {
-      console.log("Updating network list");
       this.$api
-        .get("/networks")
+        .get("vm-networks")
         .then((response) => {
           this.networkList = response.data;
           this.selectedNetwork = this.networkList[0];

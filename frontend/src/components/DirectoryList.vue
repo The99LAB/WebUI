@@ -99,7 +99,7 @@ export default {
     },
     selectiontype: {
       type: String,
-      default: "file", // file, dir
+      default: "file", // file, dir or both
     },
     startpath: {
       type: String,
@@ -119,9 +119,16 @@ export default {
         })
         .then((response) => {
           this.options = response.data.list;
+          // sort the options by name
+          this.options.sort((a, b) => {
+            return a.name.localeCompare(b.name);
+          });
           if (init == false) {
             this.currentPath = response.data.path;
           }
+          this.loading = false;
+        })
+        .catch((error) => {
           this.loading = false;
         });
     },
@@ -130,18 +137,20 @@ export default {
     },
     clickItem(value) {
       if (value.type == "dir") {
-        if (this.selectiontype == "dir") {
+        if (this.selectiontype == "dir" || this.selectiontype == "both") {
           this.setCurrentPath(value);
         }
         this.getData(value.path);
       } else if (value.type == "dirparent") {
-        if (this.selectiontype == "dir") {
+        if (this.selectiontype == "dir" || this.selectiontype == "both") {
           this.setCurrentPath(value);
         }
         this.getData(value.path);
-      } else if (value.type == "file" && this.selectiontype == "file") {
-        this.setCurrentPath(value);
-        this.focused = false;
+      } else if (value.type == "file") {
+        if (this.selectiontype == "file" || this.selectiontype == "both") {
+          this.setCurrentPath(value);
+          this.focused = false;
+        }
       }
     },
     setCurrentPath(value) {

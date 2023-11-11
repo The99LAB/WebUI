@@ -278,16 +278,16 @@ export default {
           window.open(container.webui.url, "_blank");
         } else if (container.webui["container-port"] !== undefined) {
           let port = container.webui["container-port"];
-          let protocool = container.webui.ssl ? "https://" : "http://";
+          let protocol = container.webui.ssl ? "https://" : "http://";
           let path = container.webui.path != null ? container.webui.path : "/";
           let ip;
 
           if (container.config.network.ip != null) {
             ip = container.config.network.ip;
-            window.open(protocool + ip + ":" + port + path, "_blank");
+            window.open(protocol + ip + ":" + port + path, "_blank");
           } else if (container.config.network.dhcp_ip != null) {
             ip = container.config.network.dhcp_ip;
-            window.open(protocool + ip + ":" + port + path, "_blank");
+            window.open(protocol + ip + ":" + port + path, "_blank");
           }
         }
       }

@@ -1,15 +1,35 @@
 import sqlite3
 import os
 from .settingsException import SettingsException
+import json
+
+class RegexRule:
+    def __init__(self, regex, description):
+        self.regex = regex
+        self.description = description
+    
+    @property
+    def json(self):
+        return {
+            'regex': self.regex,
+            'description': self.description
+        }
+    
+    @classmethod
+    def from_json(cls, data):
+        return cls(
+            regex=data['regex'],
+            description=data['description']
+        )
 
 class Setting:
-    def __init__(self, name, value, description, regex="", regex_description="", verifyPath=False):
+    def __init__(self, name, value, description, regexrules=[], verifyDir=False, verifyFile=False):
         self.name = name
         self.value = value
         self.description = description
-        self.regex = regex
-        self.regex_description = regex_description
-        self.verifyPath = verifyPath
+        self.regexrules = regexrules
+        self.verifyFile = verifyFile
+        self.verifyDir = verifyDir
     
     @property
     def json(self):
@@ -17,20 +37,21 @@ class Setting:
             'name': self.name,
             'value': self.value,
             'description': self.description,
-            'regex': self.regex,
-            'regex_description': self.regex_description,
-            'verifyPath': self.verifyPath
+            'regexrules': json.dumps([rule.json for rule in self.regexrules]),
+            'verifyFile': self.verifyFile,
+            'verifyDir': self.verifyDir
         }
     
     @classmethod
     def from_json(cls, data):
+        regexrules = json.loads(data['regexrules'])
         return cls(
             name=data['name'],
             value=data['value'],
             description=data['description'],
-            regex=data['regex'],
-            regex_description=data['regex_description'],
-            verifyPath=data['verifyPath']
+            regexrules=[RegexRule.from_json(rule) for rule in regexrules],
+            verifyFile=data['verifyFile'],
+            verifyDir=data['verifyDir']
         )
     
 class OvmfPath:
@@ -73,9 +94,9 @@ class SettingsManager:
                 name TEXT PRIMARY KEY,
                 value TEXT,
                 description TEXT,
-                regex TEXT,
-                regex_description TEXT,
-                verifyPath BOOLEAN
+                regexrules TEXT,
+                verifyDir BOOLEAN,
+                verifyFile BOOLEAN
             )''')
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS "settings_ovmfpaths" (
@@ -87,12 +108,15 @@ class SettingsManager:
     
     def create_ovmf_path(self, ovmf_path:OvmfPath):
         cursor = self.conn.cursor()
-        if self.verify_path(ovmf_path.path) == False:
+        if self.verify_file(ovmf_path.path) == False:
             raise SettingsException(f"Path {ovmf_path.path} does not exist")
         if " " in ovmf_path.name:
             raise SettingsException("OVMF path name can not have spaces")
-        cursor.execute('''INSERT INTO settings_ovmfpaths (name, path) VALUES (?, ?)''', 
-                       (ovmf_path.name, ovmf_path.path))
+        try:
+            cursor.execute('''INSERT INTO settings_ovmfpaths (name, path) VALUES (?, ?)''', 
+                        (ovmf_path.name, ovmf_path.path))
+        except sqlite3.IntegrityError as e:
+            raise SettingsException(e)
         self.conn.commit()
 
     def get_ovmf_path(self, name):
@@ -125,11 +149,17 @@ class SettingsManager:
     
     def create_setting(self, setting:Setting):
         cursor = self.conn.cursor()
-        if setting.verifyPath and self.verify_path(setting.value) == False:
+        if setting.verifyDir and self.verify_dir(setting.value) == False:
+            raise SettingsException(f"Path {setting.value} does not exist")
+        elif setting.verifyFile and self.verify_file(setting.value) == False:
             raise SettingsException(f"Path {setting.value} does not exist")
         if " " in setting.name:
             raise SettingsException("Setting name can not have spaces")
-        cursor.execute('''INSERT INTO settings (name, value, description, regex, regex_description, verifyPath) VALUES (?, ?, ?, ?, ?, ?)''', (setting.name, setting.value, setting.description, setting.regex, setting.regex_description, setting.verifyPath))
+        try:
+            cursor.execute('''INSERT INTO settings (name, value, description, regexrules, verifyDir, verifyFile) VALUES (?, ?, ?, ?, ?, ?)''', 
+                           (setting.name, setting.value, setting.description, setting.json['regexrules'],  setting.verifyDir, setting.verifyFile))
+        except sqlite3.IntegrityError as e:
+            raise SettingsException(e)
         self.conn.commit()
 
     def get_setting(self, name):
@@ -153,8 +183,11 @@ class SettingsManager:
     
     def update_setting(self, setting:Setting):
         cursor = self.conn.cursor()
-        cursor.execute('''UPDATE settings SET value=?, description=?, regex=?, regex_description=?, verifyPath=? WHERE name=?''', 
-                       (setting.value, setting.description, setting.regex, setting.regex_description, setting.verifyPath, setting.name))
+        try:
+            cursor.execute('''UPDATE settings SET value=?, description=?, regexrules=?, verifyDir=?, verifyFile=? WHERE name=?''', 
+                       (setting.value, setting.description, setting.json['regexrules'], setting.verifyDir, setting.verifyFile, setting.name))
+        except sqlite3.IntegrityError as e:
+            raise SettingsException(e)
         self.conn.commit()
 
     def delete_setting(self, name):
@@ -163,6 +196,9 @@ class SettingsManager:
             DELETE FROM settings WHERE name=?
         ''', (name,))
         self.conn.commit()
-
-    def verify_path(self, path):
-        return os.path.exists(path) or os.path.isfile(path)
+    
+    def verify_file(self, path):
+        return os.path.isfile(path)
+    
+    def verify_dir(self, path):
+        return os.path.isdir(path)

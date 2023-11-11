@@ -88,21 +88,40 @@
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
-      <q-card-section class="q-pt-sm">
-        <q-input
-          v-model="selected_setting[0].value"
-          type="text"
-          :label="selected_setting[0].name"
-        />
-        <p class="q-mt-md">{{ selected_setting[0].description }}</p>
+      <q-card-section>
+        <q-form @submit="editSetting" class="q-gutter-md">
+          <div v-if="selected_setting[0].verifyDir || selected_setting[0].verifyFile">
+            <DirectoryList
+              v-model="selected_setting[0].value"
+              :label="selected_setting[0].name"
+              :selectiontype="selected_setting[0].verifyDir ? 'dir' : 'file'"
+              :startpath="selected_setting[0].value"
+            />
+            <div v-if="selected_setting[0].value == null" class="q-mt-sm row items-center">
+              <q-icon name="mdi-alert" color="red" />
+              <span class="text-red q-ml-xs ">Path is required</span>
+            </div>
+            <div class="row justify-end">
+              <q-btn label="Submit" type="submit" flat :disable="selected_setting[0].value == null"/>
+            </div>
+          </div>
+          <div v-else>
+            <q-input
+              v-model="selected_setting[0].value"
+              type="text"
+              :label="selected_setting[0].name"
+              :rules="selected_setting[0].rules"
+            >
+              <template v-slot:counter>
+                  {{ selected_setting[0].description }}
+              </template>
+            </q-input>
+            <div class="row justify-end">
+              <q-btn label="Submit" type="submit" flat />
+            </div>
+          </div>
+        </q-form>
       </q-card-section>
-      <q-card-actions align="right">
-        <q-btn
-          flat
-          label="Edit"
-          @click="editSetting"
-        />
-      </q-card-actions>
     </q-card>
   </q-dialog>
   <q-dialog v-model="editOvmfPathDialogShow">
@@ -135,40 +154,45 @@
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
-      <q-separator color="transparent" spaced="lg" inset />
-      <q-card-section class="q-pt-none">
-        <q-input
-          v-model="addOvmfPathDialogName"
-          type="text"
-          label="Name"
-          :rules="[
-            (val) => val.length > 0 || 'Name is required',
-            (val) => !val.includes(' ') || 'No spaces allowed',
-          ]"
-        />
-        <q-input
-          v-model="addOvmfPathDialogPath"
-          type="text"
-          label="Path"
-          :rules="[(val) => val.length > 0 || 'Path is required']"
-        />
+      <q-card-section>
+        <q-form
+          @submit="addOvmfPath"
+          class="q-gutter-md"
+        >
+          <q-input
+            v-model="addOvmfPathDialogName"
+            type="text"
+            label="Name"
+            :rules="[
+              (val) => val.length > 0 || 'Name is required',
+              (val) => !val.includes(' ') || 'No spaces allowed',
+            ]"
+          />
+          <DirectoryList
+            v-model="addOvmfPathDialogPath"
+            label="Path"
+            selectiontype="file"
+            startpath="/usr/share/OVMF"
+          />
+          <div v-if="addOvmfPathDialogPath == null" class="q-mt-sm row items-center">
+          <q-icon name="mdi-alert" color="red" />
+          <span class="text-red q-ml-xs ">Path is required</span>
+        </div>
+          <div class="row justify-end">
+            <q-btn label="Submit" type="submit" flat :disable="addOvmfPathDialogPath == null"/>
+          </div>
+        </q-form>
       </q-card-section>
-      <q-card-actions align="right">
-        <q-btn
-          flat
-          label="Add"
-          @click="addOvmfPath"
-        />
-      </q-card-actions>
     </q-card>
   </q-dialog>
   <ErrorDialog ref="errorDialog" />
   <ConfirmDialog ref="confirmDialog" />
 </template>
 <script>
-import { ref } from "vue";
+import { isReactive, ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import DirectoryList from "src/components/DirectoryList.vue";
 
 export default {
   data() {
@@ -232,6 +256,7 @@ export default {
   components: {
     ErrorDialog,
     ConfirmDialog,
+    DirectoryList,
   },
   methods: {
     getData() {
@@ -239,6 +264,10 @@ export default {
         .get("/settings")
         .then((response) => {
           this.settings = response.data;
+          this.settings.forEach((item) => {
+            this.generateRegexRules(item);
+          });
+          console.log(this.settings);
           this.settings_loading = false;
         })
         .catch((error) => {
@@ -261,8 +290,8 @@ export default {
 
     editSetting() {
       this.$api
-        .put("/setting/" + this.selected_setting.name, {
-          value: this.selected_setting.value,
+        .put("/setting/" + this.selected_setting[0].name, {
+          value: this.selected_setting[0].value,
         })
         .then((response) => {
           this.getData();
@@ -276,8 +305,8 @@ export default {
 
     editOvmfPath() {
       this.$api
-        .put("/settings/ovmf-paths/" + this.selected_ovmf_path.name, {
-          path: this.selected_ovmf_path.path,
+        .put("/settings/ovmf-paths/" + this.selected_ovmf_path[0].name, {
+          path: this.selected_ovmf_path[0].path,
         })
         .then((response) => {
           this.getData();
@@ -291,7 +320,7 @@ export default {
 
     removeOvmfPath() {
       this.$api
-        .delete("/settings/ovmf-paths/" + this.selected_ovmf_path.name)
+        .delete("/settings/ovmf-paths/" + this.selected_ovmf_path[0].name)
         .then((response) => {
           this.getData();
         })
@@ -315,6 +344,19 @@ export default {
             error.response.data.detail,
           ]);
         });
+    },
+    generateRegexRules(item) {
+      if (item.regexrules == []){
+        item.rules = [
+          (val) => val.length > 0 || 'Value is required',
+        ]
+      }
+      else {
+        item.rules = item.regexrules.map((rule) => {
+          rule.regex = new RegExp(rule.regex);
+          return (val) => rule.regex.test(val) || rule.description;
+        });
+      }
     },
   },
   mounted() {

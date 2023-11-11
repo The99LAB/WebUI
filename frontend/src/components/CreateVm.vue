@@ -270,8 +270,7 @@ export default {
         });
     },
     getOvmf() {
-      this.$api.get("/vm-manager/settings/ovmf-paths/all").then((response) => {
-        console.log(response.data);
+      this.$api.get("/settings/ovmf-paths").then((response) => {
         this.ovmfOptions = response.data;
         this.general_ovmf = this.ovmfOptions[0];
       });

@@ -1888,8 +1888,8 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         raise HTTPException(status_code=404, detail="Action not found")
 
 ### API-NETWORKS ###
-@app.get("/api/vm-manager/networks")
-async def api_networks_get(username: str = Depends(check_auth)):
+@app.get("/api/vm-networks")
+async def api_networks_get():
     # get all networks from libvirt
     networks = conn.listAllNetworks()
     # create empty list for networks
@@ -2455,7 +2455,7 @@ async def api_host_settings_get(setting: str, username: str = Depends(check_auth
             vnc_settings = { 
                 "ip": settings_manager.get_setting("novnc_ip").value,
                 "port": settings_manager.get_setting("novnc_port").value,
-                "protocool": settings_manager.get_setting("novnc_protocol").value,
+                "protocol": settings_manager.get_setting("novnc_protocol").value,
                 "path": settings_manager.get_setting("novnc_path").value,
             }
             return vnc_settings
