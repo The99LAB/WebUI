@@ -5,11 +5,13 @@ import os
 import json
 from datetime import datetime
 import base64
+from notifications import NotificationManager, NotificationType, Notification
 
 class Templates:
     def __init__(self):
         self.db_conn = database()
         self.db_cursor = self.db_conn.cursor()
+        self.notification_manager = NotificationManager()
     
     def getLocations(self):
         return self.db_cursor.execute('SELECT * FROM docker_templates_locations').fetchall()
@@ -29,13 +31,17 @@ class Templates:
         print("update template location", id)
         # Remove all templates associated with this location
         self.db_cursor.execute('DELETE FROM docker_templates WHERE template_repository_id = ?', (id,))
+        self.db_conn.commit()
 
         # Download the new templates using git
         template_location_data = self.getLocation(id)
         repository_url = template_location_data['url']
         repository_branch = template_location_data['branch']
+        repository_name = template_location_data['name']
         temp_dir = tempfile.TemporaryDirectory()
-
+        update_notification_id = self.notification_manager.create_notification(Notification(NotificationType.PROGRESS, "Docker Template repository", f'Updating template repository "{repository_name}"'))
+        update_notification = self.notification_manager.get_notification(update_notification_id)
+        
         # Clone the repo
         Repo.clone_from(repository_url, temp_dir.name, branch=repository_branch)
 
@@ -79,6 +85,13 @@ class Templates:
         # Update the last_update field
         self.db_cursor.execute('UPDATE docker_templates_locations SET last_update = ? WHERE id = ?', (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), id))
         self.db_conn.commit()
+
+        # Delete the temp dir
+        temp_dir.cleanup()
+
+        # Mark the notification as done
+        update_notification.progress = 100
+        self.notification_manager.update_notification(update_notification)
 
     def deleteLocation(self, id):
         self.db_cursor.execute('DELETE FROM docker_templates_locations WHERE id = ?', (id,))
