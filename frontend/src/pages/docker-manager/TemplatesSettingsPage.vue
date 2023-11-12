@@ -11,6 +11,20 @@
       :loading="templateTableLoading"
       hide-selected-banner
     >
+      <template v-slot:top-left>
+        <div class="row items-center">
+          <p class="text-h6 q-my-none text-weight-regular">Template Repositories</p>
+          <q-btn
+            color="primary"
+            icon="mdi-refresh"
+            round
+            flat
+            @click="getTemplateRepos"
+          >
+            <q-tooltip :offset="[5, 5]">Refresh Template Repositories</q-tooltip>
+          </q-btn>
+        </div>
+      </template>
       <template v-slot:top-right>
         <q-btn
           color="primary"
