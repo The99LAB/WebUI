@@ -28,6 +28,9 @@ def convertSizeUnit(size: int, from_unit, to_unit=None, mode="float", round_stat
                 to_unit = unit
             else: # if the result is less than 1.0, then we have found the largest unit, so break
                 break
+
+    if to_unit == None:
+        to_unit = from_unit
   
     # find the difference between the two units
     difference = sizeUnit[from_unit] - sizeUnit[to_unit]
