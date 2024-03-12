@@ -18,7 +18,7 @@ class Networks:
             if network_driver == "macvlan" or network_driver == "ipvlan":
                 network_custom_ip = True
             # check if network has subnet
-            if 'Config' in network.attrs['IPAM'] and len(network.attrs['IPAM']['Config']) > 0 and 'Subnet' in network.attrs['IPAM']['Config'][0]:
+            if 'Config' in network.attrs['IPAM'] and network.attrs['IPAM']['Config'] != None and len(network.attrs['IPAM']['Config']) > 0 and 'Subnet' in network.attrs['IPAM']['Config'][0]:
                 network_subnet = network.attrs['IPAM']['Config'][0]['Subnet']
             
             networks_list.append({
