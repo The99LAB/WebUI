@@ -1,7 +1,10 @@
 {
-    "folders": [
-        {
-            "path": "../WebUI-docker-templates"
-        }
-    ]
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "../WebUI-docker-templates"
+    }
+  ]
 }
