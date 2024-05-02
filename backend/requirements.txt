@@ -2,7 +2,7 @@ psutil
 fastapi
 asyncio
 libvirt-python
-blkinfo
+blkinfo @ git+https://github.com/99-industries/blkinfo.git@0.2.0
 distro
 python-pam
 python-jose[cryptography]

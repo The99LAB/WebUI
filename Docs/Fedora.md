@@ -68,16 +68,6 @@ bridge-slave-enp37s0  5f9b861e-b09c-4e08-b7e7-17171cb5f5fa  ethernet  --
 
 
 ## VMManager Installation
-#### Install custom blkinfo Python module
-- Download from GitHub:
-```
-curl -s https://api.github.com/repos/macOS-KVM/blkinfo/releases/latest \
-| grep "browser_download_url.*tar.gz" \
-| cut -d : -f 2,3 \
-| tr -d \" \
-| wget -qi -
-```
-- Install the module: ``pip3 install blkinfo-*.tar.gz``
 
 #### Download VmManager
 - Download the latest release from GitHub:
