@@ -1,10 +1,7 @@
 {
     "folders": [
         {
-            "path": "."
-        },
-        {
-            "path": "../vm-manager-docker-templates"
+            "path": "../WebUI-docker-templates"
         }
     ]
 }
