@@ -1,4 +1,4 @@
-# Install VMManager on Fedora Server
+# Install the WebUI on Fedora Server
 
 ## Preparation
 #### Diable cockpit
@@ -67,20 +67,20 @@ bridge-slave-enp37s0  5f9b861e-b09c-4e08-b7e7-17171cb5f5fa  ethernet  --
 - Enable samba: ``systemctl enable --now smb``
 
 
-## VMManager Installation
+## WebUI Installation
 
-#### Download VmManager
+#### Download the WebUI
 - Download the latest release from GitHub:
 ```
-curl -s https://api.github.com/repos/macOS-KVM/VmManager/releases/latest \
+curl -s https://api.github.com/repos/99-industries/WebUI/releases/latest \
 | grep "browser_download_url.*zip" \
 | cut -d : -f 2,3 \
 | tr -d \" \
 | wget -qi -
 ```
-- ``unzip VmManager-build.zip``
-- ``cd VmManager-build``
+- ``unzip WebUI-build.zip``
+- ``cd WebUI-build``
 #### Install python modules
 - ``pip3 install -r requirements.txt``
-#### Run VmManager
-- Follow the instructions in the README.md file to run VmManager
+#### Run the WebUI
+- Follow the instructions in the README.md file to run the WebUI

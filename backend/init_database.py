@@ -37,4 +37,4 @@ settings_manager.create_ovmf_path(ovmf_path_setting)
 settings_manager.create_ovmf_path(ovmf_secureboot_path_setting)
 
 # Create welcome notification
-NotificationManager().create_notification(Notification(NotificationType.INFO, "Welcome to Virtual Machine Manager", "Welcome to Virtual Machine Manager by Core-i99"))
+NotificationManager().create_notification(Notification(NotificationType.INFO, "Welcome to the Server99 WebUI", ""))

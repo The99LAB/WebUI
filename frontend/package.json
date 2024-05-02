@@ -2,7 +2,7 @@
   "name": "quasar-project",
   "version": "0.0.1",
   "description": "Web UI for managing libvirt based virtual machines",
-  "productName": "VmManager",
+  "productName": "WebUI",
   "author": "Stijn Rombouts",
   "private": true,
   "scripts": {

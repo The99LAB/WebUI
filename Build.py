@@ -22,4 +22,4 @@ for file in os.listdir('frontend/dist/spa'):
     shutil.move('frontend/dist/spa/' + file, 'backend/static')
 
 # zip backend folder
-shutil.make_archive('VmManager-build', 'zip', 'backend')
+shutil.make_archive('WebUI-build', 'zip', 'backend')

@@ -1,4 +1,4 @@
-# VmManager (quasar-project)
+# WebUI (quasar-project)
 
 Web UI for managing libvirt based virtual machines
 

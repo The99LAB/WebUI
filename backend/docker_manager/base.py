@@ -23,7 +23,7 @@ def database():
             PRIMARY KEY("id")
         );''')
 
-        cursor.execute('''INSERT INTO "docker_templates_locations" ("id", "name", "url", "branch") VALUES ('1', 'VmManager Official', 'https://github.com/macOS-KVM/vm-manager-docker-templates.git', 'main')''')
+        cursor.execute('''INSERT INTO "docker_templates_locations" ("id", "name", "url", "branch") VALUES ('1', 'Server99 Official', 'https://github.com/macOS-KVM/vm-manager-docker-templates.git', 'main')''')
 
     # Create table docker_templates if not exists
     cursor.execute('''
