@@ -1,7 +1,7 @@
 name: Format source code
 on: 
-  push:
-    branches: [ main ]
+  workflow_dispatch:
+  
 jobs:
   run:
     name: Format
