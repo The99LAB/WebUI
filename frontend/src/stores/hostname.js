@@ -11,8 +11,9 @@ export const useHostnameStore = defineStore("hostname", {
       if (this.hostname == null) {
         if (localStorage.getItem("hostname") != null) {
           this.hostname = localStorage.getItem("hostname");
+        } else {
+          this.getHostnameApi();
         }
-        this.getHostnameApi();
       }
       return this.hostname;
     },

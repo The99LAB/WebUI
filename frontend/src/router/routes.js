@@ -125,12 +125,6 @@ const routes = [
         meta: { title: "Users" },
       },
       {
-        path: "system/terminal",
-        name: "system/terminal",
-        component: () => import("pages/system/TerminalPage.vue"),
-        meta: { title: "Terminal" },
-      },
-      {
         path: "system/filemanager",
         name: "system/filemanager",
         component: () => import("pages/system/FileManager.vue"),

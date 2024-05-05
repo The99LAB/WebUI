@@ -1,6 +1,6 @@
 {
   "name": "quasar-project",
-  "version": "0.0.1",
+  "version": "2.0",
   "description": "Web UI for managing libvirt based virtual machines",
   "productName": "WebUI",
   "author": "Stijn Rombouts",
@@ -21,9 +21,7 @@
     "socket.io-client": "^4.6.1",
     "vue": "^3.2.47",
     "vue-router": "^4.0.0",
-    "vue3-apexcharts": "^1.4.1",
-    "xterm": "^5.1.0",
-    "xterm-addon-fit": "^0.8.0"
+    "vue3-apexcharts": "^1.4.1"
   },
   "devDependencies": {
     "@quasar/app-vite": "^1.4.3",

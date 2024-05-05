@@ -58,11 +58,15 @@
           flat
           icon="mdi-delete"
           :disable="selected_ovmf_path.length == 0"
-          @click="$refs.confirmDialog.show(
-            'Are you sure?',
-            ['Are you sure you want to remove this OVMF path?'],
-            () => { removeOvmfPath() }
-          )"
+          @click="
+            $refs.confirmDialog.show(
+              'Are you sure?',
+              ['Are you sure you want to remove this OVMF path?'],
+              () => {
+                removeOvmfPath();
+              },
+            )
+          "
         >
           <q-tooltip :offset="[5, 5]"> Remove OVMF Path </q-tooltip>
         </q-btn>
@@ -90,19 +94,31 @@
       </q-card-section>
       <q-card-section>
         <q-form @submit="editSetting" class="q-gutter-md">
-          <div v-if="selected_setting[0].verifyDir || selected_setting[0].verifyFile">
+          <div
+            v-if="
+              selected_setting[0].verifyDir || selected_setting[0].verifyFile
+            "
+          >
             <DirectoryList
               v-model="selected_setting[0].value"
               :label="selected_setting[0].name"
               :selectiontype="selected_setting[0].verifyDir ? 'dir' : 'file'"
               :startpath="selected_setting[0].value"
             />
-            <div v-if="selected_setting[0].value == null" class="q-mt-sm row items-center">
+            <div
+              v-if="selected_setting[0].value == null"
+              class="q-mt-sm row items-center"
+            >
               <q-icon name="mdi-alert" color="red" />
-              <span class="text-red q-ml-xs ">Path is required</span>
+              <span class="text-red q-ml-xs">Path is required</span>
             </div>
             <div class="row justify-end">
-              <q-btn label="Submit" type="submit" flat :disable="selected_setting[0].value == null"/>
+              <q-btn
+                label="Submit"
+                type="submit"
+                flat
+                :disable="selected_setting[0].value == null"
+              />
             </div>
           </div>
           <div v-else>
@@ -113,7 +129,7 @@
               :rules="selected_setting[0].rules"
             >
               <template v-slot:counter>
-                  {{ selected_setting[0].description }}
+                {{ selected_setting[0].description }}
               </template>
             </q-input>
             <div class="row justify-end">
@@ -139,11 +155,7 @@
         />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn
-          flat
-          label="Edit"
-          @click="editOvmfPath"
-        />
+        <q-btn flat label="Edit" @click="editOvmfPath" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -155,10 +167,7 @@
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
       <q-card-section>
-        <q-form
-          @submit="addOvmfPath"
-          class="q-gutter-md"
-        >
+        <q-form @submit="addOvmfPath" class="q-gutter-md">
           <q-input
             v-model="addOvmfPathDialogName"
             type="text"
@@ -174,12 +183,20 @@
             selectiontype="file"
             startpath="/usr/share/OVMF"
           />
-          <div v-if="addOvmfPathDialogPath == null" class="q-mt-sm row items-center">
-          <q-icon name="mdi-alert" color="red" />
-          <span class="text-red q-ml-xs ">Path is required</span>
-        </div>
+          <div
+            v-if="addOvmfPathDialogPath == null"
+            class="q-mt-sm row items-center"
+          >
+            <q-icon name="mdi-alert" color="red" />
+            <span class="text-red q-ml-xs">Path is required</span>
+          </div>
           <div class="row justify-end">
-            <q-btn label="Submit" type="submit" flat :disable="addOvmfPathDialogPath == null"/>
+            <q-btn
+              label="Submit"
+              type="submit"
+              flat
+              :disable="addOvmfPathDialogPath == null"
+            />
           </div>
         </q-form>
       </q-card-section>
@@ -198,7 +215,7 @@ export default {
   data() {
     return {
       ovmf_paths: [],
-      ovmf_paths_columns:  [
+      ovmf_paths_columns: [
         {
           name: "name",
           label: "Name",
@@ -236,7 +253,7 @@ export default {
           field: "description",
           align: "left",
           sortable: true,
-        }
+        },
       ],
       selected_setting: [],
       selected_ovmf_path: [],
@@ -346,12 +363,9 @@ export default {
         });
     },
     generateRegexRules(item) {
-      if (item.regexrules == []){
-        item.rules = [
-          (val) => val.length > 0 || 'Value is required',
-        ]
-      }
-      else {
+      if (item.regexrules == []) {
+        item.rules = [(val) => val.length > 0 || "Value is required"];
+      } else {
         item.rules = item.regexrules.map((rule) => {
           rule.regex = new RegExp(rule.regex);
           return (val) => rule.regex.test(val) || rule.description;

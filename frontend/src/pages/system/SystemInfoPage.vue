@@ -34,7 +34,7 @@
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Hostname:</p>
             <p class="col">
-              {{ systemInfo.hostname }}
+              {{ hostname }}
               <q-btn
                 round
                 icon="edit"
@@ -57,7 +57,7 @@
         <q-separator color="transparent" spaced="xs" />
         <div class="row items-start">
           <p class="col text-right q-mr-sm text-weight-bold">Version:</p>
-          <p class="col">2.0</p>
+          <p class="col">{{ webuiVersion }}</p>
         </div>
       </q-card-section>
       <q-card-section>
@@ -90,18 +90,18 @@
         <q-inner-loading :showing="loadingDocker" />
       </q-card-section>
     </q-card>
-    <editHostName
-      ref="editHostNameDialog"
-      @hostname-edit-finished="getSystemInfo()"
-    />
+    <editHostName ref="editHostNameDialog" />
     <errorDialog ref="errorDialog" />
   </q-page>
 </template>
 
 <script>
+import { version } from "../../../package.json";
 import editHostName from "src/components/EditHostName.vue";
 import errorDialog from "src/components/ErrorDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
+import { useHostnameStore } from "src/stores/hostname";
+import { storeToRefs } from "pinia";
 
 import { ref } from "vue";
 export default {
@@ -111,6 +111,14 @@ export default {
       dockerInfo: {},
       loadingSystem: ref(false),
       loadingDocker: ref(false),
+      webuiVersion: version,
+    };
+  },
+  setup() {
+    const hostname_store = useHostnameStore();
+    const { getHostname } = storeToRefs(hostname_store);
+    return {
+      hostname: getHostname,
     };
   },
   components: {
@@ -148,7 +156,7 @@ export default {
         });
     },
     editHostName() {
-      this.$refs.editHostNameDialog.show((name = this.hostname));
+      this.$refs.editHostNameDialog.show();
     },
   },
   mounted() {

@@ -54,7 +54,7 @@ export default route(function (/* { store, ssrContext } */) {
     if (hostname == null) {
       document.title = to.meta.title;
     } else {
-      document.title = hostname + " - " + to.meta.title;
+      document.title = to.meta.title + " - " + hostname;
     }
   });
 

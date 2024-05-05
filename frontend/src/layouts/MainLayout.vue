@@ -1,6 +1,6 @@
 <template>
-  <q-layout view="hHh LpR fFf">
-    <q-header class="bg-primary">
+  <q-layout view="lHh LpR fFf">
+    <q-header class="header-theme">
       <q-toolbar>
         <q-btn
           dense
@@ -11,9 +11,7 @@
         >
           <ToolTip content="Toggle" />
         </q-btn>
-        <q-toolbar-title>
-          {{ hostname }}
-        </q-toolbar-title>
+        <q-space />
         <q-btn
           dense
           flat
@@ -87,6 +85,26 @@
 
     <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
       <q-list>
+        <q-item class="q-pa-md">
+          <q-item-section top avatar>
+            <q-img src="/src/assets/Server99-logo-base.png" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="text-body1">
+              <q-tooltip anchor="bottom left" self="top left" :offset="[0, 5]">
+                User
+              </q-tooltip>
+              <q-icon name="mdi-account" />
+              {{ username }}
+            </q-item-label>
+            <q-item-label class="text-body2">
+              <q-tooltip anchor="bottom left" self="top left" :offset="[0, 5]">
+                Hostname
+              </q-tooltip>
+              {{ hostname }}
+            </q-item-label>
+          </q-item-section>
+        </q-item>
         <q-item clickable tag="a" to="/dashboard">
           <q-item-section avatar>
             <q-icon name="bi-speedometer" />
@@ -221,14 +239,6 @@
             <q-item-label>Users</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/system/terminal">
-          <q-item-section avatar>
-            <q-icon name="mdi-console" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Terminal</q-item-label>
-          </q-item-section>
-        </q-item>
         <q-item clickable tag="a" to="/system/filemanager">
           <q-item-section avatar>
             <q-icon name="mdi-folder-multiple-outline" />
@@ -319,6 +329,20 @@
   </q-layout>
 </template>
 
+<style lang="scss" scoped>
+body.body--light {
+  .header-theme {
+    background-color: $primary;
+  }
+}
+
+body.body--dark {
+  .header-theme {
+    background-color: $dark;
+  }
+}
+</style>
+
 <script>
 import { Notify } from "quasar";
 import { defineComponent, ref } from "vue";
@@ -326,6 +350,7 @@ import ErrorDialog from "src/components/ErrorDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
 import { useHostnameStore } from "stores/hostname";
+import { useUsernameStore } from "stores/username";
 import { storeToRefs } from "pinia";
 import ConfirmDialog from "src/components/ConfirmDialog.vue";
 
@@ -353,10 +378,14 @@ export default defineComponent({
     };
   },
   setup() {
-    const store = useHostnameStore();
-    const { getHostname } = storeToRefs(store);
+    const hostname_store = useHostnameStore();
+    const { getHostname } = storeToRefs(hostname_store);
+    const username_store = useUsernameStore();
+    const { getUsername } = storeToRefs(username_store);
     return {
       hostname: getHostname,
+      username: getUsername,
+      username_store,
     };
   },
 
@@ -369,6 +398,7 @@ export default defineComponent({
   methods: {
     logout() {
       localStorage.setItem("jwt-token", "");
+      this.username_store.clearUsername();
       this.$router.push({ path: "/login" });
     },
     NotificationDelete(id) {

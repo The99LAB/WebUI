@@ -13,7 +13,9 @@
     >
       <template v-slot:top-left>
         <div class="row items-center">
-          <p class="text-h6 q-my-none text-weight-regular">Template Repositories</p>
+          <p class="text-h6 q-my-none text-weight-regular">
+            Template Repositories
+          </p>
           <q-btn
             color="primary"
             icon="mdi-refresh"
@@ -21,7 +23,9 @@
             flat
             @click="getTemplateRepos"
           >
-            <q-tooltip :offset="[5, 5]">Refresh Template Repositories</q-tooltip>
+            <q-tooltip :offset="[5, 5]"
+              >Refresh Template Repositories</q-tooltip
+            >
           </q-btn>
         </div>
       </template>

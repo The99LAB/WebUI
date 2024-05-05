@@ -28,6 +28,8 @@
 <script>
 import { ref } from "vue";
 import errorDialog from "src/components/ErrorDialog.vue";
+import { useHostnameStore } from "stores/hostname";
+import { storeToRefs } from "pinia";
 
 export default {
   data() {
@@ -36,35 +38,30 @@ export default {
       layout: ref(false),
     };
   },
+  setup() {
+    const hostname_store = useHostnameStore();
+    return { hostname_store };
+  },
   components: {
     errorDialog,
   },
   emits: ["hostname-edit-finished"],
   methods: {
-    show(name = null) {
+    show() {
       this.layout = true;
-      if (name != null) {
-        this.hostName = name;
-      } else {
-        this.getHostName();
-      }
+      this.getHostName();
     },
     getHostName() {
-      this.$api
-        .get("/host/system-info/hostname")
-        .then((response) => {
-          this.hostName = response.data.hostname;
-        })
-        .catch((error) => {
-          console.log("Error getting hostname: " + error.response.data.detail);
-        });
+      this.hostName = this.hostname_store.hostname;
     },
     editHostName() {
-      const formData = new FormData();
-      formData.append("hostname", this.hostName);
       this.$api
-        .post("/host/system-info/hostname", formData)
-        .then((this.layout = false), this.$emit("hostname-edit-finished"))
+        .post("/host/system-info/hostname", { hostname: this.hostName })
+        .then((response) => {
+          this.hostname_store.getHostnameApi();
+          this.layout = false;
+          this.$emit("hostname-edit-finished");
+        })
         .catch((error) => {
           this.$refs.errorDialog.show("Error editing hostname", [
             error.response.data.detail,

@@ -3,14 +3,21 @@
     <div class="row justify-center text-center q-gutter-md">
       <q-card class="dashboard-card">
         <div class="row justify-between full-height items-center q-pb-none">
-          <div class="system-info-logo col-4 full-height q-pa-sm">
-            <q-img
-              src="/src/assets/Server99-logo-full.png"
-              style="margin-bottom: 6em"
-            />
-            <q-img src="/src/assets/Server99-base.png" />
+          <div class="system-info-logo col-5 full-height column q-pa-sm">
+            <div class="col">
+              <q-img
+                src="/src/assets/Server99-logo-text.png"
+                style="width: 9em"
+              />
+            </div>
+            <div class="col">
+              <q-img
+                src="/src/assets/Server99-logo-base.png"
+                style="width: 6em; transform: translateY(-50%)"
+              />
+            </div>
           </div>
-          <div class="col-8 self-start">
+          <div class="col self-start">
             <p class="text-h6 q-my-none q-pl-md text-left">
               System Information
             </p>
@@ -56,9 +63,9 @@
       </q-card>
       <q-card class="dashboard-card">
         <q-card-section class="text-left row items-center q-pb-none">
-          <p class="text-h6">CPU</p>
+          <p class="text-h6 q-mb-none">CPU</p>
           <q-space />
-          <p class="text-subtitle2 text-grey-8">{{ cpu_name }}</p>
+          <p class="text-subtitle2 text-grey-8 q-mb-none">{{ cpu_name }}</p>
         </q-card-section>
         <q-card-section class="row items-center q-py-none">
           <div class="col">
@@ -98,7 +105,7 @@
       </q-card>
       <q-card class="dashboard-card">
         <q-card-section class="text-left q-pb-none">
-          <p class="text-h6">Memory</p>
+          <p class="text-h6 q-mb-none">Memory</p>
         </q-card-section>
         <q-card-section
           class="row items-center justify-center q-pt-none"
@@ -121,14 +128,14 @@
             <div class="row justify-start q-ml-lg q-my-none items-center">
               <q-icon
                 name="fiber_manual_record"
-                class="text-primary q-mr-xs q-pa-none"
+                class="text-secondary q-mr-xs q-pa-none"
               />
               Used ({{ mem_used }} GB)
             </div>
             <div class="row justify-start q-ml-lg q-my-none items-center">
               <q-icon
                 name="fiber_manual_record"
-                class="text-grey-9 q-mr-xs q-pa-none"
+                class="text-primary q-mr-xs q-pa-none"
               />
               Free ( {{ (mem_total - mem_used).toFixed(2) }} GB)
             </div>
@@ -184,7 +191,7 @@ body.screen--xl {
 
 body.body--light {
   .system-info-logo {
-    background-color: $grey-13;
+    background-color: $grey-4;
   }
 }
 
@@ -253,7 +260,7 @@ export default {
         yaxis: {
           max: 100,
           min: 0,
-          tickAmount: 4,
+          tickAmount: 2,
           labels: {
             formatter: function (value) {
               return value.toFixed(0);
@@ -367,8 +374,8 @@ export default {
     updateMemChart(used, total) {
       this.$refs.memUsageChart.updateOptions({
         colors: [
+          colors.getPaletteColor("secondary"),
           colors.getPaletteColor("primary"),
-          colors.getPaletteColor("grey-9"),
         ],
       });
       this.$refs.memUsageChart.updateSeries([used, total - used]);

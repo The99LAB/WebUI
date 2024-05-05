@@ -32,6 +32,7 @@ from notifications import NotificationManager, NotificationType
 import vm_backups
 from docker_manager import Templates, Containers, Networks, Images, General, DockerManagerException
 from settings import SettingsManager, Setting, OvmfPath, SettingsException
+from host_manager import libvirt_connection, SystemInfo, HostManagerException
 
 
 origins = ["*"]
@@ -50,10 +51,9 @@ SECRET_KEY = "secret!"
 ALGORITHM = "HS256"
 
 
-fd = None
-child_pid = None
 system_status = 'running'
-conn = libvirt.open('qemu:///system')
+libvirt_conn = libvirt_connection.connection
+system_info = SystemInfo()
 notification_manager = NotificationManager()
 vm_backup_manager = vm_backups.BackupJobManager()
 dockerTemplates = Templates()
@@ -100,7 +100,7 @@ def check_auth_token(token):
         return False
 
 def getvmstate(uuid):
-    domain = conn.lookupByUUIDString(uuid)
+    domain = libvirt_conn.lookupByUUIDString(uuid)
     state, reason = domain.state()
     if state == libvirt.VIR_DOMAIN_NOSTATE:
         dom_state = 'NOSTATE'
@@ -123,7 +123,7 @@ def getvmstate(uuid):
     return dom_state
 
 def getvmresults():
-    domains = conn.listAllDomains(0)
+    domains = libvirt_conn.listAllDomains(0)
     if len(domains) != 0:
         results = []
         for domain in domains:
@@ -168,7 +168,7 @@ def getvmresults():
 
 class vmmemory():
     def __init__(self, uuid):
-        self.domain = conn.lookupByUUIDString(uuid)
+        self.domain = libvirt_conn.lookupByUUIDString(uuid)
 
     def current(self):
         maxmem = self.domain.info()[1]
@@ -196,7 +196,7 @@ class vmmemory():
                     output = output.replace(
                         currentminmem, "<currentMemory unit='KiB'>" + str(minmem) + "</currentMemory>")
                     try:
-                        conn.defineXML(output)
+                        libvirt_conn.defineXML(output)
                         return ('Succeed')
                     except libvirt.libvirtError as e:
                         return (f'Error:{e}')
@@ -209,7 +209,7 @@ class vmmemory():
 class storage():
     def __init__(self, domain_uuid):
         self.domain_uuid = domain_uuid
-        self.domain = conn.lookupByUUIDString(domain_uuid)
+        self.domain = libvirt_conn.lookupByUUIDString(domain_uuid)
         self.vmXml = self.domain.XMLDesc(0)
 
     def get(self):
@@ -356,7 +356,7 @@ def SystemUsbDevicesList():
 
 
 def HostPcieDevices():
-    pci_devices = conn.listAllDevices(2)
+    pci_devices = libvirt_conn.listAllDevices(2)
     pcidevicesList = []
     for device in pci_devices:
         devicexml = device.XMLDesc()
@@ -406,7 +406,7 @@ def HostPcieDevices():
 
 class DomainPcie():
     def __init__(self, domuuid):
-        self.domain = conn.lookupByUUIDString(domuuid)
+        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
         self.vmXml = self.domain.XMLDesc()
 
     @property
@@ -501,7 +501,7 @@ class DomainPcie():
 
 class DomainUsb():
     def __init__(self, domuuid):
-        self.domain = conn.lookupByUUIDString(domuuid)
+        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
         self.xml = self.domain.XMLDesc()
 
     @property
@@ -555,7 +555,7 @@ class DomainUsb():
 
 class domainNetworkInterface():
     def __init__(self, dom_uuid):
-        self.domain = conn.lookupByUUIDString(dom_uuid)
+        self.domain = libvirt_conn.lookupByUUIDString(dom_uuid)
         self.domainxml = self.domain.XMLDesc()
 
     def get(self):
@@ -566,7 +566,7 @@ class domainNetworkInterface():
             xml = ET.tostring(interface).decode()
             if interface.get('type') == "network":
                 mac_addr = interface.find("mac").get('address')
-                source_network = conn.networkLookupByName(interface.find("source").get('network')).name()
+                source_network = libvirt_conn.networkLookupByName(interface.find("source").get('network')).name()
                 model = interface.find('model').get("type")
                 bootorderelem = interface.find('boot')
                 if bootorderelem != None:
@@ -616,7 +616,7 @@ class create_vm():
         self.qemu_path = settings_manager.get_setting("qemu_path").value
         self.networkstring = ""
         if self.network:
-            self.networkstring = f"<interface type='network'><source network='{conn.networkLookupByUUIDString(self.network_source).name()}'/><model type='{self.network_model}'/></interface>"
+            self.networkstring = f"<interface type='network'><source network='{libvirt_conn.networkLookupByUUIDString(self.network_source).name()}'/><model type='{self.network_model}'/></interface>"
         
         self.createisoxml = ""
         if self.iso:
@@ -792,11 +792,11 @@ class create_vm():
         </domain>"""
         return self.xml
     def create(self):
-        conn.defineXML(self.xml)
+        libvirt_conn.defineXML(self.xml)
 
 class DomainGraphics:
     def __init__(self, domuuid):
-        self.domain = conn.lookupByUUIDString(domuuid)
+        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
         self.xml = ET.fromstring(self.domain.XMLDesc(0))
 
     @property
@@ -819,9 +819,9 @@ class DomainGraphics:
         newxml = ET.tostring(self.xml).decode("utf-8")
         self.domain.undefineFlags(4)
         try:
-            self.domain = conn.defineXML(newxml)
+            self.domain = libvirt_conn.defineXML(newxml)
         except libvirt.libvirtError as e:
-            self.domain = conn.defineXML(original_domain_xml)
+            self.domain = libvirt_conn.defineXML(original_domain_xml)
             raise e
 
     def remove(self, index):
@@ -844,15 +844,15 @@ class DomainGraphics:
         # define new xml
         self.domain.undefineFlags(4)
         try:
-            self.domain = conn.defineXML(newxml)
+            self.domain = libvirt_conn.defineXML(newxml)
         except libvirt.libvirtError as e:
-            self.domain = conn.defineXML(original_domain_xml)
+            self.domain = libvirt_conn.defineXML(original_domain_xml)
             raise e
 
 
 class DomainVideo:
     def __init__(self, domuuid):
-        self.domain = conn.lookupByUUIDString(domuuid)
+        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
         self.xml = ET.fromstring(self.domain.XMLDesc(0))
     
     @property
@@ -879,9 +879,9 @@ class DomainVideo:
         newxml = ET.tostring(self.xml).decode("utf-8")
         self.domain.undefineFlags(4)
         try:
-            self.domain = conn.defineXML(newxml)
+            self.domain = libvirt_conn.defineXML(newxml)
         except libvirt.libvirtError as e:
-            self.domain = conn.defineXML(original_domain_xml)
+            self.domain = libvirt_conn.defineXML(original_domain_xml)
             raise e
     
     def remove(self, index):
@@ -904,14 +904,14 @@ class DomainVideo:
         # define new xml
         self.domain.undefineFlags(4)
         try:
-            self.domain = conn.defineXML(newxml)
+            self.domain = libvirt_conn.defineXML(newxml)
         except libvirt.libvirtError as e:
-            self.domain = conn.defineXML(original_domain_xml)
+            self.domain = libvirt_conn.defineXML(original_domain_xml)
             raise e
         
 class DomainSound:
     def __init__(self, domuuid):
-        self.domain = conn.lookupByUUIDString(domuuid)
+        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
         self.xml = ET.fromstring(self.domain.XMLDesc(0))
     
     @property
@@ -936,9 +936,9 @@ class DomainSound:
         newxml = ET.tostring(self.xml).decode("utf-8")
         self.domain.undefineFlags(4)
         try:
-            self.domain = conn.defineXML(newxml)
+            self.domain = libvirt_conn.defineXML(newxml)
         except libvirt.libvirtError as e:
-            self.domain = conn.defineXML(original_domain_xml)
+            self.domain = libvirt_conn.defineXML(original_domain_xml)
             raise e
     
     def remove(self, index):
@@ -961,13 +961,13 @@ class DomainSound:
         # define new xml
         self.domain.undefineFlags(4)
         try:
-            self.domain = conn.defineXML(newxml)
+            self.domain = libvirt_conn.defineXML(newxml)
         except libvirt.libvirtError as e:
-            self.domain = conn.defineXML(original_domain_xml)
+            self.domain = libvirt_conn.defineXML(original_domain_xml)
             raise e
 
 def getGuestMachineTypes():
-    capabilities = conn.getCapabilities()
+    capabilities = libvirt_conn.getCapabilities()
     root = ET.fromstring(capabilities)
     machine_types = []
     for arch in root.findall('.//arch[@name="x86_64"]'):
@@ -1010,8 +1010,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     try:
         if check_auth_token(token):
-            sysInfo = ET.fromstring(conn.getSysinfo(0))
-            cpu_name = sysInfo.find("processor/entry[@name='version']").text
+            cpu_name = system_info.cpu_model
             mem_total = storage_manager.convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB", round_state=True, round_to=2)
             os_name = distro.name(pretty=True)
             uptime = humanize.precisedelta(datetime.now() - datetime.fromtimestamp(psutil.boot_time()), minimum_unit="minutes", format="%0.0f")
@@ -1100,82 +1099,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         await websocket.send_json({"event": "auth_error"})
         await websocket.close()
 
-# changes the size reported to TTY-aware applications like vim
-def set_winsize(fd, row, col, xpix=0, ypix=0):
-    winsize = struct.pack("HHHH", row, col, xpix, ypix)
-    fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
-
-async def read_and_forward_pty_output(websocket: WebSocket):
-    global fd
-    max_read_bytes = 1024 * 20
-    while True:
-        await asyncio.sleep(0.01)
-        if fd:
-            timeout_sec = 0
-            (data_ready, _, _) = select.select([fd], [], [], timeout_sec)
-            if data_ready:
-                output = os.read(fd, max_read_bytes).decode()
-                await websocket.send_json({"type": "pty_output", "output": output})
-        else:
-            return
-
-def kill_child_process():
-    global child_pid
-    global fd
-    os.kill(child_pid, signal.SIGKILL)
-    fd = None
-    child_pid = None
-    print("pty closed")
-
-@app.websocket("/terminal")
-async def pty_socket(websocket: WebSocket, token: str):
-    global fd
-    global child_pid
-
-    await websocket.accept()
-
-    if child_pid:
-        # already started child process, don't start another
-        # write a new line so that when a client refresh the shell prompt is printed
-        os.write(fd, "\n".encode())
-        # return
-
-    # create child process attached to a pty we can read from and write to
-    (child_pid, fd) = os.forkpty()
-
-    if child_pid == 0:
-        # this is the child process fork.
-        # anything printed here will show up in the pty, including the output
-        # of this subprocess
-        # run bash in /root
-        subprocess.run(["/bin/bash"], cwd="/root", env={"TERM": "xterm"})
-
-
-    else:
-        try:
-            # this is the parent process fork.
-            asyncio.create_task(read_and_forward_pty_output(websocket))
-            while True:
-                message = await websocket.receive_json()
-                if check_auth_token(token):
-                    if message['type'] == 'input':
-                        os.write(fd, message["input"].encode())
-                    elif message['type'] == 'resize':
-                        set_winsize(fd, message["dims"]['rows'], message["dims"]['cols'])
-                else:
-                    await websocket.send_json({"type": "auth_error"})
-                    await websocket.close()
-                    kill_child_process()
-                    break
-        except WebSocketDisconnect:
-            print("Websocket connection to terminal is closed")
-            # close the pty
-            kill_child_process()
-            
 
 @app.get('/api/no-auth/hostname')
 async def get_hostname(request: Request):
-    return JSONResponse(content={"hostname": conn.getHostname()})
+    return JSONResponse(content={"hostname": system_info.hostname})
 
 @app.get('/api/no-auth/system-status')
 async def get_system_status(request: Request):
@@ -1209,7 +1136,7 @@ async def login(request: Request):
 async def get_vm_manager(request: Request, action: str, username: str = Depends(check_auth)):
     if action == "running":
         domainList = []
-        for domain in conn.listAllDomains():
+        for domain in libvirt_conn.listAllDomains():
             if domain.isActive():
                 domainList.append({
                     "name": domain.name(),
@@ -1304,7 +1231,7 @@ async def post_vm_manager(request: Request, action: str, username: str = Depends
 #### API/VM-MANAGER-ACTIONS ####
 @app.get('/api/vm-manager/{vmuuid}/{action}')
 async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
-    domain = conn.lookupByUUIDString(vmuuid)
+    domain = libvirt_conn.lookupByUUIDString(vmuuid)
     domain_xml = domain.XMLDesc()
     if action == "xml":
         return { "xml": domain_xml }
@@ -1420,7 +1347,7 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
 
 @app.post('/api/vm-manager/{vmuuid}/{action}')
 async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
-    domain = conn.lookupByUUIDString(vmuuid)
+    domain = libvirt_conn.lookupByUUIDString(vmuuid)
     if action == "start":
         try:
             if domain.state()[0] == libvirt.VIR_DOMAIN_SHUTOFF:
@@ -1476,11 +1403,11 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             except libvirt.libvirtError as e:
                 raise HTTPException(status_code=500, detail=str(e))
             try:
-                domain = conn.defineXML(xml)
+                domain = libvirt_conn.defineXML(xml)
                 return
             except libvirt.libvirtError as e:
                 try:
-                    domain = conn.defineXML(origxml)
+                    domain = libvirt_conn.defineXML(origxml)
                     raise HTTPException(status_code=500, detail=str(e))
                 except libvirt.libvirtError as e2:
                     raise HTTPException(status_code=500, detail=str(e2))
@@ -1494,7 +1421,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 xml = ET.tostring(xml).decode()
                 try:
                     domain.undefineFlags(4)
-                    domain = conn.defineXML(xml)
+                    domain = libvirt_conn.defineXML(xml)
                     return
                 except libvirt.libvirtError as e:
                     raise HTTPException(status_code=500, detail=str(e))
@@ -1550,7 +1477,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             vm_xml = ET.tostring(vm_xml).decode()
             try:
                 domain.undefineFlags(4)
-                domain = conn.defineXML(vm_xml)
+                domain = libvirt_conn.defineXML(vm_xml)
                 return
             except libvirt.libvirtError as e:
                 raise HTTPException(status_code=500, detail=str(e))
@@ -1576,7 +1503,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 model = data['networkModel']
 
                 try:
-                    source_network_name = conn.networkLookupByUUIDString(source_network).name()
+                    source_network_name = libvirt_conn.networkLookupByUUIDString(source_network).name()
                     xml = f"<interface type='network'><source network='{source_network_name}'/><model type='{model}'/></interface>"
                     domain.attachDeviceFlags(
                         xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
@@ -1891,7 +1818,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
 @app.get("/api/vm-networks")
 async def api_networks_get():
     # get all networks from libvirt
-    networks = conn.listAllNetworks()
+    networks = libvirt_conn.listAllNetworks()
     # create empty list for networks
     networks_list = []
     # loop through networks
@@ -2246,51 +2173,34 @@ async def api_host_storage_sharedfolders_post(request: Request, action: str, use
 @app.get("/api/host/system-info/{action}")
 async def api_system_info_get(action: str, username: str = Depends(check_auth)):
     if action == "all":
-        sysInfo = ET.fromstring(conn.getSysinfo(0))
-        # if baseboard exists in sysinfo
-        baseboard_manufacturer = "Unknown"
-        baseboard_product = ""
-        baseboard_version = ""
-        if sysInfo.find("baseBoard") is not None:
-            baseboard_manufacturer = sysInfo.find("baseBoard/entry[@name='manufacturer']").text
-            baseboard_product = sysInfo.find("baseBoard/entry[@name='product']").text
-            baseboard_version = sysInfo.find("baseBoard/entry[@name='version']").text
-        processor_version = sysInfo.find("processor/entry[@name='version']").text
-        memory_size = 0
-        for memory_device in sysInfo.findall("memory_device"):
-            memory_size = int(memory_size) + int(memory_device.find("entry[@name='size']").text.replace(" GB", ""))
-        memory_size = str(memory_size) + " GB"
-        uptime = humanize.precisedelta(datetime.now() - datetime.fromtimestamp(psutil.boot_time()), minimum_unit="minutes", format="%0.0f")
         return {
-            "motherboard": baseboard_manufacturer + " " + baseboard_product + " " + baseboard_version,
-            "processor": processor_version,
-            "memory": memory_size,
-            "os": distro.name(pretty=True),
-            "hostname": conn.getHostname(),
-            "linuxVersion": os.uname()[2],
-            "uptime": uptime,
+            "motherboard": system_info.motherboard,
+            "processor": system_info.cpu_model,
+            "memory": system_info.memory_size,
+            "os": system_info.os,
+            "hostname": system_info.hostname,
+            "linuxVersion": system_info.linux_kernel_version,
+            "uptime": system_info.uptime,
         }
     elif action == "hostname":
         return {
-            "hostname": conn.getHostname()
+            "hostname": system_info.hostname,
         }
     elif action == "guest-machine-types":
         return getGuestMachineTypes()
     else:
         raise HTTPException(status_code=404, detail="action not found")
 
-@app.post("/api/host/system-info/{action}")
-async def api_system_info_hostname_post(action: str, hostname: str = Form(...), username: str = Depends(check_auth)):
-    if action == "hostname":
-        # Run hostnamectl set-hostname
-        hostname_result = subprocess.run(
-            ["hostnamectl", "set-hostname", hostname], capture_output=True, text=True)
-        if hostname_result.returncode == 0:
-            return
-        else:
-            raise HTTPException(status_code=500, detail=hostname_result.stdout)
-    else:
-        raise HTTPException(status_code=404, detail="action not found")
+@app.post("/api/host/system-info/hostname")
+async def api_system_info_hostname_post(request: Request, username: str = Depends(check_auth)):
+    data = await request.json()
+    hostname = data['hostname']
+    try:
+        system_info.setHostname(hostname)
+        return
+    except HostManagerException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+   
     
 # API-SYSTEM-USERS
 @app.get("/api/system/users")

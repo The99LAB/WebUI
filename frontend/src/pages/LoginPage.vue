@@ -2,21 +2,21 @@
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
       <q-page padding class="row justify-center items-center">
-        <q-card>
+        <q-card style="width: 30em; height: 40em">
           <q-linear-progress
             rounded
             :query="loginLoading"
             track-color="primary"
             color="secondary"
           />
-          <q-card-section class="q-pb-none">
+          <q-card-section class="q-py-xl">
             <img
               class="login-logo"
               src="/src/assets/Server99-logo-full.png"
               alt="Logo"
             />
           </q-card-section>
-          <q-card-section class="q-py-lg q-px-lg">
+          <q-card-section class="q-py-none q-px-lg">
             <q-input
               class="q-mb-md q-mt-md"
               name="username"
@@ -33,7 +33,6 @@
               </template>
             </q-input>
             <q-input
-              style="width: 20em"
               name="password"
               square
               clearable
@@ -65,7 +64,7 @@
               {{ authError }}&nbsp;
             </p>
           </q-card-section>
-          <q-card-actions class="q-pb-md q-px-md">
+          <q-card-section class="q-pb-lg q-px-lg q-pt-md">
             <q-btn
               outline
               size="lg"
@@ -74,7 +73,12 @@
               label="Login"
               @click="login"
             />
-          </q-card-actions>
+          </q-card-section>
+          <q-card-section
+            class="q-pt-lg q-pb-sm q-px-lg text-center text-grey-8 text-subtitle1 text-weight-bolder fixed-bottom absolute-bottom"
+          >
+            Server99 WebUI © 2024
+          </q-card-section>
         </q-card>
       </q-page>
     </q-page-container>
@@ -89,7 +93,7 @@ body.screen--md,
 body.screen--lg,
 body.screen--xl {
   .login-logo {
-    width: 12em;
+    width: 20em;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -100,8 +104,7 @@ body.screen--xl {
 import { ref } from "vue";
 import ErrorDialog from "/src/components/ErrorDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
-import { useHostnameStore } from "stores/hostname";
-import { storeToRefs } from "pinia";
+import { useUsernameStore } from "stores/username";
 
 export default {
   data() {
@@ -114,10 +117,9 @@ export default {
     };
   },
   setup() {
-    const store = useHostnameStore();
-    const { getHostname } = storeToRefs(store);
+    const username_store = useUsernameStore();
     return {
-      hostname: getHostname,
+      username_store,
     };
   },
   components: {
@@ -132,6 +134,8 @@ export default {
         .then((response) => {
           this.authError = "";
           localStorage.setItem("jwt-token", response.data.access_token);
+          // Set username in UsernameStore
+          this.username_store.setUsername(this.username);
           this.$router.push({ path: "/dashboard" });
           this.loginLoading = false;
         })
