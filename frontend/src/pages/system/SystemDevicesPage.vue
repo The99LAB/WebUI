@@ -22,7 +22,7 @@
               :name="props.row.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
               size="sm"
             />
-            {{ props.row.iommuGroup }}
+            {{ props.row.iommu_group }}
           </q-td>
           <q-td
             key="driver"
@@ -36,7 +36,8 @@
             :props="props"
             class="text-weight-regular text-body2"
           >
-            {{ props.row.productName }}
+            {{ props.row.vendor_name }} 
+            {{ props.row.product_name }}
           </q-td>
         </q-tr>
         <q-tr v-show="props.row.expand" :props="props">
@@ -76,13 +77,13 @@
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
                   Vendor ID:
                 </p>
-                <p class="text-body2 q-my-none">{{ props.row.vendorid }}</p>
+                <p class="text-body2 q-my-none">{{ props.row.vendor_id }}</p>
               </div>
               <div class="row">
                 <p class="text-body2 text-weight-bold q-mr-sm q-my-none">
                   Product ID:
                 </p>
-                <p class="text-body2 q-my-none">{{ props.row.productid }}</p>
+                <p class="text-body2 q-my-none">{{ props.row.product_id }}</p>
               </div>
             </div>
           </q-td>

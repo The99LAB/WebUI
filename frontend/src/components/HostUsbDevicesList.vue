@@ -60,13 +60,13 @@ export default {
       if (this.selectedUsbDevice == null) {
         return null;
       }
-      return this.selectedUsbDevice["vendorid"];
+      return this.selectedUsbDevice["vendor_id"];
     },
     getSelectedUsbProductId() {
       if (this.selectedUsbDevice == null) {
         return null;
       }
-      return this.selectedUsbDevice["productid"];
+      return this.selectedUsbDevice["product_id"];
     },
   },
   mounted() {

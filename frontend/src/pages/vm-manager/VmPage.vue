@@ -147,7 +147,6 @@
 </template>
 
 <script>
-import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import CreateVm from "src/components/CreateVm.vue";
 import EditVm from "src/components/EditVm.vue";

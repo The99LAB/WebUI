@@ -42,8 +42,8 @@ export default {
     addUsbDevice() {
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-usb-add", {
-          productid: this.$refs.hostUsbDevicesList.getSelectedUsbProductId(),
-          vendorid: this.$refs.hostUsbDevicesList.getSelectedUsbVendorId(),
+          product_id: this.$refs.hostUsbDevicesList.getSelectedUsbProductId(),
+          vendor_id: this.$refs.hostUsbDevicesList.getSelectedUsbVendorId(),
         })
         .then((response) => {
           this.$emit("usb-device-add-finished");

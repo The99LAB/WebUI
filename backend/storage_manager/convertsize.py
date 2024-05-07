@@ -17,6 +17,11 @@ def convertSizeUnit(size: int, from_unit, to_unit=None, mode="float", round_stat
         "TB": 4,
     }
 
+    if from_unit not in sizeUnit:
+        raise StorageManagerException(f"Invalid from_unit {from_unit} specified for convertSizeUnit()")
+    if to_unit != None and to_unit not in sizeUnit:
+        raise StorageManagerException(f"Invalid to_unit {to_unit} specified for convertSizeUnit()")
+
     if from_unit == to_unit:
         return size
 

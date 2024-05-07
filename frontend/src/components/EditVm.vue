@@ -36,13 +36,6 @@
         <q-page padding>
           <q-tab-panels
             v-model="tab"
-            @before-transition="
-              (newval, oldval) => {
-                if (newval == 'xml') {
-                  getXml();
-                }
-              }
-            "
           >
             <q-tab-panel name="general">
               <q-input label="Name" v-model="general_name">
@@ -336,14 +329,14 @@
                 </q-input>
                 <q-input
                   label="MAC Address"
-                  v-model="network.mac_addr"
+                  v-model="network.mac_address"
                   readonly
                 />
                 <q-input label="Source" v-model="network.source" readonly />
                 <q-input label="Model" v-model="network.model" readonly />
                 <q-input
                   label="Boot order"
-                  v-model="network.bootorder"
+                  v-model="network.boot_order"
                   readonly
                 />
               </div>
@@ -459,7 +452,7 @@
                       color="primary"
                       icon="delete"
                       @click="
-                        usbdeviceDelete(usbdevice.productid, usbdevice.vendorid)
+                        usbdeviceDelete(usbdevice.product_id, usbdevice.vendor_id)
                       "
                     >
                       <q-tooltip :offset="[5, 5]">Delete USB Device</q-tooltip>
@@ -468,12 +461,12 @@
                 </q-input>
                 <q-input v-model="usbdevice.name" label="Name" readonly />
                 <q-input
-                  v-model="usbdevice.vendorid"
+                  v-model="usbdevice.vendor_id"
                   label="Vendor Id"
                   readonly
                 />
                 <q-input
-                  v-model="usbdevice.productid"
+                  v-model="usbdevice.product_id"
                   label="Product Id"
                   readonly
                 />
@@ -660,6 +653,8 @@ export default {
       networkDeleteNumber: null,
       sounddevicesList: [],
       usbdevicesList: [],
+      usbdeviceDeleteVendorId: null,
+      usbdeviceDeleteProductId: null,
       pcidevicesList: [],
       cpuModelOptions: ["host-model", "host-passthrough"],
       cpu_model: null,
@@ -698,29 +693,31 @@ export default {
       this.$api
         .get("/vm-manager/" + this.uuid + "/data")
         .then((response) => {
+          console.log(response.data);
           this.general_name = response.data.name;
-          this.general_machine = response.data.machine;
-          this.general_bios = response.data.bios;
+          this.general_machine = response.data.machine_type;
+          this.general_bios = response.data.bios_type;
           this.general_autostart = response.data.autostart;
           this.memory_minMemory = response.data.memory_min;
           this.memory_minMemoryUnit = response.data.memory_min_unit;
           this.memory_maxMemory = response.data.memory_max;
           this.memory_maxMemoryUnit = response.data.memory_max_unit;
           this.currentVcpu = response.data.current_vcpu;
-          this.cpu_model = response.data.cpu_model;
+          this.cpu_model = response.data.cpu_mode;
           this.vcpu = response.data.vcpu;
-          this.customTopology = response.data.custom_topology;
-          this.topologySockets = response.data.topology_sockets;
-          this.topologyDies = response.data.topology_dies;
-          this.topologyCores = response.data.topology_cores;
-          this.topologyThreads = response.data.topology_threads;
+          this.customTopology = response.data.cpu_custom_topology;
+          this.topologySockets = response.data.cpu_topology_sockets;
+          this.topologyDies = response.data.cpu_topology_dies;
+          this.topologyCores = response.data.cpu_topology_cores;
+          this.topologyThreads = response.data.cpu_topology_threads;
           this.diskList = response.data.disks;
-          this.networkList = response.data.networks;
-          this.usbdevicesList = response.data.usbdevices;
+          this.networkList = response.data.network_devices;
+          this.usbdevicesList = response.data.usb_devices;
           this.pcidevicesList = response.data.pcidevices;
           this.graphicsdevicesList = response.data.graphicsdevices;
           this.videodevicesList = response.data.videodevices;
           this.sounddevicesList = response.data.sounddevices;
+          this.xml = response.data.xml;
           this.loading = false;
         })
         .catch((error) => {
@@ -728,20 +725,6 @@ export default {
             error.response.data.detail,
           ]);
           this.loading = false;
-        });
-    },
-    getXml() {
-      this.loading = true;
-      this.$api
-        .get("/vm-manager/" + this.uuid + "/xml")
-        .then((response) => {
-          this.xml = response.data.xml;
-          this.loading = false;
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error loading VM XML.", [
-            error.response.data.detail,
-          ]);
         });
     },
     applyEdits() {
@@ -794,7 +777,6 @@ export default {
             xml: this.xml,
           })
           .then((response) => {
-            this.getXml();
             this.refreshData();
           })
           .catch((error) => {
@@ -803,6 +785,7 @@ export default {
             ]);
           });
       }
+      this.loading = false;
     },
     generalChangeName(value) {
       this.loading = true;
@@ -968,6 +951,7 @@ export default {
           this.$refs.errorDialog.show("Error deleting network", [
             error.response.data.detail,
           ]);
+          this.loading = false;
         });
     },
     calculateCpu() {
@@ -997,11 +981,23 @@ export default {
       this.$refs.addUsbDevice.show(this.uuid);
     },
     usbdeviceDelete(productid, vendorid) {
+      this.$refs.confirmDialog.show(
+        "Remove USB device",
+        [
+          "Are you sure you want to remove this usb device?"
+        ],
+        this.usbdeviceDeleteConfirm,
+      );
+      this.usbdeviceDeleteProductId = productid;
+      this.usbdeviceDeleteVendorId = vendorid;
+      
+    },
+    usbdeviceDeleteConfirm() {
       this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-usb-delete", {
-          productid: productid,
-          vendorid: vendorid,
+          product_id: this.usbdeviceDeleteProductId,
+          vendor_id: this.usbdeviceDeleteVendorId,
         })
         .then((response) => {
           this.refreshData();
@@ -1010,6 +1006,7 @@ export default {
           this.$refs.errorDialog.show("Error deleting usb device", [
             error.response.data.detail,
           ]);
+          this.loading = false;
         });
     },
     pciedeviceAdd() {

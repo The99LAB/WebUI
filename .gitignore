@@ -1,4 +1,7 @@
 backend/static
 backend/templates
 backend/libvirt.py
+backend/libvirtaio.py
+backend/libvirt_lxc.py
+backend/libvirt_qemu.py
 .vscode/sftp.json

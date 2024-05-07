@@ -13,13 +13,6 @@ import subprocess
 import distro
 import requests
 import pam
-import sqlite3
-import select
-import termios
-import struct
-import fcntl
-import select
-import signal
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import humanize
@@ -33,6 +26,7 @@ import vm_backups
 from docker_manager import Templates, Containers, Networks, Images, General, DockerManagerException
 from settings import SettingsManager, Setting, OvmfPath, SettingsException
 from host_manager import libvirt_connection, SystemInfo, HostManagerException
+import vm_manager
 
 
 origins = ["*"]
@@ -335,75 +329,6 @@ class storage():
         )
 
 
-def SystemUsbDevicesList():
-    device_re = re.compile(b"Bus\s+(?P<bus>\d+)\s+Device\s+(?P<device>\d+).+ID\s(?P<id>\w+:\w+)\s(?P<tag>.+)$", re.I)
-    df = subprocess.check_output("lsusb")
-    devices = []
-    for i in df.split(b'\n'):
-        if i:
-            info = device_re.match(i)
-            if info:
-                dinfo = info.groupdict()
-                dinfo['path'] = '/dev/bus/usb/%s/%s' % (dinfo.pop('bus').decode('utf-8'), dinfo.pop('device').decode('utf-8'))
-                dinfo['name'] = dinfo['tag'].decode('utf-8')
-                dinfo.pop('tag')
-                dinfo['id'] = dinfo['id'].decode('utf-8')
-                dinfo['vendorid'] = dinfo['id'].split(':')[0]
-                dinfo['productid'] = dinfo['id'].split(':')[1]
-                if not 'Linux Foundation' in dinfo['name']:
-                    devices.append(dinfo)
-    return devices
-
-
-def HostPcieDevices():
-    pci_devices = libvirt_conn.listAllDevices(2)
-    pcidevicesList = []
-    for device in pci_devices:
-        devicexml = device.XMLDesc()
-        try:
-            root = ET.fromstring(devicexml)
-            path = root.find('name').text.replace('pci_', '').replace('_', ':')
-            product = root.find('./capability/product')
-            productid = product.get('id')
-            productName = product.text
-            if productName == None:
-                productName = "Unknown"
-            if productName == None:
-                productName = ""
-            vendor = root.find('./capability/vendor')
-            vendorid = vendor.get('id')
-            vendorName = vendor.text
-            iommuGroup = root.find('./capability/iommuGroup').get('number')
-            capability = root.find('./capability')
-            domain =  str(hex(int(capability.find('domain').text))).replace('0x', '')
-            bus = str(hex(int(capability.find('bus').text))).replace('0x', '')
-            slot =  str(hex(int(capability.find('slot').text))).replace('0x', '')
-            function =  str(hex(int(capability.find('function').text))).replace('0x', '')
-            try:
-                driver = root.find('./driver/name').text
-            except AttributeError:
-                driver = ""
-            pcidevicesList.append({
-                "iommuGroup": int(iommuGroup), 
-                "path": path,
-                "productName": productName, 
-                "productid": productid,
-                "vendorName": vendorName, 
-                "vendorid": vendorid, 
-                "driver": driver, 
-                "domain": domain, 
-                "bus": bus, 
-                "slot": slot, 
-                "function": function,
-                "label": f"{path} {productName}"
-            })
-        except AttributeError:
-            pass
-    # sort by path
-    pcidevicesList = sorted(pcidevicesList, key=lambda k: k['path'])
-    return pcidevicesList
-
-
 class DomainPcie():
     def __init__(self, domuuid):
         self.domain = libvirt_conn.lookupByUUIDString(domuuid)
@@ -431,7 +356,7 @@ class DomainPcie():
                     romfile = romelem.get('file')
                     customRomFile = True
 
-                for i in HostPcieDevices():
+                for i in system_info.pcie_devices_json:
                     systempcidomain = str((i['domain']))
                     systempcibus = str((i['bus']))
                     systempcislot = str((i['slot']))
@@ -516,7 +441,7 @@ class DomainUsb():
                 vendorid = hostdev.find('source/vendor').get("id")
                 productid = hostdev.find('source/product').get("id")
 
-                for i in SystemUsbDevicesList():
+                for i in system_info.usb_devices_json:
                     systemusbproductid = "0x"+i['productid']
                     systemusbvendorid = "0x"+i['vendorid']
                     systemusbname = i['name']
@@ -1251,97 +1176,99 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             raise HTTPException(status_code=404, detail="Log file not found")
         
     elif action == "data":
-        domain_xml = ET.fromstring(domain_xml)
-        # get cpu model from xml
-        cpu_model = domain_xml.find('cpu').get('mode')
-        # get vcpus from xml
-        vcpu = domain_xml.find('vcpu').text
-        try:
-            current_vcpu = domain_xml.find('vcpu').attrib['current']
-        except KeyError:
-            current_vcpu = vcpu
+        # domain_xml = ET.fromstring(domain_xml)
+        # # get cpu model from xml
+        # cpu_model = domain_xml.find('cpu').get('mode')
+        # # get vcpus from xml
+        # vcpu = domain_xml.find('vcpu').text
+        # try:
+        #     current_vcpu = domain_xml.find('vcpu').attrib['current']
+        # except KeyError:
+        #     current_vcpu = vcpu
         
-        topologyelem = domain_xml.find('cpu/topology')
-        if topologyelem is None:
-            custom_topology = False
-            sockets = vcpu
-            dies = 1
-            cores = 1
-            threads = 1
-        else:
-            sockets = topologyelem.attrib['sockets']
-            dies = topologyelem.attrib['dies']
-            cores = topologyelem.attrib['cores']
-            threads = topologyelem.attrib['threads']
-            custom_topology = True
+        # topologyelem = domain_xml.find('cpu/topology')
+        # if topologyelem is None:
+        #     custom_topology = False
+        #     sockets = vcpu
+        #     dies = 1
+        #     cores = 1
+        #     threads = 1
+        # else:
+        #     sockets = topologyelem.attrib['sockets']
+        #     dies = topologyelem.attrib['dies']
+        #     cores = topologyelem.attrib['cores']
+        #     threads = topologyelem.attrib['threads']
+        #     custom_topology = True
             
         
-        # get machine type
-        machine_type = domain_xml.find('os/type').attrib['machine']
-        # get bios type
-        os_loader_elem = domain_xml.find('os/loader')
-        bios_type = "BIOS"
-        if os_loader_elem != None:
-            bios_type = os_loader_elem.text
+        # # get machine type
+        # machine_type = domain_xml.find('os/type').attrib['machine']
+        # # get bios type
+        # os_loader_elem = domain_xml.find('os/loader')
+        # bios_type = "BIOS"
+        # if os_loader_elem != None:
+        #     bios_type = os_loader_elem.text
 
-        # get autostart boolean
-        autostart = False
-        if domain.autostart() == 1:
-            autostart = True
+        # # get autostart boolean
+        # autostart = False
+        # if domain.autostart() == 1:
+        #     autostart = True
             
-        # get memory
-        meminfo = vmmemory(uuid=vmuuid).current()
-        minmem = storage_manager.convertSizeUnit(meminfo[0], from_unit="KB", mode="tuple")
-        maxmem = storage_manager.convertSizeUnit(meminfo[1], from_unit="KB", mode="tuple")
-        minmem_size = minmem[0]
-        minmem_unit = minmem[1]
-        maxmem_size = maxmem[0]
-        maxmem_unit = maxmem[1]
+        # # get memory
+        # meminfo = vmmemory(uuid=vmuuid).current()
+        # minmem = storage_manager.convertSizeUnit(meminfo[0], from_unit="KB", mode="tuple")
+        # maxmem = storage_manager.convertSizeUnit(meminfo[1], from_unit="KB", mode="tuple")
+        # minmem_size = minmem[0]
+        # minmem_unit = minmem[1]
+        # maxmem_size = maxmem[0]
+        # maxmem_unit = maxmem[1]
 
-        # get disk
-        diskinfo = storage(domain_uuid=vmuuid).get()
-        networks = domainNetworkInterface(dom_uuid=vmuuid).get()
+        # # get disk
+        # diskinfo = storage(domain_uuid=vmuuid).get()
+        # networks = domainNetworkInterface(dom_uuid=vmuuid).get()
 
-        # graphics tab            
-        graphicsdevices = DomainGraphics(domuuid=vmuuid).get
-        videodevices = DomainVideo(domuuid=vmuuid).get
+        # # graphics tab            
+        # graphicsdevices = DomainGraphics(domuuid=vmuuid).get
+        # videodevices = DomainVideo(domuuid=vmuuid).get
 
-        # sound tab
-        sounddevices = DomainSound(domuuid=vmuuid).get
+        # # sound tab
+        # sounddevices = DomainSound(domuuid=vmuuid).get
 
-        # passthrough devices
-        usbdevices = DomainUsb(domuuid=vmuuid).get
-        pcidevices = DomainPcie(domuuid=vmuuid).get
+        # # passthrough devices
+        # usbdevices = DomainUsb(domuuid=vmuuid).get
+        # pcidevices = DomainPcie(domuuid=vmuuid).get
 
-        data = {
-            "name": domain.name(),
-            "autostart": autostart,
-            "current_vcpu": current_vcpu,
-            "cpu_model": cpu_model,
-            "vcpu": vcpu,
-            "current_vcpu": current_vcpu,
-            "custom_topology": custom_topology,
-            "topology_sockets": sockets,
-            "topology_dies": dies,
-            "topology_cores": cores,
-            "topology_threads": threads,
-            "uuid": domain.UUIDString(),
-            "state": domain.state()[0],
-            "machine": machine_type,
-            "bios": bios_type,
-            "memory_max": maxmem_size,
-            "memory_max_unit": maxmem_unit,
-            "memory_min": minmem_size,
-            "memory_min_unit": minmem_unit,
-            "disks": diskinfo,
-            "networks": networks,
-            "sounddevices": sounddevices,
-            "usbdevices": usbdevices,
-            "pcidevices": pcidevices,
-            "graphicsdevices": graphicsdevices,
-            "videodevices": videodevices
-        }
-        return data
+        # data = {
+        #     "name": domain.name(),
+        #     "autostart": autostart,
+        #     "current_vcpu": current_vcpu,
+        #     "cpu_model": cpu_model,
+        #     "vcpu": vcpu,
+        #     "current_vcpu": current_vcpu,
+        #     "custom_topology": custom_topology,
+        #     "topology_sockets": sockets,
+        #     "topology_dies": dies,
+        #     "topology_cores": cores,
+        #     "topology_threads": threads,
+        #     "uuid": domain.UUIDString(),
+        #     "state": domain.state()[0],
+        #     "machine": machine_type,
+        #     "bios": bios_type,
+        #     "memory_max": maxmem_size,
+        #     "memory_max_unit": maxmem_unit,
+        #     "memory_min": minmem_size,
+        #     "memory_min_unit": minmem_unit,
+        #     "disks": diskinfo,
+        #     "networks": networks,
+        #     "sounddevices": sounddevices,
+        #     "usbdevices": usbdevices,
+        #     "pcidevices": pcidevices,
+        #     "graphicsdevices": graphicsdevices,
+        #     "videodevices": videodevices
+        # }
+        # return data
+        return vm_manager.VirtualMachine(vm_uuid=vmuuid).json
+
     else:
         raise HTTPException(status_code=404, detail="Action not found")
 
@@ -1489,11 +1416,11 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             memory_min_unit = data['memory_min_unit']
             memory_max = int(data['memory_max'])
             memory_max_unit = data['memory_max_unit']
-            if memory_min > memory_max:
-                raise HTTPException(status_code=400, detail="Minimum memory cannot be greater than maximum memory")
-            else:
-                vmmemory(uuid=vmuuid).edit(memory_min, memory_min_unit, memory_max, memory_max_unit)
-                return
+            try:
+                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_memory(min_memory=memory_min, min_memory_unit=memory_min_unit, max_memory=memory_max, max_memory_unit=memory_max_unit)
+            except vm_manager.VmManagerException as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
 
         # edit-network-action
         elif action.startswith("network"):
@@ -1512,12 +1439,10 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
-                index = data['number']
-                networkxml = domainNetworkInterface(dom_uuid=vmuuid).remove(index)
+                number = data['number']
                 try:
-                    domain.detachDeviceFlags(networkxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_network_device(number)
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -1672,21 +1597,15 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             if action == "add":
                 product_id = data['productid']
                 vendor_id = data['vendorid']
+                #TODO
                 print("add usb hotplug", product_id, vendor_id)
-                try:
-                    xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
-                    return
-                except Exception as e:
-                    raise HTTPException(status_code=500, detail=str(e))
+                return
             elif action == "delete":
                 product_id = data['productid']
                 vendor_id = data['vendorid']
                 print("delete usb hotplug", product_id, vendor_id)
-                try:
-                    xml = DomainUsb(vmuuid).remove(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}", hotplug=True)
-                    return
-                except Exception as e:
-                    raise HTTPException(status_code=500, detail=str(e))
+                #TODO
+                return
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
 
@@ -1694,21 +1613,18 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         elif action.startswith("usb"):
             action = action.replace("usb-", "")
             if action == "add":
-                print("add usb")
-                product_id = data['productid']
-                vendor_id = data['vendorid']
+                product_id = data['product_id']
+                vendor_id = data['vendor_id']
                 try:
-                    xml = DomainUsb(vmuuid).add(vendorid=f"0x{vendor_id}", productid=f"0x{product_id}")
-                    return
-                except Exception as e:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_usb_device(vendor_id=vendor_id, product_id=product_id)
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             elif action == "delete":
-                product_id = data['productid']
-                vendor_id = data['vendorid']
+                product_id = data['product_id']
+                vendor_id = data['vendor_id']
                 try:
-                    xml = DomainUsb(vmuuid).remove(vendorid=vendor_id, productid=product_id)
-                    return
-                except Exception as e:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_usb_device(vendor_id=vendor_id, product_id=product_id)
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -2344,9 +2260,9 @@ async def api_system_file_manager_action(action: str, request: Request, username
 @app.get("/api/host/system-devices/{devicetype}")
 async def api_host_system_devices_get(devicetype: str, username: str = Depends(check_auth)):
     if devicetype == "pcie":
-        return HostPcieDevices()
+        return system_info.pcie_devices_json
     elif devicetype == "usb":
-        return SystemUsbDevicesList()
+        return system_info.usb_devices_json
     else:
         raise HTTPException(status_code=404, detail="Device type not found")
 

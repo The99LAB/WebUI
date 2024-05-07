@@ -1,0 +1,2 @@
+from .virtual_machine import VirtualMachine, VirtualMachines
+from .vmManagerException import VmManagerException
