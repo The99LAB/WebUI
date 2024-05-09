@@ -329,192 +329,6 @@ class storage():
         )
 
 
-class DomainPcie():
-    def __init__(self, domuuid):
-        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
-        self.vmXml = self.domain.XMLDesc()
-
-    @property
-    def get(self):
-        tree = ET.fromstring(self.vmXml)
-        pcidevices = []
-        hostdevs = tree.findall('./devices/hostdev')
-        for hostdev in hostdevs:
-            foundSystemPciDevice = False
-            hostdevtype = hostdev.get('type')
-            if hostdevtype == 'pci':
-                xml = ET.tostring(hostdev).decode('utf-8')
-                source_address = hostdev.find('source/address')
-                domain = str(hex(int(source_address.get('domain'), 0))).replace('0x', '')
-                bus = str(hex(int(source_address.get('bus'), 0))).replace('0x', '')
-                slot = str(hex(int(source_address.get('slot'), 0))).replace('0x', '')
-                function = str(hex(int(source_address.get('function'), 0))).replace('0x', '')
-                romelem = hostdev.find('rom')
-                romfile = ""
-                customRomFile = False
-                if romelem != None:
-                    romfile = romelem.get('file')
-                    customRomFile = True
-
-                for i in system_info.pcie_devices_json:
-                    systempcidomain = str((i['domain']))
-                    systempcibus = str((i['bus']))
-                    systempcislot = str((i['slot']))
-                    systempcifunction = str((i['function']))
-                    deviceProductName = i['productName']
-                    deviceVendorName = i['vendorName']
-                    devicepath = i['path']
-                    if systempcidomain == domain and systempcibus == bus and systempcislot == slot and systempcifunction == function:
-                        foundSystemPciDevice = True
-                        break
-
-                if not foundSystemPciDevice:
-                    devicepath = "Unkonwn"
-                    deviceProductName = "Unkown"
-                    deviceVendorName = "Unknown"
-                pcidevices.append({
-                    "xml": xml,
-                    "devicepath": devicepath,
-                    "domain": domain,
-                    "bus": bus,
-                    "slot": slot,
-                    "function": function,
-                    "productName": deviceProductName,
-                    "vendorName": deviceVendorName,
-                    "customRomFile": customRomFile,
-                    "romfile": romfile
-                })
-
-        return pcidevices
-
-    def remove(self, domain, bus, slot, function):
-        domainpciedevices = self.get
-        for i in domainpciedevices:
-            if i['domain'] == domain and i['bus'] == bus and i['slot'] == slot and i['function'] == function:
-                pcidevicexml = i['xml']
-                self.domain.detachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-
-    def add(self, domain, bus, slot, function, romfile=None):
-        print("inside add", romfile)
-        if romfile == None:
-            pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{domain}' bus='{bus}' slot='{slot}' function='{function}'/></source></hostdev>"
-        else:
-            pcidevicexml = f"<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='{domain}' bus='{bus}' slot='{slot}' function='{function}'/></source>/><rom file='{romfile}'/></hostdev>"
-
-        self.domain.attachDeviceFlags(pcidevicexml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-
-    def romfile(self, xml, romfile):
-        origxml = xml
-        tree = ET.fromstring(xml)
-        rom_elem = tree.find('rom')
-        if romfile == "":
-            if rom_elem != None:
-                rom_elem.attrib.pop('file')
-        else:
-            if rom_elem == None:
-                rom_elem = ET.SubElement(tree, 'rom')
-            rom_elem.set('file', romfile)
-
-        xml = ET.tostring(tree).decode('utf-8')
-        self.domain.detachDeviceFlags(origxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-        # if xml fails to attach, revert to original xml
-        try:
-            self.domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-        except libvirt.libvirtError:
-            self.domain.attachDeviceFlags(origxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-
-
-class DomainUsb():
-    def __init__(self, domuuid):
-        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
-        self.xml = self.domain.XMLDesc()
-
-    @property
-    def get(self):
-        tree = ET.fromstring(self.xml)
-        usbdevices = []
-        hostdevs = tree.findall('./devices/hostdev')
-        for hostdev in hostdevs:
-            foundSystemUsbDevice = False
-            hostdevtype = hostdev.get('type')
-            if hostdevtype == 'usb':
-                vendorid = hostdev.find('source/vendor').get("id")
-                productid = hostdev.find('source/product').get("id")
-
-                for i in system_info.usb_devices_json:
-                    systemusbproductid = "0x"+i['productid']
-                    systemusbvendorid = "0x"+i['vendorid']
-                    systemusbname = i['name']
-
-                    if int(systemusbvendorid, 0) == int(vendorid, 0) and int(systemusbproductid, 0) == int(productid, 0):
-                        foundSystemUsbDevice = True
-                        break
-                if not foundSystemUsbDevice:
-                    systemusbname = "Unknown"
-                usbdevices.append(
-                {
-                    "name": systemusbname,
-                    "vendorid": vendorid,
-                    "productid": productid
-                })
-        return usbdevices
-
-    def add(self, vendorid, productid, hotplug=False):
-        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
-        if hotplug:
-            self.domain.attachDeviceFlags(
-                xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)
-        else:
-            self.domain.attachDeviceFlags(
-                xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-
-    def remove(self, vendorid, productid, hotplug=False):
-        xml = f"<hostdev mode='subsystem' type='usb' managed='no'><source><vendor id='{vendorid}'/><product id='{productid}'/></source></hostdev>"
-        if hotplug:
-            self.domain.detachDeviceFlags(
-                xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)
-        else:
-            self.domain.detachDeviceFlags(
-                xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-
-
-class domainNetworkInterface():
-    def __init__(self, dom_uuid):
-        self.domain = libvirt_conn.lookupByUUIDString(dom_uuid)
-        self.domainxml = self.domain.XMLDesc()
-
-    def get(self):
-        networkinterfaces = []
-        tree = ET.fromstring(self.domainxml)
-        interfaces = tree.findall('./devices/interface')
-        for number, interface in enumerate(interfaces):
-            xml = ET.tostring(interface).decode()
-            if interface.get('type') == "network":
-                mac_addr = interface.find("mac").get('address')
-                source_network = libvirt_conn.networkLookupByName(interface.find("source").get('network')).name()
-                model = interface.find('model').get("type")
-                bootorderelem = interface.find('boot')
-                if bootorderelem != None:
-                    bootorder = bootorderelem.get("order")
-                else:
-                    bootorder = None
-                networkinterfaces.append(
-                {
-                    'number': number, 
-                    'xml': xml, 
-                    'mac_addr': mac_addr, 
-                    'source': source_network,
-                    'model': model,
-                    'bootorder': bootorder
-                })
-        return networkinterfaces
-
-    def remove(self, index):
-        for idx, interface in enumerate(self.get()):
-            if idx == int(index):
-                return interface['xml']
-
-
 class create_vm():
     def __init__(self, name, machine_type, bios_type, mem_min, mem_min_unit, mem_max, mem_max_unit, disk=False, disk_size=None, disk_size_unit=None, disk_type=None, disk_bus=None, disk_location=None, iso=False, iso_location=None, network=False, network_source=None, network_model=None, ovmf_name=None):
         self.name = name
@@ -719,177 +533,6 @@ class create_vm():
     def create(self):
         libvirt_conn.defineXML(self.xml)
 
-class DomainGraphics:
-    def __init__(self, domuuid):
-        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
-        self.xml = ET.fromstring(self.domain.XMLDesc(0))
-
-    @property
-    def get(self):
-        graphicsDevices = []
-        for index, i in enumerate(self.xml.findall("devices/graphics")):
-            graphics_type = i.attrib["type"]
-            graphicsDevices.append(
-            {
-                "index": index, 
-                "type": graphics_type, 
-            })
-        return graphicsDevices
-
-    def add(self, graphics_type):
-        original_domain_xml = self.domain.XMLDesc(0)
-        graphics_element = ET.Element("graphics")
-        graphics_element.attrib["type"] = graphics_type
-        self.xml.find("devices").append(graphics_element)
-        newxml = ET.tostring(self.xml).decode("utf-8")
-        self.domain.undefineFlags(4)
-        try:
-            self.domain = libvirt_conn.defineXML(newxml)
-        except libvirt.libvirtError as e:
-            self.domain = libvirt_conn.defineXML(original_domain_xml)
-            raise e
-
-    def remove(self, index):
-        original_domain_xml = self.domain.XMLDesc(0)
-        graphics_element = self.xml.find(f"devices/graphics/[{index+1}]")
-
-        # remove all elements from graphics element
-        for i in graphics_element:
-            graphics_element.remove(i)
-
-        # remove all attributes from graphics element
-        graphics_element.attrib.clear()
-
-        # remove graphics element
-        self.xml.find("devices").remove(graphics_element)
-
-        # remove graphics element
-        newxml = ET.tostring(self.xml).decode("utf-8")
-        
-        # define new xml
-        self.domain.undefineFlags(4)
-        try:
-            self.domain = libvirt_conn.defineXML(newxml)
-        except libvirt.libvirtError as e:
-            self.domain = libvirt_conn.defineXML(original_domain_xml)
-            raise e
-
-
-class DomainVideo:
-    def __init__(self, domuuid):
-        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
-        self.xml = ET.fromstring(self.domain.XMLDesc(0))
-    
-    @property
-    def get(self):
-        videoDevices = []
-        for index, i in enumerate(self.xml.findall("devices/video")):
-            xml = ET.tostring(i).decode("utf-8")
-            model_type = i.find("model").attrib["type"]
-            videoDevices.append(
-            {
-                "index": index, 
-                "type": model_type, 
-                "xml": xml
-            })
-        return videoDevices
-    
-    def add(self, model_type):
-        original_domain_xml = self.domain.XMLDesc(0)
-        video_element = ET.Element("video")
-        video_model_element = ET.Element("model")
-        video_model_element.attrib["type"] = model_type
-        video_element.append(video_model_element)
-        self.xml.find("devices").append(video_element)
-        newxml = ET.tostring(self.xml).decode("utf-8")
-        self.domain.undefineFlags(4)
-        try:
-            self.domain = libvirt_conn.defineXML(newxml)
-        except libvirt.libvirtError as e:
-            self.domain = libvirt_conn.defineXML(original_domain_xml)
-            raise e
-    
-    def remove(self, index):
-        original_domain_xml = self.domain.XMLDesc(0)
-        video_element = self.xml.find(f"devices/video/[{index+1}]")
-
-        # remove all elements from video element
-        for i in video_element:
-            video_element.remove(i)
-
-        # remove all attributes from video element
-        video_element.attrib.clear()
-
-        # remove video element
-        self.xml.find("devices").remove(video_element)
-
-        # remove video element
-        newxml = ET.tostring(self.xml).decode("utf-8")
-        
-        # define new xml
-        self.domain.undefineFlags(4)
-        try:
-            self.domain = libvirt_conn.defineXML(newxml)
-        except libvirt.libvirtError as e:
-            self.domain = libvirt_conn.defineXML(original_domain_xml)
-            raise e
-        
-class DomainSound:
-    def __init__(self, domuuid):
-        self.domain = libvirt_conn.lookupByUUIDString(domuuid)
-        self.xml = ET.fromstring(self.domain.XMLDesc(0))
-    
-    @property
-    def get(self):
-        soundDevices = []
-        for index, i in enumerate(self.xml.findall("devices/sound")):
-            xml = ET.tostring(i).decode("utf-8")
-            model = i.get("model")
-            soundDevices.append(
-            {
-                "index": index, 
-                "model": model, 
-                "xml": xml
-            })
-        return soundDevices
-    
-    def add(self, model):
-        original_domain_xml = self.domain.XMLDesc(0)
-        sound_element = ET.Element("sound")
-        sound_element.attrib["model"] = model
-        self.xml.find("devices").append(sound_element)
-        newxml = ET.tostring(self.xml).decode("utf-8")
-        self.domain.undefineFlags(4)
-        try:
-            self.domain = libvirt_conn.defineXML(newxml)
-        except libvirt.libvirtError as e:
-            self.domain = libvirt_conn.defineXML(original_domain_xml)
-            raise e
-    
-    def remove(self, index):
-        original_domain_xml = self.domain.XMLDesc(0)
-        sound_element = self.xml.find(f"devices/sound/[{index+1}]")
-
-        # remove all elements from sound element
-        for i in sound_element:
-            sound_element.remove(i)
-
-        # remove all attributes from sound element
-        sound_element.attrib.clear()
-
-        # remove sound element
-        self.xml.find("devices").remove(sound_element)
-
-        # remove sound element
-        newxml = ET.tostring(self.xml).decode("utf-8")
-        
-        # define new xml
-        self.domain.undefineFlags(4)
-        try:
-            self.domain = libvirt_conn.defineXML(newxml)
-        except libvirt.libvirtError as e:
-            self.domain = libvirt_conn.defineXML(original_domain_xml)
-            raise e
 
 def getGuestMachineTypes():
     capabilities = libvirt_conn.getCapabilities()
@@ -1417,7 +1060,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             memory_max = int(data['memory_max'])
             memory_max_unit = data['memory_max_unit']
             try:
-                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_memory(min_memory=memory_min, min_memory_unit=memory_min_unit, max_memory=memory_max, max_memory_unit=memory_max_unit)
+                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_memory(min_memory=memory_min, min_memory_unit=memory_min_unit, max_memory=memory_max, max_memory_unit=memory_max_unit, memory_backing=True)
             except vm_manager.VmManagerException as e:
                 raise HTTPException(status_code=500, detail=str(e))
         
@@ -1428,14 +1071,9 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             if action == "add":
                 source_network = data['sourceNetwork']
                 model = data['networkModel']
-
                 try:
-                    source_network_name = libvirt_conn.networkLookupByUUIDString(source_network).name()
-                    xml = f"<interface type='network'><source network='{source_network_name}'/><model type='{model}'/></interface>"
-                    domain.attachDeviceFlags(
-                        xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_network_device(source_network, model)
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
@@ -1633,35 +1271,23 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         elif action.startswith("pcie"):
             action = action.replace("pcie-", "")
             if action == "add":
-                domain = "0x" + data['domain']
-                bus = "0x" + data['bus']
-                slot = "0x" + data['slot']
-                function = "0x" + data['function']
-                custom_rom_file = data['customRomFile']
-                rom_file = data['romFile']
-                try:
-                    if custom_rom_file:
-                        devicexml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function, romfile=rom_file)
-                    else:
-                        xml = DomainPcie(vmuuid).add(domain=domain, bus=bus, slot=slot, function=function)
-                    return
-                except Exception as e:
-                    raise HTTPException(status_code=500, detail=str(e))
-            elif action == "delete":
                 domain = data['domain']
                 bus = data['bus']
                 slot = data['slot']
-                function = data['function']                   
-                DomainPcie(vmuuid).remove(domain=domain, bus=bus, slot=slot, function=function)
-                return
-            elif action == "romfile":
-                devicexml = data['xml']
-                romfile = data['romfile']
+                function = data['function']
+                custom_rom_file = data['customRomFile']
+                rom_file = data['romFile']
                 try:
-                    DomainPcie(vmuuid).romfile(xml=devicexml, romfile=romfile)
-                    return
-                except Exception as e:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_pcie_device(domain=domain, bus=bus, slot=slot, function=function, rom_file=rom_file, custom_rom=custom_rom_file)
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
+            
+            elif action == "delete":
+                index = data['index']       
+                try:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_pcie_device(index=index)
+                except vm_manager.VmManagerException as e:
+                    raise HTTPException(status_code=500, detail=str(e))                
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
 
@@ -1671,17 +1297,15 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             if action == "add":
                 graphics_type = data['type']
                 try:
-                    DomainGraphics(vmuuid).add(graphics_type=graphics_type)
-                    return
-                except Exception as e:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_graphics_device(graphics_type=graphics_type)
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
-                    xml = DomainGraphics(vmuuid).remove(index=index)
-                    return
-                except Exception as e:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_graphics_device(index=index)
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -1692,17 +1316,17 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             if action == "add":
                 model_type = data['type'].lower()
                 try:
-                    DomainVideo(vmuuid).add(model_type=model_type)
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_video_device(model_type=model_type)
                     return
-                except Exception as e:
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
-                    xml = DomainVideo(vmuuid).remove(index=index)
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_video_device(index=index)
                     return
-                except Exception as e:
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -1712,21 +1336,22 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             if action == "add":
                 model = data['model']
                 try:
-                    DomainSound(vmuuid).add(model=model)
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_sound_device(model=model)
                     return
-                except Exception as e:
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
-                    DomainSound(vmuuid).remove(index=index)
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_sound_device(index=index)
                     return
-                except Exception as e:
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
+            else:
+                raise HTTPException(status_code=404, detail="Action not found")
         else:
             raise HTTPException(status_code=404, detail="Action not found")
-    
     else:
         raise HTTPException(status_code=404, detail="Action not found")
 

@@ -482,10 +482,7 @@
                       flat
                       @click="
                         pciedeviceDelete(
-                          pcidevice.domain,
-                          pcidevice.bus,
-                          pcidevice.slot,
-                          pcidevice.function,
+                          pcidevice.index
                         )
                       "
                     >
@@ -494,44 +491,26 @@
                   </template>
                 </q-input>
                 <q-input
-                  v-model="pcidevice.devicepath"
+                  v-model="pcidevice.path"
                   label="Device Path"
                   readonly
                 />
                 <q-input
-                  v-model="pcidevice.vendorName"
+                  v-model="pcidevice.vendor_name"
                   label="Vendor Name"
                   readonly
                 />
                 <q-input
-                  v-model="pcidevice.productName"
+                  v-model="pcidevice.product_name"
                   label="Product Name"
                   readonly
                 />
-                <q-toggle
-                  v-model="pcidevice.customRomFile"
-                  label="Rom File"
-                  @update:model-value="
-                    (val) => pcieToggleRomFile(val, pcidevice.xml)
-                  "
-                />
                 <q-input
-                  v-if="pcidevice.customRomFile"
-                  v-model="pcidevice.romfile"
+                  v-if="pcidevice.custom_rom_file"
+                  v-model="pcidevice.rom_file"
                   label="Rom File"
-                >
-                  <template v-slot:append>
-                    <q-btn
-                      round
-                      dense
-                      flat
-                      icon="mdi-check"
-                      @click="
-                        pcieChangeRomFile(pcidevice.xml, pcidevice.romfile)
-                      "
-                    />
-                  </template>
-                </q-input>
+                  readonly
+                />
                 <q-separator color="transparent" spaced="lg" inset />
               </div>
             </q-tab-panel>
@@ -652,6 +631,7 @@ export default {
       networkList: [],
       networkDeleteNumber: null,
       sounddevicesList: [],
+      sounddeviceDeleteIndex: null,
       usbdevicesList: [],
       usbdeviceDeleteVendorId: null,
       usbdeviceDeleteProductId: null,
@@ -710,13 +690,13 @@ export default {
           this.topologyDies = response.data.cpu_topology_dies;
           this.topologyCores = response.data.cpu_topology_cores;
           this.topologyThreads = response.data.cpu_topology_threads;
-          this.diskList = response.data.disks;
+          this.diskList = response.data.disk_devices;
           this.networkList = response.data.network_devices;
           this.usbdevicesList = response.data.usb_devices;
-          this.pcidevicesList = response.data.pcidevices;
-          this.graphicsdevicesList = response.data.graphicsdevices;
-          this.videodevicesList = response.data.videodevices;
-          this.sounddevicesList = response.data.sounddevices;
+          this.pcidevicesList = response.data.pci_devices;
+          this.graphicsdevicesList = response.data.graphics_devices;
+          this.videodevicesList = response.data.video_devices;
+          this.sounddevicesList = response.data.sound_devices;
           this.xml = response.data.xml;
           this.loading = false;
         })
@@ -1012,14 +992,11 @@ export default {
     pciedeviceAdd() {
       this.$refs.addPcieDevice.show(this.uuid);
     },
-    pciedeviceDelete(device_domain, device_bus, device_slot, device_function) {
+    pciedeviceDelete(index) {
       this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-pcie-delete", {
-          domain: device_domain,
-          bus: device_bus,
-          slot: device_slot,
-          function: device_function,
+          index: index,
         })
         .then((response) => {
           this.refreshData();
@@ -1029,27 +1006,6 @@ export default {
             error.response.data.detail,
           ]);
         });
-    },
-    pcieChangeRomFile(xml, romfile) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-pcie-romfile", {
-          xml: xml,
-          romfile: romfile,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error changing pcie rom file", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    pcieToggleRomFile(value, xml) {
-      if (value == false) {
-        this.pcieChangeRomFile(xml, "");
-      }
     },
     graphicsAdd() {
       this.$refs.addGraphics.show(this.uuid);
@@ -1067,6 +1023,7 @@ export default {
           this.$refs.errorDialog.show("Error deleting graphics", [
             error.response.data.detail,
           ]);
+          this.loading = false;
         });
     },
     videoAdd() {
@@ -1085,13 +1042,24 @@ export default {
           this.$refs.errorDialog.show("Error deleting video", [
             error.response.data.detail,
           ]);
+          this.loading = false;
         });
     },
     soundDelete(index) {
+      this.sounddeviceDeleteIndex = index;
+      this.$refs.confirmDialog.show(
+        "Remove Sound device",
+        [
+          "Are you sure you want to remove this sound device?"
+        ],
+        this.soundDeleteConfirm,
+      );
+    },
+    soundDeleteConfirm() {
       this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
-          index: index,
+          index: this.sounddeviceDeleteIndex,
         })
         .then((response) => {
           this.refreshData();
@@ -1100,8 +1068,10 @@ export default {
           this.$refs.errorDialog.show("Error deleting sound", [
             error.response.data.detail,
           ]);
+          this.loading = false;
         });
     },
+
     soundAdd() {
       this.$refs.addSound.show(this.uuid);
     },

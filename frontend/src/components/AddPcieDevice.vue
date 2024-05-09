@@ -9,6 +9,7 @@
       <q-card-section style="width: 30em">
         <HostPcieDevicesList ref="hostPcieDevicesList" />
         <q-toggle v-model="customRomFile" label="Custom ROM file" left-label />
+        <!-- TODO: Use DirectoryList component here -->
         <q-input
           v-if="customRomFile"
           v-model="romFile"
