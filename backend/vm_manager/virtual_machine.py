@@ -5,6 +5,8 @@ from .vmManagerException import VmManagerException
 from storage_manager import convertSizeUnit
 from host_manager import SystemInfo, UsbDevice
 import re
+import os
+from string import ascii_lowercase
 
 class VirtualMachine:
     def __init__(self, vm_uuid):
@@ -62,7 +64,7 @@ class VirtualMachine:
         self.vm_bios_type = "BIOS"
         if os_loader is not None:
             self.vm_bios_type = os_loader.text
-    
+
 
     def get_vm_storage_devices(self):
         self.vm_disk_devices = []
@@ -109,6 +111,80 @@ class VirtualMachine:
             self.vm_disk_devices.append(disk_device)
 
 
+    def remove_vm_storage_device(self, index:int):
+        disk_device = next((disk_device for disk_device in self.vm_disk_devices if disk_device["index"] == int(index)), None)
+        if disk_device is None:
+            raise VmManagerException(f"Failed to remove disk device: Disk device with number {index} not found")
+        disk_device_xml = disk_device["xml"]
+        try:
+            self.libvirt_domain.detachDeviceFlags(disk_device_xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to remove disk device with index {index}: {e}")
+        self.get_vm_storage_devices()
+
+
+    def _add_vm_storage_device(self, disk_type:str, disk_bus:str, device_type:str, source_file:None, source_device:None):
+        print(source_file, disk_bus, device_type)
+        if disk_type not in ["file", "block"]:
+            raise VmManagerException("Failed to add disk device: Invalid disk type specified")
+        if device_type not in ["disk", "cdrom"]:
+            raise VmManagerException("Failed to add disk device: Invalid device type specified")
+        if disk_bus not in ["ide", "scsi", "virtio", "sata"]:
+            raise VmManagerException("Failed to add disk device: Invalid disk bus specified")
+        if disk_type == 'file':
+            if not os.path.isfile(source_file):
+                raise VmManagerException("Failed to add disk device: Source file does not exist")
+        elif disk_type == 'block':
+            if not os.path.exists(source_device):
+                raise VmManagerException("Failed to add disk device: Source device does not exist")
+
+        # calculate the next available target device
+        target_devices = [disk_device["target_device"] for disk_device in self.vm_disk_devices]
+        last_used_target_device = None
+        new_target_device = None
+        for target_device in target_devices:
+            if disk_bus == "sata" or disk_bus == "scsi" or disk_bus == "usb":
+                if target_device.startswith("sd"):
+                    last_used_target_device = target_device.replace("sd", "")
+            elif disk_bus == "virtio":
+                if target_device.startswith("vd"):
+                    last_used_target_device = target_device.replace("vd", "")
+
+        try:
+            index = ascii_lowercase.index(last_used_target_device)+1
+        except TypeError:
+            index = 0
+        if disk_bus == "sata" or disk_bus == "scsi" or disk_bus == "usb":
+            new_target_device = f"sd{ascii_lowercase[index]}"
+        elif disk_bus == "virtio":
+            new_target_device = f"vd{ascii_lowercase[index]}"
+
+        driver_type = "raw"
+        if source_file.endswith(".qcow2"):
+            driver_type = "qcow2"
+        
+        disk_device_xml = f"""
+        <disk type='{disk_type}' device='{device_type}'>
+            <driver name='qemu' type='{driver_type}'/>
+            <source {f"file='{source_file}'" if source_file else f"dev='{source_device}'"}/>
+            <target dev='{new_target_device}' bus='{disk_bus}'/>
+        </disk>
+        """
+        print(disk_device_xml)
+        try:
+            self.libvirt_domain.attachDeviceFlags(disk_device_xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to add disk device: {e}")
+
+
+    def add_vm_storage_device_from_file(self, disk_bus:str, device_type:str, source_file:str):
+        self._add_vm_storage_device(disk_type="file", disk_bus=disk_bus, device_type=device_type, source_file=source_file, source_device=None)
+
+
+    def add_vm_storage_device_from_block_device(self, disk_bus:str, source_device:str):
+        self._add_vm_storage_device(disk_type="block", disk_bus=disk_bus, device_type='disk', source_device=source_device, source_file=None)
+
+
     def get_vm_network_devices(self):
         self.vm_network_devices = []
         network_devices = self.vm_xml_root.findall("devices/interface")
@@ -143,7 +219,7 @@ class VirtualMachine:
             raise VmManagerException(f"Failed to remove network device: {e}")
         self.get_vm_network_devices()
 
-    
+
     def add_vm_network_device(self, source_network_uuid:str, model_type:str, mac_address:str=""):
         if model_type not in ["virtio", "e1000", "rtl8139"]:
             raise VmManagerException("Failed to add network device: Invalid network device model specified")
@@ -388,6 +464,7 @@ class VirtualMachine:
                     "product_id": product_id,
                 })
 
+
     def generate_vm_usb_device_xml(self, vendor_id:int, product_id:int):
         usb_device_xml = f"""
         <hostdev mode='subsystem' type='usb'>
@@ -398,6 +475,7 @@ class VirtualMachine:
         </hostdev>
         """
         return usb_device_xml
+
 
     def add_vm_usb_device(self, vendor_id:int, product_id:int, hotplug=False):
         usb_device_xml = self.generate_vm_usb_device_xml(vendor_id, product_id)
@@ -489,6 +567,7 @@ class VirtualMachine:
         self.libvirt_domain.setAutostart(autostart)
         self.vm_autostart = autostart
 
+
     def set_vm_memory(self, min_memory, max_memory, min_memory_unit, max_memory_unit, memory_backing=False):
         min_memory_kb = convertSizeUnit(size=min_memory, from_unit=min_memory_unit, to_unit="KB", mode="int")
         max_memory_kb = convertSizeUnit(size=max_memory, from_unit=max_memory_unit, to_unit="KB", mode="int")
@@ -550,6 +629,7 @@ class VirtualMachine:
             'memory_min_unit': self.vm_memory_min_unit,
             'memory_max': self.vm_memory_max,
             'memory_max_unit': self.vm_memory_max_unit,
+            'memory_enable_shared': self.vm_memory_memorybacking,
             'disk_devices': self.vm_disk_devices,
             'network_devices': self.vm_network_devices,
             'sound_devices': self.vm_sound_devices,
@@ -559,7 +639,7 @@ class VirtualMachine:
             'video_devices': self.vm_video_devices,
             'xml': self.vm_xml
         }
-    
+
 
 # Class for all virtual machines in the system
 # For example used to list all virtual machines in the system

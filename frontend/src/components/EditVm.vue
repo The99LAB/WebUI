@@ -6,8 +6,48 @@
       :class="{ 'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive }"
     >
       <q-header bordered>
-        <q-toolbar>
-          <q-toolbar-title>Edit VM</q-toolbar-title>
+        <q-toolbar class="row items-center">
+          <p class="text-h6 q-ma-none">Edit VM</p>
+          <q-space />
+          <!-- 
+            general:
+              - name
+              - autostart
+              - machine
+              - bios
+              - memory
+              - cpu
+              - boot order ?
+            
+            devices:
+              - video
+              - graphics
+              - tablet
+              - sound
+              - network
+              - disks
+            
+            passthrough:
+              - usb
+              - pci
+
+            xml:
+              - xml
+           -->
+          <q-tabs allign="middle" v-model="tab">
+            <q-tab name="general" label="General" />
+            <q-tab name="devices" label="Devices" />
+            <q-tab name="disk" label="Disk" />
+            <q-tab name="network" label="Network" />
+            <q-tab name="graphics" label="Graphics" />
+            <q-tab name="sound" label="Sound" />
+            <q-tab name="passthrough" label="Passthrough" />
+            <q-tab name="xml" label="Xml" />
+          </q-tabs>
+          <q-space />
+          <q-btn flat label="Apply" v-if="tab == 'general' || tab == 'xml'">
+            <ToolTip content="Apply changes" />
+          </q-btn>
           <q-btn
             icon="close"
             flat
@@ -15,288 +55,285 @@
             dense
             v-close-popup
             @click="tab = 'general'"
-          />
+          >
+            <ToolTip content="Close" />
+          </q-btn>
         </q-toolbar>
-
-        <q-tabs allign="left" v-model="tab">
-          <q-tab name="general" label="General" />
-          <q-tab name="cpu" label="CPU" />
-          <q-tab name="memory" label="Memory" />
-          <q-tab name="disk" label="Disk" />
-          <q-tab name="network" label="Network" />
-          <q-tab name="graphics" label="Graphics" />
-          <q-tab name="sound" label="Sound" />
-          <q-tab name="passthrough" label="Passthrough" />
-          <q-tab name="xml" label="Xml" />
-        </q-tabs>
-        <q-separator color="transparent" />
       </q-header>
 
       <q-page-container>
         <q-page padding>
-          <q-tab-panels
-            v-model="tab"
-          >
+          <q-tab-panels v-model="tab">
             <q-tab-panel name="general">
-              <q-input label="Name" v-model="general_name">
-                <template v-slot:append>
-                  <q-btn
-                    round
-                    dense
-                    flat
-                    icon="mdi-check"
-                    @click="generalChangeName(general_name)"
-                  >
-                    <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
-                  </q-btn>
-                </template>
-              </q-input>
-              <q-select label="Machine" v-model="general_machine" disable />
-              <q-select label="BIOS" v-model="general_bios" disable />
-              <q-toggle
-                label="Autostart"
-                v-model="general_autostart"
-                @update:model-value="toggleAutostart"
-              />
-            </q-tab-panel>
-            <q-tab-panel name="cpu">
-              <q-select
-                label="CPU Model"
-                v-model="cpu_model"
-                :options="cpuModelOptions"
-                @update:model-value="calculateCpu"
-              />
-              <q-input
-                label="Current vCPU"
-                v-model="currentVcpu"
-                type="number"
-                min="1"
-                :max="vcpu"
-                :rules="[
-                  (val) =>
-                    val <= vcpu ||
-                    'Current vCPU cannot be bigger than vCPU value',
-                ]"
-                disable
-                v-if="customTopology"
-              />
-              <q-input
-                label="Current vCPU"
-                v-model="currentVcpu"
-                type="number"
-                min="1"
-                :max="vcpu"
-                :rules="[
-                  (val) =>
-                    val <= vcpu ||
-                    'Current vCPU cannot be bigger than vCPU value',
-                ]"
-                v-else
-              />
-              <q-input
-                label="vCPU"
-                v-model="vcpu"
-                type="number"
-                min="1"
-                disable
-                v-if="customTopology"
-              />
-              <q-input
-                label="vCPU"
-                v-model="vcpu"
-                type="number"
-                min="1"
-                @update:model-value="(val) => (topologySockets = val)"
-                v-else
-              />
-              <q-toggle
-                label="Custom Topology"
-                v-model="customTopology"
-                @update:model-value="calculateCpu"
-              />
-              <div v-if="customTopology">
-                <q-input
-                  label="Sockets"
-                  v-model="topologySockets"
-                  type="number"
-                  min="1"
-                  @update:model-value="calculateCpu"
-                />
-                <q-input
-                  label="Dies"
-                  v-model="topologyDies"
-                  type="number"
-                  min="1"
-                  @update:model-value="calculateCpu"
-                />
-                <q-input
-                  label="Cores"
-                  v-model="topologyCores"
-                  type="number"
-                  min="1"
-                  @update:model-value="calculateCpu"
-                />
-                <q-input
-                  label="Threads"
-                  v-model="topologyThreads"
-                  type="number"
-                  min="1"
-                  @update:model-value="calculateCpu"
-                />
+              <div class="justify-center q-gutter-md">
+                <q-card>
+                  <q-card-section>
+                    <div class="row">
+                      <div class="col q-mr-lg">
+                        <q-input label="Name" v-model="general_name" />
+                        <div class="row items-center q-mt-md">
+                          <p class="text-body2 q-ma-none">Autostart:</p>
+                          <q-toggle v-model="general_autostart" />
+                          <q-tooltip
+                            :delay="500"
+                            anchor="bottom left"
+                            self="top start"
+                            :offset="[0, 8]"
+                          >
+                            Automatically start the VM when the server boots
+                          </q-tooltip>
+                        </div>
+                      </div>
+                      <div class="col q-ml-lg">
+                        <q-select
+                          label="Machine"
+                          v-model="general_machine"
+                          readonly
+                        />
+                        <q-select
+                          label="BIOS"
+                          v-model="general_bios"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                  </q-card-section>
+                </q-card>
+                <q-card>
+                  <q-card-section class="row q-pb-none">
+                    <p class="text-h6 q-ma-none">Memory</p>
+                    <q-space />
+                    <div class="row items-center">
+                      <p class="text-body2 q-ma-none">Enable shared memory:</p>
+                      <q-toggle v-model="memory_enable_shared" />
+                    </div>
+                  </q-card-section>
+                  <q-card-section class="q-pt-none">
+                    <div class="row">
+                      <div class="col q-mr-lg">
+                        <q-input
+                          label="Current allocation"
+                          v-model="memory_minMemory"
+                          type="number"
+                          min="1"
+                        >
+                          <template v-slot:append>
+                            <q-select
+                              v-model="memory_minMemoryUnit"
+                              :options="memoryUnitOptions"
+                            />
+                          </template>
+                        </q-input>
+                      </div>
+                      <div class="col q-ml-lg">
+                        <q-input
+                          label="Maximum allocation"
+                          v-model="memory_maxMemory"
+                          type="number"
+                          min="1"
+                        >
+                          <template v-slot:append>
+                            <q-select
+                              v-model="memory_maxMemoryUnit"
+                              :options="memoryUnitOptions"
+                            />
+                          </template>
+                        </q-input>
+                      </div>
+                    </div>
+                  </q-card-section>
+                </q-card>
+                <q-card>
+                  <q-card-section class="row">
+                    <div class="col q-mr-lg">
+                      <p class="q-ma-none text-h6">CPU</p>
+                      <q-select
+                        label="CPU Model"
+                        v-model="cpu_model"
+                        :options="cpuModelOptions"
+                        @update:model-value="calculateCpu"
+                      />
+                      <q-input
+                        label="Current vCPU"
+                        v-model="currentVcpu"
+                        type="number"
+                        min="1"
+                        :max="vcpu"
+                        :rules="[
+                          (val) =>
+                            val <= vcpu ||
+                            'Current vCPU cannot be bigger than vCPU value',
+                        ]"
+                        :readonly="customTopology"
+                      />
+                      <q-input
+                        label="vCPU"
+                        v-model="vcpu"
+                        type="number"
+                        min="1"
+                        @update:model-value="(val) => (topologySockets = val)"
+                        :readonly="customTopology"
+                      />
+                    </div>
+                    <q-separator vertical />
+                    <div class="col q-ml-lg">
+                      <div class="row items-center">
+                        <p class="q-ma-none text-subtitle1 text-weight-medium">
+                          Custom Topology
+                          <ToolTip
+                            content='"Custom Topology" allows you to set the number of sockets, dies, cores, and threads manually. If you disable this option, the vCPU value will be used to calculate the topology.'
+                          />
+                        </p>
+                        <q-space />
+                        <q-toggle
+                          v-model="customTopology"
+                          @update:model-value="calculateCpu"
+                        />
+                      </div>
+                      <q-input
+                        label="Sockets"
+                        v-model="topologySockets"
+                        type="number"
+                        min="1"
+                        @update:model-value="calculateCpu"
+                        :readonly="!customTopology"
+                      />
+                      <q-input
+                        label="Dies"
+                        v-model="topologyDies"
+                        type="number"
+                        min="1"
+                        @update:model-value="calculateCpu"
+                        :readonly="!customTopology"
+                      />
+                      <q-input
+                        label="Cores"
+                        v-model="topologyCores"
+                        type="number"
+                        min="1"
+                        @update:model-value="calculateCpu"
+                        :readonly="!customTopology"
+                      />
+                      <q-input
+                        label="Threads"
+                        v-model="topologyThreads"
+                        type="number"
+                        min="1"
+                        @update:model-value="calculateCpu"
+                        :readonly="!customTopology"
+                      />
+                    </div>
+                  </q-card-section>
+                </q-card>
               </div>
-              <div v-else>
-                <q-input
-                  label="Sockets"
-                  v-model="topologySockets"
-                  type="number"
-                  min="1"
-                  @update:model-value="calculateCpu"
-                  disable
-                />
-                <q-input
-                  label="Dies"
-                  v-model="topologyDies"
-                  type="number"
-                  min="1"
-                  @update:model-value="calculateCpu"
-                  disable
-                />
-                <q-input
-                  label="Cores"
-                  v-model="topologyCores"
-                  type="number"
-                  min="1"
-                  @update:model-value="calculateCpu"
-                  disable
-                />
-                <q-input
-                  label="Threads"
-                  v-model="topologyThreads"
-                  type="number"
-                  min="1"
-                  @update:model-value="calculateCpu"
-                  disable
-                />
-              </div>
             </q-tab-panel>
-            <q-tab-panel name="memory">
-              <q-input
-                label="Memory minimum"
-                v-model="memory_minMemory"
-                type="number"
-                min="1"
-              >
-                <template v-slot:append>
-                  <q-select
-                    v-model="memory_minMemoryUnit"
-                    :options="memoryUnitOptions"
-                  />
-                </template>
-              </q-input>
-              <q-input
-                label="Memory maximum"
-                v-model="memory_maxMemory"
-                type="number"
-                min="1"
-              >
-                <template v-slot:append>
-                  <q-select
-                    v-model="memory_maxMemoryUnit"
-                    :options="memoryUnitOptions"
-                  />
-                </template>
-              </q-input>
+            <q-tab-panel name="devices">
+              <!-- column left side with all the devices -->
+              <!-- https://quasar.dev/vue-components/list-and-list-items#example--menu -->
+              <!-- right side, detail about the device -->
+              <div class="row">
+                <div class="col-">
+                  <q-list bordered>
+                    <q-item
+                      clickable
+                      v-ripple
+                      v-for="disk in diskList"
+                      :key="disk"
+                      active
+                      @click="console.log('click disk', disk.index)"
+                    >
+                      <q-item-section thumbnail class="q-pr-sm">
+                        <q-icon
+                          color="primary"
+                          :name="
+                            disk.device_type == 'cdrom'
+                              ? 'mdi-disc'
+                              : 'mdi-harddisk'
+                          "
+                          class="q-pl-sm"
+                        />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label>
+                          {{
+                            disk.bus_format == "virtio"
+                              ? "VirtIO"
+                              : disk.bus_format.toUpperCase()
+                          }}
+                          {{
+                            disk.device_type == "cdrom"
+                              ? "CDROM"
+                              : disk.device_type == "disk"
+                              ? "Disk"
+                              : disk.device_type
+                          }}
+                          {{ disk.index }}
+                        </q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </div>
+                <div class="col q-ml-md">
+                  <p class="text-h6 q-ma-none">Device</p>
+                </div>
+              </div>
             </q-tab-panel>
             <q-tab-panel name="disk">
               <div v-for="disk in diskList" :key="disk">
                 <q-separator
                   color="primary"
                   spaced="lg"
-                  v-if="disk.number != 0"
+                  v-if="disk.index != 0"
                 />
-                <q-select
+                <q-input
                   label="Device Type"
-                  v-model="disk.devicetype"
-                  :options="diskTypeOptions"
-                  @update:model-value="
-                    (val) => diskChangeType(disk.number, val)
-                  "
-                />
-                <q-select
-                  label="Driver Type"
-                  v-model="disk.drivertype"
-                  :options="diskDriverTypeOptions"
-                  @update:model-value="
-                    (val) => diskChangeDriverType(disk.number, val)
-                  "
-                />
-                <q-select
-                  label="Bus Format"
-                  v-model="disk.busformat"
-                  :options="diskBusOptions"
-                  @update:model-value="(val) => diskChangeBus(disk.number, val)"
-                />
-                <DirectoryList label="Source File" v-model="disk.sourcefile">
+                  v-model="disk.device_type"
+                  readonly
+                >
                   <template v-slot:append>
                     <q-btn
-                      round
-                      dense
                       flat
-                      icon="mdi-check"
-                      @click="
-                        diskChangeSourceFile(disk.number, disk.sourcefile)
-                      "
+                      round
+                      color="primary"
+                      icon="delete"
+                      @click="diskDelete(disk.index)"
                     >
-                      <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
+                      <q-tooltip :offset="[5, 5]">Delete Disk</q-tooltip>
                     </q-btn>
                   </template>
-                </DirectoryList>
+                </q-input>
+                <q-input
+                  label="Driver Type"
+                  v-model="disk.driver_type"
+                  readonly
+                />
+                <q-input
+                  label="Bus Format"
+                  v-model="disk.bus_format"
+                  readonly
+                />
+                <q-input
+                  :label="
+                    disk.read_only ? 'Source File (Read Only)' : 'Source File'
+                  "
+                  v-model="disk.source_file"
+                  v-if="disk.source_file != null"
+                  readonly
+                />
                 <q-input
                   label="Source Device"
-                  v-model="disk.sourcedev"
-                  v-if="disk.sourcedev != null"
-                >
-                  <template v-slot:append>
-                    <q-btn
-                      round
-                      dense
-                      flat
-                      icon="mdi-check"
-                      @click="diskChangeSourceDev(disk.number, disk.sourcedev)"
-                    />
-                  </template>
-                </q-input>
+                  v-model="disk.source_device"
+                  v-if="disk.source_device != null"
+                  readonly
+                />
                 <q-input
                   label="Boot order"
-                  v-model="disk.bootorder"
+                  v-model="disk.boot_order"
+                  v-if="disk.boot_order != null"
                   type="number"
                   min="1"
-                >
-                  <template v-slot:append>
-                    <q-btn
-                      round
-                      dense
-                      flat
-                      icon="mdi-check"
-                      @click="diskChangeBootorder(disk.number, disk.bootorder)"
-                    >
-                      <q-tooltip :offset="[5, 5]">Apply</q-tooltip>
-                    </q-btn>
-                  </template>
-                </q-input>
-                <div class="row q-mt-xs">
-                  <q-toggle label="Read Only" v-model="disk.readonly" disable />
-                  <q-space />
-                  <q-btn
-                    color="primary"
-                    icon="delete"
-                    flat
-                    round
-                    @click="diskDelete(disk.number)"
-                  >
-                    <q-tooltip :offset="[5, 5]">Delete Disk</q-tooltip>
-                  </q-btn>
-                </div>
+                  readonly
+                />
               </div>
             </q-tab-panel>
             <q-tab-panel name="network">
@@ -337,6 +374,7 @@
                 <q-input
                   label="Boot order"
                   v-model="network.boot_order"
+                  v-if="network.boot_order != null"
                   readonly
                 />
               </div>
@@ -347,9 +385,8 @@
                 :key="graphicsdevice"
               >
                 <q-separator
-                  color="transparent"
+                  color="primary"
                   spaced="lg"
-                  inset
                   v-if="graphicsdevice.index != 0"
                 />
                 <q-input label="Device Type" model-value="Graphics" readonly>
@@ -375,9 +412,8 @@
               </div>
               <div v-for="videodevice in videodevicesList" :key="videodevice">
                 <q-separator
-                  color="transparent"
+                  color="primary"
                   spaced="lg"
-                  inset
                   v-if="
                     graphicsdevicesList.length > 0 && videodevice.index >= 0
                   "
@@ -414,9 +450,8 @@
             <q-tab-panel name="sound">
               <div v-for="sounddevice in sounddevicesList" :key="sounddevice">
                 <q-separator
-                  color="transparent"
+                  color="primary"
                   spaced="lg"
-                  inset
                   v-if="sounddevice.index != 0"
                 />
                 <q-input label="Device Type" model-value="Sound" readonly>
@@ -452,7 +487,10 @@
                       color="primary"
                       icon="delete"
                       @click="
-                        usbdeviceDelete(usbdevice.product_id, usbdevice.vendor_id)
+                        usbdeviceDelete(
+                          usbdevice.product_id,
+                          usbdevice.vendor_id,
+                        )
                       "
                     >
                       <q-tooltip :offset="[5, 5]">Delete USB Device</q-tooltip>
@@ -470,9 +508,13 @@
                   label="Product Id"
                   readonly
                 />
-                <q-separator color="transparent" spaced="lg" inset />
               </div>
               <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
+                <q-separator
+                  color="primary"
+                  spaced="lg"
+                  v-if="pcidevicesList.length > 0 && usbdevicesList.length >= 0"
+                />
                 <q-input model-value="PCI Device" label="Type" readonly>
                   <template v-slot:append>
                     <q-btn
@@ -480,11 +522,7 @@
                       icon="delete"
                       round
                       flat
-                      @click="
-                        pciedeviceDelete(
-                          pcidevice.index
-                        )
-                      "
+                      @click="pciedeviceDelete(pcidevice.index)"
                     >
                       <q-tooltip :offset="[5, 5]">Delete PCI Device</q-tooltip>
                     </q-btn>
@@ -511,7 +549,6 @@
                   label="Rom File"
                   readonly
                 />
-                <q-separator color="transparent" spaced="lg" inset />
               </div>
             </q-tab-panel>
             <q-tab-panel name="xml">
@@ -519,7 +556,7 @@
             </q-tab-panel>
           </q-tab-panels>
         </q-page>
-        <q-footer bordered>
+        <!-- <q-footer bordered>
           <q-toolbar>
             <q-space />
             <q-btn flat label="Add" @click="diskAdd()" v-if="tab == 'disk'" />
@@ -566,7 +603,7 @@
               v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu'"
             />
           </q-toolbar>
-        </q-footer>
+        </q-footer> -->
       </q-page-container>
     </q-layout>
     <q-inner-loading :showing="loading" />
@@ -596,7 +633,7 @@ import AddPcieDevice from "src/components/AddPcieDevice.vue";
 import AddGraphics from "src/components/AddGraphics.vue";
 import AddVideo from "src/components/AddVideo.vue";
 import AddSound from "src/components/AddSound.vue";
-import DirectoryList from "./DirectoryList.vue";
+import ToolTip from "src/components/ToolTip.vue";
 
 export default {
   data() {
@@ -622,6 +659,7 @@ export default {
       memory_minMemoryUnit: ref("GB"),
       memory_maxMemory: null,
       memory_maxMemoryUnit: ref("GB"),
+      memory_enable_shared: null,
       diskUnitOptions: ["MB", "GB", "TB"],
       diskDriverTypeOptions: ["raw", "qcow2"],
       diskBusOptions: ["sata", "scsi", "virtio", "usb"],
@@ -654,13 +692,13 @@ export default {
     ErrorDialog,
     ConfirmDialog,
     AddDisk,
-    DirectoryList,
     AddNetwork,
     AddUsbDevice,
     AddPcieDevice,
     AddGraphics,
     AddVideo,
     AddSound,
+    ToolTip,
   },
   methods: {
     show(uuid) {
@@ -682,6 +720,7 @@ export default {
           this.memory_minMemoryUnit = response.data.memory_min_unit;
           this.memory_maxMemory = response.data.memory_max;
           this.memory_maxMemoryUnit = response.data.memory_max_unit;
+          this.memory_enable_shared = response.data.memory_enable_shared;
           this.currentVcpu = response.data.current_vcpu;
           this.cpu_model = response.data.cpu_mode;
           this.vcpu = response.data.vcpu;
@@ -878,7 +917,7 @@ export default {
           ]);
         });
     },
-    diskDelete(disknumber) {
+    diskDelete(index) {
       this.$refs.confirmDialog.show(
         "Delete disk",
         [
@@ -887,13 +926,13 @@ export default {
         ],
         this.diskDeleteConfirm,
       );
-      this.diskDeleteNumber = disknumber;
+      this.diskDeleteNumber = index;
     },
     diskDeleteConfirm() {
       this.loading = true;
       this.$api
         .post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
-          number: this.diskDeleteNumber,
+          index: this.diskDeleteNumber,
         })
         .then((response) => {
           this.refreshData();
@@ -902,6 +941,7 @@ export default {
           this.$refs.errorDialog.show("Error deleting disk", [
             error.response.data.detail,
           ]);
+          this.loading = false;
         });
     },
     diskAdd() {
@@ -963,14 +1003,11 @@ export default {
     usbdeviceDelete(productid, vendorid) {
       this.$refs.confirmDialog.show(
         "Remove USB device",
-        [
-          "Are you sure you want to remove this usb device?"
-        ],
+        ["Are you sure you want to remove this usb device?"],
         this.usbdeviceDeleteConfirm,
       );
       this.usbdeviceDeleteProductId = productid;
       this.usbdeviceDeleteVendorId = vendorid;
-      
     },
     usbdeviceDeleteConfirm() {
       this.loading = true;
@@ -1049,9 +1086,7 @@ export default {
       this.sounddeviceDeleteIndex = index;
       this.$refs.confirmDialog.show(
         "Remove Sound device",
-        [
-          "Are you sure you want to remove this sound device?"
-        ],
+        ["Are you sure you want to remove this sound device?"],
         this.soundDeleteConfirm,
       );
     },

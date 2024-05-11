@@ -2,7 +2,7 @@
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
       <q-page padding class="row justify-center items-center">
-        <q-card style="width: 30em; height: 40em">
+        <q-card style="width: 30em; height: 40em" class="shadow-1">
           <q-linear-progress
             rounded
             :query="loginLoading"

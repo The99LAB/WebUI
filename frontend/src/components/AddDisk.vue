@@ -92,6 +92,7 @@
             </q-icon>
           </template>
         </q-select>
+        <!-- TODO: Use DirectoryList component here at directory /dev/disk/by-id/ -->
         <q-input
           v-model="sourceDevice"
           label="Source Device"
@@ -191,6 +192,7 @@ export default {
     show(uuid) {
       this.dialogVisible = true;
       this.uuid = uuid;
+      this.volumePath = null;
     },
     addDisk() {
       if (

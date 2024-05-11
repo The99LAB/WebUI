@@ -224,6 +224,7 @@
                 v-model="item.value"
                 :label="item.description"
                 :validate="item.createdir ? false : true"
+                selectiontype="dir"
                 v-if="item.editable"
               >
                 <template v-slot:counter>

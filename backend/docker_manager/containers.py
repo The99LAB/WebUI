@@ -88,13 +88,20 @@ class Containers:
         dockerImages.pull(container_image, notify=False)
 
         # Create the container
+        print(container_volumes) # container_volumes is a dictionary
+        volumes_list = []
+        for volume in config_volumes:
+            volumes_list.append(volume['bind'])
+        
+
         container = self.docker_client.api.create_container(
             image=container_image,
             name=name,
             environment=container_env,
             # volumes are the _container_volumes 
             # volumes list is from container_config['volumes']
-            volumes=[volume['bind'] for volume in container_volumes],
+
+            volumes=volumes_list,
             host_config=self.docker_client.api.create_host_config(binds=container_volumes),
             networking_config=container_network_config,
             command=container_command,

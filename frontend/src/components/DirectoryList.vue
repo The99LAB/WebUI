@@ -136,8 +136,10 @@ export default {
       this.getData(value);
     },
     clickItem(value) {
+      console.log("clickItem", value);
       if (value.type == "dir") {
         if (this.selectiontype == "dir" || this.selectiontype == "both") {
+          console.log("dir", value);
           this.setCurrentPath(value);
         }
         this.getData(value.path);

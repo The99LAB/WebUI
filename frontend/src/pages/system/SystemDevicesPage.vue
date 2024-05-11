@@ -36,7 +36,7 @@
             :props="props"
             class="text-weight-regular text-body2"
           >
-            {{ props.row.vendor_name }} 
+            {{ props.row.vendor_name }}
             {{ props.row.product_name }}
           </q-td>
         </q-tr>

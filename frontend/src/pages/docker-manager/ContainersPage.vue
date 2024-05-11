@@ -288,6 +288,11 @@ export default {
           } else if (container.config.network.dhcp_ip != null) {
             ip = container.config.network.dhcp_ip;
             window.open(protocol + ip + ":" + port + path, "_blank");
+          } else {
+            this.$refs.errorDialog.show(
+              "Error opening WebUI",
+              "No IP address found for container",
+            );
           }
         }
       }

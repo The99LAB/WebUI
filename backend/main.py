@@ -799,118 +799,33 @@ async def post_vm_manager(request: Request, action: str, username: str = Depends
 #### API/VM-MANAGER-ACTIONS ####
 @app.get('/api/vm-manager/{vmuuid}/{action}')
 async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
-    domain = libvirt_conn.lookupByUUIDString(vmuuid)
-    domain_xml = domain.XMLDesc()
     if action == "xml":
-        return { "xml": domain_xml }
+        try:
+            return { "xml": vm_manager.VirtualMachine(vm_uuid=vmuuid).vm_xml}
+        except vm_manager.VmManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
     elif action == "disk-data":
         try:
-            return storage(domain_uuid=vmuuid).get()
-        except Exception as e:
-            return {"error": f"{e}"}
+            return vm_manager.VirtualMachine(vm_uuid=vmuuid).vm_disk_devices
+        except vm_manager.VmManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
     elif action == "logs":
-        domain_name = domain.name()
-        libvirt_domain_logs_path = settings_manager.get_setting("libvirt_domain_logs").value
-        domain_log_path = os.path.join(libvirt_domain_logs_path, domain_name + ".log")
-        if os.path.exists(domain_log_path):
-            with open(domain_log_path, "r") as f:
-                return { "log": f.read() }
-        else:
-            raise HTTPException(status_code=404, detail="Log file not found")
+        #TODO: Use vm_manager module to get logs
+        # domain_name = domain.name()
+        # libvirt_domain_logs_path = settings_manager.get_setting("libvirt_domain_logs").value
+        # domain_log_path = os.path.join(libvirt_domain_logs_path, domain_name + ".log")
+        # if os.path.exists(domain_log_path):
+        #     with open(domain_log_path, "r") as f:
+        #         return { "log": f.read() }
+        # else:
+        #     raise HTTPException(status_code=404, detail="Log file not found")
+        raise HTTPException(status_code=404, detail="Action not found")
         
     elif action == "data":
-        # domain_xml = ET.fromstring(domain_xml)
-        # # get cpu model from xml
-        # cpu_model = domain_xml.find('cpu').get('mode')
-        # # get vcpus from xml
-        # vcpu = domain_xml.find('vcpu').text
-        # try:
-        #     current_vcpu = domain_xml.find('vcpu').attrib['current']
-        # except KeyError:
-        #     current_vcpu = vcpu
-        
-        # topologyelem = domain_xml.find('cpu/topology')
-        # if topologyelem is None:
-        #     custom_topology = False
-        #     sockets = vcpu
-        #     dies = 1
-        #     cores = 1
-        #     threads = 1
-        # else:
-        #     sockets = topologyelem.attrib['sockets']
-        #     dies = topologyelem.attrib['dies']
-        #     cores = topologyelem.attrib['cores']
-        #     threads = topologyelem.attrib['threads']
-        #     custom_topology = True
-            
-        
-        # # get machine type
-        # machine_type = domain_xml.find('os/type').attrib['machine']
-        # # get bios type
-        # os_loader_elem = domain_xml.find('os/loader')
-        # bios_type = "BIOS"
-        # if os_loader_elem != None:
-        #     bios_type = os_loader_elem.text
-
-        # # get autostart boolean
-        # autostart = False
-        # if domain.autostart() == 1:
-        #     autostart = True
-            
-        # # get memory
-        # meminfo = vmmemory(uuid=vmuuid).current()
-        # minmem = storage_manager.convertSizeUnit(meminfo[0], from_unit="KB", mode="tuple")
-        # maxmem = storage_manager.convertSizeUnit(meminfo[1], from_unit="KB", mode="tuple")
-        # minmem_size = minmem[0]
-        # minmem_unit = minmem[1]
-        # maxmem_size = maxmem[0]
-        # maxmem_unit = maxmem[1]
-
-        # # get disk
-        # diskinfo = storage(domain_uuid=vmuuid).get()
-        # networks = domainNetworkInterface(dom_uuid=vmuuid).get()
-
-        # # graphics tab            
-        # graphicsdevices = DomainGraphics(domuuid=vmuuid).get
-        # videodevices = DomainVideo(domuuid=vmuuid).get
-
-        # # sound tab
-        # sounddevices = DomainSound(domuuid=vmuuid).get
-
-        # # passthrough devices
-        # usbdevices = DomainUsb(domuuid=vmuuid).get
-        # pcidevices = DomainPcie(domuuid=vmuuid).get
-
-        # data = {
-        #     "name": domain.name(),
-        #     "autostart": autostart,
-        #     "current_vcpu": current_vcpu,
-        #     "cpu_model": cpu_model,
-        #     "vcpu": vcpu,
-        #     "current_vcpu": current_vcpu,
-        #     "custom_topology": custom_topology,
-        #     "topology_sockets": sockets,
-        #     "topology_dies": dies,
-        #     "topology_cores": cores,
-        #     "topology_threads": threads,
-        #     "uuid": domain.UUIDString(),
-        #     "state": domain.state()[0],
-        #     "machine": machine_type,
-        #     "bios": bios_type,
-        #     "memory_max": maxmem_size,
-        #     "memory_max_unit": maxmem_unit,
-        #     "memory_min": minmem_size,
-        #     "memory_min_unit": minmem_unit,
-        #     "disks": diskinfo,
-        #     "networks": networks,
-        #     "sounddevices": sounddevices,
-        #     "usbdevices": usbdevices,
-        #     "pcidevices": pcidevices,
-        #     "graphicsdevices": graphicsdevices,
-        #     "videodevices": videodevices
-        # }
-        # return data
-        return vm_manager.VirtualMachine(vm_uuid=vmuuid).json
+        try:
+            return vm_manager.VirtualMachine(vm_uuid=vmuuid).json
+        except vm_manager.VmManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     else:
         raise HTTPException(status_code=404, detail="Action not found")
@@ -918,6 +833,7 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
 @app.post('/api/vm-manager/{vmuuid}/{action}')
 async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
     domain = libvirt_conn.lookupByUUIDString(vmuuid)
+    #TODO: use vm_manager module to perform these actions
     if action == "start":
         try:
             if domain.state()[0] == libvirt.VIR_DOMAIN_SHUTOFF:
@@ -1088,27 +1004,15 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         # edit-disk-action
         elif action.startswith("disk"):
             action = action.replace("disk-", "")
-            if action != "add":
-                disknumber = data['number']
-                xml_orig = storage(domain_uuid=vmuuid).getxml(disknumber)
-                xml = ET.fromstring(xml_orig)
-
             if action == "add":
                 formDeviceType = data['deviceType']
                 if formDeviceType == "cdrom" or formDeviceType == "existingvdisk":
                     formDeviceType = "disk" if formDeviceType == "existingvdisk" else "cdrom"
-                    cdrompath = data['volumePath']
-                    cdrombus = data['diskBus']
+                    disk_path = data['volumePath']
+                    disk_bus = data['diskBus']
                     try:
-                        storage(domain_uuid=vmuuid).add_xml(
-                            disktype="file",
-                            targetbus=cdrombus,
-                            devicetype=formDeviceType,
-                            drivertype="raw",
-                            sourcefile=cdrompath
-                        )
-                        return
-                    except libvirt.libvirtError as e:
+                        vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_storage_device_from_file(source_file=disk_path, disk_bus=disk_bus, device_type=formDeviceType)
+                    except vm_manager.VmManagerException as e:
                         raise HTTPException(status_code=500, detail=str(e))
                 
                 elif formDeviceType == "createvdisk":
@@ -1130,102 +1034,23 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                         raise HTTPException(status_code=500, detail=str(e))
                     
                 elif formDeviceType == "block":
-                    blockdev = data['sourceDevice']
-                    diskBus = data['diskBus']
+                    source_device = data['sourceDevice']
+                    disk_bus = data['diskBus']
                     try:
-                        storage(domain_uuid=vmuuid).add_xml(
-                            disktype="block",
-                            targetbus=diskBus,
-                            devicetype="disk",
-                            drivertype="raw",
-                            sourcedev=blockdev
-                        )
-                        return
-                    except libvirt.libvirtError as e:
+                        vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_storage_device_from_block_device(source_device=source_device, disk_bus=disk_bus)
+                    except vm_manager.VmManagerException as e:
                         raise HTTPException(status_code=500, detail=str(e))
-                
+
                 else:
                     raise HTTPException(status_code=400, detail="Invalid device type")
 
-            elif action == "type":
-                value = data['value']
-                orig_value = xml.get('device')
-                xml.set('device', value)
-                if orig_value == "cdrom" and value == "disk":
-                    xml.remove(xml.find('readonly'))
-                xml = ET.tostring(xml).decode()
-                try:
-                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
-
-            elif action == "driver-type":
-                value = data['value']
-                xml.find('driver').set('type', value)
-                xml = ET.tostring(xml).decode()
-                try:
-                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
-
-            elif action == "bus":
-                value = data['value']
-                xml.find('target').set('bus', value)
-                xml.remove(xml.find('address'))
-                xml = ET.tostring(xml).decode()
-                try:
-                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
-
-            elif action == "source-file":
-                value = data['value']
-                xml.find('source').set('file', value)
-                xml = ET.tostring(xml).decode()
-                try:
-                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
-            
-            elif action == "source-dev":
-                value = data['value']
-                xml.find('source').set('dev', value)
-                xml = ET.tostring(xml).decode()
-                try:
-                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
-
-            elif action == "bootorder":
-                value = data['value']
-                bootelem = xml.find('boot')
-                if bootelem is None:
-                    bootelem = ET.SubElement(xml, 'boot')
-                bootelem.set('order', value)
-                xml = ET.tostring(xml).decode()
-                try:
-                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
-
             elif action == "delete":
+                index = data['index']
                 try:
-                    domain.detachDeviceFlags(xml_orig, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
-                    return
-                except libvirt.libvirtError as e:
+                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_storage_device(index=index)
+                except vm_manager.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
+                
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
 
@@ -1400,8 +1225,6 @@ async def api_docker_manager_templates_get(username: str = Depends(check_auth)):
 @app.get("/api/docker-manager/template-locations")
 async def api_docker_manager_template_locations_get(username: str = Depends(check_auth)):
     template_locations = dockerTemplates.getLocations()
-    for template_location in template_locations:
-        print(template_location['last_update'])
     return template_locations
 
 @app.post("/api/docker-manager/template-locations/update")

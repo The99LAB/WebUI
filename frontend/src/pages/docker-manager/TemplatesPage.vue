@@ -48,7 +48,7 @@
           </p>
         </q-card-section>
         <q-card-actions>
-          <div class="absolute-bottom-right">
+          <div class="absolute-bottom-right q-mb-xs q-mr-xs">
             <q-btn
               unelevated
               label="Info"
