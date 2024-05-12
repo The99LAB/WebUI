@@ -24,13 +24,7 @@
             key="name"
             :props="props"
             class="text-weight-regular text-body2"
-            @click="props.expand = !props.expand"
-            style="cursor: pointer; user-select: none"
           >
-            <q-icon
-              :name="props.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
-              size="sm"
-            />
             {{ props.row.name }}
           </q-td>
           <q-td
@@ -39,6 +33,77 @@
             class="text-weight-regular text-body2"
           >
             {{ props.row.state }}
+          </q-td>
+          <q-td
+            key="actions"
+            :props="props"
+            class="text-weight-regular text-body2"
+          >
+            <q-btn
+              icon="mdi-play"
+              flat
+              round
+              size="sm"
+              padding="xs"
+              @click="startVm(props.row.uuid)"
+              v-if="props.row.state != 'Running'"
+            >
+              <q-tooltip :offset="[0, 5]">Start</q-tooltip>
+            </q-btn>
+            <q-btn
+              icon="mdi-stop"
+              flat
+              round
+              size="sm"
+              padding="xs"
+              @click="stopVm(props.row.uuid)"
+              v-if="props.row.state == 'Running'"
+            >
+              <q-tooltip :offset="[0, 5]">Stop</q-tooltip>
+            </q-btn>
+            <q-btn
+              icon="mdi-bomb"
+              flat
+              round
+              size="sm"
+              padding="xs"
+              @click="forceStopVm(props.row.uuid)"
+              v-if="props.row.state == 'Running'"
+            >
+              <q-tooltip :offset="[0, 5]">Force Stop</q-tooltip>
+            </q-btn>
+            <q-btn
+              icon="mdi-open-in-new"
+              flat
+              round
+              size="sm"
+              padding="xs"
+              v-if="props.row.VNC && props.row.state == 'Running'"
+              @click="vncVm(props.row.uuid)"
+            >
+              <q-tooltip :offset="[0, 5]">WebUI</q-tooltip>
+            </q-btn>
+            <q-btn
+              icon="mdi-pencil"
+              flat
+              round
+              size="sm"
+              padding="xs"
+              v-if="props.row.state == 'Shutoff'"
+              @click="editVm(props.row.uuid)"
+            >
+              <q-tooltip :offset="[0, 5]">Edit</q-tooltip>
+            </q-btn>
+            <q-btn
+              icon="mdi-file-document"
+              flat
+              round
+              size="sm"
+              padding="xs"
+              @click="logsVm(props.row.uuid)"
+            >
+              <q-tooltip :offset="[0, 5]">Logs</q-tooltip>
+            </q-btn>
           </q-td>
           <q-td
             key="vcpus"
@@ -70,67 +135,6 @@
               v-model="props.row.autostart"
               @update:model-value="autostartVm(props.row.uuid)"
             />
-          </q-td>
-        </q-tr>
-        <q-tr v-show="props.expand" :props="props">
-          <q-td colspan="100%">
-            <div>
-              <q-btn
-                class="q-ma-sm"
-                color="primary"
-                icon="mdi-play"
-                label="Start"
-                v-if="props.row.state != 'Running'"
-                @click="startVm(props.row.uuid)"
-              />
-              <q-btn
-                class="q-ma-sm"
-                color="primary"
-                icon="mdi-delete"
-                label="Remove"
-                v-if="props.row.state == 'Shutoff'"
-                @click="removeVm(props.row.uuid)"
-              />
-              <q-btn
-                class="q-ma-sm"
-                color="primary"
-                icon="mdi-stop"
-                label="Stop"
-                v-if="props.row.state == 'Running'"
-                @click="stopVm(props.row.uuid)"
-              />
-              <q-btn
-                class="q-ma-sm"
-                color="primary"
-                icon="mdi-bomb"
-                label="Force stop"
-                v-if="props.row.state == 'Running'"
-                @click="forceStopVm(props.row.uuid)"
-              />
-              <q-btn
-                class="q-ma-sm"
-                color="primary"
-                icon="mdi-eye"
-                label="VNC"
-                v-if="props.row.VNC && props.row.state == 'Running'"
-                @click="vncVm(props.row.uuid)"
-              />
-              <q-btn
-                class="q-ma-sm"
-                color="primary"
-                icon="mdi-pencil"
-                label="Edit"
-                v-if="props.row.state == 'Shutoff'"
-                @click="editVm(props.row.uuid)"
-              />
-              <q-btn
-                class="q-ma-sm"
-                color="primary"
-                icon="mdi-file-document"
-                label="Logs"
-                @click="logsVm(props.row.uuid)"
-              />
-            </div>
           </q-td>
         </q-tr>
       </template>
@@ -173,6 +177,13 @@ export default {
           sortable: true,
         },
         {
+          label: "Actions",
+          field: "actions",
+          name: "actions",
+          align: "left",
+          sortable: false,
+        },
+        {
           label: "vCPUs",
           field: "vcpus",
           name: "vcpus",
@@ -192,12 +203,6 @@ export default {
           name: "memory_max",
           align: "left",
           sortable: true,
-        },
-        {
-          label: "Autostart",
-          field: "autostart",
-          name: "autostart",
-          align: "left",
         },
       ],
       selected: [],

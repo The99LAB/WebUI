@@ -1,46 +1,47 @@
 <template>
-  <q-dialog v-model="layout" full-width full-height>
+  <q-dialog
+    v-model="layout"
+    full-width
+    full-height
+    :maximized="$q.screen.lt.md"
+  >
     <q-layout
       view="hHh lpR fFf"
       container
       :class="{ 'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive }"
     >
       <q-header bordered>
-        <q-toolbar class="row items-center">
+        <!-- 
+          general:
+            - name
+            - autostart
+            - machine
+            - bios
+            - memory
+            - cpu
+            - boot order ?
+          
+          devices:
+            - video
+            - graphics
+            - tablet
+            - sound
+            - network
+            - disks
+          
+          passthrough:
+            - usb
+            - pci
+
+          xml:
+            - xml
+        -->
+        <q-toolbar class="row items-center" v-if="$q.screen.gt.sm">
           <p class="text-h6 q-ma-none">Edit VM</p>
           <q-space />
-          <!-- 
-            general:
-              - name
-              - autostart
-              - machine
-              - bios
-              - memory
-              - cpu
-              - boot order ?
-            
-            devices:
-              - video
-              - graphics
-              - tablet
-              - sound
-              - network
-              - disks
-            
-            passthrough:
-              - usb
-              - pci
-
-            xml:
-              - xml
-           -->
-          <q-tabs allign="middle" v-model="tab">
+          <q-tabs v-model="tab">
             <q-tab name="general" label="General" />
             <q-tab name="devices" label="Devices" />
-            <q-tab name="disk" label="Disk" />
-            <q-tab name="network" label="Network" />
-            <q-tab name="graphics" label="Graphics" />
-            <q-tab name="sound" label="Sound" />
             <q-tab name="passthrough" label="Passthrough" />
             <q-tab name="xml" label="Xml" />
           </q-tabs>
@@ -59,11 +60,33 @@
             <ToolTip content="Close" />
           </q-btn>
         </q-toolbar>
+        <q-toolbar v-if="$q.screen.lt.md">
+          <q-toolbar-title class="text-h6">Edit VM</q-toolbar-title>
+          <q-btn flat label="Apply" v-if="tab == 'general' || tab == 'xml'">
+            <ToolTip content="Apply changes" />
+          </q-btn>
+          <q-btn
+            icon="close"
+            flat
+            round
+            dense
+            v-close-popup
+            @click="tab = 'general'"
+          >
+            <ToolTip content="Close" />
+          </q-btn>
+        </q-toolbar>
+        <q-tabs v-model="tab" v-if="$q.screen.lt.md">
+          <q-tab name="general" label="General" />
+          <q-tab name="devices" label="Devices" />
+          <q-tab name="passthrough" label="Passthrough" />
+          <q-tab name="xml" label="Xml" />
+        </q-tabs>
       </q-header>
 
       <q-page-container>
-        <q-page padding>
-          <q-tab-panels v-model="tab">
+        <q-page padding class="row q-pa-md">
+          <q-tab-panels v-model="tab" style="width: 100%">
             <q-tab-panel name="general">
               <div class="justify-center q-gutter-md">
                 <q-card>
@@ -90,11 +113,7 @@
                           v-model="general_machine"
                           readonly
                         />
-                        <q-select
-                          label="BIOS"
-                          v-model="general_bios"
-                          readonly
-                        />
+                        <q-input label="BIOS" v-model="general_bios" readonly />
                       </div>
                     </div>
                   </q-card-section>
@@ -227,54 +246,248 @@
                 </q-card>
               </div>
             </q-tab-panel>
-            <q-tab-panel name="devices">
-              <!-- column left side with all the devices -->
-              <!-- https://quasar.dev/vue-components/list-and-list-items#example--menu -->
-              <!-- right side, detail about the device -->
-              <div class="row">
+            <q-tab-panel name="devices" class="q-pa-none">
+              <div class="row full-height">
                 <div class="col-">
-                  <q-list bordered>
-                    <q-item
-                      clickable
-                      v-ripple
-                      v-for="disk in diskList"
-                      :key="disk"
-                      active
-                      @click="console.log('click disk', disk.index)"
+                  <div class="row items-center" style="height: 7%">
+                    <p class="text-h6 q-ma-none">Devices</p>
+                    <q-space />
+                    <q-btn
+                      flat
+                      round
+                      color="primary"
+                      icon="add"
+                      @click="addDevice()"
                     >
-                      <q-item-section thumbnail class="q-pr-sm">
-                        <q-icon
-                          color="primary"
-                          :name="
-                            disk.device_type == 'cdrom'
-                              ? 'mdi-disc'
-                              : 'mdi-harddisk'
-                          "
-                          class="q-pl-sm"
-                        />
-                      </q-item-section>
-                      <q-item-section>
-                        <q-item-label>
-                          {{
-                            disk.bus_format == "virtio"
-                              ? "VirtIO"
-                              : disk.bus_format.toUpperCase()
-                          }}
-                          {{
-                            disk.device_type == "cdrom"
-                              ? "CDROM"
-                              : disk.device_type == "disk"
-                              ? "Disk"
-                              : disk.device_type
-                          }}
-                          {{ disk.index }}
-                        </q-item-label>
-                      </q-item-section>
-                    </q-item>
-                  </q-list>
+                      <q-tooltip :offset="[5, 5]">Add Device</q-tooltip>
+                    </q-btn>
+                  </div>
+                  <q-separator class="q-mt-xs" />
+                  <q-scroll-area
+                    style="height: 92%"
+                    class="devices_scroll_area"
+                  >
+                    <q-list>
+                      <q-item
+                        clickable
+                        v-ripple
+                        v-for="disk in diskList"
+                        :key="disk"
+                        :active="disk.active"
+                        @click="setSelectedDevice('disk', disk)"
+                      >
+                        <q-item-section thumbnail class="q-pr-sm">
+                          <q-icon
+                            color="primary"
+                            :name="
+                              disk.device_type == 'cdrom'
+                                ? 'mdi-disc'
+                                : 'mdi-harddisk'
+                            "
+                          />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>
+                            {{
+                              disk.bus_format == "virtio"
+                                ? "VirtIO"
+                                : disk.bus_format.toUpperCase()
+                            }}
+                            {{
+                              disk.device_type == "cdrom"
+                                ? "CDROM"
+                                : disk.device_type == "disk"
+                                ? "Disk"
+                                : disk.device_type
+                            }}
+                            {{ disk.index }}
+                          </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        v-ripple
+                        v-for="network in networkList"
+                        :key="network"
+                        :active="network.active"
+                        @click="setSelectedDevice('network', network)"
+                      >
+                        <q-item-section thumbnail class="q-pr-sm">
+                          <q-icon color="primary" name="mdi-ethernet" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>
+                            Network Interface {{ network.number }}
+                          </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        v-ripple
+                        v-for="graphics in graphicsdevicesList"
+                        :key="graphics"
+                        :active="graphics.active"
+                        @click="setSelectedDevice('graphics', graphics)"
+                      >
+                        <q-item-section thumbnail class="q-pr-sm">
+                          <q-icon color="primary" name="mdi-monitor" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>
+                            Display {{ graphics.type.toUpperCase() }}
+                          </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        v-ripple
+                        v-for="video in videodevicesList"
+                        :key="video"
+                        :active="video.active"
+                        @click="setSelectedDevice('video', video)"
+                      >
+                        <q-item-section thumbnail class="q-pr-sm">
+                          <q-icon color="primary" name="mdi-monitor" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>
+                            Video
+                            {{
+                              video.type == "virtio"
+                                ? "VirtIO"
+                                : video.type.toUpperCase()
+                            }}
+                          </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        v-ripple
+                        v-for="sound in sounddevicesList"
+                        :key="sound"
+                        :active="sound.active"
+                        @click="setSelectedDevice('sound', sound)"
+                      >
+                        <q-item-section thumbnail class="q-pr-sm">
+                          <q-icon color="primary" name="mdi-volume-high" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label> Sound {{ sound.model }} </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-scroll-area>
                 </div>
+                <q-separator vertical />
                 <div class="col q-ml-md">
-                  <p class="text-h6 q-ma-none">Device</p>
+                  <div class="row">
+                    <p class="text-h6 q-ma-none">
+                      {{
+                        selectedDeviceTitle == null
+                          ? "Select a device to edit"
+                          : selectedDeviceTitle
+                      }}
+                    </p>
+                    <q-space />
+                    <q-btn flat round color="primary" icon="check">
+                      <ToolTip content="Apply Changes" />
+                    </q-btn>
+                    <q-btn
+                      flat
+                      round
+                      color="primary"
+                      icon="delete"
+                      @click="deviceDelete(selectedDevice.index)"
+                    >
+                      <ToolTip content="Delete Device" />
+                    </q-btn>
+                  </div>
+                  <div v-if="selectedDeviceType == 'disk'">
+                    <q-input
+                      label="Device Type"
+                      v-model="selectedDevice.device_type"
+                      readonly
+                    />
+                    <q-input
+                      label="Driver Type"
+                      v-model="selectedDevice.driver_type"
+                      readonly
+                    />
+                    <q-input
+                      label="Bus Format"
+                      v-model="selectedDevice.bus_format"
+                      readonly
+                    />
+                    <q-input
+                      :label="
+                        selectedDevice.read_only
+                          ? 'Source File (Read Only)'
+                          : 'Source File'
+                      "
+                      v-model="selectedDevice.source_file"
+                      v-if="selectedDevice.source_file != null"
+                      readonly
+                    />
+                    <q-input
+                      label="Source Device"
+                      v-model="selectedDevice.source_device"
+                      v-if="selectedDevice.source_device != null"
+                      readonly
+                    />
+                    <q-input
+                      label="Boot order"
+                      v-model="selectedDevice.boot_order"
+                      v-if="selectedDevice.boot_order != null"
+                      type="number"
+                      min="1"
+                      readonly
+                    />
+                  </div>
+                  <div v-if="selectedDeviceType == 'network'">
+                    <q-input
+                      label="Source"
+                      v-model="selectedDevice.source"
+                      readonly
+                    />
+                    <q-input
+                      label="Model"
+                      v-model="selectedDevice.model"
+                      readonly
+                    />
+                    <q-input
+                      label="MAC Address"
+                      v-model="selectedDevice.mac_address"
+                      readonly
+                    />
+                  </div>
+                  <div v-if="selectedDeviceType == 'graphics'">
+                    <q-input
+                      label="Device Type"
+                      model-value="Graphics"
+                      readonly
+                    />
+                    <q-input
+                      label="Type"
+                      v-model="selectedDevice.type"
+                      readonly
+                    />
+                  </div>
+                  <div v-if="selectedDeviceType == 'video'">
+                    <q-input label="Device Type" model-value="Video" readonly />
+                    <q-input
+                      label="Model"
+                      v-model="selectedDevice.type"
+                      readonly
+                    />
+                  </div>
+                  <div v-if="selectedDeviceType == 'sound'">
+                    <q-input label="Device Type" model-value="Sound" readonly />
+                    <q-input
+                      label="Sound model"
+                      v-model="selectedDevice.model"
+                      readonly
+                    />
+                  </div>
                 </div>
               </div>
             </q-tab-panel>
@@ -551,59 +764,11 @@
                 />
               </div>
             </q-tab-panel>
-            <q-tab-panel name="xml">
+            <q-tab-panel name="xml" class="q-pa-none">
               <q-input filled v-model="xml" type="textarea" autogrow />
             </q-tab-panel>
           </q-tab-panels>
         </q-page>
-        <!-- <q-footer bordered>
-          <q-toolbar>
-            <q-space />
-            <q-btn flat label="Add" @click="diskAdd()" v-if="tab == 'disk'" />
-            <q-btn
-              flat
-              label="Add Network"
-              @click="networkAdd()"
-              v-if="tab == 'network'"
-            />
-            <q-btn
-              flat
-              label="Add USB Device"
-              @click="usbdeviceAdd()"
-              v-if="tab == 'passthrough'"
-            />
-            <q-btn
-              flat
-              label="Add PCI Device"
-              @click="pciedeviceAdd()"
-              v-if="tab == 'passthrough'"
-            />
-            <q-btn
-              flat
-              label="Add Graphics"
-              @click="graphicsAdd()"
-              v-if="tab == 'graphics'"
-            />
-            <q-btn
-              flat
-              label="Add Sound"
-              @click="soundAdd()"
-              v-if="tab == 'sound'"
-            />
-            <q-btn
-              flat
-              label="Add Video"
-              @click="videoAdd()"
-              v-if="tab == 'graphics'"
-            />
-            <q-btn
-              flat
-              label="Apply"
-              @click="applyEdits()"
-              v-if="tab == 'memory' || tab == 'xml' || tab == 'cpu'"
-            />
-          </q-toolbar>
-        </q-footer> -->
       </q-page-container>
     </q-layout>
     <q-inner-loading :showing="loading" />
@@ -621,6 +786,32 @@
   <AddVideo ref="addVideo" @video-add-finished="refreshData()" />
   <AddSound ref="addSound" @sound-add-finished="refreshData()" />
 </template>
+
+<style lang="scss" scoped>
+body.screen--xs {
+  .devices_scroll_area {
+    width: 8em;
+  }
+}
+
+body.screen--sm {
+  .devices_scroll_area {
+    width: 15em;
+  }
+}
+
+body.screen--md {
+  .devices_scroll_area {
+    width: 15em;
+  }
+}
+
+body.screen--lg {
+  .devices_scroll_area {
+    width: 15em;
+  }
+}
+</style>
 
 <script>
 import { ref } from "vue";
@@ -686,6 +877,9 @@ export default {
       graphicsdevicesList: [],
       videodevicesList: [],
       xml: null,
+      selectedDeviceType: null,
+      selectedDeviceTitle: null,
+      selectedDevice: null,
     };
   },
   components: {
@@ -746,370 +940,442 @@ export default {
           this.loading = false;
         });
     },
-    applyEdits() {
-      this.loading = true;
-      if (this.tab == "memory") {
-        this.$api
-          .post("/vm-manager/" + this.uuid + "/edit-memory", {
-            memory_min: this.memory_minMemory,
-            memory_min_unit: this.memory_minMemoryUnit,
-            memory_max: this.memory_maxMemory,
-            memory_max_unit: this.memory_maxMemoryUnit,
-          })
-          .then((response) => {
-            this.refreshData();
-          })
-          .catch((error) => {
-            this.$refs.errorDialog.show("Error changing memory", [
-              error.response.data.detail,
-            ]);
-          });
-      } else if (this.tab == "cpu") {
-        if (this.currentVcpu > this.vcpu) {
-          this.$refs.errorDialog.show("VCPU error", [
-            "Current VCPU is greater than the new VCPU. This is not allowed.",
-          ]);
-          return;
+    setSelectedDevice(deviceType, device) {
+      this.selectedDeviceType = deviceType;
+      this.selectedDevice = device;
+      this.diskList.forEach((disk) => {
+        if (deviceType == "disk" && disk.index == device.index) {
+          this.selectedDeviceTitle =
+            (disk.bus_format == "virtio"
+              ? "VirtIO"
+              : disk.bus_format.toUpperCase()) +
+            " " +
+            (disk.device_type == "cdrom"
+              ? "CDROM"
+              : disk.device_type == "disk"
+              ? "Disk"
+              : disk.device_type) +
+            " " +
+            disk.index;
+          disk.active = true;
+        } else {
+          disk.active = false;
         }
-        this.$api
-          .post("/vm-manager/" + this.uuid + "/edit-cpu", {
-            vcpu: this.vcpu,
-            cpu_model: this.cpu_model,
-            current_vcpu: this.currentVcpu,
-            custom_topology: this.customTopology,
-            topology_sockets: this.topologySockets,
-            topology_dies: this.topologyDies,
-            topology_cores: this.topologyCores,
-            topology_threads: this.topologyThreads,
-          })
-          .then((response) => {
-            this.refreshData();
-          })
-          .catch((error) => {
-            this.$refs.errorDialog.show("Error changing CPU", [
-              error.response.data.detail,
-            ]);
-          });
-      } else if (this.tab == "xml") {
-        this.$api
-          .post("/vm-manager/" + this.uuid + "/edit-xml", {
-            xml: this.xml,
-          })
-          .then((response) => {
-            this.refreshData();
-          })
-          .catch((error) => {
-            this.$refs.errorDialog.show("Error changing XML", [
-              error.response.data.detail,
-            ]);
-          });
-      }
-      this.loading = false;
+      });
+      this.networkList.forEach((network) => {
+        if (deviceType == "network" && network.number == device.number) {
+          this.selectedDeviceTitle = "Network Interface " + network.number;
+          network.active = true;
+        } else {
+          network.active = false;
+        }
+      });
+      this.graphicsdevicesList.forEach((graphicsdevice) => {
+        if (deviceType == "graphics" && graphicsdevice.index == device.index) {
+          this.selectedDeviceTitle =
+            "Display " + graphicsdevice.type.toUpperCase();
+          graphicsdevice.active = true;
+        } else {
+          graphicsdevice.active = false;
+        }
+      });
+      this.videodevicesList.forEach((videodevice) => {
+        if (deviceType == "video" && videodevice.index == device.index) {
+          this.selectedDeviceTitle =
+            "Video " +
+            (videodevice.type == "virtio"
+              ? "VirtIO"
+              : videodevice.type.toUpperCase());
+          videodevice.active = true;
+        } else {
+          videodevice.active = false;
+        }
+      });
+      this.sounddevicesList.forEach((sounddevice) => {
+        if (deviceType == "sound" && sounddevice.index == device.index) {
+          this.selectedDeviceTitle = "Sound " + sounddevice.model;
+          sounddevice.active = true;
+        } else {
+          sounddevice.active = false;
+        }
+      });
     },
-    generalChangeName(value) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-general-name", {
-          value: value,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error changing name", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    diskChangeType(disknumber, value) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-disk-type", {
-          number: disknumber,
-          value: value,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error editing disk type", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    diskChangeDriverType(disknumber, value) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-disk-driver-type", {
-          number: disknumber,
-          value: value,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error editing driver type", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    diskChangeBus(disknumber, value) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-disk-bus", {
-          number: disknumber,
-          value: value,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error editing bus", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    diskChangeSourceFile(disknumber, value) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-disk-source-file", {
-          number: disknumber,
-          value: value,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error editing source file", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    diskChangeSourceDev(disknumber, value) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-disk-source-dev", {
-          number: disknumber,
-          value: value,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error editing source device", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    diskChangeBootorder(disknumber, value) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-disk-bootorder", {
-          number: disknumber,
-          value: value,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error changing bootorder", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    diskDelete(index) {
+    deviceDelete() {
       this.$refs.confirmDialog.show(
-        "Delete disk",
-        [
-          "Are you sure you want to delete this disk?",
-          "This only removes the disk from the vm, not the file itself.",
-        ],
-        this.diskDeleteConfirm,
-      );
-      this.diskDeleteNumber = index;
-    },
-    diskDeleteConfirm() {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
-          index: this.diskDeleteNumber,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting disk", [
-            error.response.data.detail,
-          ]);
-          this.loading = false;
-        });
-    },
-    diskAdd() {
-      this.$refs.addDisk.show(this.uuid);
-    },
-    networkAdd() {
-      this.$refs.addNetwork.show(this.uuid);
-    },
-    networkDelete(networknumber) {
-      this.$refs.confirmDialog.show(
-        "Delete network",
-        ["Are you sure you want to delete this network?"],
-        this.networkDeleteConfirm,
-      );
-      this.networkDeleteNumber = networknumber;
-    },
-    networkDeleteConfirm() {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-network-delete", {
-          number: this.networkDeleteNumber,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting network", [
-            error.response.data.detail,
-          ]);
-          this.loading = false;
-        });
-    },
-    calculateCpu() {
-      this.vcpu =
-        this.topologySockets *
-        this.topologyDies *
-        this.topologyCores *
-        this.topologyThreads;
-      this.currentVcpu = this.vcpu;
-    },
-    toggleAutostart() {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-general-autostart", {
-          value: this.general_autostart,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error changing autostart", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    usbdeviceAdd() {
-      this.$refs.addUsbDevice.show(this.uuid);
-    },
-    usbdeviceDelete(productid, vendorid) {
-      this.$refs.confirmDialog.show(
-        "Remove USB device",
-        ["Are you sure you want to remove this usb device?"],
-        this.usbdeviceDeleteConfirm,
-      );
-      this.usbdeviceDeleteProductId = productid;
-      this.usbdeviceDeleteVendorId = vendorid;
-    },
-    usbdeviceDeleteConfirm() {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-usb-delete", {
-          product_id: this.usbdeviceDeleteProductId,
-          vendor_id: this.usbdeviceDeleteVendorId,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting usb device", [
-            error.response.data.detail,
-          ]);
-          this.loading = false;
-        });
-    },
-    pciedeviceAdd() {
-      this.$refs.addPcieDevice.show(this.uuid);
-    },
-    pciedeviceDelete(index) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-pcie-delete", {
-          index: index,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting pcie device", [
-            error.response.data.detail,
-          ]);
-        });
-    },
-    graphicsAdd() {
-      this.$refs.addGraphics.show(this.uuid);
-    },
-    graphicsDelete(index) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
-          index: index,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting graphics", [
-            error.response.data.detail,
-          ]);
-          this.loading = false;
-        });
-    },
-    videoAdd() {
-      this.$refs.addVideo.show(this.uuid);
-    },
-    videoDelete(index) {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
-          index: index,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting video", [
-            error.response.data.detail,
-          ]);
-          this.loading = false;
-        });
-    },
-    soundDelete(index) {
-      this.sounddeviceDeleteIndex = index;
-      this.$refs.confirmDialog.show(
-        "Remove Sound device",
-        ["Are you sure you want to remove this sound device?"],
-        this.soundDeleteConfirm,
+        "Delete device",
+        ["Are you sure you want to delete this device?"],
+        this.deviceDeleteConfirm,
       );
     },
-    soundDeleteConfirm() {
-      this.loading = true;
-      this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
-          index: this.sounddeviceDeleteIndex,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting sound", [
-            error.response.data.detail,
-          ]);
-          this.loading = false;
-        });
+    deviceDeleteConfirm() {
+      console.log("device type:", this.selectedDeviceType);
+      console.log("device:", this.selectedDevice);
     },
 
-    soundAdd() {
-      this.$refs.addSound.show(this.uuid);
-    },
+    // applyEdits() {
+    //   this.loading = true;
+    //   if (this.tab == "memory") {
+    //     this.$api
+    //       .post("/vm-manager/" + this.uuid + "/edit-memory", {
+    //         memory_min: this.memory_minMemory,
+    //         memory_min_unit: this.memory_minMemoryUnit,
+    //         memory_max: this.memory_maxMemory,
+    //         memory_max_unit: this.memory_maxMemoryUnit,
+    //       })
+    //       .then((response) => {
+    //         this.refreshData();
+    //       })
+    //       .catch((error) => {
+    //         this.$refs.errorDialog.show("Error changing memory", [
+    //           error.response.data.detail,
+    //         ]);
+    //       });
+    //   } else if (this.tab == "cpu") {
+    //     if (this.currentVcpu > this.vcpu) {
+    //       this.$refs.errorDialog.show("VCPU error", [
+    //         "Current VCPU is greater than the new VCPU. This is not allowed.",
+    //       ]);
+    //       return;
+    //     }
+    //     this.$api
+    //       .post("/vm-manager/" + this.uuid + "/edit-cpu", {
+    //         vcpu: this.vcpu,
+    //         cpu_model: this.cpu_model,
+    //         current_vcpu: this.currentVcpu,
+    //         custom_topology: this.customTopology,
+    //         topology_sockets: this.topologySockets,
+    //         topology_dies: this.topologyDies,
+    //         topology_cores: this.topologyCores,
+    //         topology_threads: this.topologyThreads,
+    //       })
+    //       .then((response) => {
+    //         this.refreshData();
+    //       })
+    //       .catch((error) => {
+    //         this.$refs.errorDialog.show("Error changing CPU", [
+    //           error.response.data.detail,
+    //         ]);
+    //       });
+    //   } else if (this.tab == "xml") {
+    //     this.$api
+    //       .post("/vm-manager/" + this.uuid + "/edit-xml", {
+    //         xml: this.xml,
+    //       })
+    //       .then((response) => {
+    //         this.refreshData();
+    //       })
+    //       .catch((error) => {
+    //         this.$refs.errorDialog.show("Error changing XML", [
+    //           error.response.data.detail,
+    //         ]);
+    //       });
+    //   }
+    //   this.loading = false;
+    // },
+    // generalChangeName(value) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-general-name", {
+    //       value: value,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error changing name", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // diskChangeType(disknumber, value) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-disk-type", {
+    //       number: disknumber,
+    //       value: value,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error editing disk type", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // diskChangeDriverType(disknumber, value) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-disk-driver-type", {
+    //       number: disknumber,
+    //       value: value,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error editing driver type", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // diskChangeBus(disknumber, value) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-disk-bus", {
+    //       number: disknumber,
+    //       value: value,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error editing bus", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // diskChangeSourceFile(disknumber, value) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-disk-source-file", {
+    //       number: disknumber,
+    //       value: value,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error editing source file", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // diskChangeSourceDev(disknumber, value) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-disk-source-dev", {
+    //       number: disknumber,
+    //       value: value,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error editing source device", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // diskChangeBootorder(disknumber, value) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-disk-bootorder", {
+    //       number: disknumber,
+    //       value: value,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error changing bootorder", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // diskDelete(index) {
+    //   this.$refs.confirmDialog.show(
+    //     "Delete disk",
+    //     [
+    //       "Are you sure you want to delete this disk?",
+    //       "This only removes the disk from the vm, not the file itself.",
+    //     ],
+    //     this.diskDeleteConfirm,
+    //   );
+    //   this.diskDeleteNumber = index;
+    // },
+    // diskDeleteConfirm() {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
+    //       index: this.diskDeleteNumber,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error deleting disk", [
+    //         error.response.data.detail,
+    //       ]);
+    //       this.loading = false;
+    //     });
+    // },
+    // diskAdd() {
+    //   this.$refs.addDisk.show(this.uuid);
+    // },
+    // networkAdd() {
+    //   this.$refs.addNetwork.show(this.uuid);
+    // },
+    // networkDelete(networknumber) {
+    //   this.$refs.confirmDialog.show(
+    //     "Delete network",
+    //     ["Are you sure you want to delete this network?"],
+    //     this.networkDeleteConfirm,
+    //   );
+    //   this.networkDeleteNumber = networknumber;
+    // },
+    // networkDeleteConfirm() {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-network-delete", {
+    //       number: this.networkDeleteNumber,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error deleting network", [
+    //         error.response.data.detail,
+    //       ]);
+    //       this.loading = false;
+    //     });
+    // },
+    // calculateCpu() {
+    //   this.vcpu =
+    //     this.topologySockets *
+    //     this.topologyDies *
+    //     this.topologyCores *
+    //     this.topologyThreads;
+    //   this.currentVcpu = this.vcpu;
+    // },
+    // toggleAutostart() {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-general-autostart", {
+    //       value: this.general_autostart,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error changing autostart", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // usbdeviceAdd() {
+    //   this.$refs.addUsbDevice.show(this.uuid);
+    // },
+    // usbdeviceDelete(productid, vendorid) {
+    //   this.$refs.confirmDialog.show(
+    //     "Remove USB device",
+    //     ["Are you sure you want to remove this usb device?"],
+    //     this.usbdeviceDeleteConfirm,
+    //   );
+    //   this.usbdeviceDeleteProductId = productid;
+    //   this.usbdeviceDeleteVendorId = vendorid;
+    // },
+    // usbdeviceDeleteConfirm() {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-usb-delete", {
+    //       product_id: this.usbdeviceDeleteProductId,
+    //       vendor_id: this.usbdeviceDeleteVendorId,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error deleting usb device", [
+    //         error.response.data.detail,
+    //       ]);
+    //       this.loading = false;
+    //     });
+    // },
+    // pciedeviceAdd() {
+    //   this.$refs.addPcieDevice.show(this.uuid);
+    // },
+    // pciedeviceDelete(index) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-pcie-delete", {
+    //       index: index,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error deleting pcie device", [
+    //         error.response.data.detail,
+    //       ]);
+    //     });
+    // },
+    // graphicsAdd() {
+    //   this.$refs.addGraphics.show(this.uuid);
+    // },
+    // graphicsDelete(index) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
+    //       index: index,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error deleting graphics", [
+    //         error.response.data.detail,
+    //       ]);
+    //       this.loading = false;
+    //     });
+    // },
+    // videoAdd() {
+    //   this.$refs.addVideo.show(this.uuid);
+    // },
+    // videoDelete(index) {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
+    //       index: index,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error deleting video", [
+    //         error.response.data.detail,
+    //       ]);
+    //       this.loading = false;
+    //     });
+    // },
+    // soundDelete(index) {
+    //   this.sounddeviceDeleteIndex = index;
+    //   this.$refs.confirmDialog.show(
+    //     "Remove Sound device",
+    //     ["Are you sure you want to remove this sound device?"],
+    //     this.soundDeleteConfirm,
+    //   );
+    // },
+    // soundDeleteConfirm() {
+    //   this.loading = true;
+    //   this.$api
+    //     .post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
+    //       index: this.sounddeviceDeleteIndex,
+    //     })
+    //     .then((response) => {
+    //       this.refreshData();
+    //     })
+    //     .catch((error) => {
+    //       this.$refs.errorDialog.show("Error deleting sound", [
+    //         error.response.data.detail,
+    //       ]);
+    //       this.loading = false;
+    //     });
+    // },
+
+    // soundAdd() {
+    //   this.$refs.addSound.show(this.uuid);
+    // },
   },
 };
 </script>
