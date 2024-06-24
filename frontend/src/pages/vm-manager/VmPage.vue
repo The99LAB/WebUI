@@ -102,7 +102,7 @@
               padding="xs"
               @click="logsVm(props.row.uuid)"
             >
-              <q-tooltip :offset="[0, 5]">Logs</q-tooltip>
+              <q-tooltip :offset="[0, 5]">Log</q-tooltip>
             </q-btn>
           </q-td>
           <q-td
@@ -152,9 +152,9 @@
 
 <script>
 import ErrorDialog from "src/components/ErrorDialog.vue";
-import CreateVm from "src/components/CreateVm.vue";
-import EditVm from "src/components/EditVm.vue";
-import LogDialog from "src/components/LogDialog.vue";
+import CreateVm from "src/components/vm-manager/CreateVm.vue";
+import EditVm from "src/components/vm-manager/EditVm.vue";
+import LogDialog from "src/components/vm-manager/VmLogDialog.vue";
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
 
 export default {
@@ -212,8 +212,6 @@ export default {
         sortBy: "name",
         descending: false,
       },
-      logDialog: false,
-      logDialogContent: "",
     };
   },
   components: {
@@ -253,17 +251,7 @@ export default {
     },
     logsVm(uuid) {
       console.log("logs vm with uuid", uuid);
-      this.$api
-        .get("vm-manager/" + uuid + "/logs")
-        .then((response) => {
-          this.$refs.logVm.show(response.data.log);
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error getting logs", [
-            "vm uuid: " + uuid,
-            "Error: " + error.response.data.detail,
-          ]);
-        });
+      this.$refs.logVm.show(uuid);
     },
     removeVm(uuid) {
       console.log("removing vm with uuid", uuid);

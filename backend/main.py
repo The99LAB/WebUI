@@ -809,18 +809,12 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
             return vm_manager.VirtualMachine(vm_uuid=vmuuid).vm_disk_devices
         except vm_manager.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
-    elif action == "logs":
-        #TODO: Use vm_manager module to get logs
-        # domain_name = domain.name()
-        # libvirt_domain_logs_path = settings_manager.get_setting("libvirt_domain_logs").value
-        # domain_log_path = os.path.join(libvirt_domain_logs_path, domain_name + ".log")
-        # if os.path.exists(domain_log_path):
-        #     with open(domain_log_path, "r") as f:
-        #         return { "log": f.read() }
-        # else:
-        #     raise HTTPException(status_code=404, detail="Log file not found")
-        raise HTTPException(status_code=404, detail="Action not found")
-        
+    elif action == "log":
+        try:
+            return vm_manager.VirtualMachine(vm_uuid=vmuuid).get_vm_log()
+        except vm_manager.VmManagerException as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
     elif action == "data":
         try:
             return vm_manager.VirtualMachine(vm_uuid=vmuuid).json
@@ -832,142 +826,104 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
 
 @app.post('/api/vm-manager/{vmuuid}/{action}')
 async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
-    domain = libvirt_conn.lookupByUUIDString(vmuuid)
-    #TODO: use vm_manager module to perform these actions
     if action == "start":
         try:
-            if domain.state()[0] == libvirt.VIR_DOMAIN_SHUTOFF:
-                domain.create()
-                return
-            elif domain.state()[0] == libvirt.VIR_DOMAIN_PMSUSPENDED:
-                domain.pMWakeup()
-                return
-            else:
-                raise HTTPException(status_code=400, detail="Domain is in an invalid state")
-        except libvirt.libvirtError as e:
+            vm_manager.VirtualMachine(vm_uuid=vmuuid).start_vm()
+        except vm_manager.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     elif action == "stop":
         try:
-            domain.shutdown()
-            return
-        except Exception as e:
+            vm_manager.VirtualMachine(vm_uuid=vmuuid).stop_vm()
+        except vm_manager.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
+
     elif action == "forcestop":
         try:
-            domain.destroy()
-            return
-        except Exception as e:
+            vm_manager.VirtualMachine(vm_uuid=vmuuid).stop_vm(force=True)
+        except vm_manager.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
+
     elif action == "remove":
         try:
-            # flag 4 = also remove any nvram file
-            domain.undefineFlags(4)
-            return
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    elif action == "autostart":
-        data = await request.json()
-        value = data['autostart']
-        try:
-            if value == True:
-                domain.setAutostart(1)
-            else:
-                domain.setAutostart(0)
-            return
-        except libvirt.libvirtError as e:
+            vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm()
+        except vm_manager.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     elif action.startswith("edit"):
         data = await request.json()
         action = action.replace("edit-", "")
+        # edit-xml
         if action == "xml":
             xml = data['xml']
-            origxml = domain.XMLDesc(0)
             try:
-                domain.undefineFlags(4)
-            except libvirt.libvirtError as e:
+                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_xml(xml)
+            except vm_manager.VmManagerException as e:
                 raise HTTPException(status_code=500, detail=str(e))
-            try:
-                domain = libvirt_conn.defineXML(xml)
-                return
-            except libvirt.libvirtError as e:
-                try:
-                    domain = libvirt_conn.defineXML(origxml)
-                    raise HTTPException(status_code=500, detail=str(e))
-                except libvirt.libvirtError as e2:
-                    raise HTTPException(status_code=500, detail=str(e2))
 
-        elif action.startswith("general"):
-            action = action.replace("general-", "")
-            value = data['value']
-            if action == "name":
-                xml = ET.fromstring(domain.XMLDesc(0))
-                xml.find('name').text = value
-                xml = ET.tostring(xml).decode()
-                try:
-                    domain.undefineFlags(4)
-                    domain = libvirt_conn.defineXML(xml)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
-            elif action == "autostart":
-                if value == True:
-                    value = 1
-                else:
-                    value = 0
-                try:
-                    domain.setAutostart(value)
-                    return
-                except libvirt.libvirtError as e:
-                    raise HTTPException(status_code=500, detail=str(e))
+        # edit-name
+        elif action == "name":
+            name = data['name']
+            try:
+                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_name(name)
+            except vm_manager.VmManagerException as e:
+                raise HTTPException(status_code=500, detail=str(e))
+
+        # edit-autostart
+        elif action == "autostart":
+            autostart = data['autostart']
+            try:
+                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_autostart(autostart)
+            except vm_manager.VmManagerException as e:
+                raise HTTPException(status_code=500, detail=str(e))
 
         # edit-cpu
         elif action == "cpu":
-            model = data['cpu_model']
-            vcpu = str(data['vcpu'])
-            current_vcpu = str(data['current_vcpu'])
-            custom_topology = data['custom_topology']
-            sockets = str(data['topology_sockets'])
-            dies = str(data['topology_dies'])
-            cores = str(data['topology_cores'])
-            threads = str(data['topology_threads'])
-            vm_xml = ET.fromstring(domain.XMLDesc(0))
-            # set cpu model
-            cpu_elem  = vm_xml.find('cpu')
-            cpu_elem.set('mode', model)
-            # remove migratable from cpu element
-            if cpu_elem.attrib.get('migratable') != None:
-                cpu_elem.attrib.pop('migratable')
+            # model = data['cpu_model']
+            # vcpu = str(data['vcpu'])
+            # current_vcpu = str(data['current_vcpu'])
+            # custom_topology = data['custom_topology']
+            # sockets = str(data['topology_sockets'])
+            # dies = str(data['topology_dies'])
+            # cores = str(data['topology_cores'])
+            # threads = str(data['topology_threads'])
+            # vm_xml = ET.fromstring(domain.XMLDesc(0))
+            # # set cpu model
+            # cpu_elem  = vm_xml.find('cpu')
+            # cpu_elem.set('mode', model)
+            # # remove migratable from cpu element
+            # if cpu_elem.attrib.get('migratable') != None:
+            #     cpu_elem.attrib.pop('migratable')
             
 
-            if custom_topology:
-                # new dict for topology
-                topologyelem = vm_xml.find('cpu/topology')
-                if topologyelem != None:
-                    topologyelem.set('sockets', sockets)
-                    topologyelem.set('dies', dies)
-                    topologyelem.set('cores', cores)
-                    topologyelem.set('threads', threads)
-                else:
-                    topologyelem = ET.Element('topology')
-                    topologyelem.set('sockets', sockets)
-                    topologyelem.set('dies', dies)
-                    topologyelem.set('cores', cores)
-                    topologyelem.set('threads', threads)
-                    vm_xml.find('cpu').append(topologyelem)
+            # if custom_topology:
+            #     # new dict for topology
+            #     topologyelem = vm_xml.find('cpu/topology')
+            #     if topologyelem != None:
+            #         topologyelem.set('sockets', sockets)
+            #         topologyelem.set('dies', dies)
+            #         topologyelem.set('cores', cores)
+            #         topologyelem.set('threads', threads)
+            #     else:
+            #         topologyelem = ET.Element('topology')
+            #         topologyelem.set('sockets', sockets)
+            #         topologyelem.set('dies', dies)
+            #         topologyelem.set('cores', cores)
+            #         topologyelem.set('threads', threads)
+            #         vm_xml.find('cpu').append(topologyelem)
             
-            vm_xml.find('vcpu').text = vcpu
-            if current_vcpu != vcpu:
-                vm_xml.find('vcpu').attrib['current'] = current_vcpu 
-            vm_xml = ET.tostring(vm_xml).decode()
-            try:
-                domain.undefineFlags(4)
-                domain = libvirt_conn.defineXML(vm_xml)
-                return
-            except libvirt.libvirtError as e:
-                raise HTTPException(status_code=500, detail=str(e))
-
+            # vm_xml.find('vcpu').text = vcpu
+            # if current_vcpu != vcpu:
+            #     vm_xml.find('vcpu').attrib['current'] = current_vcpu 
+            # vm_xml = ET.tostring(vm_xml).decode()
+            # try:
+            #     domain.undefineFlags(4)
+            #     domain = libvirt_conn.defineXML(vm_xml)
+            #     return
+            # except libvirt.libvirtError as e:
+            #     raise HTTPException(status_code=500, detail=str(e))
+            #TODO: do this in vm_manager module
+            return
 
         # edit-memory
         elif action == "memory":
@@ -979,7 +935,6 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_memory(min_memory=memory_min, min_memory_unit=memory_min_unit, max_memory=memory_max, max_memory_unit=memory_max_unit, memory_backing=True)
             except vm_manager.VmManagerException as e:
                 raise HTTPException(status_code=500, detail=str(e))
-        
 
         # edit-network-action
         elif action.startswith("network"):
@@ -1000,7 +955,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
-        
+
         # edit-disk-action
         elif action.startswith("disk"):
             action = action.replace("disk-", "")
@@ -1156,6 +1111,7 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
 
+        # edit-sound-action
         elif action.startswith("sound"):
             action = action.replace("sound-", "")
             if action == "add":

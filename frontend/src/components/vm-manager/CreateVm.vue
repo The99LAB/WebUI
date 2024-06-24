@@ -188,7 +188,7 @@
 import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import DirectoryList from "src/components/DirectoryList.vue";
-import NetworkList from "src/components/NetworkList.vue";
+import NetworkList from "src/components/vm-manager/NetworkList.vue";
 
 export default {
   data() {

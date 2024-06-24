@@ -24,7 +24,7 @@
 
 <script>
 import { ref } from "vue";
-import NetworkList from "src/components/NetworkList.vue";
+import NetworkList from "src/components/vm-manager/NetworkList.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 
 export default {

@@ -37,7 +37,9 @@
             - xml
         -->
         <q-toolbar class="row items-center" v-if="$q.screen.gt.sm">
-          <p class="text-h6 q-ma-none">Edit VM</p>
+          <div style="width: 10em" class="text-left">
+            <p class="text-h6 q-ma-none">Edit VM</p>
+          </div>
           <q-space />
           <q-tabs v-model="tab">
             <q-tab name="general" label="General" />
@@ -46,19 +48,21 @@
             <q-tab name="xml" label="Xml" />
           </q-tabs>
           <q-space />
-          <q-btn flat label="Apply" v-if="tab == 'general' || tab == 'xml'">
-            <ToolTip content="Apply changes" />
-          </q-btn>
-          <q-btn
+          <div style="width: 10em" class="text-right">
+            <q-btn flat label="Apply" v-if="tab == 'general' || tab == 'xml'">
+              <ToolTip content="Apply changes" />
+            </q-btn>
+            <q-btn
             icon="close"
             flat
             round
             dense
             v-close-popup
             @click="tab = 'general'"
-          >
-            <ToolTip content="Close" />
-          </q-btn>
+            >
+              <ToolTip content="Close" />
+            </q-btn>
+          </div>
         </q-toolbar>
         <q-toolbar v-if="$q.screen.lt.md">
           <q-toolbar-title class="text-h6">Edit VM</q-toolbar-title>
@@ -93,10 +97,10 @@
                   <q-card-section>
                     <div class="row">
                       <div class="col q-mr-lg">
-                        <q-input label="Name" v-model="general_name" />
+                        <q-input label="Name" v-model="name" />
                         <div class="row items-center q-mt-md">
                           <p class="text-body2 q-ma-none">Autostart:</p>
-                          <q-toggle v-model="general_autostart" />
+                          <q-toggle v-model="autostart" />
                           <q-tooltip
                             :delay="500"
                             anchor="bottom left"
@@ -110,10 +114,10 @@
                       <div class="col q-ml-lg">
                         <q-select
                           label="Machine"
-                          v-model="general_machine"
+                          v-model="machine_type"
                           readonly
                         />
-                        <q-input label="BIOS" v-model="general_bios" readonly />
+                        <q-input label="BIOS" v-model="bios_type" readonly />
                       </div>
                     </div>
                   </q-card-section>
@@ -168,13 +172,13 @@
                       <p class="q-ma-none text-h6">CPU</p>
                       <q-select
                         label="CPU Model"
-                        v-model="cpu_model"
-                        :options="cpuModelOptions"
+                        v-model="cpu_mode"
+                        :options="cpu_mode_options"
                         @update:model-value="calculateCpu"
                       />
                       <q-input
                         label="Current vCPU"
-                        v-model="currentVcpu"
+                        v-model="current_vcpu"
                         type="number"
                         min="1"
                         :max="vcpu"
@@ -183,15 +187,15 @@
                             val <= vcpu ||
                             'Current vCPU cannot be bigger than vCPU value',
                         ]"
-                        :readonly="customTopology"
+                        :readonly="cpu_custom_topology"
                       />
                       <q-input
                         label="vCPU"
                         v-model="vcpu"
                         type="number"
                         min="1"
-                        @update:model-value="(val) => (topologySockets = val)"
-                        :readonly="customTopology"
+                        @update:model-value="(val) => (cpu_topology_sockets = val)"
+                        :readonly="cpu_custom_topology"
                       />
                     </div>
                     <q-separator vertical />
@@ -205,41 +209,41 @@
                         </p>
                         <q-space />
                         <q-toggle
-                          v-model="customTopology"
+                          v-model="cpu_custom_topology"
                           @update:model-value="calculateCpu"
                         />
                       </div>
                       <q-input
                         label="Sockets"
-                        v-model="topologySockets"
+                        v-model="cpu_topology_sockets"
                         type="number"
                         min="1"
                         @update:model-value="calculateCpu"
-                        :readonly="!customTopology"
+                        :readonly="!cpu_custom_topology"
                       />
                       <q-input
                         label="Dies"
-                        v-model="topologyDies"
+                        v-model="cpu_topology_dies"
                         type="number"
                         min="1"
                         @update:model-value="calculateCpu"
-                        :readonly="!customTopology"
+                        :readonly="!cpu_custom_topology"
                       />
                       <q-input
                         label="Cores"
-                        v-model="topologyCores"
+                        v-model="cpu_topology_cores"
                         type="number"
                         min="1"
                         @update:model-value="calculateCpu"
-                        :readonly="!customTopology"
+                        :readonly="!cpu_custom_topology"
                       />
                       <q-input
                         label="Threads"
-                        v-model="topologyThreads"
+                        v-model="cpu_topology_threads"
                         type="number"
                         min="1"
                         @update:model-value="calculateCpu"
-                        :readonly="!customTopology"
+                        :readonly="!cpu_custom_topology"
                       />
                     </div>
                   </q-card-section>
@@ -271,7 +275,7 @@
                       <q-item
                         clickable
                         v-ripple
-                        v-for="disk in diskList"
+                        v-for="disk in disk_devices"
                         :key="disk"
                         :active="disk.active"
                         @click="setSelectedDevice('disk', disk)"
@@ -307,7 +311,7 @@
                       <q-item
                         clickable
                         v-ripple
-                        v-for="network in networkList"
+                        v-for="network in network_devices"
                         :key="network"
                         :active="network.active"
                         @click="setSelectedDevice('network', network)"
@@ -324,7 +328,7 @@
                       <q-item
                         clickable
                         v-ripple
-                        v-for="graphics in graphicsdevicesList"
+                        v-for="graphics in graphics_devices"
                         :key="graphics"
                         :active="graphics.active"
                         @click="setSelectedDevice('graphics', graphics)"
@@ -341,7 +345,7 @@
                       <q-item
                         clickable
                         v-ripple
-                        v-for="video in videodevicesList"
+                        v-for="video in video_devices"
                         :key="video"
                         :active="video.active"
                         @click="setSelectedDevice('video', video)"
@@ -363,7 +367,7 @@
                       <q-item
                         clickable
                         v-ripple
-                        v-for="sound in sounddevicesList"
+                        v-for="sound in sound_devices"
                         :key="sound"
                         :active="sound.active"
                         @click="setSelectedDevice('sound', sound)"
@@ -389,7 +393,7 @@
                       }}
                     </p>
                     <q-space />
-                    <q-btn flat round color="primary" icon="check">
+                    <q-btn flat round color="primary" icon="check" disable>
                       <ToolTip content="Apply Changes" />
                     </q-btn>
                     <q-btn
@@ -691,7 +695,7 @@
               </div>
             </q-tab-panel>
             <q-tab-panel name="passthrough">
-              <div v-for="usbdevice in usbdevicesList" :key="usbdevice">
+              <div v-for="usbdevice in usb_devices" :key="usbdevice">
                 <q-input model-value="USB Device" label="Type" readonly>
                   <template v-slot:append>
                     <q-btn
@@ -722,11 +726,11 @@
                   readonly
                 />
               </div>
-              <div v-for="pcidevice in pcidevicesList" :key="pcidevice">
+              <div v-for="pcidevice in pci_devices" :key="pcidevice">
                 <q-separator
                   color="primary"
                   spaced="lg"
-                  v-if="pcidevicesList.length > 0 && usbdevicesList.length >= 0"
+                  v-if="pci_devices.length > 0 && usb_devices.length >= 0"
                 />
                 <q-input model-value="PCI Device" label="Type" readonly>
                   <template v-slot:append>
@@ -811,71 +815,58 @@ body.screen--lg {
     width: 15em;
   }
 }
+
+body.screen--xl {
+  .devices_scroll_area {
+    width: 15em;
+  }
+}
 </style>
 
 <script>
-import { ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import ConfirmDialog from "src/components/ConfirmDialog.vue";
-import AddDisk from "src/components/AddDisk.vue";
-import AddNetwork from "src/components/AddNetwork.vue";
-import AddUsbDevice from "src/components/AddUsbDevice.vue";
-import AddPcieDevice from "src/components/AddPcieDevice.vue";
-import AddGraphics from "src/components/AddGraphics.vue";
-import AddVideo from "src/components/AddVideo.vue";
-import AddSound from "src/components/AddSound.vue";
+import AddDisk from "src/components/vm-manager/AddDisk.vue";
+import AddNetwork from "src/components/vm-manager/AddNetwork.vue";
+import AddUsbDevice from "src/components/vm-manager/AddUsbDevice.vue";
+import AddPcieDevice from "src/components/vm-manager/AddPcieDevice.vue";
+import AddGraphics from "src/components/vm-manager/AddGraphics.vue";
+import AddVideo from "src/components/vm-manager/AddVideo.vue";
+import AddSound from "src/components/vm-manager/AddSound.vue";
 import ToolTip from "src/components/ToolTip.vue";
 
 export default {
   data() {
     return {
-      layout: ref(false),
+      layout: false,
       loading: false,
-      tab: ref("general"),
-      general_name: null,
-      general_machine: null,
-      general_bios: null,
-      general_autostart: null,
-      memoryMinOptions: [
-        "1024",
-        "2048",
-        "4096",
-        "8192",
-        "16384",
-        "32768",
-        "65536",
-      ],
+      tab: "general",
+      name: null,
+      machine_type: null,
+      bios_type: null,
+      autostart: null,
       memoryUnitOptions: ["MB", "GB", "TB"],
       memory_minMemory: null,
-      memory_minMemoryUnit: ref("GB"),
+      memory_minMemoryUnit: "GB",
       memory_maxMemory: null,
-      memory_maxMemoryUnit: ref("GB"),
+      memory_maxMemoryUnit: "GB",
       memory_enable_shared: null,
-      diskUnitOptions: ["MB", "GB", "TB"],
-      diskDriverTypeOptions: ["raw", "qcow2"],
-      diskBusOptions: ["sata", "scsi", "virtio", "usb"],
-      diskTypeOptions: ["disk", "cdrom"],
-      diskList: [],
-      diskDeleteNumber: null,
-      networkList: [],
-      networkDeleteNumber: null,
-      sounddevicesList: [],
-      sounddeviceDeleteIndex: null,
-      usbdevicesList: [],
-      usbdeviceDeleteVendorId: null,
-      usbdeviceDeleteProductId: null,
-      pcidevicesList: [],
-      cpuModelOptions: ["host-model", "host-passthrough"],
-      cpu_model: null,
-      currentVcpu: null,
+      disk_devices: [],
+      network_devices: [],
+      sound_devices: [],
+      usb_devices: [],
+      pci_devices: [],
+      cpu_mode_options: ["host-model", "host-passthrough"],
+      cpu_mode: null,
+      current_vcpu: null,
       vcpu: null,
-      customTopology: false,
-      topologySockets: null,
-      topologyDies: null,
-      topologyCores: null,
-      topologyThreads: null,
-      graphicsdevicesList: [],
-      videodevicesList: [],
+      cpu_custom_topology: false,
+      cpu_topology_sockets: null,
+      cpu_topology_dies: null,
+      cpu_topology_cores: null,
+      cpu_topology_threads: null,
+      graphics_devices: [],
+      video_devices: [],
       xml: null,
       selectedDeviceType: null,
       selectedDeviceTitle: null,
@@ -906,44 +897,45 @@ export default {
         .get("/vm-manager/" + this.uuid + "/data")
         .then((response) => {
           console.log(response.data);
-          this.general_name = response.data.name;
-          this.general_machine = response.data.machine_type;
-          this.general_bios = response.data.bios_type;
-          this.general_autostart = response.data.autostart;
+          this.name = response.data.name;
+          this.machine_type = response.data.machine_type;
+          this.bios_type = response.data.bios_type;
+          this.autostart = response.data.autostart;
           this.memory_minMemory = response.data.memory_min;
           this.memory_minMemoryUnit = response.data.memory_min_unit;
           this.memory_maxMemory = response.data.memory_max;
           this.memory_maxMemoryUnit = response.data.memory_max_unit;
           this.memory_enable_shared = response.data.memory_enable_shared;
-          this.currentVcpu = response.data.current_vcpu;
-          this.cpu_model = response.data.cpu_mode;
+          this.current_vcpu = response.data.current_vcpu;
+          this.cpu_mode = response.data.cpu_mode;
           this.vcpu = response.data.vcpu;
-          this.customTopology = response.data.cpu_custom_topology;
-          this.topologySockets = response.data.cpu_topology_sockets;
-          this.topologyDies = response.data.cpu_topology_dies;
-          this.topologyCores = response.data.cpu_topology_cores;
-          this.topologyThreads = response.data.cpu_topology_threads;
-          this.diskList = response.data.disk_devices;
-          this.networkList = response.data.network_devices;
-          this.usbdevicesList = response.data.usb_devices;
-          this.pcidevicesList = response.data.pci_devices;
-          this.graphicsdevicesList = response.data.graphics_devices;
-          this.videodevicesList = response.data.video_devices;
-          this.sounddevicesList = response.data.sound_devices;
+          this.cpu_custom_tpology = response.data.cpu_custom_topology;
+          this.cpu_topology_sockets = response.data.cpu_topology_sockets;
+          this.cpu_topology_dies = response.data.cpu_topology_dies;
+          this.cpu_topology_cores = response.data.cpu_topology_cores;
+          this.cpu_topology_threads = response.data.cpu_topology_threads;
+          this.disk_devices = response.data.disk_devices;
+          this.network_devices = response.data.network_devices;
+          this.usb_devices = response.data.usb_devices;
+          this.pci_devices = response.data.pci_devices;
+          this.graphics_devices = response.data.graphics_devices;
+          this.video_devices = response.data.video_devices;
+          this.sound_devices = response.data.sound_devices;
           this.xml = response.data.xml;
-          this.loading = false;
         })
         .catch((error) => {
           this.$refs.errorDialog.show("Error loading VM data.", [
             error.response.data.detail,
           ]);
+        })
+        .finally(() => {
           this.loading = false;
         });
     },
     setSelectedDevice(deviceType, device) {
       this.selectedDeviceType = deviceType;
       this.selectedDevice = device;
-      this.diskList.forEach((disk) => {
+      this.disk_devices.forEach((disk) => {
         if (deviceType == "disk" && disk.index == device.index) {
           this.selectedDeviceTitle =
             (disk.bus_format == "virtio"
@@ -962,7 +954,7 @@ export default {
           disk.active = false;
         }
       });
-      this.networkList.forEach((network) => {
+      this.network_devices.forEach((network) => {
         if (deviceType == "network" && network.number == device.number) {
           this.selectedDeviceTitle = "Network Interface " + network.number;
           network.active = true;
@@ -970,7 +962,7 @@ export default {
           network.active = false;
         }
       });
-      this.graphicsdevicesList.forEach((graphicsdevice) => {
+      this.graphics_devices.forEach((graphicsdevice) => {
         if (deviceType == "graphics" && graphicsdevice.index == device.index) {
           this.selectedDeviceTitle =
             "Display " + graphicsdevice.type.toUpperCase();
@@ -979,7 +971,7 @@ export default {
           graphicsdevice.active = false;
         }
       });
-      this.videodevicesList.forEach((videodevice) => {
+      this.video_devices.forEach((videodevice) => {
         if (deviceType == "video" && videodevice.index == device.index) {
           this.selectedDeviceTitle =
             "Video " +
@@ -991,7 +983,7 @@ export default {
           videodevice.active = false;
         }
       });
-      this.sounddevicesList.forEach((sounddevice) => {
+      this.sound_devices.forEach((sounddevice) => {
         if (deviceType == "sound" && sounddevice.index == device.index) {
           this.selectedDeviceTitle = "Sound " + sounddevice.model;
           sounddevice.active = true;
@@ -1010,372 +1002,81 @@ export default {
     deviceDeleteConfirm() {
       console.log("device type:", this.selectedDeviceType);
       console.log("device:", this.selectedDevice);
+      if (this.selectedDeviceType == "disk"){
+        this.$api.post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
+          index: this.selectedDevice.index,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting disk", [
+            error.response.data.detail,
+          ]);
+        });
+      } else if (this.selectedDeviceType == "network"){
+        this.$api.post("/vm-manager/" + this.uuid + "/edit-network-delete", {
+          number: this.selectedDevice.number,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting network", [
+            error.response.data.detail,
+          ]);
+        });
+      } else if (this.selectedDeviceType == "graphics"){
+        this.$api.post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
+          index: this.selectedDevice.index,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting graphics", [
+            error.response.data.detail,
+          ]);
+        });
+      } else if (this.selectedDeviceType == "video"){
+        this.$api.post("/vm-manager/" + this.uuid + "/edit-video-delete", {
+          index: this.selectedDevice.index,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting video", [
+            error.response.data.detail,
+          ]);
+        });
+      } else if (this.selectedDeviceType == "sound"){
+        this.$api.post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
+          index: this.selectedDevice.index,
+        })
+        .then((response) => {
+          this.refreshData();
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show("Error deleting sound", [
+            error.response.data.detail,
+          ]);
+        });
+      }
+      else {
+        this.$refs.errorDialog.show("Error deleting device", [
+          "Device type not recognized",
+        ]);
+      }
     },
-
-    // applyEdits() {
-    //   this.loading = true;
-    //   if (this.tab == "memory") {
-    //     this.$api
-    //       .post("/vm-manager/" + this.uuid + "/edit-memory", {
-    //         memory_min: this.memory_minMemory,
-    //         memory_min_unit: this.memory_minMemoryUnit,
-    //         memory_max: this.memory_maxMemory,
-    //         memory_max_unit: this.memory_maxMemoryUnit,
-    //       })
-    //       .then((response) => {
-    //         this.refreshData();
-    //       })
-    //       .catch((error) => {
-    //         this.$refs.errorDialog.show("Error changing memory", [
-    //           error.response.data.detail,
-    //         ]);
-    //       });
-    //   } else if (this.tab == "cpu") {
-    //     if (this.currentVcpu > this.vcpu) {
-    //       this.$refs.errorDialog.show("VCPU error", [
-    //         "Current VCPU is greater than the new VCPU. This is not allowed.",
-    //       ]);
-    //       return;
-    //     }
-    //     this.$api
-    //       .post("/vm-manager/" + this.uuid + "/edit-cpu", {
-    //         vcpu: this.vcpu,
-    //         cpu_model: this.cpu_model,
-    //         current_vcpu: this.currentVcpu,
-    //         custom_topology: this.customTopology,
-    //         topology_sockets: this.topologySockets,
-    //         topology_dies: this.topologyDies,
-    //         topology_cores: this.topologyCores,
-    //         topology_threads: this.topologyThreads,
-    //       })
-    //       .then((response) => {
-    //         this.refreshData();
-    //       })
-    //       .catch((error) => {
-    //         this.$refs.errorDialog.show("Error changing CPU", [
-    //           error.response.data.detail,
-    //         ]);
-    //       });
-    //   } else if (this.tab == "xml") {
-    //     this.$api
-    //       .post("/vm-manager/" + this.uuid + "/edit-xml", {
-    //         xml: this.xml,
-    //       })
-    //       .then((response) => {
-    //         this.refreshData();
-    //       })
-    //       .catch((error) => {
-    //         this.$refs.errorDialog.show("Error changing XML", [
-    //           error.response.data.detail,
-    //         ]);
-    //       });
-    //   }
-    //   this.loading = false;
-    // },
-    // generalChangeName(value) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-general-name", {
-    //       value: value,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error changing name", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // diskChangeType(disknumber, value) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-disk-type", {
-    //       number: disknumber,
-    //       value: value,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error editing disk type", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // diskChangeDriverType(disknumber, value) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-disk-driver-type", {
-    //       number: disknumber,
-    //       value: value,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error editing driver type", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // diskChangeBus(disknumber, value) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-disk-bus", {
-    //       number: disknumber,
-    //       value: value,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error editing bus", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // diskChangeSourceFile(disknumber, value) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-disk-source-file", {
-    //       number: disknumber,
-    //       value: value,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error editing source file", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // diskChangeSourceDev(disknumber, value) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-disk-source-dev", {
-    //       number: disknumber,
-    //       value: value,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error editing source device", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // diskChangeBootorder(disknumber, value) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-disk-bootorder", {
-    //       number: disknumber,
-    //       value: value,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error changing bootorder", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // diskDelete(index) {
-    //   this.$refs.confirmDialog.show(
-    //     "Delete disk",
-    //     [
-    //       "Are you sure you want to delete this disk?",
-    //       "This only removes the disk from the vm, not the file itself.",
-    //     ],
-    //     this.diskDeleteConfirm,
-    //   );
-    //   this.diskDeleteNumber = index;
-    // },
-    // diskDeleteConfirm() {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
-    //       index: this.diskDeleteNumber,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error deleting disk", [
-    //         error.response.data.detail,
-    //       ]);
-    //       this.loading = false;
-    //     });
-    // },
-    // diskAdd() {
-    //   this.$refs.addDisk.show(this.uuid);
-    // },
-    // networkAdd() {
-    //   this.$refs.addNetwork.show(this.uuid);
-    // },
-    // networkDelete(networknumber) {
-    //   this.$refs.confirmDialog.show(
-    //     "Delete network",
-    //     ["Are you sure you want to delete this network?"],
-    //     this.networkDeleteConfirm,
-    //   );
-    //   this.networkDeleteNumber = networknumber;
-    // },
-    // networkDeleteConfirm() {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-network-delete", {
-    //       number: this.networkDeleteNumber,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error deleting network", [
-    //         error.response.data.detail,
-    //       ]);
-    //       this.loading = false;
-    //     });
-    // },
-    // calculateCpu() {
-    //   this.vcpu =
-    //     this.topologySockets *
-    //     this.topologyDies *
-    //     this.topologyCores *
-    //     this.topologyThreads;
-    //   this.currentVcpu = this.vcpu;
-    // },
-    // toggleAutostart() {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-general-autostart", {
-    //       value: this.general_autostart,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error changing autostart", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // usbdeviceAdd() {
-    //   this.$refs.addUsbDevice.show(this.uuid);
-    // },
-    // usbdeviceDelete(productid, vendorid) {
-    //   this.$refs.confirmDialog.show(
-    //     "Remove USB device",
-    //     ["Are you sure you want to remove this usb device?"],
-    //     this.usbdeviceDeleteConfirm,
-    //   );
-    //   this.usbdeviceDeleteProductId = productid;
-    //   this.usbdeviceDeleteVendorId = vendorid;
-    // },
-    // usbdeviceDeleteConfirm() {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-usb-delete", {
-    //       product_id: this.usbdeviceDeleteProductId,
-    //       vendor_id: this.usbdeviceDeleteVendorId,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error deleting usb device", [
-    //         error.response.data.detail,
-    //       ]);
-    //       this.loading = false;
-    //     });
-    // },
-    // pciedeviceAdd() {
-    //   this.$refs.addPcieDevice.show(this.uuid);
-    // },
-    // pciedeviceDelete(index) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-pcie-delete", {
-    //       index: index,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error deleting pcie device", [
-    //         error.response.data.detail,
-    //       ]);
-    //     });
-    // },
-    // graphicsAdd() {
-    //   this.$refs.addGraphics.show(this.uuid);
-    // },
-    // graphicsDelete(index) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
-    //       index: index,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error deleting graphics", [
-    //         error.response.data.detail,
-    //       ]);
-    //       this.loading = false;
-    //     });
-    // },
-    // videoAdd() {
-    //   this.$refs.addVideo.show(this.uuid);
-    // },
-    // videoDelete(index) {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
-    //       index: index,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error deleting video", [
-    //         error.response.data.detail,
-    //       ]);
-    //       this.loading = false;
-    //     });
-    // },
-    // soundDelete(index) {
-    //   this.sounddeviceDeleteIndex = index;
-    //   this.$refs.confirmDialog.show(
-    //     "Remove Sound device",
-    //     ["Are you sure you want to remove this sound device?"],
-    //     this.soundDeleteConfirm,
-    //   );
-    // },
-    // soundDeleteConfirm() {
-    //   this.loading = true;
-    //   this.$api
-    //     .post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
-    //       index: this.sounddeviceDeleteIndex,
-    //     })
-    //     .then((response) => {
-    //       this.refreshData();
-    //     })
-    //     .catch((error) => {
-    //       this.$refs.errorDialog.show("Error deleting sound", [
-    //         error.response.data.detail,
-    //       ]);
-    //       this.loading = false;
-    //     });
-    // },
-
-    // soundAdd() {
-    //   this.$refs.addSound.show(this.uuid);
-    // },
+    calculateCpu() {
+      this.vcpu =
+        this.cpu_topology_sockets *
+        this.cpu_topology_dies *
+        this.cpu_topology_cores *
+        this.cpu_topology_threads;
+      this.current_vcpu = this.vcpu;
+    },
   },
 };
 </script>

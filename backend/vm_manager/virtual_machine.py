@@ -4,6 +4,7 @@ import libvirt
 from .vmManagerException import VmManagerException
 from storage_manager import convertSizeUnit
 from host_manager import SystemInfo, UsbDevice
+from settings import SettingsManager
 import re
 import os
 from string import ascii_lowercase
@@ -14,6 +15,7 @@ class VirtualMachine:
         self.libvirt_conn = libvirt_connection.connection
         self.libvirt_domain = self.libvirt_conn.lookupByUUIDString(vm_uuid)
         self.host_system_info = SystemInfo()
+        self.host_settings = SettingsManager()
         self.vm_xml = self.libvirt_domain.XMLDesc()
         self.vm_xml_root = ET.fromstring(self.vm_xml)
         self.vm_name = self.libvirt_domain.name()
@@ -109,6 +111,19 @@ class VirtualMachine:
                 "boot_order": boot_order,
             }
             self.vm_disk_devices.append(disk_device)
+
+
+    def get_vm_log(self):
+        libvirt_domain_logs_path = self.host_settings.get_setting("libvirt_domain_logs").value
+        domain_log_path = os.path.join(libvirt_domain_logs_path, self.vm_name + ".log")
+        try:
+            with open(domain_log_path, "r") as file:
+                log = file.read()
+                return log
+        except FileNotFoundError:
+            raise VmManagerException("Failed to get log: Log file not found")
+        except PermissionError:
+            raise VmManagerException("Failed to get log: Permission denied")
 
 
     def remove_vm_storage_device(self, index:int):
@@ -563,8 +578,8 @@ class VirtualMachine:
             self.vm_state = "UNKNOWN"
 
 
-    def set_vm_autostart(self, autostart):
-        self.libvirt_domain.setAutostart(autostart)
+    def set_vm_autostart(self, autostart:bool):
+        self.libvirt_domain.setAutostart(int(autostart))
         self.vm_autostart = autostart
 
 
@@ -607,6 +622,75 @@ class VirtualMachine:
                     raise VmManagerException(f"Failed to set memory: {e}")
             except AttributeError:
                 raise VmManagerException("Failed to find minimum or maximum memory in XML")
+
+
+    def set_vm_name(self, name:str):
+        try:
+            self.libvirt_domain.rename(name)
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to set name: {e}")
+
+
+    def set_vm_xml(self, xml):
+        try:
+            self.libvirt_conn.defineXML(xml)
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to set XML: {e}")
+
+
+    def start_vm(self):
+        try:
+            if self.vm_state == "SHUTOFF":
+                self.libvirt_domain.create()
+            elif self.vm_state == "PAUSED":
+                self.libvirt_domain.resume()
+            elif self.vm_state == "PMSUSPENDED":
+                self.libvirt_domain.pMWakeup()
+            else:
+                raise VmManagerException("Failed to start VM: VM is already running")
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to start VM: {e}")
+
+
+    def stop_vm(self, force:bool=False):
+        try:
+            if self.vm_state == "RUNNING":
+                if force:
+                    self.libvirt_domain.destroy()
+                else:
+                    self.libvirt_domain.shutdown()
+            else:
+                raise VmManagerException("Failed to stop VM: VM is not running")
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to stop VM: {e}")
+
+
+    def reset_vm(self):
+        try:
+            if self.vm_state == "RUNNING":
+                self.libvirt_domain.reset()
+            else:
+                raise VmManagerException("Failed to reset VM: VM is not running")
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to reset VM: {e}")
+
+
+    def restart_vm(self):
+        try:
+            if self.vm_state == "RUNNING":
+                self.libvirt_domain.reboot()
+            else:
+                raise VmManagerException("Failed to restart VM: VM is not running")
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to restart VM: {e}")
+
+
+    def remove_vm(self):
+        try:
+            self.libvirt_domain.undefine(4)
+        except libvirt.libvirtError as e:
+            raise VmManagerException(f"Failed to remove VM: {e}")
+
 
     @property
     def json(self):
