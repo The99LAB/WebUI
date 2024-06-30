@@ -5,3 +5,12 @@ backend/libvirtaio.py
 backend/libvirt_lxc.py
 backend/libvirt_qemu.py
 .vscode/sftp.json
+backend/database.db
+backend/__pycache__
+backend/docker_manager/__pycache__
+backend/host_manager/__pycache__
+backend/vm_manager/__pycache__
+backend/vm_backups/__pycache__
+backend/notifications/__pycache__
+backend/settings/__pycache__
+backend/storage_manager/__pycache__

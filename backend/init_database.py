@@ -29,12 +29,9 @@ settings_manager.create_setting(login_token_expire_setting)
 settings_manager.create_setting(docker_template_repository_update)
 
 # Create ovmf paths
-ovmf_path = "/usr/share/OVMF/OVMF_CODE.fd"
-ovmf_secureboot_path = "/usr/share/OVMF/OVMF_CODE.secboot.fd"
+ovmf_path = "/usr/share/ovmf/OVMF.fd"
 ovmf_path_setting = OvmfPath("OVMF", ovmf_path)
-ovmf_secureboot_path_setting = OvmfPath("OVMF_Secureboot", ovmf_secureboot_path)
 settings_manager.create_ovmf_path(ovmf_path_setting)
-settings_manager.create_ovmf_path(ovmf_secureboot_path_setting)
 
 # Create welcome notification
 NotificationManager().create_notification(Notification(NotificationType.INFO, "Welcome to the Server99 WebUI", ""))
