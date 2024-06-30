@@ -29,7 +29,7 @@
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Uptime:</p>
-            <p class="col">{{ systemInfo.uptime }}</p>
+            <p class="col">{{ uptime }}</p>
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Hostname:</p>
@@ -98,6 +98,7 @@
 <script>
 import { version } from "../../../package.json";
 import editHostName from "src/components/host-manager/EditHostName.vue";
+import { convertEpochToUptime } from "src/utils/timeUtils";
 import errorDialog from "src/components/ErrorDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
 import { useHostnameStore } from "src/stores/hostname";
@@ -112,6 +113,8 @@ export default {
       loadingSystem: ref(false),
       loadingDocker: ref(false),
       webuiVersion: version,
+      uptime: null,
+      up_since: null,
     };
   },
   setup() {
@@ -133,6 +136,8 @@ export default {
         .get("/host/system-info/all")
         .then((response) => {
           this.systemInfo = response.data;
+          this.up_since = this.systemInfo.up_since;
+          this.updateUpTime();
           this.loadingSystem = false;
         })
         .catch((error) => {
@@ -158,10 +163,22 @@ export default {
     editHostName() {
       this.$refs.editHostNameDialog.show();
     },
+    updateUpTime() {
+      if (this.up_since != null)
+      {
+        this.uptime = convertEpochToUptime(this.up_since);
+      }
+    },
   },
   mounted() {
     this.getSystemInfo();
     this.getDockerInfo();
+    this.upTimeInterval = setInterval(() => {
+      this.updateUpTime();
+    }, 1000);
+  },
+  beforeUnmount() {
+    clearInterval(this.upTimeInterval);
   },
 };
 </script>

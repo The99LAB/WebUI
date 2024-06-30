@@ -55,7 +55,7 @@
                 Uptime:
               </p>
               <p class="text-weight-regular q-mb-none">
-                {{ uptime }} at {{ loading_timestamp }}
+                {{ uptime }}
               </p>
             </div>
           </div>
@@ -204,6 +204,7 @@ body.body--dark {
 
 <script>
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
+import { convertEpochToUptime } from 'src/utils/timeUtils.js';
 import { colors } from "quasar";
 import { useHostnameStore } from "stores/hostname";
 import { storeToRefs } from "pinia";
@@ -223,7 +224,7 @@ export default {
       mem_used: null,
       mem_total: null,
       uptime: null,
-      loading_timestamp: null,
+      up_since: null,
       os_name: null,
       loadingVisible: true,
       cpuChartOptions: {
@@ -329,7 +330,8 @@ export default {
           this.mem_total = data.data.mem_total;
           this.cpu_name = data.data.cpu_name;
           this.os_name = data.data.os_name;
-          this.uptime = data.data.uptime;
+          this.up_since = data.data.up_since;
+          this.updateUptime();
         }
         if (data.type == "dashboard") {
           this.cpu_progress = data.data.cpu_percent;
@@ -380,25 +382,26 @@ export default {
       });
       this.$refs.memUsageChart.updateSeries([used, total - used]);
     },
-    getCurrentTime() {
-      let date = new Date();
-      let hours = date.getHours();
-      let minutes = date.getMinutes();
-      if (minutes < 10) {
-        minutes = "0" + minutes;
+    updateUptime() {
+      if (this.up_since != null) {
+        this.uptime = convertEpochToUptime(this.up_since);
       }
-      this.loading_timestamp = hours + ":" + minutes;
-    },
+    }
   },
   created() {
     this.connectWebSocket();
   },
   mounted() {
-    this.getCurrentTime();
+    this.upTimeInterval = setInterval(() => {
+      this.updateUptime();
+    }, 1000);
   },
   unmounted() {
     this.ws.onclose = () => {};
     this.ws.close();
+  },
+  beforeUnmount() {
+    clearInterval(this.upTimeInterval);
   },
 };
 </script>

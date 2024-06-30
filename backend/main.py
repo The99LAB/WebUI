@@ -581,8 +581,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             cpu_name = system_info.cpu_model
             mem_total = storage_manager.convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB", round_state=True, round_to=2)
             os_name = distro.name(pretty=True)
-            uptime = humanize.precisedelta(datetime.now() - datetime.fromtimestamp(psutil.boot_time()), minimum_unit="minutes", format="%0.0f")
-            await websocket.send_json({"type": "dashboard_init", "data": {"cpu_name": cpu_name, "mem_total": mem_total, "os_name": os_name, "uptime": uptime}})
+            up_since = psutil.boot_time()
+            await websocket.send_json({"type": "dashboard_init", "data": {"cpu_name": cpu_name, "mem_total": mem_total, "os_name": os_name, "up_since": up_since}})
         while True:
             if check_auth_token(token):
                 cpu_percent = int(psutil.cpu_percent())
@@ -1500,7 +1500,7 @@ async def api_system_info_get(action: str, username: str = Depends(check_auth)):
             "os": system_info.os,
             "hostname": system_info.hostname,
             "linuxVersion": system_info.linux_kernel_version,
-            "uptime": system_info.uptime,
+            "up_since": system_info.up_since,
         }
     elif action == "hostname":
         return {

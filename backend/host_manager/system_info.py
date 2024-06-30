@@ -81,7 +81,7 @@ class SystemInfo:
         self._memory_size = 0
         self._os = "Unknown"
         self._linux_kernel = "Unknown"
-        self._uptime = "Unknown"
+        self._up_since = 0
         self._pcie_devices = []
         self._usb_devices = []
         self.libvirt_sysinfo_xml = ET.fromstring(self.libvirt_conn.getSysinfo())
@@ -91,7 +91,7 @@ class SystemInfo:
         self.get_memory_size()
         self.get_os_info()
         self.get_linux_kernel_info()
-        self.get_uptime()
+        self.get_up_since()
         self.get_pcie_devices()
         self.get_usb_devices()
         pass
@@ -121,8 +121,8 @@ class SystemInfo:
         return self._linux_kernel
     
     @property
-    def uptime(self):
-        return self._uptime
+    def up_since(self):
+        return self._up_since
     
     @property
     def pcie_devices(self):
@@ -170,8 +170,8 @@ class SystemInfo:
         for memory_device in self.libvirt_sysinfo_xml.findall('memory_device'):
             self._memory_size += int(memory_device.find("entry[@name='size']").text.replace(" GB", ""))
     
-    def get_uptime(self):
-        self._uptime = humanize.precisedelta(datetime.now() - datetime.fromtimestamp(psutil.boot_time()), minimum_unit="minutes", format="%0.0f")
+    def get_up_since(self):
+        self._up_since = psutil.boot_time()
     
     def get_pcie_devices(self):
         pcie_devices = self.libvirt_conn.listAllDevices(2)
