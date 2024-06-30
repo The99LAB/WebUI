@@ -1,5 +1,6 @@
 psutil
 fastapi
+fastapi-cli
 asyncio
 libvirt-python
 blkinfo @ git+https://github.com/99-industries/blkinfo.git@0.2.0
