@@ -97,7 +97,7 @@
 
 <script>
 import { version } from "../../../package.json";
-import editHostName from "src/components/EditHostName.vue";
+import editHostName from "src/components/host-manager/EditHostName.vue";
 import errorDialog from "src/components/ErrorDialog.vue";
 import ToolTip from "src/components/ToolTip.vue";
 import { useHostnameStore } from "src/stores/hostname";

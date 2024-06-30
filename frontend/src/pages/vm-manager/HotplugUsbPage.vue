@@ -22,8 +22,8 @@
   </q-page>
 </template>
 <script>
-import HostUsbDevicesList from "src/components/HostUsbDevicesList.vue";
-import VmList from "src/components/VmList.vue";
+import HostUsbDevicesList from "src/components/host-manager/HostUsbDevicesList.vue";
+import VmList from "src/components/vm-manager/VmList.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 
 export default {

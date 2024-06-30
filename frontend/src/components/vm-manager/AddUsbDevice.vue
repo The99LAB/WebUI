@@ -19,7 +19,7 @@
 
 <script>
 import { ref } from "vue";
-import HostUsbDevicesList from "src/components/HostUsbDevicesList.vue";
+import HostUsbDevicesList from "src/components/host-manager/HostUsbDevicesList.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 
 export default {

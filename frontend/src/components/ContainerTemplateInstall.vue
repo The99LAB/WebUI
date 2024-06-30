@@ -414,7 +414,7 @@
 
 <script>
 import ErrorDialog from "/src/components/ErrorDialog.vue";
-import DirectoryList from "/src/components/DirectoryList.vue";
+import DirectoryList from "/src/components/host-manager/DirectoryList.vue";
 export default {
   data() {
     return {

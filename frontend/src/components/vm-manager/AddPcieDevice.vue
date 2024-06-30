@@ -27,7 +27,7 @@
 
 <script>
 import { ref } from "vue";
-import HostPcieDevicesList from "src/components/HostPcieDevicesList.vue";
+import HostPcieDevicesList from "src/components/host-manager/HostPcieDevicesList.vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 
 export default {

@@ -369,7 +369,7 @@
 <script>
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import ConfirmDialog from "src/components/ConfirmDialog.vue";
-import DirectoryList from "src/components/DirectoryList.vue";
+import DirectoryList from "src/components/host-manager/DirectoryList.vue";
 
 export default {
   data() {
