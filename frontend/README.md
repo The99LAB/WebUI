@@ -3,7 +3,7 @@
 Web UI for managing libvirt based virtual machines
 
 ## Install the dependencies
-
+`npm i -g @quasar/cli`
 `npm install`
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
