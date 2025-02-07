@@ -29,10 +29,7 @@
         v-model="focused"
         fit
         class="q-my-none q-py-none"
-        @hide="
-          $refs.input.focus()
-          $refs.input.blur()
-        "
+        @hide="$refs.input.focus(); $refs.input.blur()"
       >
         <q-list
           class="q-my-none q-py-none shadow-3"

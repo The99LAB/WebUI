@@ -18,10 +18,7 @@
           color="primary"
           icon="mdi-form-textbox"
           :disable="selected.length == 0 || selected.length > 1"
-          @click="
-            renameDialogItem = JSON.parse(JSON.stringify(selected[0]))
-            renameDialog = true
-          "
+          @click="openRenameDialog"
         >
           <q-tooltip :offset="[0, 5]"> Rename </q-tooltip>
         </q-btn>
@@ -44,7 +41,7 @@
             this.$refs.confirmDialog.show(
               'Are you sure?',
               ['Do you really want to remove this?', 'This action is not reversable!'],
-              removePath,
+              removePath
             )
           "
         >
@@ -332,6 +329,10 @@ export default {
           let errormsg = error.response ? error.response.data.detail : error
           this.$refs.errorDialog.show('Error renaming folder', [errormsg])
         })
+    },
+    openRenameDialog() {
+      this.renameDialogItem = JSON.parse(JSON.stringify(this.selected[0]))
+      this.renameDialog = true
     },
   },
   mounted() {
