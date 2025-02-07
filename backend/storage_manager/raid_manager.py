@@ -1,7 +1,7 @@
 import mdstat
 import subprocess
 from .storage_manager_exception import StorageManagerException
-from .convertsize import convertSizeUnit
+from .convertsize import convertSizeUnit, SizeUnit, ConvertSizeUnitMode
 from .disk_manager import wipeDisk, add_startupmount, remove_startupmount
 from blkinfo import BlkDiskInfo
 import os
@@ -32,7 +32,7 @@ def get():
         _active = output['devices'][device]['active']
         _personality = output['devices'][device]['personality']
         _disks = [disk for disk in output['devices'][device]['disks'].keys()]
-        _size = convertSizeUnit(size=output['devices'][device]['status']['blocks'], from_unit="KB", mode="str_space", round_state=True, round_to=1)
+        _size = convertSizeUnit(size=output['devices'][device]['status']['blocks'], from_unit=SizeUnit.KB, mode=ConvertSizeUnitMode.INT_STR_SPACE, round_state=True, round_to=1, use_decimal_units=True)
         _operation = None
         _operation_progress = None
         _operation_finish = None

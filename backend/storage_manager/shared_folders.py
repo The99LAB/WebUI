@@ -1,7 +1,7 @@
 import os
 from .storage_manager_exception import StorageManagerException
 from .disk_manager import findUsedSpace
-from .convertsize import convertSizeUnit
+from .convertsize import convertSizeUnit, SizeUnit, ConvertSizeUnitMode
 from .raid_manager import get as getRaidArrays
 from .disk_manager import get as getDisks
 from .smbusers import get as get_smb_users
@@ -269,9 +269,9 @@ def get():
         else:
             # get the used space of the disk
             usedspace = findUsedSpace(folderpath)
-            used = convertSizeUnit(usedspace[0], from_unit="MB", mode="str_space", round_state=True, round_to=None)
-            capacity = convertSizeUnit(usedspace[1], from_unit="MB", mode="str_space", round_state=True, round_to=None)
-            free = convertSizeUnit(usedspace[2], from_unit="MB", mode="str_space", round_state=True, round_to=None)
+            used = convertSizeUnit(usedspace[0], from_unit=SizeUnit.MB, mode=ConvertSizeUnitMode.FLOAT_STR_SPACE, round_state=True, round_to=None)
+            capacity = convertSizeUnit(usedspace[1], from_unit=SizeUnit.MB, mode=ConvertSizeUnitMode.FLOAT_STR_SPACE, round_state=True, round_to=None)
+            free = convertSizeUnit(usedspace[2], from_unit=SizeUnit.MB ,mode=ConvertSizeUnitMode.FLOAT_STR_SPACE, round_state=True, round_to=None)
 
         folders.append({
             "name": folder,

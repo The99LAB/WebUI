@@ -3,10 +3,9 @@
     <q-page-container>
       <q-page padding class="row justify-center items-center">
         <q-card style="width: 30em; height: 40em" class="shadow-1">
-          <q-linear-progress
-            rounded
-            :query="loginLoading"
-            track-color="primary"
+          <q-inner-loading
+            :showing="loginLoading"
+            size="5em"
             color="secondary"
           />
           <q-card-section class="q-py-xl">
@@ -130,7 +129,11 @@ export default {
     login() {
       this.loginLoading = true;
       this.$api
-        .post("login", { username: this.username, password: this.password })
+        .post(
+          "/login",
+          { username: this.username, password: this.password },
+          { timeout: 5000 },
+        )
         .then((response) => {
           this.authError = "";
           localStorage.setItem("jwt-token", response.data.access_token);

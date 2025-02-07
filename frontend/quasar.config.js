@@ -68,8 +68,8 @@ module.exports = configure(function (/* ctx */) {
       publicPath: "/static/",
       // analyze: true,
       env: {
-        WEBSOCKET_ENDPOINT_DEV: "ws://192.168.0.58:8000",
-        API_ENDPOINT_DEV: "http://192.168.0.58:8000/api",
+        WEBSOCKET_ENDPOINT_DEV: "ws://server99-dev-server.local:8000",
+        API_ENDPOINT_DEV: "http://server99-dev-server.local:8000/api",
         PRODUCTION_BACKEND_PORT: 80,
       },
       // rawDefine: {}

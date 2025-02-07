@@ -1,10 +1,28 @@
 {
   "folders": [
     {
+      "name": "WebUI",
       "path": "."
     },
     {
+      "name": "WebUI-docker-templates",
       "path": "../WebUI-docker-templates"
+    },
+    {
+      "name": "server99-blkinfo",
+      "path": "../server99-blkinfo"
+    },
+    {
+      "name": "server99-edk2",
+      "path": "../server99-edk2"
+    },
+    {
+      "name": "server99-installer",
+      "path": "../server99-installer"
+    },
+    {
+      "name": "s99-build",
+      "path": "../s99-build"
     }
   ]
 }

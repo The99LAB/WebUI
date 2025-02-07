@@ -1,0 +1,6 @@
+[virt-viewer]
+port=6000
+type=spice
+proxy=http://server99-dev-server.local:6000
+host=s99spiceproxy-015uw8lul80d61kzu3q9t1m9ydy323qj
+delete-this-file=0

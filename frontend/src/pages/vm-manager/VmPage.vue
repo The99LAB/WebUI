@@ -7,7 +7,7 @@
       :columns="columns"
       row-key="uuid"
       separator="none"
-      no-data-label="Failed to get data from backend or no vm's defined"
+      no-data-label="No virtual machines defined"
       :pagination="vmTablePagination"
     >
       <template v-slot:loading>

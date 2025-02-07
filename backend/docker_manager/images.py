@@ -1,6 +1,6 @@
 from .base import docker_client
 from .docker_manager_exception import DockerManagerException
-from storage_manager import convertSizeUnit
+from storage_manager import convertSizeUnit, SizeUnit, ConvertSizeUnitMode
 import docker
 from notifications import NotificationManager, NotificationType, Notification
 
@@ -14,7 +14,7 @@ class Images:
         for image in docker_images:
             image_id = image.short_id
             image_tags = image.tags
-            image_size = convertSizeUnit(size=image.attrs['Size'], from_unit="B", mode="str", round_to=None)
+            image_size = convertSizeUnit(size=image.attrs['Size'], from_unit=SizeUnit.B, mode=ConvertSizeUnitMode.INT_STR, round_to=None)
             image_created_orig = image.attrs['Created']
             image_created_split = image_created_orig.split('.')[0]
             image_created = image_created_split.split('T')[0] + " " + image_created_split.split('T')[1]

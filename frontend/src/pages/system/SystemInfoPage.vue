@@ -15,7 +15,13 @@
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Memory:</p>
-            <p class="col">{{ systemInfo.memory }}</p>
+            <p class="col">
+              {{
+                systemInfo.memory === undefined
+                  ? "N/A"
+                  : systemInfo.memory.value + " " + systemInfo.memory.unit
+              }}
+            </p>
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">
@@ -26,6 +32,10 @@
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Linux Kernel:</p>
             <p class="col">{{ systemInfo.linuxVersion }}</p>
+          </div>
+          <div class="row items-start">
+            <p class="col text-right q-mr-sm text-weight-bold">Boot Mode:</p>
+            <p class="col">{{ systemInfo.systemBootMode }}</p>
           </div>
           <div class="row items-start">
             <p class="col text-right q-mr-sm text-weight-bold">Uptime:</p>
@@ -164,8 +174,7 @@ export default {
       this.$refs.editHostNameDialog.show();
     },
     updateUpTime() {
-      if (this.up_since != null)
-      {
+      if (this.up_since != null) {
         this.uptime = convertEpochToUptime(this.up_since);
       }
     },

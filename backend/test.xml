@@ -1,0 +1,38 @@
+<domain type='kvm'>
+  <name>Windows 7</name>
+  <memory unit='KiB'>4294967296</memory>
+  <currentMemory unit='KiB'>2147483648</currentMemory>
+  <vcpu placement='static' current='2'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-q35-7.2'>hvm</type>
+
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <hyperv mode='custom'>
+      <relaxed state='on'/>
+      <vapic state='on'/>
+      <spinlocks state='on' retries='8191'/>
+    </hyperv>
+    <vmport state='off'/>
+  </features>
+  <cpu mode='host-model' check='partial'/>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+
+    <graphics type='vnc' port='-1' autoport='yes'><listen type='address'/> </graphics>
+    <controller type='pci' index='0' model='pcie-root'/>
+    <input type='tablet' bus='usb'>
+      <address type='usb' bus='0' port='1'/>
+    </input>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+
+    <video><model type='virtio' heads='1' primary='yes'/> </video>
+  </devices>
+</domain>

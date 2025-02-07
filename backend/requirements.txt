@@ -1,5 +1,5 @@
 psutil
-fastapi
+fastapi[standard]
 fastapi-cli
 asyncio
 libvirt-python
@@ -16,3 +16,4 @@ humanize
 docker
 cron-validator
 GitPython
+sqlmodel

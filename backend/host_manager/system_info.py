@@ -1,13 +1,13 @@
 from .libvirt_con import libvirt_connection
 from .hostManagerException import HostManagerException
+from storage_manager import convertSizeUnit, SizeUnit, ConvertSizeUnitMode
 from xml.etree import ElementTree as ET
 import distro
 import os
 import psutil
-import humanize
-from datetime import datetime
 import subprocess
 import re
+import psutil
 
 class PcieDevice:
     def __init__(self, device_xml):
@@ -81,6 +81,7 @@ class SystemInfo:
         self._memory_size = 0
         self._os = "Unknown"
         self._linux_kernel = "Unknown"
+        self._system_boot_mode = "Unknown"
         self._up_since = 0
         self._pcie_devices = []
         self._usb_devices = []
@@ -91,6 +92,7 @@ class SystemInfo:
         self.get_memory_size()
         self.get_os_info()
         self.get_linux_kernel_info()
+        self.get_system_boot_mode()
         self.get_up_since()
         self.get_pcie_devices()
         self.get_usb_devices()
@@ -110,7 +112,10 @@ class SystemInfo:
     
     @property
     def memory_size(self):
-        return f"{self._memory_size} GB"
+        return {
+            "value": self._memory_size,
+            "unit": SizeUnit.GB.symbol
+        }
     
     @property
     def os(self):
@@ -119,6 +124,10 @@ class SystemInfo:
     @property
     def linux_kernel_version(self):
         return self._linux_kernel
+    
+    @property
+    def system_boot_mode(self):
+        return self._system_boot_mode
     
     @property
     def up_since(self):
@@ -152,6 +161,12 @@ class SystemInfo:
                 if line.startswith('model name'):
                     self._cpu_model = line.split(':')[1].strip()
                     break
+    
+    def get_cpu_usage(self, per_thread=False):
+        if per_thread:
+            return psutil.cpu_percent(interval=1, percpu=True)
+        else:
+            return int(psutil.cpu_percent())
 
     def get_motherboard_info(self):
         if self.libvirt_sysinfo_xml.find('baseBoard') is not None:
@@ -166,10 +181,31 @@ class SystemInfo:
     def get_linux_kernel_info(self):
         self._linux_kernel = os.uname()[2]
 
+    def get_system_boot_mode(self):
+        # This is either UEFI, UEFI secure boot or BIOS
+        # Check if /sys/firmware/efi exists
+        if os.path.exists('/sys/firmware/efi'):
+            # Check if /sys/firmware/efi/efivars exists
+            if os.path.exists('/sys/firmware/efi/efivars'):
+                self._system_boot_mode = "EFI (Secure Boot)"
+            else:
+                self._system_boot_mode = "EFI"
+        else:
+            self._system_boot_mode = "BIOS"
+
     def get_memory_size(self):
         for memory_device in self.libvirt_sysinfo_xml.findall('memory_device'):
+            # TODO: Handle other units
             self._memory_size += int(memory_device.find("entry[@name='size']").text.replace(" GB", ""))
     
+    def get_memory_usage(self):
+        memory_used = convertSizeUnit(size=psutil.virtual_memory().used, from_unit=SizeUnit.B, to_unit=SizeUnit.GB, mode=ConvertSizeUnitMode.FLOAT_TUPLE_UNIT, use_decimal_units=True)
+        print(memory_used)
+        return {
+            "value": memory_used[0],
+            "unit": memory_used[1].symbol,
+        }
+
     def get_up_since(self):
         self._up_since = psutil.boot_time()
     
@@ -190,4 +226,3 @@ class SystemInfo:
                 if "Linux Foundation" not in usb_device.name:
                     self._usb_devices.append(usb_device)
 
-        

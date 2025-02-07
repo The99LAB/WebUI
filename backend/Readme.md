@@ -1,4 +1,5 @@
 - Create a virtual environment: `python3 -m venv venv --system-site-packages`
 - Activate the virtual environment: `source venv/bin/activate`
 - Install the requirements: `pip install -r requirements.txt`
+- Setup the database: `python3 init_database.py`
 - Run the server: `fastapi dev --host 0.0.0.0`

@@ -206,7 +206,6 @@
   <ConfirmDialog ref="confirmDialog" />
 </template>
 <script>
-import { isReactive, ref } from "vue";
 import ErrorDialog from "src/components/ErrorDialog.vue";
 import ConfirmDialog from "src/components/ConfirmDialog.vue";
 import DirectoryList from "src/components/host-manager/DirectoryList.vue";

@@ -53,12 +53,12 @@
               <ToolTip content="Apply changes" />
             </q-btn>
             <q-btn
-            icon="close"
-            flat
-            round
-            dense
-            v-close-popup
-            @click="tab = 'general'"
+              icon="close"
+              flat
+              round
+              dense
+              v-close-popup
+              @click="tab = 'general'"
             >
               <ToolTip content="Close" />
             </q-btn>
@@ -194,7 +194,9 @@
                         v-model="vcpu"
                         type="number"
                         min="1"
-                        @update:model-value="(val) => (cpu_topology_sockets = val)"
+                        @update:model-value="
+                          (val) => (cpu_topology_sockets = val)
+                        "
                         :readonly="cpu_custom_topology"
                       />
                     </div>
@@ -1002,68 +1004,72 @@ export default {
     deviceDeleteConfirm() {
       console.log("device type:", this.selectedDeviceType);
       console.log("device:", this.selectedDevice);
-      if (this.selectedDeviceType == "disk"){
-        this.$api.post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
-          index: this.selectedDevice.index,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting disk", [
-            error.response.data.detail,
-          ]);
-        });
-      } else if (this.selectedDeviceType == "network"){
-        this.$api.post("/vm-manager/" + this.uuid + "/edit-network-delete", {
-          number: this.selectedDevice.number,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting network", [
-            error.response.data.detail,
-          ]);
-        });
-      } else if (this.selectedDeviceType == "graphics"){
-        this.$api.post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
-          index: this.selectedDevice.index,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting graphics", [
-            error.response.data.detail,
-          ]);
-        });
-      } else if (this.selectedDeviceType == "video"){
-        this.$api.post("/vm-manager/" + this.uuid + "/edit-video-delete", {
-          index: this.selectedDevice.index,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting video", [
-            error.response.data.detail,
-          ]);
-        });
-      } else if (this.selectedDeviceType == "sound"){
-        this.$api.post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
-          index: this.selectedDevice.index,
-        })
-        .then((response) => {
-          this.refreshData();
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting sound", [
-            error.response.data.detail,
-          ]);
-        });
-      }
-      else {
+      if (this.selectedDeviceType == "disk") {
+        this.$api
+          .post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
+            index: this.selectedDevice.index,
+          })
+          .then((response) => {
+            this.refreshData();
+          })
+          .catch((error) => {
+            this.$refs.errorDialog.show("Error deleting disk", [
+              error.response.data.detail,
+            ]);
+          });
+      } else if (this.selectedDeviceType == "network") {
+        this.$api
+          .post("/vm-manager/" + this.uuid + "/edit-network-delete", {
+            number: this.selectedDevice.number,
+          })
+          .then((response) => {
+            this.refreshData();
+          })
+          .catch((error) => {
+            this.$refs.errorDialog.show("Error deleting network", [
+              error.response.data.detail,
+            ]);
+          });
+      } else if (this.selectedDeviceType == "graphics") {
+        this.$api
+          .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
+            index: this.selectedDevice.index,
+          })
+          .then((response) => {
+            this.refreshData();
+          })
+          .catch((error) => {
+            this.$refs.errorDialog.show("Error deleting graphics", [
+              error.response.data.detail,
+            ]);
+          });
+      } else if (this.selectedDeviceType == "video") {
+        this.$api
+          .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
+            index: this.selectedDevice.index,
+          })
+          .then((response) => {
+            this.refreshData();
+          })
+          .catch((error) => {
+            this.$refs.errorDialog.show("Error deleting video", [
+              error.response.data.detail,
+            ]);
+          });
+      } else if (this.selectedDeviceType == "sound") {
+        this.$api
+          .post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
+            index: this.selectedDevice.index,
+          })
+          .then((response) => {
+            this.refreshData();
+          })
+          .catch((error) => {
+            this.$refs.errorDialog.show("Error deleting sound", [
+              error.response.data.detail,
+            ]);
+          });
+      } else {
         this.$refs.errorDialog.show("Error deleting device", [
           "Device type not recognized",
         ]);

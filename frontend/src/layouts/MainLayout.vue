@@ -105,156 +105,108 @@
             </q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" to="/dashboard">
-          <q-item-section avatar>
-            <q-icon name="bi-speedometer" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Dashboard</q-item-label>
-          </q-item-section>
-        </q-item>
+        <DashboardItem to="/dashboard" icon="bi-speedometer" name="Dashboard" />
         <q-item-label header class="q-pb-none q-pt-md"
-          >Virtual Machines</q-item-label
+          >Virtual Machines OLD</q-item-label
         >
-        <q-item clickable tag="a" to="/vm-manager/vms">
-          <q-item-section avatar>
-            <q-icon name="ion-cube" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Virtual Machines</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/vm-manager/hotplug-usb">
-          <q-item-section avatar>
-            <q-icon name="mdi-usb" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Hotplug USB</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/vm-manager/backups">
-          <q-item-section avatar>
-            <q-icon name="mdi-backup-restore" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Backups</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/vm-manager/download-iso">
-          <q-item-section avatar>
-            <q-icon name="mdi-disc" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Download ISO</q-item-label>
-          </q-item-section>
-        </q-item>
+        <DashboardItem
+          to="/vm-manager/vms"
+          icon="ion-cube"
+          name="Virtual Machines"
+        />
+        <DashboardItem
+          to="/vm-manager/hotplug-usb"
+          icon="mdi-usb"
+          name="Hotplug USB"
+        />
+        <DashboardItem
+          to="/vm-manager/backups"
+          icon="mdi-backup-restore"
+          name="Backups"
+        />
+        <DashboardItem
+          to="/vm-manager/download-iso"
+          icon="mdi-disc"
+          name="Download ISO"
+        />
+        <q-item-label header class="q-pb-none q-pt-md"
+          >Virtual Machines New</q-item-label
+        >
+        <DashboardItem
+          to="/vm/overview"
+          icon="ion-cube"
+          name="Virtual Machines"
+        />
+        <DashboardItem
+          to="/vm/templates"
+          icon="mdi-cube-outline"
+          name="Templates"
+        />
         <q-item-label header class="q-pb-none q-pt-md">Docker</q-item-label>
-        <q-item clickable tag="a" to="/docker-manager/containers">
-          <q-item-section avatar>
-            <q-icon name="bi-boxes" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Containers</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/docker-manager/images">
-          <q-item-section avatar>
-            <q-icon name="fa-solid fa-clone" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Images</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/docker-manager/networks">
-          <q-item-section avatar>
-            <q-icon name="mdi-lan" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Networks</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-expansion-item
-          expand-separator
-          icon="bi-files"
-          label="Templates"
-          to="/docker-manager/templates"
-          :content-inset-level="0.2"
-        >
-          <q-item clickable tag="a" to="/docker-manager/templates/settings">
-            <q-item-section avatar>
-              <q-icon name="mdi-cog" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Settings</q-item-label>
-            </q-item-section>
-          </q-item>
+        <DashboardItem
+          to="/docker-manager/containers"
+          icon="bi-boxes"
+          name="Containers"
+        />
+        <DashboardItem
+          to="/docker-manager/images"
+          icon="fa-solid fa-clone"
+          name="Images"
+        />
+        <DashboardItem
+          to="/docker-manager/networks"
+          icon="mdi-lan"
+          name="Networks"
+        />
+        <q-expansion-item>
+          <template v-slot:header>
+            <div class="row items-center">
+              <div class="q-pr-md"><q-icon name="bi-files" size="sm" /></div>
+              <div>Templates</div>
+            </div>
+          </template>
+          <DashboardItem
+            to="/docker-manager/templates/settings"
+            class="q-ml-sm"
+            icon="mdi-cog"
+            name="Settings"
+          />
         </q-expansion-item>
         <q-item-label header class="q-pb-none q-pt-md">Storage</q-item-label>
-        <q-item clickable tag="a" to="/storage-manager/disks">
-          <q-item-section avatar>
-            <q-icon name="bi-hdd" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Disks</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/storage-manager/raid-manager">
-          <q-item-section avatar>
-            <q-icon name="mdi-database-outline" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>RAID Management</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/storage-manager/sharedfolders">
-          <q-item-section avatar>
-            <q-icon name="mdi-share-variant-outline" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Shared Folders</q-item-label>
-          </q-item-section>
-        </q-item>
+        <DashboardItem to="/storage-manager/disks" icon="bi-hdd" name="Disks" />
+        <DashboardItem
+          to="/storage-manager/raid-manager"
+          icon="mdi-database-outline"
+          name="RAID Management"
+        />
+        <DashboardItem
+          to="/storage-manager/sharedfolders"
+          icon="mdi-share-variant-outline"
+          name="Shared Folders"
+        />
         <q-item-label header class="q-pb-none q-pt-md">System</q-item-label>
-        <q-item clickable tag="a" to="/system/system-info">
-          <q-item-section avatar>
-            <q-icon name="mdi-monitor" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>System Information</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/system/system-devices">
-          <q-item-section avatar>
-            <q-icon name="bi-gpu-card" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>System Devices</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/system/users">
-          <q-item-section avatar>
-            <q-icon name="mdi-account" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Users</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/system/filemanager">
-          <q-item-section avatar>
-            <q-icon name="mdi-folder-multiple-outline" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>File Manager</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item clickable tag="a" to="/system/settings">
-          <q-item-section avatar>
-            <q-icon name="mdi-cog" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Settings</q-item-label>
-          </q-item-section>
-        </q-item>
+        <DashboardItem
+          to="/system/system-info"
+          icon="mdi-monitor"
+          name="System Information"
+        />
+        <DashboardItem
+          to="/system/networks"
+          icon="mdi-network"
+          name="Networks"
+        />
+        <DashboardItem
+          to="/system/system-devices"
+          icon="bi-gpu-card"
+          name="System Devices"
+        />
+        <DashboardItem to="/system/users" icon="mdi-account" name="Users" />
+        <DashboardItem
+          to="/system/filemanager"
+          icon="mdi-folder-multiple-outline"
+          name="File Manager"
+        />
+        <DashboardItem to="/system/settings" icon="mdi-cog" name="Settings" />
       </q-list>
     </q-drawer>
 
@@ -353,6 +305,7 @@ import { useHostnameStore } from "stores/hostname";
 import { useUsernameStore } from "stores/username";
 import { storeToRefs } from "pinia";
 import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import DashboardItem from "src/components/DashboardItem.vue";
 
 export default defineComponent({
   name: "MainLayout",
@@ -394,6 +347,7 @@ export default defineComponent({
     WsReconnectDialog,
     ToolTip,
     ConfirmDialog,
+    DashboardItem,
   },
   methods: {
     logout() {

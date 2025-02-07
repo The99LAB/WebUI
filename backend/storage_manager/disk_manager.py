@@ -1,7 +1,7 @@
 import subprocess
 from blkinfo import BlkDiskInfo # fork of genalt/blkinfo see https://github.com/macOS-KVM/blkinfo/releases/tag/0.2.0
 from .storage_manager_exception import StorageManagerException
-from .convertsize import convertSizeUnit
+from .convertsize import convertSizeUnit, ConvertSizeUnitMode, SizeUnit
 import time
 import os
 from pyfstab import Fstab, Entry
@@ -255,15 +255,15 @@ def get():
                     "mount": partition_mount,
                     "path": partition_path,
                     "parent": diskpath,
-                    "used": None if partition_used == 0 else convertSizeUnit(size=partition_used, from_unit="MB", mode="str", round_state=True, round_to=None),
-                    "size": "0B" if partition_size == 0 else convertSizeUnit(size=int(partition_size), from_unit="B", mode="str", round_state=True, round_to=None),
+                    "used": None if partition_used == 0 else convertSizeUnit(size=partition_used, from_unit=SizeUnit.MB, mode=ConvertSizeUnitMode.INT_STR, round_state=True, round_to=None),
+                    "size": "0B" if partition_size == 0 else convertSizeUnit(size=int(partition_size), from_unit=SizeUnit.B, mode=ConvertSizeUnitMode.INT_STR, round_state=True, round_to=None),
                     })
 
             disk_list.append({
                 'name': disk['name'],
                 'model': disk['model'],
                 'disktype': disk_type,
-                'size': convertSizeUnit(size=int(size), from_unit="B", mode="str", round_state=True, round_to=None),
+                'size': convertSizeUnit(size=int(size), from_unit=SizeUnit.B, mode=ConvertSizeUnitMode.INT_STR, round_state=True, round_to=None),
                 'path': diskpath,
                 'serial': disk['serial'],
                 'partitions': partitions,

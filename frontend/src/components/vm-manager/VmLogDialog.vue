@@ -1,5 +1,10 @@
 <template>
-  <q-dialog v-model="visible" full-width full-height :maximized="$q.screen.lt.md">
+  <q-dialog
+    v-model="visible"
+    full-width
+    full-height
+    :maximized="$q.screen.lt.md"
+  >
     <q-layout
       view="hHh lpR fFf"
       container
@@ -15,7 +20,13 @@
         <q-page class="fit row items-center justify-center">
           <q-card class="q-pa-md" style="width: 100%">
             <q-card-section>
-              <q-input filled v-model="content" type="textarea" autogrow readonly />
+              <q-input
+                filled
+                v-model="content"
+                type="textarea"
+                autogrow
+                readonly
+              />
             </q-card-section>
           </q-card>
         </q-page>
@@ -43,15 +54,19 @@ export default {
   },
   methods: {
     show(vm_uuid) {
-      this.visible = true;
       this.loading = true;
       this.vm_uuid = vm_uuid;
-      this.$api.get("/vm-manager/" + this.vm_uuid + "/log")
+      this.$api
+        .get("/vm-manager/" + this.vm_uuid + "/log")
         .then((response) => {
           this.content = response.data;
+          this.visible = true;
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error while loading vm log", error);
+          this.$refs.errorDialog.show(
+            "Error while loading vm log",
+            error.response.data,
+          );
         })
         .finally(() => {
           this.loading = false;

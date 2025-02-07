@@ -115,7 +115,7 @@
             <div class="row justify-start q-ml-lg q-my-none items-center">
               <div class="q-py-none q-my-none row justify-center items-end">
                 <p class="text-h3 q-mr-xs q-py-none q-my-none">
-                  {{ Math.round(mem_total * 10) / 10 }}
+                  {{ mem_total }}
                 </p>
                 <p class="text-subtitle1 q-py-none q-my-none">GB</p>
               </div>
@@ -204,7 +204,7 @@ body.body--dark {
 
 <script>
 import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
-import { convertEpochToUptime } from 'src/utils/timeUtils.js';
+import { convertEpochToUptime } from "src/utils/timeUtils.js";
 import { colors } from "quasar";
 import { useHostnameStore } from "stores/hostname";
 import { storeToRefs } from "pinia";
@@ -223,6 +223,7 @@ export default {
       cpu_progress_text: "",
       mem_used: null,
       mem_total: null,
+      mem_unit: "GB",
       uptime: null,
       up_since: null,
       os_name: null,
@@ -318,6 +319,16 @@ export default {
     WsReconnectDialog,
   },
   methods: {
+    getSystemInfo() {
+      this.$api.get("/host/system-info/all").then((response) => {
+        this.mem_total = response.data.memory.value;
+        this.cpu_name = response.data.processor;
+        this.os_name = response.data.os;
+        this.up_since = response.data.up_since;
+        this.updateUptime();
+        this.connectWebSocket();
+      });
+    },
     connectWebSocket() {
       const jwt_token = localStorage.getItem("jwt-token");
       this.ws = new WebSocket(
@@ -326,13 +337,6 @@ export default {
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        if (data.type == "dashboard_init") {
-          this.mem_total = data.data.mem_total;
-          this.cpu_name = data.data.cpu_name;
-          this.os_name = data.data.os_name;
-          this.up_since = data.data.up_since;
-          this.updateUptime();
-        }
         if (data.type == "dashboard") {
           this.cpu_progress = data.data.cpu_percent;
           this.cpu_progress_text = data.data.cpu_percent + "%";
@@ -342,7 +346,7 @@ export default {
           this.cpu_thread_highest_usage.thread =
             data.data.cpu_thread_data.indexOf(highest_thread_usage);
           this.cpu_thread_highest_usage.usage = highest_thread_usage;
-          this.mem_used = data.data.mem_used;
+          this.mem_used = data.data.mem_used.value;
           this.updateMemChart(this.mem_used, this.mem_total);
           this.loadingVisible = false;
         } else if (data.type == "auth_error") {
@@ -355,6 +359,7 @@ export default {
         this.$refs.wsReconnectDialog.show();
       };
     },
+
     updateCpuChart(threadCount, threadData) {
       if (this.cpu_thread_categories == null) {
         this.cpu_thread_categories = [];
@@ -386,10 +391,10 @@ export default {
       if (this.up_since != null) {
         this.uptime = convertEpochToUptime(this.up_since);
       }
-    }
+    },
   },
   created() {
-    this.connectWebSocket();
+    this.getSystemInfo();
   },
   mounted() {
     this.upTimeInterval = setInterval(() => {

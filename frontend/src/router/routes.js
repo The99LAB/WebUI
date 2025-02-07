@@ -58,6 +58,18 @@ const routes = [
         meta: { title: "Download ISO" },
       },
       {
+        path: "vm/overview",
+        name: "vm/overview",
+        component: () => import("pages/vm/VmOverviewPage.vue"),
+        meta: { title: "VM Overview" },
+      },
+      {
+        path: "vm/templates",
+        name: "vm/templates",
+        component: () => import("pages/vm/TemplateOverviewPage.vue"),
+        meta: { title: "VM Templates" },
+      },
+      {
         path: "docker-manager/containers",
         name: "docker-manager/containers",
         component: () => import("pages/docker-manager/ContainersPage.vue"),
@@ -117,6 +129,12 @@ const routes = [
         name: "system/system-devices",
         component: () => import("pages/system/SystemDevicesPage.vue"),
         meta: { title: "System Devices" },
+      },
+      {
+        path: "system/networks",
+        name: "system/networks",
+        component: () => import("pages/system/NetworksPage.vue"),
+        meta: { title: "Networks" },
       },
       {
         path: "system/users",

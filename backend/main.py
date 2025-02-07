@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, Request, Form, WebSocketDisconnect, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-import psutil
+from auth_manager.auth import check_auth, check_auth_token, login as auth_login
 import asyncio
 import libvirt
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,8 +15,6 @@ import requests
 import pam
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-import humanize
-import json
 import pwd
 import grp
 import shutil
@@ -26,7 +24,9 @@ import vm_backups
 from docker_manager import Templates, Containers, Networks, Images, General, DockerManagerException
 from settings import SettingsManager, Setting, OvmfPath, SettingsException
 from host_manager import libvirt_connection, SystemInfo, HostManagerException
-import vm_manager
+import vm_manager_old
+from network_manager.routes import router as network_manager_router
+from vm_manager.routes import router as vm_manager_router
 
 
 origins = ["*"]
@@ -40,9 +40,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-SECRET_KEY = "secret!"
-ALGORITHM = "HS256"
+app.include_router(network_manager_router, prefix="/api/system/networks", tags=["Network Manager"])
+app.include_router(vm_manager_router, prefix="/api/vm", tags=["VM Manager"])
 
 
 system_status = 'running'
@@ -57,41 +56,6 @@ dockerImages = Images()
 dockerGeneral = General()
 settings_manager = SettingsManager()
 
-# check if the user is authenticated
-def check_auth(request: Request):
-    try:
-        token = request.headers['Authorization'].split(" ")[1]
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("username")
-        if username is None:
-            raise HTTPException(status_code=401, detail="Invalid authentication token")
-        # check expiration
-        expires = payload.get("exp")
-        if expires is None:
-            raise HTTPException(status_code=401, detail="Invalid authentication token")
-        expires_datetime = datetime.utcfromtimestamp(expires)
-        if datetime.utcnow() > expires_datetime:
-            raise HTTPException(status_code=401, detail="Authentication token expired")
-        return username
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid authentication token")
-
-# check auth by token
-def check_auth_token(token):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("username")
-        if username is None:
-            return False
-        expires = payload.get("exp")
-        if expires is None:
-            return False
-        expires_datetime = datetime.utcfromtimestamp(expires)
-        if datetime.utcnow() > expires_datetime:
-            return False
-        return True
-    except JWTError:
-        return False
 
 def getvmstate(uuid):
     domain = libvirt_conn.lookupByUUIDString(uuid)
@@ -136,8 +100,8 @@ def getvmresults():
                     if port != None:
                         vnc_state = True
 
-            dom_memory_min = storage_manager.convertSizeUnit(size=vmmemory(dom_uuid).current()[0], from_unit="KB", mode="tuple")
-            dom_memory_max = storage_manager.convertSizeUnit(size=vmmemory(dom_uuid).current()[1], from_unit="KB", mode="tuple")
+            dom_memory_min = storage_manager.convertSizeUnit(size=vmmemory(dom_uuid).current()[0], from_unit=storage_manager.SizeUnit.KiB, mode=storage_manager.ConvertSizeUnitMode.INT_STR_TUPLE)
+            dom_memory_max = storage_manager.convertSizeUnit(size=vmmemory(dom_uuid).current()[1], from_unit=storage_manager.SizeUnit.KiB, mode=storage_manager.ConvertSizeUnitMode.INT_STR_TUPLE)
 
             dom_autostart = False
             if domain.autostart() == 1:
@@ -170,8 +134,8 @@ class vmmemory():
         return [minmem, maxmem]
 
     def edit(self, minmem, minmemunit, maxmem, maxmemunit):
-        maxmem = storage_manager.convertSizeUnit(size=maxmem, from_unit=maxmemunit, to_unit="KB", mode="int")
-        minmem = storage_manager.convertSizeUnit(size=minmem, from_unit=minmemunit, to_unit="KB", mode="int")
+        maxmem = storage_manager.convertSizeUnit(size=maxmem, from_unit=maxmemunit, to_unit=storage_manager.SizeUnit.KB, mode=storage_manager.ConvertSizeUnitMode.INT)
+        minmem = storage_manager.convertSizeUnit(size=minmem, from_unit=minmemunit, to_unit=storage_manager.SizeUnit.KB, mode=storage_manager.ConvertSizeUnitMode.INT)
 
         if minmem > maxmem:
             return ("Error: minmemory can't be bigger than maxmemory")
@@ -313,7 +277,7 @@ class storage():
         self.domain.attachDeviceFlags(self.diskxml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
     def createnew(self, directory, disksize, disksizeunit, disktype, diskbus):
-        disksize = storage_manager.convertSizeUnit(size=int(disksize), from_unit=disksizeunit, to_unit="B", mode="int")
+        disksize = storage_manager.convertSizeUnit(size=int(disksize), from_unit=disksizeunit, to_unit=storage_manager.SizeUnit.B, mode=storage_manager.ConvertSizeUnitMode.INT)
         available_disk_number = len(self.get())
         disk_path = os.path.join(directory, f"{self.domain.name()}-{available_disk_number}.{disktype}")
         try:
@@ -577,24 +541,21 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     try:
-        if check_auth_token(token):
-            cpu_name = system_info.cpu_model
-            mem_total = storage_manager.convertSizeUnit(psutil.virtual_memory().total, from_unit="B", to_unit="GB", round_state=True, round_to=2)
-            os_name = distro.name(pretty=True)
-            up_since = psutil.boot_time()
-            await websocket.send_json({"type": "dashboard_init", "data": {"cpu_name": cpu_name, "mem_total": mem_total, "os_name": os_name, "up_since": up_since}})
-        while True:
-            if check_auth_token(token):
-                cpu_percent = int(psutil.cpu_percent())
-                cpu_thread_data = psutil.cpu_percent(interval=1, percpu=True)
-                mem_used = storage_manager.convertSizeUnit(psutil.virtual_memory().used, from_unit="B", to_unit="GB", round_state=True, round_to=2)
-                message = {"cpu_percent": cpu_percent, "cpu_thread_data": cpu_thread_data, "mem_used": mem_used}
+        while check_auth_token(token):
+            print(system_info.get_memory_usage())
+            message = {
+                "cpu_percent": system_info.get_cpu_usage(), 
+                "cpu_thread_data": system_info.get_cpu_usage(per_thread=True), 
+                "mem_used": system_info.get_memory_usage(),
+            }
+            # Check if the websocket is still open before sending data
+            if websocket.client_state != 3:
                 await websocket.send_json({"type": "dashboard", "data": message})
                 await asyncio.sleep(1)
-            else:
-                await websocket.send_json({"type": "auth_error"})
-                await websocket.close()
-                break
+
+        await websocket.send_json({"type": "auth_error"})
+        await websocket.close()
+
     except WebSocketDisconnect:
         pass
 
@@ -605,12 +566,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     try:
         while True:
             if check_auth_token(token):
-                # only send new data if the vm list has changed
-                new_vm_list = getvmresults()
-                if vm_list == None or vm_list != new_vm_list:
-                    vm_list = new_vm_list
+                vm_list = getvmresults()
+                if websocket.client_state != 3:
                     await websocket.send_json({"type": "vmdata", "data": vm_list})
-                await asyncio.sleep(1)
+                    await asyncio.sleep(1)
             else:
                 await websocket.send_json({"type": "auth_error"})
                 await websocket.close()
@@ -684,20 +643,11 @@ async def login(request: Request):
     password = data['password']
 
     if not username:
-        return HTTPException(status_code=400, detail="Username is required")
+        raise HTTPException(status_code=400, detail="Username is required")
     if not password:
-        return HTTPException(status_code=400, detail="Password is required")
+        raise HTTPException(status_code=400, detail="Password is required")
     
-    if pam.authenticate(username, password):
-        expire_time_seconds = int(settings_manager.get_setting("login_token_expire").value)
-        expires_delta = timedelta(seconds=expire_time_seconds)
-        expire = datetime.utcnow() + expires_delta
-        token = jwt.encode({"username": username, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM, )
-        print("auth success")
-        return JSONResponse(content={"access_token": token})
-    else:
-        return HTTPException(status_code=401, detail="Invalid username or password")
-
+    return JSONResponse(content={"access_token": auth_login(username, password)})
 
 ### API/VM-MANAGER ###
 @app.get('/api/vm-manager/{action}')
@@ -801,24 +751,24 @@ async def post_vm_manager(request: Request, action: str, username: str = Depends
 async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
     if action == "xml":
         try:
-            return { "xml": vm_manager.VirtualMachine(vm_uuid=vmuuid).vm_xml}
-        except vm_manager.VmManagerException as e:
+            return { "xml": vm_manager_old.VirtualMachine(vm_uuid=vmuuid).vm_xml}
+        except vm_manager_old.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
     elif action == "disk-data":
         try:
-            return vm_manager.VirtualMachine(vm_uuid=vmuuid).vm_disk_devices
-        except vm_manager.VmManagerException as e:
+            return vm_manager_old.VirtualMachine(vm_uuid=vmuuid).vm_disk_devices
+        except vm_manager_old.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
     elif action == "log":
         try:
-            return vm_manager.VirtualMachine(vm_uuid=vmuuid).get_vm_log()
-        except vm_manager.VmManagerException as e:
+            return vm_manager_old.VirtualMachine(vm_uuid=vmuuid).get_vm_log()
+        except vm_manager_old.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     elif action == "data":
         try:
-            return vm_manager.VirtualMachine(vm_uuid=vmuuid).json
-        except vm_manager.VmManagerException as e:
+            return vm_manager_old.VirtualMachine(vm_uuid=vmuuid).json
+        except vm_manager_old.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     else:
@@ -828,26 +778,26 @@ async def get_vm_manager_actions(request: Request, vmuuid: str, action: str, use
 async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, username: str = Depends(check_auth)):
     if action == "start":
         try:
-            vm_manager.VirtualMachine(vm_uuid=vmuuid).start_vm()
-        except vm_manager.VmManagerException as e:
+            vm_manager_old.VirtualMachine(vm_uuid=vmuuid).start_vm()
+        except vm_manager_old.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     elif action == "stop":
         try:
-            vm_manager.VirtualMachine(vm_uuid=vmuuid).stop_vm()
-        except vm_manager.VmManagerException as e:
+            vm_manager_old.VirtualMachine(vm_uuid=vmuuid).stop_vm()
+        except vm_manager_old.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     elif action == "forcestop":
         try:
-            vm_manager.VirtualMachine(vm_uuid=vmuuid).stop_vm(force=True)
-        except vm_manager.VmManagerException as e:
+            vm_manager_old.VirtualMachine(vm_uuid=vmuuid).stop_vm(force=True)
+        except vm_manager_old.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     elif action == "remove":
         try:
-            vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm()
-        except vm_manager.VmManagerException as e:
+            vm_manager_old.VirtualMachine(vm_uuid=vmuuid).remove_vm()
+        except vm_manager_old.VmManagerException as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     elif action.startswith("edit"):
@@ -857,24 +807,24 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
         if action == "xml":
             xml = data['xml']
             try:
-                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_xml(xml)
-            except vm_manager.VmManagerException as e:
+                vm_manager_old.VirtualMachine(vm_uuid=vmuuid).set_vm_xml(xml)
+            except vm_manager_old.VmManagerException as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         # edit-name
         elif action == "name":
             name = data['name']
             try:
-                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_name(name)
-            except vm_manager.VmManagerException as e:
+                vm_manager_old.VirtualMachine(vm_uuid=vmuuid).set_vm_name(name)
+            except vm_manager_old.VmManagerException as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         # edit-autostart
         elif action == "autostart":
             autostart = data['autostart']
             try:
-                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_autostart(autostart)
-            except vm_manager.VmManagerException as e:
+                vm_manager_old.VirtualMachine(vm_uuid=vmuuid).set_vm_autostart(autostart)
+            except vm_manager_old.VmManagerException as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         # edit-cpu
@@ -932,8 +882,8 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             memory_max = int(data['memory_max'])
             memory_max_unit = data['memory_max_unit']
             try:
-                vm_manager.VirtualMachine(vm_uuid=vmuuid).set_vm_memory(min_memory=memory_min, min_memory_unit=memory_min_unit, max_memory=memory_max, max_memory_unit=memory_max_unit, memory_backing=True)
-            except vm_manager.VmManagerException as e:
+                vm_manager_old.VirtualMachine(vm_uuid=vmuuid).set_vm_memory(min_memory=memory_min, min_memory_unit=memory_min_unit, max_memory=memory_max, max_memory_unit=memory_max_unit, memory_backing=True)
+            except vm_manager_old.VmManagerException as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         # edit-network-action
@@ -943,15 +893,15 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 source_network = data['sourceNetwork']
                 model = data['networkModel']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_network_device(source_network, model)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).add_vm_network_device(source_network, model)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 number = data['number']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_network_device(number)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).remove_vm_network_device(number)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -966,8 +916,8 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                     disk_path = data['volumePath']
                     disk_bus = data['diskBus']
                     try:
-                        vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_storage_device_from_file(source_file=disk_path, disk_bus=disk_bus, device_type=formDeviceType)
-                    except vm_manager.VmManagerException as e:
+                        vm_manager_old.VirtualMachine(vm_uuid=vmuuid).add_vm_storage_device_from_file(source_file=disk_path, disk_bus=disk_bus, device_type=formDeviceType)
+                    except vm_manager_old.VmManagerException as e:
                         raise HTTPException(status_code=500, detail=str(e))
                 
                 elif formDeviceType == "createvdisk":
@@ -992,8 +942,8 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                     source_device = data['sourceDevice']
                     disk_bus = data['diskBus']
                     try:
-                        vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_storage_device_from_block_device(source_device=source_device, disk_bus=disk_bus)
-                    except vm_manager.VmManagerException as e:
+                        vm_manager_old.VirtualMachine(vm_uuid=vmuuid).add_vm_storage_device_from_block_device(source_device=source_device, disk_bus=disk_bus)
+                    except vm_manager_old.VmManagerException as e:
                         raise HTTPException(status_code=500, detail=str(e))
 
                 else:
@@ -1002,8 +952,8 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             elif action == "delete":
                 index = data['index']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_storage_device(index=index)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).remove_vm_storage_device(index=index)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
                 
             else:
@@ -1034,15 +984,15 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 product_id = data['product_id']
                 vendor_id = data['vendor_id']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_usb_device(vendor_id=vendor_id, product_id=product_id)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).add_vm_usb_device(vendor_id=vendor_id, product_id=product_id)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             elif action == "delete":
                 product_id = data['product_id']
                 vendor_id = data['vendor_id']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_usb_device(vendor_id=vendor_id, product_id=product_id)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).remove_vm_usb_device(vendor_id=vendor_id, product_id=product_id)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -1058,15 +1008,15 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
                 custom_rom_file = data['customRomFile']
                 rom_file = data['romFile']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_pcie_device(domain=domain, bus=bus, slot=slot, function=function, rom_file=rom_file, custom_rom=custom_rom_file)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).add_vm_pcie_device(domain=domain, bus=bus, slot=slot, function=function, rom_file=rom_file, custom_rom=custom_rom_file)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             
             elif action == "delete":
                 index = data['index']       
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_pcie_device(index=index)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).remove_vm_pcie_device(index=index)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))                
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -1077,15 +1027,15 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             if action == "add":
                 graphics_type = data['type']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_graphics_device(graphics_type=graphics_type)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).add_vm_graphics_device(graphics_type=graphics_type)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_graphics_device(index=index)
-                except vm_manager.VmManagerException as e:
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).remove_vm_graphics_device(index=index)
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -1096,17 +1046,17 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             if action == "add":
                 model_type = data['type'].lower()
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_video_device(model_type=model_type)
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).add_vm_video_device(model_type=model_type)
                     return
-                except vm_manager.VmManagerException as e:
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_video_device(index=index)
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).remove_vm_video_device(index=index)
                     return
-                except vm_manager.VmManagerException as e:
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -1117,17 +1067,17 @@ async def post_vm_manager_actions(request: Request, vmuuid: str, action: str, us
             if action == "add":
                 model = data['model']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).add_vm_sound_device(model=model)
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).add_vm_sound_device(model=model)
                     return
-                except vm_manager.VmManagerException as e:
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
 
             elif action == "delete":
                 index = data['index']
                 try:
-                    vm_manager.VirtualMachine(vm_uuid=vmuuid).remove_vm_sound_device(index=index)
+                    vm_manager_old.VirtualMachine(vm_uuid=vmuuid).remove_vm_sound_device(index=index)
                     return
-                except vm_manager.VmManagerException as e:
+                except vm_manager_old.VmManagerException as e:
                     raise HTTPException(status_code=500, detail=str(e))
             else:
                 raise HTTPException(status_code=404, detail="Action not found")
@@ -1500,6 +1450,7 @@ async def api_system_info_get(action: str, username: str = Depends(check_auth)):
             "os": system_info.os,
             "hostname": system_info.hostname,
             "linuxVersion": system_info.linux_kernel_version,
+            "systemBootMode": system_info.system_boot_mode,
             "up_since": system_info.up_since,
         }
     elif action == "hostname":
@@ -1520,8 +1471,7 @@ async def api_system_info_hostname_post(request: Request, username: str = Depend
         return
     except HostManagerException as e:
         raise HTTPException(status_code=500, detail=str(e))
-   
-    
+
 # API-SYSTEM-USERS
 @app.get("/api/system/users")
 async def api_system_users_get(username: str = Depends(check_auth)):
@@ -1610,8 +1560,7 @@ async def api_system_file_manager_get(request: Request, username: str = Depends(
                 file_type = "dir"
             else:
                 # calculate size of file if path is not a directory. ConvertSizeUnit returns a tuple with the size and the unit
-                file_size = storage_manager.convertSizeUnit(size=os.path.getsize(file_path), from_unit="B", mode="str")
-
+                file_size = storage_manager.convertSizeUnit(size=os.path.getsize(file_path), from_unit=storage_manager.SizeUnit.B, mode=storage_manager.ConvertSizeUnitMode.FLOAT_STR_SPACE)
             file_modified = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
             file_permissions = oct(os.stat(file_path).st_mode)[-3:]
 
