@@ -3,17 +3,9 @@
     <q-page-container>
       <q-page padding class="row justify-center items-center">
         <q-card style="width: 30em; height: 40em" class="shadow-1">
-          <q-inner-loading
-            :showing="loginLoading"
-            size="5em"
-            color="secondary"
-          />
+          <q-inner-loading :showing="loginLoading" size="5em" color="secondary" />
           <q-card-section class="q-py-xl">
-            <img
-              class="login-logo"
-              src="/src/assets/Server99-logo-full.png"
-              alt="Logo"
-            />
+            <img class="login-logo" src="../assets/Server99-logo-full.png" alt="Logo" />
           </q-card-section>
           <q-card-section class="q-py-none q-px-lg">
             <q-input
@@ -51,15 +43,11 @@
                   class="cursor-pointer"
                   @click="isPwd = !isPwd"
                 >
-                  <ToolTip
-                    :content="isPwd ? 'Show Password' : 'Hide Password'"
-                  />
+                  <ToolTip :content="isPwd ? 'Show Password' : 'Hide Password'" />
                 </q-icon>
               </template>
             </q-input>
-            <p
-              class="text-body2 text-weight-bold text-center text-negative q-mb-none"
-            >
+            <p class="text-body2 text-weight-bold text-center text-negative q-mb-none">
               {{ authError }}&nbsp;
             </p>
           </q-card-section>
@@ -100,26 +88,26 @@ body.screen--xl {
 }
 </style>
 <script>
-import { ref } from "vue";
-import ErrorDialog from "/src/components/ErrorDialog.vue";
-import ToolTip from "src/components/ToolTip.vue";
-import { useUsernameStore } from "stores/username";
+import { ref } from 'vue'
+import ErrorDialog from '/src/components/ErrorDialog.vue'
+import ToolTip from 'src/components/ToolTip.vue'
+import { useUsernameStore } from 'stores/username'
 
 export default {
   data() {
     return {
       isPwd: ref(true),
-      username: "",
-      password: "",
-      authError: "",
+      username: '',
+      password: '',
+      authError: '',
       loginLoading: false,
-    };
+    }
   },
   setup() {
-    const username_store = useUsernameStore();
+    const username_store = useUsernameStore()
     return {
       username_store,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -127,30 +115,26 @@ export default {
   },
   methods: {
     login() {
-      this.loginLoading = true;
+      this.loginLoading = true
       this.$api
-        .post(
-          "/login",
-          { username: this.username, password: this.password },
-          { timeout: 5000 },
-        )
+        .post('/login', { username: this.username, password: this.password }, { timeout: 5000 })
         .then((response) => {
-          this.authError = "";
-          localStorage.setItem("jwt-token", response.data.access_token);
+          this.authError = ''
+          localStorage.setItem('jwt-token', response.data.access_token)
           // Set username in UsernameStore
-          this.username_store.setUsername(this.username);
-          this.$router.push({ path: "/dashboard" });
-          this.loginLoading = false;
+          this.username_store.setUsername(this.username)
+          this.$router.push({ path: '/dashboard' })
+          this.loginLoading = false
         })
         .catch((error) => {
           if (error.response == undefined) {
-            this.authError = "Server is not responding";
+            this.authError = 'Server is not responding'
           } else {
-            this.authError = error.response.data.detail;
+            this.authError = error.response.data.detail
           }
-          this.loginLoading = false;
-        });
+          this.loginLoading = false
+        })
     },
   },
-};
+}
 </script>

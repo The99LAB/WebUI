@@ -23,50 +23,50 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import { ref } from 'vue'
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
     return {
       visible: ref(false),
       uuid: null,
-      selectedSoundDeviceModel: { label: "AC97", value: "ac97" },
+      selectedSoundDeviceModel: { label: 'AC97', value: 'ac97' },
       soundDevicesModel: [
-        { label: "AC97", value: "ac97" },
-        { label: "ICH6", value: "ich6" },
-        { label: "ICH9", value: "ich9" },
+        { label: 'AC97', value: 'ac97' },
+        { label: 'ICH6', value: 'ich6' },
+        { label: 'ICH9', value: 'ich9' },
       ],
-    };
+    }
   },
-  emits: ["sound-add-finished"],
+  emits: ['sound-add-finished'],
   components: {
     ErrorDialog,
   },
   methods: {
     show(uuid) {
-      this.uuid = uuid;
+      this.uuid = uuid
       if (this.selectedSoundDeviceModel == null) {
-        this.selectedSoundDeviceModel = this.soundDevicesModel[0].value;
+        this.selectedSoundDeviceModel = this.soundDevicesModel[0].value
       }
-      this.visible = true;
+      this.visible = true
     },
     addSoundDevice() {
       this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-sound-add", {
+        .post('/vm-manager/' + this.uuid + '/edit-sound-add', {
           model: this.selectedSoundDeviceModel.value,
         })
-        .then((response) => {
-          this.$emit("sound-add-finished");
-          this.visible = false;
+        .then(() => {
+          this.$emit('sound-add-finished')
+          this.visible = false
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error", [
-            "Failed to add sound device.",
+          this.$refs.errorDialog.show('Error', [
+            'Failed to add sound device.',
             error.response.data.detail,
-          ]);
-        });
+          ])
+        })
     },
   },
-};
+}
 </script>

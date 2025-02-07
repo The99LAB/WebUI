@@ -16,14 +16,14 @@
   <ErrorDialog ref="errorDialog" />
 </template>
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
     return {
       usbDevicesList: [],
       selectedUsbDevice: null,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -31,46 +31,41 @@ export default {
   methods: {
     updateUsbDevices() {
       this.$api
-        .get("/host/system-devices/usb")
+        .get('/host/system-devices/usb')
         .then((response) => {
-          this.usbDevicesList = response.data;
-          if (
-            this.usbDevicesList.length > 0 &&
-            this.selectedUsbDevice == null
-          ) {
-            this.selectedUsbDevice = this.usbDevicesList[0];
+          this.usbDevicesList = response.data
+          if (this.usbDevicesList.length > 0 && this.selectedUsbDevice == null) {
+            this.selectedUsbDevice = this.usbDevicesList[0]
           }
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting USB devices list", [
-            error,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error getting USB devices list', [error])
+        })
     },
     getSelectedUsbDevice() {
-      return this.selectedUsbDevice;
+      return this.selectedUsbDevice
     },
     getSelectedUsbDeviceName() {
       if (this.selectedUsbDevice == null) {
-        return null;
+        return null
       }
-      return this.selectedUsbDevice["name"];
+      return this.selectedUsbDevice['name']
     },
     getSelectedUsbVendorId() {
       if (this.selectedUsbDevice == null) {
-        return null;
+        return null
       }
-      return this.selectedUsbDevice["vendor_id"];
+      return this.selectedUsbDevice['vendor_id']
     },
     getSelectedUsbProductId() {
       if (this.selectedUsbDevice == null) {
-        return null;
+        return null
       }
-      return this.selectedUsbDevice["product_id"];
+      return this.selectedUsbDevice['product_id']
     },
   },
   mounted() {
-    this.updateUsbDevices();
+    this.updateUsbDevices()
   },
-};
+}
 </script>

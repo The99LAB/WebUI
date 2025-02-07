@@ -96,11 +96,11 @@
 </template>
 
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
-import ToolTip from "src/components/ToolTip.vue";
-import EditVmDialog from "src/components/vm/EditVmDialog.vue";
-import { convertsize } from "src/utils/convertsize";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
+import ToolTip from 'src/components/ToolTip.vue'
+import EditVmDialog from 'src/components/vm/EditVmDialog.vue'
+import { convertsize } from 'src/utils/convertsize'
 
 export default {
   data() {
@@ -108,58 +108,58 @@ export default {
       data: [],
       columns: [
         {
-          name: "id",
-          label: "ID",
-          field: "id",
-          align: "left",
+          name: 'id',
+          label: 'ID',
+          field: 'id',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "state",
-          label: "State",
-          field: "status",
-          align: "left",
+          name: 'state',
+          label: 'State',
+          field: 'status',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "autostart",
-          label: "Autostart",
-          field: "autostart",
-          align: "left",
+          name: 'autostart',
+          label: 'Autostart',
+          field: 'autostart',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "vcpu",
-          label: "vCPU",
-          field: "vcpu",
-          align: "left",
+          name: 'vcpu',
+          label: 'vCPU',
+          field: 'vcpu',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "memory_min",
-          label: "Memory Min",
-          field: "memory_min",
-          align: "left",
+          name: 'memory_min',
+          label: 'Memory Min',
+          field: 'memory_min',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "memory_max",
-          label: "Memory Max",
-          field: "memory_max",
-          align: "left",
+          name: 'memory_max',
+          label: 'Memory Max',
+          field: 'memory_max',
+          align: 'left',
           sortable: true,
         },
       ],
       tableLoading: false,
       selectedVm: [],
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -170,105 +170,92 @@ export default {
   computed: {
     convertMemory() {
       return (value) => {
-        return convertsize(value, "B", null, "int_str_space");
-      };
+        return convertsize(value, 'B', null, 'int_str_space')
+      }
     },
   },
   methods: {
     getData() {
-      this.tableLoading = true;
-      var selectedvmid =
-        this.selectedVm.length > 0 ? this.selectedVm[0].id : null;
-      this.selectedVm = [];
+      this.tableLoading = true
+      var selectedvmid = this.selectedVm.length > 0 ? this.selectedVm[0].id : null
+      this.selectedVm = []
       this.$api
-        .get("/vm/")
+        .get('/vm/')
         .then((response) => {
-          this.data = response.data;
-          console.log(this.data);
-          this.tableLoading = false;
+          this.data = response.data
+          console.log(this.data)
+          this.tableLoading = false
           if (selectedvmid) {
-            this.selectedVm = this.data.filter((vm) => vm.id === selectedvmid);
+            this.selectedVm = this.data.filter((vm) => vm.id === selectedvmid)
           }
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error loading VM templates", [
-            error.response.data.detail,
-          ]);
-          this.tableLoading = false;
-        });
+          this.$refs.errorDialog.show('Error loading VM templates', [error.response.data.detail])
+          this.tableLoading = false
+        })
     },
     editVm() {
-      this.$refs.editVmDialog.show(this.selectedVm[0].id);
+      this.$refs.editVmDialog.show(this.selectedVm[0].id)
     },
     startVm() {
       this.$api
         .post(`/vm/${this.selectedVm[0].id}/start`)
         .then(() => {
-          this.getData();
+          this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error starting VM", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error starting VM', [error.response.data.detail])
+        })
     },
     shutdownVm() {
       this.$api
         .post(`/vm/${this.selectedVm[0].id}/shutdown`)
         .then(() => {
-          this.getData();
+          this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error shutting down VM", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error shutting down VM', [error.response.data.detail])
+        })
     },
     forcestopVm() {
       this.$api
         .post(`/vm/${this.selectedVm[0].id}/forcestop`)
         .then(() => {
-          this.getData();
+          this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error stopping VM", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error stopping VM', [error.response.data.detail])
+        })
     },
     resetVm() {
       this.$api
         .post(`/vm/${this.selectedVm[0].id}/reset`)
         .then(() => {
-          this.getData();
+          this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error resetting VM", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error resetting VM', [error.response.data.detail])
+        })
     },
     removeVm() {
       this.$refs.confirmDialog.show(
-        "Remove VM",
-        ["Are you sure you want to remove the selected VM?"],
+        'Remove VM',
+        ['Are you sure you want to remove the selected VM?'],
         () => {
           this.$api
             .delete(`/vm/${this.selectedVm[0].id}`)
             .then(() => {
-              this.getData();
+              this.getData()
             })
             .catch((error) => {
-              this.$refs.errorDialog.show("Error removing VM", [
-                error.response.data.detail,
-              ]);
-            });
+              this.$refs.errorDialog.show('Error removing VM', [error.response.data.detail])
+            })
         },
-      );
+      )
     },
   },
   mounted() {
-    this.getData();
+    this.getData()
   },
-};
+}
 </script>

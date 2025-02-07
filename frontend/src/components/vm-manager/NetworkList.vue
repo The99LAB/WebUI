@@ -1,10 +1,5 @@
 <template>
-  <q-select
-    label="Network"
-    v-model="selectedNetwork"
-    :options="networkList"
-    option-label="name"
-  >
+  <q-select label="Network" v-model="selectedNetwork" :options="networkList" option-label="name">
     <template v-slot:option="scope">
       <q-item v-bind="scope.itemProps">
         <q-item-section>
@@ -21,25 +16,25 @@ export default {
   data() {
     return {
       networkList: [],
-      selectedNetwork: "default",
-    };
+      selectedNetwork: 'default',
+    }
   },
   methods: {
     updateNetworkList() {
       this.$api
-        .get("vm-networks")
+        .get('vm-networks')
         .then((response) => {
-          this.networkList = response.data;
-          this.selectedNetwork = this.networkList[0];
+          this.networkList = response.data
+          this.selectedNetwork = this.networkList[0]
         })
-        .catch((error) => {});
+        .catch(() => {})
     },
     getSelectedNetwork() {
-      return this.selectedNetwork["uuid"];
+      return this.selectedNetwork['uuid']
     },
   },
   mounted() {
-    this.updateNetworkList();
+    this.updateNetworkList()
   },
-};
+}
 </script>

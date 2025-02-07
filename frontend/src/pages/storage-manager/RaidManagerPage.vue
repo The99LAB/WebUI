@@ -15,19 +15,11 @@
       </template>
       <template v-slot:top-left>
         <q-btn round flat color="primary" icon="mdi-refresh" @click="fetchData">
-          <q-tooltip :offset="[5, 5]"
-            >Refresh RAID Arrays information</q-tooltip
-          >
+          <q-tooltip :offset="[5, 5]">Refresh RAID Arrays information</q-tooltip>
         </q-btn>
       </template>
       <template v-slot:top-right>
-        <q-btn
-          round
-          flat
-          color="primary"
-          icon="mdi-plus"
-          @click="arrayCreateDialogOpen"
-        >
+        <q-btn round flat color="primary" icon="mdi-plus" @click="arrayCreateDialogOpen">
           <q-tooltip :offset="[0, 2]">New Array</q-tooltip>
         </q-btn>
         <q-btn
@@ -81,16 +73,8 @@
       </template>
       <template v-slot:body-cell-devices="props">
         <q-td :props="props">
-          <span
-            v-for="disk in props.row.disks"
-            :key="disk"
-            class="row items-center"
-          >
-            <q-icon
-              class="q-pa-none q-mr-xs"
-              name="mdi-circle"
-              color="primary"
-            />
+          <span v-for="disk in props.row.disks" :key="disk" class="row items-center">
+            <q-icon class="q-pa-none q-mr-xs" name="mdi-circle" color="primary" />
             {{ disk }}
           </span>
         </q-td>
@@ -133,18 +117,14 @@
               <template v-slot:option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section>
-                    <q-item-label>{{
-                      raidLabels[scope.opt].label
-                    }}</q-item-label>
+                    <q-item-label>{{ raidLabels[scope.opt].label }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </template>
               <template v-slot:selected-item="scope">
                 <q-item v-bind="scope.itemProps" class="q-pl-none">
                   <q-item-section>
-                    <q-item-label>{{
-                      raidLabels[scope.opt].label
-                    }}</q-item-label>
+                    <q-item-label>{{ raidLabels[scope.opt].label }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </template>
@@ -162,31 +142,21 @@
               :rules="[
                 (val) =>
                   val.length >= raidLabels[createArrayLevel].minDevices ||
-                  'At least ' +
-                    raidLabels[createArrayLevel].minDevices +
-                    ' devices are required',
+                  'At least ' + raidLabels[createArrayLevel].minDevices + ' devices are required',
               ]"
             >
               <template v-slot:option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section>
-                    <q-item-label
-                      >{{ scope.opt.name }} -
-                      {{ scope.opt.model }}</q-item-label
-                    >
-                    <q-item-label caption
-                      >size: {{ scope.opt.size }}</q-item-label
-                    >
+                    <q-item-label>{{ scope.opt.name }} - {{ scope.opt.model }}</q-item-label>
+                    <q-item-label caption>size: {{ scope.opt.size }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </template>
               <template v-slot:selected-item="scope">
                 <q-item v-bind="scope.itemProps" class="q-pl-none">
                   <q-item-section>
-                    <q-item-label
-                      >{{ scope.opt.name }} -
-                      {{ scope.opt.model }}</q-item-label
-                    >
+                    <q-item-label>{{ scope.opt.name }} - {{ scope.opt.model }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </template>
@@ -214,8 +184,8 @@
 </template>
 
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 
 export default {
   data() {
@@ -223,87 +193,87 @@ export default {
       data: [],
       columns: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "active",
-          label: "Status",
-          field: "active",
-          align: "left",
+          name: 'active',
+          label: 'Status',
+          field: 'active',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "level",
-          label: "Level",
-          field: "level",
-          align: "left",
+          name: 'level',
+          label: 'Level',
+          field: 'level',
+          align: 'left',
         },
         {
-          name: "devices",
-          label: "Devices",
-          field: "devices",
-          align: "left",
+          name: 'devices',
+          label: 'Devices',
+          field: 'devices',
+          align: 'left',
         },
         {
-          name: "capacity",
-          label: "Capacity",
-          field: "size",
-          align: "left",
+          name: 'capacity',
+          label: 'Capacity',
+          field: 'size',
+          align: 'left',
         },
         {
-          name: "filesystem",
-          label: "Filesystem",
-          field: "fstype",
-          align: "left",
+          name: 'filesystem',
+          label: 'Filesystem',
+          field: 'fstype',
+          align: 'left',
         },
         {
-          name: "mountpoint",
-          label: "Mountpoint",
-          field: "mountpoint",
-          align: "left",
+          name: 'mountpoint',
+          label: 'Mountpoint',
+          field: 'mountpoint',
+          align: 'left',
         },
       ],
       raidLabels: {
         raid0: {
-          label: "RAID0 (Stripe)",
+          label: 'RAID0 (Stripe)',
           minDevices: 2,
         },
         raid1: {
-          label: "RAID1 (Mirrored)",
+          label: 'RAID1 (Mirrored)',
           minDevices: 2,
         },
         raid5: {
-          label: "RAID5",
+          label: 'RAID5',
           minDevices: 3,
         },
         raid6: {
-          label: "RAID6",
+          label: 'RAID6',
           minDevices: 4,
         },
         raid10: {
-          label: "RAID10",
+          label: 'RAID10',
           minDevices: 4,
         },
       },
       pagination: {
         rowsPerPage: 15,
-        sortBy: "name",
+        sortBy: 'name',
       },
       selectedRows: [],
       tableLoading: true,
       createArrayDialog: false,
       createArrayDevices: [],
       createArrayDeviceOptions: [],
-      createArrayLevel: "raid1",
-      createArrayLevelOptions: ["raid0", "raid1", "raid5", "raid6", "raid10"],
-      createArrayFilesystem: "ext4",
-      createArrayFilesystemOptions: ["ext4", "xfs"],
+      createArrayLevel: 'raid1',
+      createArrayLevelOptions: ['raid0', 'raid1', 'raid5', 'raid6', 'raid10'],
+      createArrayFilesystem: 'ext4',
+      createArrayFilesystemOptions: ['ext4', 'xfs'],
       createArrayLoading: false,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -311,71 +281,69 @@ export default {
   },
   methods: {
     fetchData() {
-      this.tableLoading = true;
+      this.tableLoading = true
       this.$api
-        .get("storage/raid-manager")
+        .get('storage/raid-manager')
         .then((response) => {
-          this.data = response.data;
-          this.tableLoading = false;
+          this.data = response.data
+          this.tableLoading = false
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error fetching data", [error]);
-        });
+          this.$refs.errorDialog.show('Error fetching data', [error])
+        })
     },
     arrayCreateDialogOpen() {
-      this.createArrayDialog = true;
-      this.createArrayLoading = true;
+      this.createArrayDialog = true
+      this.createArrayLoading = true
       this.$api
-        .get("storage/disks")
+        .get('storage/disks')
         .then((response) => {
           this.createArrayDeviceOptions = response.data.filter(
-            (item) =>
-              item.disktype == "individual" && item.partitions.length == 0,
-          );
-          this.createArrayLoading = false;
+            (item) => item.disktype == 'individual' && item.partitions.length == 0,
+          )
+          this.createArrayLoading = false
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error loading disks", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error loading disks', [errormsg])
+        })
     },
     arrayCreate() {
-      const level = this.createArrayLevel.replace("raid", "");
-      const devices = this.createArrayDevices.map((item) => item.path);
-      const filesystem = this.createArrayFilesystem;
-      this.createArrayLoading = true;
+      const level = this.createArrayLevel.replace('raid', '')
+      const devices = this.createArrayDevices.map((item) => item.path)
+      const filesystem = this.createArrayFilesystem
+      this.createArrayLoading = true
       this.$api
-        .post("storage/raid-manager/create", {
+        .post('storage/raid-manager/create', {
           level: level,
           devices: devices,
           filesystem: filesystem,
         })
-        .then((response) => {
-          this.createArrayLoading = false;
-          this.createArrayDialog = false;
+        .then(() => {
+          this.createArrayLoading = false
+          this.createArrayDialog = false
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error creating array", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error creating array', [errormsg])
+        })
     },
     arrayDelete() {
       this.$api
-        .post("storage/raid-manager/delete", {
+        .post('storage/raid-manager/delete', {
           path: this.selectedRows[0].path,
         })
-        .then((response) => {
-          this.selectedRows = [];
+        .then(() => {
+          this.selectedRows = []
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error deleting array", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error deleting array', [errormsg])
+        })
     },
   },
   mounted() {
-    this.fetchData();
+    this.fetchData()
   },
-};
+}
 </script>

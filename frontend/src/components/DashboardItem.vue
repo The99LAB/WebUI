@@ -12,7 +12,7 @@ export default {
   props: {
     to: {
       type: String,
-      default: "/",
+      default: '/',
     },
     icon: {
       type: String,
@@ -23,5 +23,5 @@ export default {
       default: undefined,
     },
   },
-};
+}
 </script>

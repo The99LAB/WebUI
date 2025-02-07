@@ -20,9 +20,7 @@
           flat
           color="primary"
           icon="mdi-pencil"
-          :disable="
-            table_selected.length === 0 || table_selected[0].name === 'root'
-          "
+          :disable="table_selected.length === 0 || table_selected[0].name === 'root'"
           @click="editUserDialogShow"
         >
           <q-tooltip :offset="[5, 5]">Edit User</q-tooltip>
@@ -31,9 +29,7 @@
           round
           flat
           color="primary"
-          :disable="
-            table_selected.length === 0 || table_selected[0].name === 'root'
-          "
+          :disable="table_selected.length === 0 || table_selected[0].name === 'root'"
           icon="mdi-minus"
           @click="
             $refs.confirmDialog.show(
@@ -54,7 +50,7 @@
             size="sm"
           >
             <q-tooltip>
-              {{ props.row.smb_user ? "SMB user" : "Not a SMB user" }}
+              {{ props.row.smb_user ? 'SMB user' : 'Not a SMB user' }}
             </q-tooltip>
           </q-icon>
         </q-td>
@@ -74,70 +70,41 @@
               v-model="editUserDialogPassword"
               label="Password"
               type="password"
-              :rules="[
-                (val) =>
-                  val.length >= 8 || 'Password must be at least 8 characters',
-              ]"
+              :rules="[(val) => val.length >= 8 || 'Password must be at least 8 characters']"
               lazy-rules
             />
             <q-input
               v-model="editUserDialogPasswordConfirm"
               label="Confirm Password"
               type="password"
-              :rules="[
-                (val) =>
-                  val === editUserDialogPassword || 'Passwords do not match',
-              ]"
+              :rules="[(val) => val === editUserDialogPassword || 'Passwords do not match']"
               lazy-rules
             />
             <div class="row">
               <q-space />
-              <q-btn
-                class="q-mt-sm q-mb-md"
-                label="Save"
-                color="primary"
-                outline
-                type="submit"
-              />
+              <q-btn class="q-mt-sm q-mb-md" label="Save" color="primary" outline type="submit" />
             </div>
           </q-form>
           <q-separator spaced="md" />
           <q-form @submit="editUserSmb">
-            <q-checkbox
-              v-model="editUserDialogSmb"
-              left-label
-              label="Enable SMB"
-              class="q-mt-md"
-            />
+            <q-checkbox v-model="editUserDialogSmb" left-label label="Enable SMB" class="q-mt-md" />
             <q-input
               v-model="editUserDialogSmbPassword"
               label="Password"
               type="password"
               v-if="editUserDialogSmb"
-              :rules="[
-                (val) =>
-                  val.length >= 8 || 'Password must be at least 8 characters',
-              ]"
+              :rules="[(val) => val.length >= 8 || 'Password must be at least 8 characters']"
             />
             <q-input
               v-model="editUserDialogSmbPasswordConfirm"
               label="Confirm Password"
               type="password"
               v-if="editUserDialogSmb"
-              :rules="[
-                (val) =>
-                  val === editUserDialogSmbPassword || 'Passwords do not match',
-              ]"
+              :rules="[(val) => val === editUserDialogSmbPassword || 'Passwords do not match']"
             />
             <div class="row">
               <q-space />
-              <q-btn
-                class="q-mt-sm q-mb-md"
-                label="Save"
-                color="primary"
-                outline
-                type="submit"
-              />
+              <q-btn class="q-mt-sm q-mb-md" label="Save" color="primary" outline type="submit" />
             </div>
           </q-form>
         </q-card-section>
@@ -149,8 +116,8 @@
 </template>
 
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 
 export default {
   data() {
@@ -158,68 +125,68 @@ export default {
       users: [],
       table_culumns: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "groups",
-          label: "Groups",
-          field: "groups",
-          align: "left",
+          name: 'groups',
+          label: 'Groups',
+          field: 'groups',
+          align: 'left',
           sortable: false,
         },
         {
-          name: "home",
-          label: "Home",
-          field: "home",
-          align: "left",
+          name: 'home',
+          label: 'Home',
+          field: 'home',
+          align: 'left',
           sortable: false,
         },
         {
-          name: "shell",
-          label: "Shell",
-          field: "shell",
-          align: "left",
+          name: 'shell',
+          label: 'Shell',
+          field: 'shell',
+          align: 'left',
           sortable: false,
         },
         {
-          name: "uid",
-          label: "UID",
-          field: "uid",
-          align: "left",
+          name: 'uid',
+          label: 'UID',
+          field: 'uid',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "gid",
-          label: "GID",
-          field: "gid",
-          align: "left",
+          name: 'gid',
+          label: 'GID',
+          field: 'gid',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "smb",
-          label: "SMB",
-          field: "smb_user",
-          align: "left",
+          name: 'smb',
+          label: 'SMB',
+          field: 'smb_user',
+          align: 'left',
         },
       ],
       table_pagination: {
         rowsPerPage: 15,
-        sortBy: "name",
+        sortBy: 'name',
         descending: false,
       },
       table_selected: [],
       table_loading: false,
       editUserDialog: false,
-      editUserDialogPassword: "",
-      editUserDialogPasswordConfirm: "",
+      editUserDialogPassword: '',
+      editUserDialogPasswordConfirm: '',
       editUserDialogSmb: false,
-      editUserDialogSmbPassword: "",
-      editUserDialogSmbPasswordConfirm: "",
-    };
+      editUserDialogSmbPassword: '',
+      editUserDialogSmbPasswordConfirm: '',
+    }
   },
   components: {
     ErrorDialog,
@@ -227,93 +194,87 @@ export default {
   },
   methods: {
     getUsers() {
-      this.table_loading = true;
+      this.table_loading = true
       this.$api
-        .get("/system/users")
+        .get('/system/users')
         .then((response) => {
-          this.users = response.data;
-          this.table_loading = false;
+          this.users = response.data
+          this.table_loading = false
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data : error;
-          this.$refs.errorDialog.showError("Error getting users", [errormsg]);
-          this.table_loading = false;
-        });
+          let errormsg = error.response ? error.response.data : error
+          this.$refs.errorDialog.showError('Error getting users', [errormsg])
+          this.table_loading = false
+        })
     },
     editUserDialogShow() {
-      this.editUserDialogSmb = this.table_selected[0].smb_user ? true : false;
-      this.editUserDialog = true;
+      this.editUserDialogSmb = this.table_selected[0].smb_user ? true : false
+      this.editUserDialog = true
     },
     editUserGeneral() {
       this.$api
-        .post("system/users/change-password", {
+        .post('system/users/change-password', {
           username: this.table_selected[0].name,
           password: this.editUserDialogPassword,
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error changing password", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error changing password', [errormsg])
+        })
     },
     editUserSmb() {
       if (this.editUserDialogSmb) {
         this.$api
-          .post("system/users/change-smb-password", {
+          .post('system/users/change-smb-password', {
             username: this.table_selected[0].name,
             password: this.editUserDialogSmbPassword,
           })
-          .then((response) => {
-            this.getUsers();
+          .then(() => {
+            this.getUsers()
           })
           .catch((error) => {
-            const errormsg = error.response
-              ? error.response.data.detail
-              : error;
-            this.$refs.errorDialog.show("Error changing smb password", [
-              errormsg,
-            ]);
-          });
+            const errormsg = error.response ? error.response.data.detail : error
+            this.$refs.errorDialog.show('Error changing smb password', [errormsg])
+          })
       } else {
         this.$api
-          .post("system/users/remove-smb-user", {
+          .post('system/users/remove-smb-user', {
             username: this.table_selected[0].name,
           })
-          .then((response) => {
-            this.getUsers();
+          .then(() => {
+            this.getUsers()
           })
           .catch((error) => {
-            const errormsg = error.response
-              ? error.response.data.detail
-              : error;
-            this.$refs.errorDialog.show("Error removing smb user", [errormsg]);
-          });
+            const errormsg = error.response ? error.response.data.detail : error
+            this.$refs.errorDialog.show('Error removing smb user', [errormsg])
+          })
       }
     },
     removeUser() {
-      this.table_loading = true;
+      this.table_loading = true
       this.$api
-        .post("system/users/remove-user", {
+        .post('system/users/remove-user', {
           username: this.table_selected[0].name,
         })
-        .then((response) => {
-          this.getUsers();
+        .then(() => {
+          this.getUsers()
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error removing user", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error removing user', [errormsg])
+        })
     },
   },
   computed: {
     formattedUsers() {
       return this.users.map((user) => ({
         ...user,
-        groups: user.groups.join(", "), // Convert the groups array to a string
-      }));
+        groups: user.groups.join(', '), // Convert the groups array to a string
+      }))
     },
   },
   mounted() {
-    this.getUsers();
+    this.getUsers()
   },
-};
+}
 </script>

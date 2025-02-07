@@ -2,23 +2,11 @@
   <q-layout view="lHh LpR fFf">
     <q-header class="header-theme">
       <q-toolbar>
-        <q-btn
-          dense
-          flat
-          round
-          icon="menu"
-          @click="leftDrawerOpen = !leftDrawerOpen"
-        >
+        <q-btn dense flat round icon="menu" @click="leftDrawerOpen = !leftDrawerOpen">
           <ToolTip content="Toggle" />
         </q-btn>
         <q-space />
-        <q-btn
-          dense
-          flat
-          round
-          icon="notifications"
-          @click="rightDrawerOpen = !rightDrawerOpen"
-        >
+        <q-btn dense flat round icon="notifications" @click="rightDrawerOpen = !rightDrawerOpen">
           <q-badge
             floating
             color="red"
@@ -66,16 +54,10 @@
           dense
           flat
           round
-          :icon="
-            $q.dark.isActive ? 'mdi-lightbulb' : 'mdi-moon-waning-crescent'
-          "
+          :icon="$q.dark.isActive ? 'mdi-lightbulb' : 'mdi-moon-waning-crescent'"
           @click="this.$q.dark.toggle()"
         >
-          <ToolTip
-            :content="
-              $q.dark.isActive ? 'Enable light mode' : 'Enable dark mode'
-            "
-          />
+          <ToolTip :content="$q.dark.isActive ? 'Enable light mode' : 'Enable dark mode'" />
         </q-btn>
         <q-btn dense flat round icon="logout" @click="logout()">
           <ToolTip content="Logout" />
@@ -87,13 +69,11 @@
       <q-list>
         <q-item class="q-pa-md">
           <q-item-section top avatar>
-            <q-img src="/src/assets/Server99-logo-base.png" />
+            <q-img src="../assets/Server99-logo-base.png" />
           </q-item-section>
           <q-item-section>
             <q-item-label class="text-body1">
-              <q-tooltip anchor="bottom left" self="top left" :offset="[0, 5]">
-                User
-              </q-tooltip>
+              <q-tooltip anchor="bottom left" self="top left" :offset="[0, 5]"> User </q-tooltip>
               <q-icon name="mdi-account" />
               {{ username }}
             </q-item-label>
@@ -106,58 +86,18 @@
           </q-item-section>
         </q-item>
         <DashboardItem to="/dashboard" icon="bi-speedometer" name="Dashboard" />
-        <q-item-label header class="q-pb-none q-pt-md"
-          >Virtual Machines OLD</q-item-label
-        >
-        <DashboardItem
-          to="/vm-manager/vms"
-          icon="ion-cube"
-          name="Virtual Machines"
-        />
-        <DashboardItem
-          to="/vm-manager/hotplug-usb"
-          icon="mdi-usb"
-          name="Hotplug USB"
-        />
-        <DashboardItem
-          to="/vm-manager/backups"
-          icon="mdi-backup-restore"
-          name="Backups"
-        />
-        <DashboardItem
-          to="/vm-manager/download-iso"
-          icon="mdi-disc"
-          name="Download ISO"
-        />
-        <q-item-label header class="q-pb-none q-pt-md"
-          >Virtual Machines New</q-item-label
-        >
-        <DashboardItem
-          to="/vm/overview"
-          icon="ion-cube"
-          name="Virtual Machines"
-        />
-        <DashboardItem
-          to="/vm/templates"
-          icon="mdi-cube-outline"
-          name="Templates"
-        />
+        <q-item-label header class="q-pb-none q-pt-md">Virtual Machines OLD</q-item-label>
+        <DashboardItem to="/vm-manager/vms" icon="ion-cube" name="Virtual Machines" />
+        <DashboardItem to="/vm-manager/hotplug-usb" icon="mdi-usb" name="Hotplug USB" />
+        <DashboardItem to="/vm-manager/backups" icon="mdi-backup-restore" name="Backups" />
+        <DashboardItem to="/vm-manager/download-iso" icon="mdi-disc" name="Download ISO" />
+        <q-item-label header class="q-pb-none q-pt-md">Virtual Machines New</q-item-label>
+        <DashboardItem to="/vm/overview" icon="ion-cube" name="Virtual Machines" />
+        <DashboardItem to="/vm/templates" icon="mdi-cube-outline" name="Templates" />
         <q-item-label header class="q-pb-none q-pt-md">Docker</q-item-label>
-        <DashboardItem
-          to="/docker-manager/containers"
-          icon="bi-boxes"
-          name="Containers"
-        />
-        <DashboardItem
-          to="/docker-manager/images"
-          icon="fa-solid fa-clone"
-          name="Images"
-        />
-        <DashboardItem
-          to="/docker-manager/networks"
-          icon="mdi-lan"
-          name="Networks"
-        />
+        <DashboardItem to="/docker-manager/containers" icon="bi-boxes" name="Containers" />
+        <DashboardItem to="/docker-manager/images" icon="fa-solid fa-clone" name="Images" />
+        <DashboardItem to="/docker-manager/networks" icon="mdi-lan" name="Networks" />
         <q-expansion-item>
           <template v-slot:header>
             <div class="row items-center">
@@ -185,21 +125,9 @@
           name="Shared Folders"
         />
         <q-item-label header class="q-pb-none q-pt-md">System</q-item-label>
-        <DashboardItem
-          to="/system/system-info"
-          icon="mdi-monitor"
-          name="System Information"
-        />
-        <DashboardItem
-          to="/system/networks"
-          icon="mdi-network"
-          name="Networks"
-        />
-        <DashboardItem
-          to="/system/system-devices"
-          icon="bi-gpu-card"
-          name="System Devices"
-        />
+        <DashboardItem to="/system/system-info" icon="mdi-monitor" name="System Information" />
+        <DashboardItem to="/system/networks" icon="mdi-network" name="Networks" />
+        <DashboardItem to="/system/system-devices" icon="bi-gpu-card" name="System Devices" />
         <DashboardItem to="/system/users" icon="mdi-account" name="Users" />
         <DashboardItem
           to="/system/filemanager"
@@ -249,10 +177,7 @@
                 size="sm"
                 padding="none"
                 label="Dismiss"
-                v-if="
-                  n.type != 'progress' ||
-                  (n.type == 'progress' && n.progress == 100)
-                "
+                v-if="n.type != 'progress' || (n.type == 'progress' && n.progress == 100)"
               />
               <q-space />{{ n.timestamp }}
             </q-item-label>
@@ -273,10 +198,7 @@
       <router-view />
       <ErrorDialog ref="errorDialog" />
       <ConfirmDialog ref="confirmDialog" />
-      <WsReconnectDialog
-        ref="wsReconnectDialog"
-        @ws-reconnect="connectNotificationsWebsocket"
-      />
+      <WsReconnectDialog ref="wsReconnectDialog" @ws-reconnect="connectNotificationsWebsocket" />
     </q-page-container>
   </q-layout>
 </template>
@@ -296,19 +218,18 @@ body.body--dark {
 </style>
 
 <script>
-import { Notify } from "quasar";
-import { defineComponent, ref } from "vue";
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
-import ToolTip from "src/components/ToolTip.vue";
-import { useHostnameStore } from "stores/hostname";
-import { useUsernameStore } from "stores/username";
-import { storeToRefs } from "pinia";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
-import DashboardItem from "src/components/DashboardItem.vue";
+import { defineComponent, ref } from 'vue'
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import WsReconnectDialog from 'src/components/WsReconnectDialog.vue'
+import ToolTip from 'src/components/ToolTip.vue'
+import { useHostnameStore } from 'stores/hostname'
+import { useUsernameStore } from 'stores/username'
+import { storeToRefs } from 'pinia'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
+import DashboardItem from 'src/components/DashboardItem.vue'
 
 export default defineComponent({
-  name: "MainLayout",
+  name: 'MainLayout',
   data() {
     return {
       leftDrawerOpen: ref(false),
@@ -316,30 +237,30 @@ export default defineComponent({
       notifications: [],
       showPowerMenu: ref(false),
       notificationIcon: {
-        error: "mdi-alert-circle",
-        warning: "mdi-alert-circle",
-        success: "mdi-check-circle",
-        info: "mdi-information",
+        error: 'mdi-alert-circle',
+        warning: 'mdi-alert-circle',
+        success: 'mdi-check-circle',
+        info: 'mdi-information',
       },
       notificationColor: {
-        error: "red",
-        warning: "orange",
-        success: "green",
-        info: "white",
-        progress: "blue",
+        error: 'red',
+        warning: 'orange',
+        success: 'green',
+        info: 'white',
+        progress: 'blue',
       },
-    };
+    }
   },
   setup() {
-    const hostname_store = useHostnameStore();
-    const { getHostname } = storeToRefs(hostname_store);
-    const username_store = useUsernameStore();
-    const { getUsername } = storeToRefs(username_store);
+    const hostname_store = useHostnameStore()
+    const { getHostname } = storeToRefs(hostname_store)
+    const username_store = useUsernameStore()
+    const { getUsername } = storeToRefs(username_store)
     return {
       hostname: getHostname,
       username: getUsername,
       username_store,
-    };
+    }
   },
 
   components: {
@@ -351,105 +272,97 @@ export default defineComponent({
   },
   methods: {
     logout() {
-      localStorage.setItem("jwt-token", "");
-      this.username_store.clearUsername();
-      this.$router.push({ path: "/login" });
+      localStorage.setItem('jwt-token', '')
+      this.username_store.clearUsername()
+      this.$router.push({ path: '/login' })
     },
     NotificationDelete(id) {
       if (id == -1) {
-        this.notifications = this.notifications.filter(
-          (n) => n.type == "progress",
-        );
+        this.notifications = this.notifications.filter((n) => n.type == 'progress')
       } else {
-        this.notifications = this.notifications.filter((n) => n.id != id);
+        this.notifications = this.notifications.filter((n) => n.id != id)
       }
 
-      this.$api.delete("notifications/" + id).catch((error) => {
-        this.$refs.errorDialog.show("Error deleting notification", [
-          "Could not delete notification.",
+      this.$api.delete('notifications/' + id).catch((error) => {
+        this.$refs.errorDialog.show('Error deleting notification', [
+          'Could not delete notification.',
           error.response.data.detail,
-        ]);
-      });
+        ])
+      })
     },
     connectNotificationsWebsocket() {
-      const jwt_token = localStorage.getItem("jwt-token");
-      this.ws = new WebSocket(
-        this.$WS_ENDPOINT + "/notifications?token=" + jwt_token,
-      );
+      const jwt_token = localStorage.getItem('jwt-token')
+      this.ws = new WebSocket(this.$WS_ENDPOINT + '/notifications?token=' + jwt_token)
 
       this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type == "notifications_init") {
-          this.notifications = data.data;
-        } else if (data.type == "notifications") {
-          this.notifications = data.data;
-        } else if (data.type == "auth_error") {
-          localStorage.setItem("jwt-token", "");
-          this.$router.push({ path: "/login" });
+        const data = JSON.parse(event.data)
+        if (data.type == 'notifications_init') {
+          this.notifications = data.data
+        } else if (data.type == 'notifications') {
+          this.notifications = data.data
+        } else if (data.type == 'auth_error') {
+          localStorage.setItem('jwt-token', '')
+          this.$router.push({ path: '/login' })
         }
-      };
+      }
 
-      this.ws.onclose = (event) => {
-        this.$refs.wsReconnectDialog.show();
-      };
+      this.ws.onclose = () => {
+        this.$refs.wsReconnectDialog.show()
+      }
     },
     powerAction(action) {
-      if (action == "shutdown") {
+      if (action == 'shutdown') {
         this.$refs.confirmDialog.show(
-          "Shutdown",
-          ["Are you sure you want to shutdown?"],
+          'Shutdown',
+          ['Are you sure you want to shutdown?'],
           this.shutdown,
-        );
-      } else if (action == "reboot") {
-        this.$refs.confirmDialog.show(
-          "Reboot",
-          ["Are you sure you want to reboot?"],
-          this.reboot,
-        );
+        )
+      } else if (action == 'reboot') {
+        this.$refs.confirmDialog.show('Reboot', ['Are you sure you want to reboot?'], this.reboot)
       }
-      this.showPowerMenu = false;
+      this.showPowerMenu = false
     },
     shutdown() {
       this.$api
-        .post("host/power/shutdown")
-        .then((response) => {
-          this.$router.push({ name: "shutdown" });
+        .post('host/power/shutdown')
+        .then(() => {
+          this.$router.push({ name: 'shutdown' })
         })
         .catch((error) => {
-          let errormsg = "";
+          let errormsg = ''
           if (error.response == undefined) {
-            errormsg = "Could not connect to server.";
+            errormsg = 'Could not connect to server.'
           } else {
-            errormsg = error.response.data.detail;
+            errormsg = error.response.data.detail
           }
-          this.$refs.errorDialog.show("Shutdown error", [errormsg]);
-        });
+          this.$refs.errorDialog.show('Shutdown error', [errormsg])
+        })
     },
     reboot() {
       this.$api
-        .post("host/power/reboot")
-        .then((response) => {
-          this.$router.push({ name: "reboot" });
+        .post('host/power/reboot')
+        .then(() => {
+          this.$router.push({ name: 'reboot' })
         })
         .catch((error) => {
-          let errormsg = "";
+          let errormsg = ''
           if (error.response == undefined) {
-            errormsg = "Could not connect to server.";
+            errormsg = 'Could not connect to server.'
           } else {
-            errormsg = error.response.data.detail;
+            errormsg = error.response.data.detail
           }
-          this.$refs.errorDialog.show("Reboot error", [errormsg]);
-        });
+          this.$refs.errorDialog.show('Reboot error', [errormsg])
+        })
     },
   },
   created() {
-    this.connectNotificationsWebsocket();
+    this.connectNotificationsWebsocket()
   },
   unmounted() {
-    this.ws.onclose = () => {};
-    this.ws.close();
+    this.ws.onclose = () => {}
+    this.ws.close()
   },
-});
+})
 </script>
 <style lang="scss">
 .disable-focus-helper {

@@ -27,23 +27,23 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref } from 'vue'
 
 export default {
   data() {
     return {
       alert: ref(false),
-    };
+    }
   },
-  emits: ["ws-reconnect"],
+  emits: ['ws-reconnect'],
   methods: {
     show() {
-      this.alert = true;
+      this.alert = true
     },
     reconnect() {
-      this.$emit("ws-reconnect");
-      this.alert = false;
+      this.$emit('ws-reconnect')
+      this.alert = false
     },
   },
-};
+}
 </script>

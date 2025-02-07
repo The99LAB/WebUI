@@ -12,22 +12,10 @@
       hide-selected-banner
     >
       <template v-slot:top-right>
-        <q-btn
-          color="primary"
-          icon="mdi-refresh"
-          round
-          flat
-          @click="getDockerImages"
-        >
+        <q-btn color="primary" icon="mdi-refresh" round flat @click="getDockerImages">
           <q-tooltip :offset="[5, 5]">Refresh Images</q-tooltip>
         </q-btn>
-        <q-btn
-          color="primary"
-          icon="mdi-download"
-          round
-          flat
-          :disable="selectedImage.length == 0"
-        >
+        <q-btn color="primary" icon="mdi-download" round flat :disable="selectedImage.length == 0">
           <q-tooltip :offset="[5, 5]">Update Image</q-tooltip>
         </q-btn>
         <q-btn
@@ -46,13 +34,7 @@
         >
           <q-tooltip :offset="[5, 5]">Delete Image</q-tooltip>
         </q-btn>
-        <q-btn
-          color="primary"
-          icon="mdi-plus"
-          round
-          flat
-          @click="pullImageDialog = true"
-        >
+        <q-btn color="primary" icon="mdi-plus" round flat @click="pullImageDialog = true">
           <q-tooltip :offset="[5, 5]">Pull Image</q-tooltip>
         </q-btn>
       </template>
@@ -88,61 +70,61 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import errorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import { ref } from 'vue'
+import errorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 
 export default {
   data() {
     return {
       dockerImagesColumns: [
         {
-          label: "Repository",
-          field: "repo",
-          name: "repo",
-          align: "left",
+          label: 'Repository',
+          field: 'repo',
+          name: 'repo',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Tag",
-          field: "tag",
-          name: "tag",
-          align: "left",
+          label: 'Tag',
+          field: 'tag',
+          name: 'tag',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Image ID",
-          field: "id",
-          name: "id",
-          align: "left",
+          label: 'Image ID',
+          field: 'id',
+          name: 'id',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Created",
-          field: "created",
-          name: "created",
-          align: "left",
+          label: 'Created',
+          field: 'created',
+          name: 'created',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Size",
-          field: "size",
-          name: "size",
-          align: "left",
+          label: 'Size',
+          field: 'size',
+          name: 'size',
+          align: 'left',
           sortable: true,
         },
       ],
       dockerImages: [],
       dockerImagesPagination: {
-        sortBy: "repository",
+        sortBy: 'repository',
         rowsPerPage: 15,
       },
       selectedImage: ref([]),
       pullImageDialog: false,
-      pullImageName: "",
+      pullImageName: '',
       pullImageLoading: false,
       dockerImagesLoading: false,
-    };
+    }
   },
   components: {
     errorDialog,
@@ -150,61 +132,57 @@ export default {
   },
   methods: {
     getDockerImages() {
-      this.dockerImagesLoading = true;
+      this.dockerImagesLoading = true
       this.$api
-        .get("docker-manager/images")
+        .get('docker-manager/images')
         .then((response) => {
-          this.dockerImages = response.data;
-          this.dockerImagesLoading = false;
+          this.dockerImages = response.data
+          this.dockerImagesLoading = false
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error fetching docker images", [
-            errormsg,
-          ]);
-        });
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error fetching docker images', [errormsg])
+        })
     },
     imageDelete() {
       // create a list of the images. Each item has an id and tag
-      let images = [];
+      let images = []
       for (let i = 0; i < this.selectedImage.length; i++) {
         images.push({
           name: this.selectedImage[i].repo,
           tag: this.selectedImage[i].tag,
-        });
+        })
       }
       // clear the selected images
-      this.selectedImage = [];
+      this.selectedImage = []
       this.$api
-        .post("docker-manager/images/delete", { images: images })
-        .then((response) => {
-          this.getDockerImages();
+        .post('docker-manager/images/delete', { images: images })
+        .then(() => {
+          this.getDockerImages()
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error deleting docker image", [
-            errormsg,
-          ]);
-        });
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error deleting docker image', [errormsg])
+        })
     },
     imagePull() {
-      this.pullImageLoading = true;
+      this.pullImageLoading = true
       this.$api
-        .post("docker-manager/images/pull", { image: this.pullImageName })
-        .then((response) => {
-          this.getDockerImages();
-          this.pullImageLoading = false;
-          this.pullImageDialog = false;
+        .post('docker-manager/images/pull', { image: this.pullImageName })
+        .then(() => {
+          this.getDockerImages()
+          this.pullImageLoading = false
+          this.pullImageDialog = false
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error pulling docker image", [errormsg]);
-          this.pullImageLoading = false;
-        });
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error pulling docker image', [errormsg])
+          this.pullImageLoading = false
+        })
     },
   },
   mounted() {
-    this.getDockerImages();
+    this.getDockerImages()
   },
-};
+}
 </script>

@@ -1,7 +1,7 @@
-import { defineStore } from "pinia";
-import { api } from "boot/axios";
+import { defineStore } from 'pinia'
+import { api } from 'boot/axios'
 
-export const useHostnameStore = defineStore("hostname", {
+export const useHostnameStore = defineStore('hostname', {
   state: () => ({
     hostname: null,
   }),
@@ -9,23 +9,23 @@ export const useHostnameStore = defineStore("hostname", {
   getters: {
     getHostname() {
       if (this.hostname == null) {
-        if (localStorage.getItem("hostname") != null) {
-          this.hostname = localStorage.getItem("hostname");
+        if (localStorage.getItem('hostname') != null) {
+          this.hostname = localStorage.getItem('hostname')
         } else {
-          this.getHostnameApi();
+          this.getHostnameApi()
         }
       }
-      return this.hostname;
+      return this.hostname
     },
   },
 
   actions: {
     getHostnameApi() {
-      console.log("getHostnameApi");
-      api.get("/no-auth/hostname").then((response) => {
-        this.hostname = response.data.hostname;
-        localStorage.setItem("hostname", this.hostname);
-      });
+      console.log('getHostnameApi')
+      api.get('/no-auth/hostname').then((response) => {
+        this.hostname = response.data.hostname
+        localStorage.setItem('hostname', this.hostname)
+      })
     },
   },
-});
+})

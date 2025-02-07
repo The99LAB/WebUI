@@ -10,13 +10,7 @@
       :pagination="containerPagination"
     >
       <template v-slot:top-right>
-        <q-btn
-          color="primary"
-          icon="mdi-refresh"
-          flat
-          round
-          @click="containersUpdate"
-        >
+        <q-btn color="primary" icon="mdi-refresh" flat round @click="containersUpdate">
           <q-tooltip :offset="[0, 5]">Refresh Containers</q-tooltip>
         </q-btn>
         <q-btn color="primary" icon="mdi-plus" flat round @click="containerNew">
@@ -28,18 +22,10 @@
           <q-td key="name" :props="props">
             {{ props.row.name }}
           </q-td>
-          <q-td
-            key="status"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="status" :props="props" class="text-weight-regular text-body2">
             {{ props.row.status }}
           </q-td>
-          <q-td
-            key="actions"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="actions" :props="props" class="text-weight-regular text-body2">
             <q-btn
               icon="mdi-play"
               flat
@@ -83,9 +69,7 @@
               round
               size="sm"
               padding="xs"
-              v-if="
-                props.row.status !== 'running' && props.row.status !== 'paused'
-              "
+              v-if="props.row.status !== 'running' && props.row.status !== 'paused'"
               @click="containerDelete(props.row.id)"
             >
               <q-tooltip :offset="[0, 5]">Delete</q-tooltip>
@@ -107,16 +91,10 @@
               size="xs"
               v-if="props.row.container_type == 'unmanaged'"
             >
-              <q-tooltip :offset="[0, 5]">
-                This container is not managed by the WebUI.
-              </q-tooltip>
+              <q-tooltip :offset="[0, 5]"> This container is not managed by the WebUI. </q-tooltip>
             </q-icon>
           </q-td>
-          <q-td
-            key="network"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="network" :props="props" class="text-weight-regular text-body2">
             <div v-if="props.row.container_type !== 'unmanaged'">
               {{ props.row.config.network.name }}
             </div>
@@ -138,32 +116,23 @@
               ip: {{ props.row.config.network.dhcp_ip }}
             </div>
           </q-td>
-          <q-td
-            key="image"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="image" :props="props" class="text-weight-regular text-body2">
             <span v-if="props.row.container_type !== 'unmanaged'"
-              >{{ props.row.config.repository }}:{{
-                props.row.config.tag
-              }}</span
+              >{{ props.row.config.repository }}:{{ props.row.config.tag }}</span
             >
             <span v-else></span>
           </q-td>
         </q-tr>
       </template>
     </q-table>
-    <ContainerTemplateInstall
-      ref="editContainer"
-      @finished="containersUpdate"
-    />
+    <ContainerTemplateInstall ref="editContainer" @finished="containersUpdate" />
     <ErrorDialog ref="errorDialog" />
   </q-page>
 </template>
 
 <script>
-import ContainerTemplateInstall from "src/components/ContainerTemplateInstall.vue";
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import ContainerTemplateInstall from 'src/components/ContainerTemplateInstall.vue'
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 export default {
   data() {
     return {
@@ -173,46 +142,46 @@ export default {
       containerRows: [],
       containerColumns: [
         {
-          label: "Name",
-          field: "name",
-          name: "name",
-          align: "left",
+          label: 'Name',
+          field: 'name',
+          name: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Status",
-          field: "status",
-          name: "status",
-          align: "left",
+          label: 'Status',
+          field: 'status',
+          name: 'status',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Actions",
-          field: "actions",
-          name: "actions",
-          align: "left",
+          label: 'Actions',
+          field: 'actions',
+          name: 'actions',
+          align: 'left',
           sortable: false,
         },
         {
-          label: "Network",
-          field: "network",
-          name: "network",
-          align: "left",
+          label: 'Network',
+          field: 'network',
+          name: 'network',
+          align: 'left',
           sortable: false,
         },
         {
-          label: "Image",
-          field: "image",
-          name: "image",
-          align: "left",
+          label: 'Image',
+          field: 'image',
+          name: 'image',
+          align: 'left',
           sortable: true,
         },
       ],
       containerPagination: {
-        sortBy: "name",
+        sortBy: 'name',
         rowsPerPage: 15,
       },
-    };
+    }
   },
   components: {
     ContainerTemplateInstall,
@@ -220,102 +189,91 @@ export default {
   },
   methods: {
     containersUpdate() {
-      this.containersLoading = true;
+      this.containersLoading = true
       this.$api
-        .get("docker-manager/containers")
+        .get('docker-manager/containers')
         .then((response) => {
-          this.containerRows = response.data;
-          this.containersLoading = false;
+          this.containerRows = response.data
+          this.containersLoading = false
         })
         .catch((error) => {
-          let errormsg =
-            error.response != undefined ? error.response.data : error;
-          this.$refs.errorDialog.show("Error getting docker data", [errormsg]);
-        });
+          let errormsg = error.response != undefined ? error.response.data : error
+          this.$refs.errorDialog.show('Error getting docker data', [errormsg])
+        })
     },
     containerStart(id) {
       this.$api
-        .post("docker-manager/container/" + id + "/start")
-        .then((response) => {
-          this.containersUpdate();
+        .post('docker-manager/container/' + id + '/start')
+        .then(() => {
+          this.containersUpdate()
         })
         .catch((error) => {
-          let errormsg =
-            error.response != undefined ? error.response.data : error;
-          this.$refs.errorDialog.show("Error starting container", [errormsg]);
-        });
+          let errormsg = error.response != undefined ? error.response.data : error
+          this.$refs.errorDialog.show('Error starting container', [errormsg])
+        })
     },
     containerStop(id) {
       this.$api
-        .post("docker-manager/container/" + id + "/stop")
-        .then((response) => {
-          this.containersUpdate();
+        .post('docker-manager/container/' + id + '/stop')
+        .then(() => {
+          this.containersUpdate()
         })
         .catch((error) => {
-          let errormsg =
-            error.response != undefined ? error.response.data : error;
-          this.$refs.errorDialog.show("Error stopping container", [errormsg]);
-        });
+          let errormsg = error.response != undefined ? error.response.data : error
+          this.$refs.errorDialog.show('Error stopping container', [errormsg])
+        })
     },
     containerDelete(id) {
       this.$api
-        .post("docker-manager/container/" + id + "/delete")
-        .then((response) => {
-          this.containersUpdate();
+        .post('docker-manager/container/' + id + '/delete')
+        .then(() => {
+          this.containersUpdate()
         })
         .catch((error) => {
-          let errormsg =
-            error.response != undefined ? error.response.data : error;
-          this.$refs.errorDialog.show("Error deleting container", [errormsg]);
-        });
+          let errormsg = error.response != undefined ? error.response.data : error
+          this.$refs.errorDialog.show('Error deleting container', [errormsg])
+        })
     },
     containerWebui(id) {
-      let container = this.containerRows.find(
-        (container) => container.id === id,
-      );
+      let container = this.containerRows.find((container) => container.id === id)
       if (container.webui.enable) {
         if (container.webui.url !== undefined) {
-          window.open(container.webui.url, "_blank");
-        } else if (container.webui["container-port"] !== undefined) {
-          let port = container.webui["container-port"];
-          let protocol = container.webui.ssl ? "https://" : "http://";
-          let path = container.webui.path != null ? container.webui.path : "/";
-          let ip;
+          window.open(container.webui.url, '_blank')
+        } else if (container.webui['container-port'] !== undefined) {
+          let port = container.webui['container-port']
+          let protocol = container.webui.ssl ? 'https://' : 'http://'
+          let path = container.webui.path != null ? container.webui.path : '/'
+          let ip
 
           if (container.config.network.ip != null) {
-            ip = container.config.network.ip;
-            window.open(protocol + ip + ":" + port + path, "_blank");
+            ip = container.config.network.ip
+            window.open(protocol + ip + ':' + port + path, '_blank')
           } else if (container.config.network.dhcp_ip != null) {
-            ip = container.config.network.dhcp_ip;
-            window.open(protocol + ip + ":" + port + path, "_blank");
+            ip = container.config.network.dhcp_ip
+            window.open(protocol + ip + ':' + port + path, '_blank')
           } else {
-            this.$refs.errorDialog.show(
-              "Error opening WebUI",
-              "No IP address found for container",
-            );
+            this.$refs.errorDialog.show('Error opening WebUI', 'No IP address found for container')
           }
         }
       }
     },
     containerEdit(id) {
-      let dialogMode;
+      let dialogMode
       // if the container has container_type 'custom' then use dialogMode 'edit-custom'else use dialogMode 'edit'
-      let container = this.containerRows.find(
-        (container) => container.id === id,
-      );
-      if (container.container_type == "custom") {
-        dialogMode = "edit-custom";
+      let container = this.containerRows.find((container) => container.id === id)
+      if (container.container_type == 'custom') {
+        dialogMode = 'edit-custom'
       } else {
-        dialogMode = "edit";
+        dialogMode = 'edit'
       }
-      this.$refs.editContainer.showDialog(id, dialogMode);
+      this.$refs.editContainer.showDialog(id, dialogMode)
     },
     containerNew() {
-      this.$refs.editContainer.showDialog(null, "new-custom");
+      this.$refs.editContainer.showDialog(null, 'new-custom')
     },
   },
   mounted() {
-    this.containersUpdate();
+    this.containersUpdate()
   },
-};
+}
 </script>

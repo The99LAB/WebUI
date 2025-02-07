@@ -16,14 +16,14 @@
   <ErrorDialog ref="errorDialog" />
 </template>
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
     return {
       pciDevicesList: [],
       selectedPciDevice: null,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -31,25 +31,23 @@ export default {
   methods: {
     updatePciDevices() {
       this.$api
-        .get("/host/system-devices/pcie")
+        .get('/host/system-devices/pcie')
         .then((response) => {
-          this.pciDevicesList = response.data;
+          this.pciDevicesList = response.data
           if (this.pciDevicesList.length > 0) {
-            this.selectedPciDevice = this.pciDevicesList[0];
+            this.selectedPciDevice = this.pciDevicesList[0]
           }
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting PCI devices list", [
-            error,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error getting PCI devices list', [error])
+        })
     },
     getSelectedPciDevice() {
-      return this.selectedPciDevice;
+      return this.selectedPciDevice
     },
   },
   mounted() {
-    this.updatePciDevices();
+    this.updatePciDevices()
   },
-};
+}
 </script>

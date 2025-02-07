@@ -10,20 +10,8 @@
     ref="input"
   >
     <template v-slot:append>
-      <q-btn
-        icon="mdi-menu-down"
-        round
-        flat
-        @click="focused = true"
-        v-if="focused == false"
-      />
-      <q-btn
-        icon="mdi-menu-up"
-        round
-        flat
-        @click="focused = false"
-        v-if="focused == true"
-      />
+      <q-btn icon="mdi-menu-down" round flat @click="focused = true" v-if="focused == false" />
+      <q-btn icon="mdi-menu-up" round flat @click="focused = false" v-if="focused == true" />
       <slot name="append"></slot>
     </template>
     <template v-slot:after>
@@ -42,8 +30,8 @@
         fit
         class="q-my-none q-py-none"
         @hide="
-          $refs.input.focus();
-          $refs.input.blur();
+          $refs.input.focus()
+          $refs.input.blur()
         "
       >
         <q-list
@@ -54,17 +42,9 @@
           }"
           v-show="focused"
         >
-          <q-item
-            v-for="option in options"
-            clickable
-            @click="clickItem(option)"
-            :key="option.name"
-          >
+          <q-item v-for="option in options" clickable @click="clickItem(option)" :key="option.name">
             <q-item-section side>
-              <q-icon
-                :name="option.type == 'file' ? 'mdi-file' : 'mdi-folder'"
-                color="white"
-              />
+              <q-icon :name="option.type == 'file' ? 'mdi-file' : 'mdi-folder'" color="white" />
             </q-item-section>
             <q-item-section>
               <q-item-label>{{ option.name }}</q-item-label>
@@ -81,12 +61,12 @@ export default {
   data() {
     return {
       options: [],
-      selectedPath: "",
+      selectedPath: '',
       currentPath: this.modelValue,
       focused: false,
       isValid: false,
       loading: false,
-    };
+    }
   },
   props: {
     validate: {
@@ -99,11 +79,11 @@ export default {
     },
     selectiontype: {
       type: String,
-      default: "file", // file, dir or both
+      default: 'file', // file, dir or both
     },
     startpath: {
       type: String,
-      default: "/mnt/sharedfolders",
+      default: '/mnt/sharedfolders',
     },
     label: {
       type: String,
@@ -112,87 +92,87 @@ export default {
   },
   methods: {
     getData(path, init = false) {
-      this.loading = true;
+      this.loading = true
       this.$api
-        .post("system/file-manager", {
+        .post('system/file-manager', {
           path: path,
         })
         .then((response) => {
-          this.options = response.data.list;
+          this.options = response.data.list
           // sort the options by name
           this.options.sort((a, b) => {
-            return a.name.localeCompare(b.name);
-          });
+            return a.name.localeCompare(b.name)
+          })
           if (init == false) {
-            this.currentPath = response.data.path;
+            this.currentPath = response.data.path
           }
-          this.loading = false;
+          this.loading = false
         })
-        .catch((error) => {
-          this.loading = false;
-        });
+        .catch(() => {
+          this.loading = false
+        })
     },
     updateCurrentPath(value) {
-      this.getData(value);
+      this.getData(value)
     },
     clickItem(value) {
-      console.log("clickItem", value);
-      if (value.type == "dir") {
-        if (this.selectiontype == "dir" || this.selectiontype == "both") {
-          console.log("dir", value);
-          this.setCurrentPath(value);
+      console.log('clickItem', value)
+      if (value.type == 'dir') {
+        if (this.selectiontype == 'dir' || this.selectiontype == 'both') {
+          console.log('dir', value)
+          this.setCurrentPath(value)
         }
-        this.getData(value.path);
-      } else if (value.type == "dirparent") {
-        if (this.selectiontype == "dir" || this.selectiontype == "both") {
-          this.setCurrentPath(value);
+        this.getData(value.path)
+      } else if (value.type == 'dirparent') {
+        if (this.selectiontype == 'dir' || this.selectiontype == 'both') {
+          this.setCurrentPath(value)
         }
-        this.getData(value.path);
-      } else if (value.type == "file") {
-        if (this.selectiontype == "file" || this.selectiontype == "both") {
-          this.setCurrentPath(value);
-          this.focused = false;
+        this.getData(value.path)
+      } else if (value.type == 'file') {
+        if (this.selectiontype == 'file' || this.selectiontype == 'both') {
+          this.setCurrentPath(value)
+          this.focused = false
         }
       }
     },
     setCurrentPath(value) {
-      this.currentPath = value.path;
-      this.$emit("update:modelValue", value.path);
-      if (this.selectiontype == "dir") {
-        value.type == "dir" ? (this.isValid = true) : (this.isValid = false);
-      } else if (this.selectiontype == "file") {
-        value.type == "file" ? (this.isValid = true) : (this.isValid = false);
+      this.currentPath = value.path
+      this.$emit('update:modelValue', value.path)
+      if (this.selectiontype == 'dir') {
+        value.type == 'dir' ? (this.isValid = true) : (this.isValid = false)
+      } else if (this.selectiontype == 'file') {
+        value.type == 'file' ? (this.isValid = true) : (this.isValid = false)
       }
     },
   },
   mounted() {
-    if (this.modelValue == null || this.modelValue == "") {
-      this.$emit("update:modelValue", null);
-      this.currentPath = this.startpath;
-      this.getData(this.currentPath);
-      return;
+    if (this.modelValue == null || this.modelValue == '') {
+      this.$emit('update:modelValue', null)
+      this.currentPath = this.startpath
+      this.getData(this.currentPath)
+      return
     }
     this.$api
-      .post("system/file-manager/validate-path", {
+      .post('system/file-manager/validate-path', {
         path: this.modelValue,
       })
       .then((response) => {
-        this.currentPath = this.modelValue;
-        this.$emit("update:modelValue", this.modelValue);
-        if (response.data.type == "dir") {
-          this.getData(this.currentPath);
-        } else if (response.data.type == "file") {
-          this.getData(response.data.parent, true);
+        this.currentPath = this.modelValue
+        this.$emit('update:modelValue', this.modelValue)
+        if (response.data.type == 'dir') {
+          this.getData(this.currentPath)
+        } else if (response.data.type == 'file') {
+          this.getData(response.data.parent, true)
         }
       })
-      .catch((error) => {
+      .catch(() => {
         // bypass the validation if the prop is set
         if (this.validate) {
-          this.$emit("update:modelValue", null);
-          this.currentPath = this.startpath;
-          this.getData(this.currentPath);
+          this.$emit('update:modelValue', null)
+          this.currentPath = this.startpath
+          this.getData(this.currentPath)
         }
-      });
+      })
   },
-};
+}
 </script>

@@ -1,6 +1,6 @@
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia'
 
-export const useUsernameStore = defineStore("username", {
+export const useUsernameStore = defineStore('username', {
   state: () => ({
     username: null,
   }),
@@ -8,22 +8,22 @@ export const useUsernameStore = defineStore("username", {
   getters: {
     getUsername() {
       if (this.username == null) {
-        if (localStorage.getItem("username") != null) {
-          this.username = localStorage.getItem("username");
+        if (localStorage.getItem('username') != null) {
+          this.username = localStorage.getItem('username')
         }
       }
-      return this.username;
+      return this.username
     },
   },
 
   actions: {
     setUsername(username) {
-      this.username = username;
-      localStorage.setItem("username", username);
+      this.username = username
+      localStorage.setItem('username', username)
     },
     clearUsername() {
-      this.username = null;
-      localStorage.removeItem("username");
+      this.username = null
+      localStorage.removeItem('username')
     },
   },
-});
+})

@@ -20,11 +20,7 @@
       </template>
     </q-select>
     <div class="row justify-center text-center q-gutter-md">
-      <q-card
-        v-for="template in templates"
-        :key="template.id"
-        class="template-card"
-      >
+      <q-card v-for="template in templates" :key="template.id" class="template-card">
         <q-img
           class="template-img"
           spinner-color="primary"
@@ -35,11 +31,7 @@
           <div class="row items-center justify-center q-mb-sm">
             <q-icon name="mdi-source-repository" />
             <p class="q-ma-none">
-              {{
-                templateRepos.find(
-                  (repo) => repo.id === template.template_repository_id,
-                ).name
-              }}
+              {{ templateRepos.find((repo) => repo.id === template.template_repository_id).name }}
             </p>
             <q-tooltip :offset="[0, 0]">Template Repository</q-tooltip>
           </div>
@@ -79,14 +71,11 @@
               Template Repository:
               {{
                 templateRepos.find(
-                  (repo) =>
-                    repo.id === templateInfoDialogData.template_repository_id,
+                  (repo) => repo.id === templateInfoDialogData.template_repository_id,
                 ).name
               }}
             </div>
-            <div class="text-subtitle2">
-              Maintainer: {{ templateInfoDialogData.maintainer }}
-            </div>
+            <div class="text-subtitle2">Maintainer: {{ templateInfoDialogData.maintainer }}</div>
             <q-separator spaced="sm" inset color="transparent" />
             <div class="row q-gutter-md">
               <q-btn
@@ -143,9 +132,9 @@
 </style>
 
 <script>
-import { ref } from "vue";
-import ContainerTemplateInstall from "src/components/ContainerTemplateInstall.vue";
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import { ref } from 'vue'
+import ContainerTemplateInstall from 'src/components/ContainerTemplateInstall.vue'
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
@@ -155,10 +144,10 @@ export default {
       templateInfoDialog: false,
       templateInfoDialogData: {},
       templateLoading: true,
-      installIcon: "mdi-monitor-arrow-down",
+      installIcon: 'mdi-monitor-arrow-down',
       templateRepos: [],
       templateRepoSelected: ref(null),
-    };
+    }
   },
   components: {
     ContainerTemplateInstall,
@@ -166,70 +155,66 @@ export default {
   },
   methods: {
     templatesFetch() {
-      this.templateLoading = true;
-      let templateRepoIds = [];
+      this.templateLoading = true
+      let templateRepoIds = []
       for (let i = 0; i < this.templateRepoSelected.length; i++) {
-        templateRepoIds.push(this.templateRepoSelected[i].id);
+        templateRepoIds.push(this.templateRepoSelected[i].id)
       }
       this.$api
-        .get("docker-manager/templates")
+        .get('docker-manager/templates')
         .then((response) => {
           // Filter the templates based on the selected template repositories
           this.templates = response.data.filter((template) =>
             templateRepoIds.includes(template.template_repository_id),
-          );
-          this.templateLoading = false;
+          )
+          this.templateLoading = false
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error fetching templates", [errormsg]);
-        });
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error fetching templates', [errormsg])
+        })
     },
     templateLocationsFetch() {
-      this.templateLoading = true;
+      this.templateLoading = true
       this.$api
-        .get("docker-manager/template-locations")
+        .get('docker-manager/template-locations')
         .then((response) => {
-          this.templateRepos = response.data;
-          this.templateRepoSelected = [this.templateRepos[0]];
-          this.templatesFetch();
+          this.templateRepos = response.data
+          this.templateRepoSelected = [this.templateRepos[0]]
+          this.templatesFetch()
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error fetching template locations", [
-            errormsg,
-          ]);
-        });
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error fetching template locations', [errormsg])
+        })
     },
     templateInfo(templateId) {
       // Get the template details from 'templates' and display them in a dialog
-      let template = this.templates.find(
-        (template) => template.id === templateId,
-      );
-      this.templateInfoDialogData = template;
-      this.templateInfoDialog = true;
+      let template = this.templates.find((template) => template.id === templateId)
+      this.templateInfoDialogData = template
+      this.templateInfoDialog = true
     },
     templateInstall(templateId) {
-      this.templateInfoDialog = false;
-      this.$refs.templateInstallDialog.showDialog(templateId, "new");
+      this.templateInfoDialog = false
+      this.$refs.templateInstallDialog.showDialog(templateId, 'new')
     },
   },
   mounted() {
     // Check if "/mnt/sharedfolders/docker_data" exists using system/file-manager/validate-path
     // if not, the user will be prompted to create it
     this.$api
-      .post("system/file-manager/validate-path", {
-        path: "/mnt/sharedfolders/docker_data",
+      .post('system/file-manager/validate-path', {
+        path: '/mnt/sharedfolders/docker_data',
       })
-      .then((response) => {
-        this.templateLocationsFetch();
+      .then(() => {
+        this.templateLocationsFetch()
       })
-      .catch((error) => {
-        this.$refs.errorDialog.show("Shared folder docker_data not found", [
-          "Please create the shared folder docker_data before installing templates.",
-        ]);
-        this.templateLoading = false;
-      });
+      .catch(() => {
+        this.$refs.errorDialog.show('Shared folder docker_data not found', [
+          'Please create the shared folder docker_data before installing templates.',
+        ])
+        this.templateLoading = false
+      })
   },
-};
+}
 </script>

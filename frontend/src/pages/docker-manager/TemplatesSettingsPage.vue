@@ -13,19 +13,9 @@
     >
       <template v-slot:top-left>
         <div class="row items-center">
-          <p class="text-h6 q-my-none text-weight-regular">
-            Template Repositories
-          </p>
-          <q-btn
-            color="primary"
-            icon="mdi-refresh"
-            round
-            flat
-            @click="getTemplateRepos"
-          >
-            <q-tooltip :offset="[5, 5]"
-              >Refresh Template Repositories</q-tooltip
-            >
+          <p class="text-h6 q-my-none text-weight-regular">Template Repositories</p>
+          <q-btn color="primary" icon="mdi-refresh" round flat @click="getTemplateRepos">
+            <q-tooltip :offset="[5, 5]">Refresh Template Repositories</q-tooltip>
           </q-btn>
         </div>
       </template>
@@ -170,8 +160,8 @@
 </template>
 
 <script>
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
@@ -179,36 +169,36 @@ export default {
       templateRepos: [],
       templateTableColums: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "url",
-          label: "URL",
-          field: "url",
-          align: "left",
+          name: 'url',
+          label: 'URL',
+          field: 'url',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "branch",
-          label: "Branch",
-          field: "branch",
-          align: "left",
+          name: 'branch',
+          label: 'Branch',
+          field: 'branch',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "last_updated",
-          label: "Last Updated",
-          field: "last_update",
-          align: "left",
+          name: 'last_updated',
+          label: 'Last Updated',
+          field: 'last_update',
+          align: 'left',
           sortable: false,
         },
       ],
       templateTablePagination: {
-        sortBy: "id",
+        sortBy: 'id',
         rowsPerPage: 15,
       },
       templateRepoSelected: [],
@@ -219,21 +209,17 @@ export default {
       templateAddRepoData: {
         name: null,
         url: null,
-        branch: "master",
+        branch: 'master',
       },
       templateAddRepoDialog: false,
       templateAddRepoDialogLoading: false,
-      templateRepoNameRule: [
-        (val) => (val && val.length > 0) || "Please type something",
-      ],
+      templateRepoNameRule: [(val) => (val && val.length > 0) || 'Please type something'],
       templateRepoUrlRule: [
-        (val) => (val && val.length > 0) || "Please type something",
-        (val) => (val && val.startsWith("http")) || "Please type a valid URL",
+        (val) => (val && val.length > 0) || 'Please type something',
+        (val) => (val && val.startsWith('http')) || 'Please type a valid URL',
       ],
-      templateRepoBranchRule: [
-        (val) => (val && val.length > 0) || "Please type something",
-      ],
-    };
+      templateRepoBranchRule: [(val) => (val && val.length > 0) || 'Please type something'],
+    }
   },
   components: {
     ConfirmDialog,
@@ -241,92 +227,87 @@ export default {
   },
   methods: {
     getTemplateRepos() {
-      this.templateTableLoading = true;
+      this.templateTableLoading = true
       this.$api
-        .get("docker-manager/template-locations")
+        .get('docker-manager/template-locations')
         .then((response) => {
-          this.templateRepos = response.data;
-          this.templateTableLoading = false;
+          this.templateRepos = response.data
+          this.templateTableLoading = false
         })
         .catch((error) => {
-          let errormsg;
+          let errormsg
           if (error.response === undefined) {
-            errormsg = "Error fetching template locations";
+            errormsg = 'Error fetching template locations'
           } else {
-            errormsg = error.response.data.message;
+            errormsg = error.response.data.message
           }
-          this.$refs.errorDialog.show("Error fetching template locations", [
-            errormsg,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error fetching template locations', [errormsg])
+        })
     },
     templateRepoAdd() {
-      this.templateAddRepoDialogLoading = true;
+      this.templateAddRepoDialogLoading = true
       this.$api
-        .post("docker-manager/template-locations", this.templateAddRepoData)
-        .then((response) => {
-          this.templateAddRepoDialogLoading = false;
-          this.templateAddRepoDialog = false;
-          this.getTemplateRepos();
+        .post('docker-manager/template-locations', this.templateAddRepoData)
+        .then(() => {
+          this.templateAddRepoDialogLoading = false
+          this.templateAddRepoDialog = false
+          this.getTemplateRepos()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error adding template repository", [
+          this.$refs.errorDialog.show('Error adding template repository', [
             error.response.data.message,
-          ]);
-          this.templateAddRepoDialogLoading = false;
-          this.templateAddRepoDialog = false;
-        });
+          ])
+          this.templateAddRepoDialogLoading = false
+          this.templateAddRepoDialog = false
+        })
     },
     templateRepoDelete() {
-      this.templateTableLoading = true;
+      this.templateTableLoading = true
       this.$api
-        .delete("docker-manager/template-locations", {
+        .delete('docker-manager/template-locations', {
           data: {
             id: this.templateRepoSelected[0].id,
           },
         })
-        .then((response) => {
-          this.getTemplateRepos();
+        .then(() => {
+          this.getTemplateRepos()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error deleting template repository", [
+          this.$refs.errorDialog.show('Error deleting template repository', [
             error.response.data.message,
-          ]);
-        });
+          ])
+        })
     },
     templateRepoUpdate() {
-      console.log("Update template repo", this.templateRepoSelected[0]);
+      console.log('Update template repo', this.templateRepoSelected[0])
       this.$api
-        .post(
-          "docker-manager/template-locations/update",
-          this.templateRepoSelected[0],
-        )
+        .post('docker-manager/template-locations/update', this.templateRepoSelected[0])
         .catch((error) => {
-          this.$refs.errorDialog.show("Error updating template repository", [
+          this.$refs.errorDialog.show('Error updating template repository', [
             error.response.data.message,
-          ]);
-        });
+          ])
+        })
     },
     templateRepoEdit() {
-      this.editDialogLoading = true;
+      this.editDialogLoading = true
       this.$api
-        .put("docker-manager/template-locations", this.templateRepoSelected[0])
-        .then((response) => {
-          this.editDialogLoading = false;
-          this.templateRepoEditDialog = false;
-          this.getTemplateRepos();
+        .put('docker-manager/template-locations', this.templateRepoSelected[0])
+        .then(() => {
+          this.editDialogLoading = false
+          this.templateRepoEditDialog = false
+          this.getTemplateRepos()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error editing template repository", [
+          this.$refs.errorDialog.show('Error editing template repository', [
             error.response.data.message,
-          ]);
-          this.editDialogLoading = false;
-          this.templateRepoEditDialog = false;
-        });
+          ])
+          this.editDialogLoading = false
+          this.templateRepoEditDialog = false
+        })
     },
   },
   mounted() {
-    this.getTemplateRepos();
+    this.getTemplateRepos()
   },
-};
+}
 </script>

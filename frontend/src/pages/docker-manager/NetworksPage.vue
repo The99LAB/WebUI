@@ -36,50 +36,50 @@
 </template>
 
 <script>
-import errorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import errorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 
 export default {
   data() {
     return {
       dockerNetworksColumns: [
         {
-          label: "Name",
-          field: "name",
-          name: "name",
-          align: "left",
+          label: 'Name',
+          field: 'name',
+          name: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Network ID",
-          field: "id",
-          name: "id",
-          align: "left",
+          label: 'Network ID',
+          field: 'id',
+          name: 'id',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Driver",
-          field: "driver",
-          name: "driver",
-          align: "left",
+          label: 'Driver',
+          field: 'driver',
+          name: 'driver',
+          align: 'left',
           sortable: true,
         },
         {
-          label: "Scope",
-          field: "scope",
-          name: "scope",
-          align: "left",
+          label: 'Scope',
+          field: 'scope',
+          name: 'scope',
+          align: 'left',
           sortable: true,
         },
       ],
       dockerNetworks: [],
       dockerNetworksPagination: {
-        sortBy: "name",
+        sortBy: 'name',
         rowsPerPage: 15,
       },
       selectedNetwork: [],
       dockerNetworksLoading: false,
-    };
+    }
   },
   components: {
     errorDialog,
@@ -87,37 +87,33 @@ export default {
   },
   methods: {
     getdockerNetworks() {
-      this.dockerNetworksLoading = true;
+      this.dockerNetworksLoading = true
       this.$api
-        .get("docker-manager/networks")
+        .get('docker-manager/networks')
         .then((response) => {
-          this.dockerNetworks = response.data;
-          this.dockerNetworksLoading = false;
+          this.dockerNetworks = response.data
+          this.dockerNetworksLoading = false
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error fetching docker networks", [
-            errormsg,
-          ]);
-        });
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error fetching docker networks', [errormsg])
+        })
     },
     networkDelete() {
-      this.dockerNetworksLoading = true;
+      this.dockerNetworksLoading = true
       this.$api
-        .delete("docker-manager/network" + this.selectedNetwork[0].id)
-        .then((response) => {
-          this.getdockerNetworks();
+        .delete('docker-manager/network' + this.selectedNetwork[0].id)
+        .then(() => {
+          this.getdockerNetworks()
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error deleting docker network", [
-            errormsg,
-          ]);
-        });
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error deleting docker network', [errormsg])
+        })
     },
   },
   mounted() {
-    this.getdockerNetworks();
+    this.getdockerNetworks()
   },
-};
+}
 </script>

@@ -1,10 +1,5 @@
 <template>
-  <q-dialog
-    v-model="layout"
-    full-width
-    full-height
-    :maximized="$q.screen.lt.md"
-  >
+  <q-dialog v-model="layout" full-width full-height :maximized="$q.screen.lt.md">
     <q-layout
       view="hHh lpR fFf"
       container
@@ -52,14 +47,7 @@
             <q-btn flat label="Apply" v-if="tab == 'general' || tab == 'xml'">
               <ToolTip content="Apply changes" />
             </q-btn>
-            <q-btn
-              icon="close"
-              flat
-              round
-              dense
-              v-close-popup
-              @click="tab = 'general'"
-            >
+            <q-btn icon="close" flat round dense v-close-popup @click="tab = 'general'">
               <ToolTip content="Close" />
             </q-btn>
           </div>
@@ -69,14 +57,7 @@
           <q-btn flat label="Apply" v-if="tab == 'general' || tab == 'xml'">
             <ToolTip content="Apply changes" />
           </q-btn>
-          <q-btn
-            icon="close"
-            flat
-            round
-            dense
-            v-close-popup
-            @click="tab = 'general'"
-          >
+          <q-btn icon="close" flat round dense v-close-popup @click="tab = 'general'">
             <ToolTip content="Close" />
           </q-btn>
         </q-toolbar>
@@ -112,11 +93,7 @@
                         </div>
                       </div>
                       <div class="col q-ml-lg">
-                        <q-select
-                          label="Machine"
-                          v-model="machine_type"
-                          readonly
-                        />
+                        <q-select label="Machine" v-model="machine_type" readonly />
                         <q-input label="BIOS" v-model="bios_type" readonly />
                       </div>
                     </div>
@@ -141,10 +118,7 @@
                           min="1"
                         >
                           <template v-slot:append>
-                            <q-select
-                              v-model="memory_minMemoryUnit"
-                              :options="memoryUnitOptions"
-                            />
+                            <q-select v-model="memory_minMemoryUnit" :options="memoryUnitOptions" />
                           </template>
                         </q-input>
                       </div>
@@ -156,10 +130,7 @@
                           min="1"
                         >
                           <template v-slot:append>
-                            <q-select
-                              v-model="memory_maxMemoryUnit"
-                              :options="memoryUnitOptions"
-                            />
+                            <q-select v-model="memory_maxMemoryUnit" :options="memoryUnitOptions" />
                           </template>
                         </q-input>
                       </div>
@@ -183,9 +154,7 @@
                         min="1"
                         :max="vcpu"
                         :rules="[
-                          (val) =>
-                            val <= vcpu ||
-                            'Current vCPU cannot be bigger than vCPU value',
+                          (val) => val <= vcpu || 'Current vCPU cannot be bigger than vCPU value',
                         ]"
                         :readonly="cpu_custom_topology"
                       />
@@ -194,9 +163,7 @@
                         v-model="vcpu"
                         type="number"
                         min="1"
-                        @update:model-value="
-                          (val) => (cpu_topology_sockets = val)
-                        "
+                        @update:model-value="(val) => (cpu_topology_sockets = val)"
                         :readonly="cpu_custom_topology"
                       />
                     </div>
@@ -258,21 +225,12 @@
                   <div class="row items-center" style="height: 7%">
                     <p class="text-h6 q-ma-none">Devices</p>
                     <q-space />
-                    <q-btn
-                      flat
-                      round
-                      color="primary"
-                      icon="add"
-                      @click="addDevice()"
-                    >
+                    <q-btn flat round color="primary" icon="add" @click="addDevice()">
                       <q-tooltip :offset="[5, 5]">Add Device</q-tooltip>
                     </q-btn>
                   </div>
                   <q-separator class="q-mt-xs" />
-                  <q-scroll-area
-                    style="height: 92%"
-                    class="devices_scroll_area"
-                  >
+                  <q-scroll-area style="height: 92%" class="devices_scroll_area">
                     <q-list>
                       <q-item
                         clickable
@@ -285,26 +243,20 @@
                         <q-item-section thumbnail class="q-pr-sm">
                           <q-icon
                             color="primary"
-                            :name="
-                              disk.device_type == 'cdrom'
-                                ? 'mdi-disc'
-                                : 'mdi-harddisk'
-                            "
+                            :name="disk.device_type == 'cdrom' ? 'mdi-disc' : 'mdi-harddisk'"
                           />
                         </q-item-section>
                         <q-item-section>
                           <q-item-label>
                             {{
-                              disk.bus_format == "virtio"
-                                ? "VirtIO"
-                                : disk.bus_format.toUpperCase()
+                              disk.bus_format == 'virtio' ? 'VirtIO' : disk.bus_format.toUpperCase()
                             }}
                             {{
-                              disk.device_type == "cdrom"
-                                ? "CDROM"
-                                : disk.device_type == "disk"
-                                ? "Disk"
-                                : disk.device_type
+                              disk.device_type == 'cdrom'
+                                ? 'CDROM'
+                                : disk.device_type == 'disk'
+                                  ? 'Disk'
+                                  : disk.device_type
                             }}
                             {{ disk.index }}
                           </q-item-label>
@@ -322,9 +274,7 @@
                           <q-icon color="primary" name="mdi-ethernet" />
                         </q-item-section>
                         <q-item-section>
-                          <q-item-label>
-                            Network Interface {{ network.number }}
-                          </q-item-label>
+                          <q-item-label> Network Interface {{ network.number }} </q-item-label>
                         </q-item-section>
                       </q-item>
                       <q-item
@@ -339,9 +289,7 @@
                           <q-icon color="primary" name="mdi-monitor" />
                         </q-item-section>
                         <q-item-section>
-                          <q-item-label>
-                            Display {{ graphics.type.toUpperCase() }}
-                          </q-item-label>
+                          <q-item-label> Display {{ graphics.type.toUpperCase() }} </q-item-label>
                         </q-item-section>
                       </q-item>
                       <q-item
@@ -358,11 +306,7 @@
                         <q-item-section>
                           <q-item-label>
                             Video
-                            {{
-                              video.type == "virtio"
-                                ? "VirtIO"
-                                : video.type.toUpperCase()
-                            }}
+                            {{ video.type == 'virtio' ? 'VirtIO' : video.type.toUpperCase() }}
                           </q-item-label>
                         </q-item-section>
                       </q-item>
@@ -390,7 +334,7 @@
                     <p class="text-h6 q-ma-none">
                       {{
                         selectedDeviceTitle == null
-                          ? "Select a device to edit"
+                          ? 'Select a device to edit'
                           : selectedDeviceTitle
                       }}
                     </p>
@@ -409,27 +353,11 @@
                     </q-btn>
                   </div>
                   <div v-if="selectedDeviceType == 'disk'">
+                    <q-input label="Device Type" v-model="selectedDevice.device_type" readonly />
+                    <q-input label="Driver Type" v-model="selectedDevice.driver_type" readonly />
+                    <q-input label="Bus Format" v-model="selectedDevice.bus_format" readonly />
                     <q-input
-                      label="Device Type"
-                      v-model="selectedDevice.device_type"
-                      readonly
-                    />
-                    <q-input
-                      label="Driver Type"
-                      v-model="selectedDevice.driver_type"
-                      readonly
-                    />
-                    <q-input
-                      label="Bus Format"
-                      v-model="selectedDevice.bus_format"
-                      readonly
-                    />
-                    <q-input
-                      :label="
-                        selectedDevice.read_only
-                          ? 'Source File (Read Only)'
-                          : 'Source File'
-                      "
+                      :label="selectedDevice.read_only ? 'Source File (Read Only)' : 'Source File'"
                       v-model="selectedDevice.source_file"
                       v-if="selectedDevice.source_file != null"
                       readonly
@@ -450,91 +378,39 @@
                     />
                   </div>
                   <div v-if="selectedDeviceType == 'network'">
-                    <q-input
-                      label="Source"
-                      v-model="selectedDevice.source"
-                      readonly
-                    />
-                    <q-input
-                      label="Model"
-                      v-model="selectedDevice.model"
-                      readonly
-                    />
-                    <q-input
-                      label="MAC Address"
-                      v-model="selectedDevice.mac_address"
-                      readonly
-                    />
+                    <q-input label="Source" v-model="selectedDevice.source" readonly />
+                    <q-input label="Model" v-model="selectedDevice.model" readonly />
+                    <q-input label="MAC Address" v-model="selectedDevice.mac_address" readonly />
                   </div>
                   <div v-if="selectedDeviceType == 'graphics'">
-                    <q-input
-                      label="Device Type"
-                      model-value="Graphics"
-                      readonly
-                    />
-                    <q-input
-                      label="Type"
-                      v-model="selectedDevice.type"
-                      readonly
-                    />
+                    <q-input label="Device Type" model-value="Graphics" readonly />
+                    <q-input label="Type" v-model="selectedDevice.type" readonly />
                   </div>
                   <div v-if="selectedDeviceType == 'video'">
                     <q-input label="Device Type" model-value="Video" readonly />
-                    <q-input
-                      label="Model"
-                      v-model="selectedDevice.type"
-                      readonly
-                    />
+                    <q-input label="Model" v-model="selectedDevice.type" readonly />
                   </div>
                   <div v-if="selectedDeviceType == 'sound'">
                     <q-input label="Device Type" model-value="Sound" readonly />
-                    <q-input
-                      label="Sound model"
-                      v-model="selectedDevice.model"
-                      readonly
-                    />
+                    <q-input label="Sound model" v-model="selectedDevice.model" readonly />
                   </div>
                 </div>
               </div>
             </q-tab-panel>
             <q-tab-panel name="disk">
               <div v-for="disk in diskList" :key="disk">
-                <q-separator
-                  color="primary"
-                  spaced="lg"
-                  v-if="disk.index != 0"
-                />
-                <q-input
-                  label="Device Type"
-                  v-model="disk.device_type"
-                  readonly
-                >
+                <q-separator color="primary" spaced="lg" v-if="disk.index != 0" />
+                <q-input label="Device Type" v-model="disk.device_type" readonly>
                   <template v-slot:append>
-                    <q-btn
-                      flat
-                      round
-                      color="primary"
-                      icon="delete"
-                      @click="diskDelete(disk.index)"
-                    >
+                    <q-btn flat round color="primary" icon="delete" @click="diskDelete(disk.index)">
                       <q-tooltip :offset="[5, 5]">Delete Disk</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>
+                <q-input label="Driver Type" v-model="disk.driver_type" readonly />
+                <q-input label="Bus Format" v-model="disk.bus_format" readonly />
                 <q-input
-                  label="Driver Type"
-                  v-model="disk.driver_type"
-                  readonly
-                />
-                <q-input
-                  label="Bus Format"
-                  v-model="disk.bus_format"
-                  readonly
-                />
-                <q-input
-                  :label="
-                    disk.read_only ? 'Source File (Read Only)' : 'Source File'
-                  "
+                  :label="disk.read_only ? 'Source File (Read Only)' : 'Source File'"
                   v-model="disk.source_file"
                   v-if="disk.source_file != null"
                   readonly
@@ -557,11 +433,7 @@
             </q-tab-panel>
             <q-tab-panel name="network">
               <div v-for="network in networkList" :key="network">
-                <q-separator
-                  color="primary"
-                  spaced="lg"
-                  v-if="network.number != 0"
-                />
+                <q-separator color="primary" spaced="lg" v-if="network.number != 0" />
                 <q-input
                   label="Interface Number"
                   v-model="network.number"
@@ -577,17 +449,11 @@
                       icon="mdi-delete"
                       @click="networkDelete(network.number)"
                     >
-                      <q-tooltip :offset="[5, 5]"
-                        >Delete Network Interface</q-tooltip
-                      >
+                      <q-tooltip :offset="[5, 5]">Delete Network Interface</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>
-                <q-input
-                  label="MAC Address"
-                  v-model="network.mac_address"
-                  readonly
-                />
+                <q-input label="MAC Address" v-model="network.mac_address" readonly />
                 <q-input label="Source" v-model="network.source" readonly />
                 <q-input label="Model" v-model="network.model" readonly />
                 <q-input
@@ -599,15 +465,8 @@
               </div>
             </q-tab-panel>
             <q-tab-panel name="graphics">
-              <div
-                v-for="graphicsdevice in graphicsdevicesList"
-                :key="graphicsdevice"
-              >
-                <q-separator
-                  color="primary"
-                  spaced="lg"
-                  v-if="graphicsdevice.index != 0"
-                />
+              <div v-for="graphicsdevice in graphicsdevicesList" :key="graphicsdevice">
+                <q-separator color="primary" spaced="lg" v-if="graphicsdevice.index != 0" />
                 <q-input label="Device Type" model-value="Graphics" readonly>
                   <template v-slot:append>
                     <q-btn
@@ -617,33 +476,22 @@
                       flat
                       @click="graphicsDelete(graphicsdevice.index)"
                     >
-                      <q-tooltip :offset="[5, 5]"
-                        >Delete Graphics Device</q-tooltip
-                      >
+                      <q-tooltip :offset="[5, 5]">Delete Graphics Device</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>
-                <q-input
-                  label="Graphics Type"
-                  v-model="graphicsdevice.type"
-                  readonly
-                />
+                <q-input label="Graphics Type" v-model="graphicsdevice.type" readonly />
               </div>
               <div v-for="videodevice in videodevicesList" :key="videodevice">
                 <q-separator
                   color="primary"
                   spaced="lg"
-                  v-if="
-                    graphicsdevicesList.length > 0 && videodevice.index >= 0
-                  "
+                  v-if="graphicsdevicesList.length > 0 && videodevice.index >= 0"
                 />
                 <q-input label="Device Type" model-value="Video" readonly>
                   <template
                     v-slot:after
-                    v-if="
-                      graphicsdevicesList.length < 1 ||
-                      videodevicesList.length > 1
-                    "
+                    v-if="graphicsdevicesList.length < 1 || videodevicesList.length > 1"
                   >
                     <q-btn
                       icon="mdi-delete"
@@ -653,26 +501,16 @@
                       flat
                       @click="videoDelete(videodevice.index)"
                     >
-                      <q-tooltip :offset="[5, 5]"
-                        >Delete Video Device</q-tooltip
-                      >
+                      <q-tooltip :offset="[5, 5]">Delete Video Device</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>
-                <q-input
-                  label="Video Type"
-                  v-model="videodevice.type"
-                  readonly
-                />
+                <q-input label="Video Type" v-model="videodevice.type" readonly />
               </div>
             </q-tab-panel>
             <q-tab-panel name="sound">
               <div v-for="sounddevice in sounddevicesList" :key="sounddevice">
-                <q-separator
-                  color="primary"
-                  spaced="lg"
-                  v-if="sounddevice.index != 0"
-                />
+                <q-separator color="primary" spaced="lg" v-if="sounddevice.index != 0" />
                 <q-input label="Device Type" model-value="Sound" readonly>
                   <template v-slot:append>
                     <q-btn
@@ -683,17 +521,11 @@
                       flat
                       @click="soundDelete(sounddevice.index)"
                     >
-                      <q-tooltip :offset="[5, 5]"
-                        >Delete Sound Device</q-tooltip
-                      >
+                      <q-tooltip :offset="[5, 5]">Delete Sound Device</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>
-                <q-input
-                  label="Sound model"
-                  v-model="sounddevice.model"
-                  readonly
-                />
+                <q-input label="Sound model" v-model="sounddevice.model" readonly />
               </div>
             </q-tab-panel>
             <q-tab-panel name="passthrough">
@@ -705,28 +537,15 @@
                       round
                       color="primary"
                       icon="delete"
-                      @click="
-                        usbdeviceDelete(
-                          usbdevice.product_id,
-                          usbdevice.vendor_id,
-                        )
-                      "
+                      @click="usbdeviceDelete(usbdevice.product_id, usbdevice.vendor_id)"
                     >
                       <q-tooltip :offset="[5, 5]">Delete USB Device</q-tooltip>
                     </q-btn>
                   </template>
                 </q-input>
                 <q-input v-model="usbdevice.name" label="Name" readonly />
-                <q-input
-                  v-model="usbdevice.vendor_id"
-                  label="Vendor Id"
-                  readonly
-                />
-                <q-input
-                  v-model="usbdevice.product_id"
-                  label="Product Id"
-                  readonly
-                />
+                <q-input v-model="usbdevice.vendor_id" label="Vendor Id" readonly />
+                <q-input v-model="usbdevice.product_id" label="Product Id" readonly />
               </div>
               <div v-for="pcidevice in pci_devices" :key="pcidevice">
                 <q-separator
@@ -747,21 +566,9 @@
                     </q-btn>
                   </template>
                 </q-input>
-                <q-input
-                  v-model="pcidevice.path"
-                  label="Device Path"
-                  readonly
-                />
-                <q-input
-                  v-model="pcidevice.vendor_name"
-                  label="Vendor Name"
-                  readonly
-                />
-                <q-input
-                  v-model="pcidevice.product_name"
-                  label="Product Name"
-                  readonly
-                />
+                <q-input v-model="pcidevice.path" label="Device Path" readonly />
+                <q-input v-model="pcidevice.vendor_name" label="Vendor Name" readonly />
+                <q-input v-model="pcidevice.product_name" label="Product Name" readonly />
                 <q-input
                   v-if="pcidevice.custom_rom_file"
                   v-model="pcidevice.rom_file"
@@ -784,10 +591,7 @@
   <AddDisk ref="addDisk" @disk-add-finished="refreshData()" />
   <AddNetwork ref="addNetwork" @network-add-finished="refreshData()" />
   <AddUsbDevice ref="addUsbDevice" @usb-device-add-finished="refreshData()" />
-  <AddPcieDevice
-    ref="addPcieDevice"
-    @pcie-device-add-finished="refreshData()"
-  />
+  <AddPcieDevice ref="addPcieDevice" @pcie-device-add-finished="refreshData()" />
   <AddGraphics ref="addGraphics" @graphics-add-finished="refreshData()" />
   <AddVideo ref="addVideo" @video-add-finished="refreshData()" />
   <AddSound ref="addSound" @sound-add-finished="refreshData()" />
@@ -826,39 +630,39 @@ body.screen--xl {
 </style>
 
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
-import AddDisk from "src/components/vm-manager/AddDisk.vue";
-import AddNetwork from "src/components/vm-manager/AddNetwork.vue";
-import AddUsbDevice from "src/components/vm-manager/AddUsbDevice.vue";
-import AddPcieDevice from "src/components/vm-manager/AddPcieDevice.vue";
-import AddGraphics from "src/components/vm-manager/AddGraphics.vue";
-import AddVideo from "src/components/vm-manager/AddVideo.vue";
-import AddSound from "src/components/vm-manager/AddSound.vue";
-import ToolTip from "src/components/ToolTip.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
+import AddDisk from 'src/components/vm-manager/AddDisk.vue'
+import AddNetwork from 'src/components/vm-manager/AddNetwork.vue'
+import AddUsbDevice from 'src/components/vm-manager/AddUsbDevice.vue'
+import AddPcieDevice from 'src/components/vm-manager/AddPcieDevice.vue'
+import AddGraphics from 'src/components/vm-manager/AddGraphics.vue'
+import AddVideo from 'src/components/vm-manager/AddVideo.vue'
+import AddSound from 'src/components/vm-manager/AddSound.vue'
+import ToolTip from 'src/components/ToolTip.vue'
 
 export default {
   data() {
     return {
       layout: false,
       loading: false,
-      tab: "general",
+      tab: 'general',
       name: null,
       machine_type: null,
       bios_type: null,
       autostart: null,
-      memoryUnitOptions: ["MB", "GB", "TB"],
+      memoryUnitOptions: ['MB', 'GB', 'TB'],
       memory_minMemory: null,
-      memory_minMemoryUnit: "GB",
+      memory_minMemoryUnit: 'GB',
       memory_maxMemory: null,
-      memory_maxMemoryUnit: "GB",
+      memory_maxMemoryUnit: 'GB',
       memory_enable_shared: null,
       disk_devices: [],
       network_devices: [],
       sound_devices: [],
       usb_devices: [],
       pci_devices: [],
-      cpu_mode_options: ["host-model", "host-passthrough"],
+      cpu_mode_options: ['host-model', 'host-passthrough'],
       cpu_mode: null,
       current_vcpu: null,
       vcpu: null,
@@ -873,7 +677,7 @@ export default {
       selectedDeviceType: null,
       selectedDeviceTitle: null,
       selectedDevice: null,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -889,190 +693,170 @@ export default {
   },
   methods: {
     show(uuid) {
-      this.uuid = uuid;
-      this.refreshData();
+      this.uuid = uuid
+      this.refreshData()
     },
     refreshData() {
-      this.loading = true;
-      this.layout = true;
+      this.loading = true
+      this.layout = true
       this.$api
-        .get("/vm-manager/" + this.uuid + "/data")
+        .get('/vm-manager/' + this.uuid + '/data')
         .then((response) => {
-          console.log(response.data);
-          this.name = response.data.name;
-          this.machine_type = response.data.machine_type;
-          this.bios_type = response.data.bios_type;
-          this.autostart = response.data.autostart;
-          this.memory_minMemory = response.data.memory_min;
-          this.memory_minMemoryUnit = response.data.memory_min_unit;
-          this.memory_maxMemory = response.data.memory_max;
-          this.memory_maxMemoryUnit = response.data.memory_max_unit;
-          this.memory_enable_shared = response.data.memory_enable_shared;
-          this.current_vcpu = response.data.current_vcpu;
-          this.cpu_mode = response.data.cpu_mode;
-          this.vcpu = response.data.vcpu;
-          this.cpu_custom_tpology = response.data.cpu_custom_topology;
-          this.cpu_topology_sockets = response.data.cpu_topology_sockets;
-          this.cpu_topology_dies = response.data.cpu_topology_dies;
-          this.cpu_topology_cores = response.data.cpu_topology_cores;
-          this.cpu_topology_threads = response.data.cpu_topology_threads;
-          this.disk_devices = response.data.disk_devices;
-          this.network_devices = response.data.network_devices;
-          this.usb_devices = response.data.usb_devices;
-          this.pci_devices = response.data.pci_devices;
-          this.graphics_devices = response.data.graphics_devices;
-          this.video_devices = response.data.video_devices;
-          this.sound_devices = response.data.sound_devices;
-          this.xml = response.data.xml;
+          console.log(response.data)
+          this.name = response.data.name
+          this.machine_type = response.data.machine_type
+          this.bios_type = response.data.bios_type
+          this.autostart = response.data.autostart
+          this.memory_minMemory = response.data.memory_min
+          this.memory_minMemoryUnit = response.data.memory_min_unit
+          this.memory_maxMemory = response.data.memory_max
+          this.memory_maxMemoryUnit = response.data.memory_max_unit
+          this.memory_enable_shared = response.data.memory_enable_shared
+          this.current_vcpu = response.data.current_vcpu
+          this.cpu_mode = response.data.cpu_mode
+          this.vcpu = response.data.vcpu
+          this.cpu_custom_tpology = response.data.cpu_custom_topology
+          this.cpu_topology_sockets = response.data.cpu_topology_sockets
+          this.cpu_topology_dies = response.data.cpu_topology_dies
+          this.cpu_topology_cores = response.data.cpu_topology_cores
+          this.cpu_topology_threads = response.data.cpu_topology_threads
+          this.disk_devices = response.data.disk_devices
+          this.network_devices = response.data.network_devices
+          this.usb_devices = response.data.usb_devices
+          this.pci_devices = response.data.pci_devices
+          this.graphics_devices = response.data.graphics_devices
+          this.video_devices = response.data.video_devices
+          this.sound_devices = response.data.sound_devices
+          this.xml = response.data.xml
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error loading VM data.", [
-            error.response.data.detail,
-          ]);
+          this.$refs.errorDialog.show('Error loading VM data.', [error.response.data.detail])
         })
         .finally(() => {
-          this.loading = false;
-        });
+          this.loading = false
+        })
     },
     setSelectedDevice(deviceType, device) {
-      this.selectedDeviceType = deviceType;
-      this.selectedDevice = device;
+      this.selectedDeviceType = deviceType
+      this.selectedDevice = device
       this.disk_devices.forEach((disk) => {
-        if (deviceType == "disk" && disk.index == device.index) {
+        if (deviceType == 'disk' && disk.index == device.index) {
           this.selectedDeviceTitle =
-            (disk.bus_format == "virtio"
-              ? "VirtIO"
-              : disk.bus_format.toUpperCase()) +
-            " " +
-            (disk.device_type == "cdrom"
-              ? "CDROM"
-              : disk.device_type == "disk"
-              ? "Disk"
-              : disk.device_type) +
-            " " +
-            disk.index;
-          disk.active = true;
+            (disk.bus_format == 'virtio' ? 'VirtIO' : disk.bus_format.toUpperCase()) +
+            ' ' +
+            (disk.device_type == 'cdrom'
+              ? 'CDROM'
+              : disk.device_type == 'disk'
+                ? 'Disk'
+                : disk.device_type) +
+            ' ' +
+            disk.index
+          disk.active = true
         } else {
-          disk.active = false;
+          disk.active = false
         }
-      });
+      })
       this.network_devices.forEach((network) => {
-        if (deviceType == "network" && network.number == device.number) {
-          this.selectedDeviceTitle = "Network Interface " + network.number;
-          network.active = true;
+        if (deviceType == 'network' && network.number == device.number) {
+          this.selectedDeviceTitle = 'Network Interface ' + network.number
+          network.active = true
         } else {
-          network.active = false;
+          network.active = false
         }
-      });
+      })
       this.graphics_devices.forEach((graphicsdevice) => {
-        if (deviceType == "graphics" && graphicsdevice.index == device.index) {
-          this.selectedDeviceTitle =
-            "Display " + graphicsdevice.type.toUpperCase();
-          graphicsdevice.active = true;
+        if (deviceType == 'graphics' && graphicsdevice.index == device.index) {
+          this.selectedDeviceTitle = 'Display ' + graphicsdevice.type.toUpperCase()
+          graphicsdevice.active = true
         } else {
-          graphicsdevice.active = false;
+          graphicsdevice.active = false
         }
-      });
+      })
       this.video_devices.forEach((videodevice) => {
-        if (deviceType == "video" && videodevice.index == device.index) {
+        if (deviceType == 'video' && videodevice.index == device.index) {
           this.selectedDeviceTitle =
-            "Video " +
-            (videodevice.type == "virtio"
-              ? "VirtIO"
-              : videodevice.type.toUpperCase());
-          videodevice.active = true;
+            'Video ' + (videodevice.type == 'virtio' ? 'VirtIO' : videodevice.type.toUpperCase())
+          videodevice.active = true
         } else {
-          videodevice.active = false;
+          videodevice.active = false
         }
-      });
+      })
       this.sound_devices.forEach((sounddevice) => {
-        if (deviceType == "sound" && sounddevice.index == device.index) {
-          this.selectedDeviceTitle = "Sound " + sounddevice.model;
-          sounddevice.active = true;
+        if (deviceType == 'sound' && sounddevice.index == device.index) {
+          this.selectedDeviceTitle = 'Sound ' + sounddevice.model
+          sounddevice.active = true
         } else {
-          sounddevice.active = false;
+          sounddevice.active = false
         }
-      });
+      })
     },
     deviceDelete() {
       this.$refs.confirmDialog.show(
-        "Delete device",
-        ["Are you sure you want to delete this device?"],
+        'Delete device',
+        ['Are you sure you want to delete this device?'],
         this.deviceDeleteConfirm,
-      );
+      )
     },
     deviceDeleteConfirm() {
-      console.log("device type:", this.selectedDeviceType);
-      console.log("device:", this.selectedDevice);
-      if (this.selectedDeviceType == "disk") {
+      console.log('device type:', this.selectedDeviceType)
+      console.log('device:', this.selectedDevice)
+      if (this.selectedDeviceType == 'disk') {
         this.$api
-          .post("/vm-manager/" + this.uuid + "/edit-disk-delete", {
+          .post('/vm-manager/' + this.uuid + '/edit-disk-delete', {
             index: this.selectedDevice.index,
           })
-          .then((response) => {
-            this.refreshData();
+          .then(() => {
+            this.refreshData()
           })
           .catch((error) => {
-            this.$refs.errorDialog.show("Error deleting disk", [
-              error.response.data.detail,
-            ]);
-          });
-      } else if (this.selectedDeviceType == "network") {
+            this.$refs.errorDialog.show('Error deleting disk', [error.response.data.detail])
+          })
+      } else if (this.selectedDeviceType == 'network') {
         this.$api
-          .post("/vm-manager/" + this.uuid + "/edit-network-delete", {
+          .post('/vm-manager/' + this.uuid + '/edit-network-delete', {
             number: this.selectedDevice.number,
           })
-          .then((response) => {
-            this.refreshData();
+          .then(() => {
+            this.refreshData()
           })
           .catch((error) => {
-            this.$refs.errorDialog.show("Error deleting network", [
-              error.response.data.detail,
-            ]);
-          });
-      } else if (this.selectedDeviceType == "graphics") {
+            this.$refs.errorDialog.show('Error deleting network', [error.response.data.detail])
+          })
+      } else if (this.selectedDeviceType == 'graphics') {
         this.$api
-          .post("/vm-manager/" + this.uuid + "/edit-graphics-delete", {
+          .post('/vm-manager/' + this.uuid + '/edit-graphics-delete', {
             index: this.selectedDevice.index,
           })
-          .then((response) => {
-            this.refreshData();
+          .then(() => {
+            this.refreshData()
           })
           .catch((error) => {
-            this.$refs.errorDialog.show("Error deleting graphics", [
-              error.response.data.detail,
-            ]);
-          });
-      } else if (this.selectedDeviceType == "video") {
+            this.$refs.errorDialog.show('Error deleting graphics', [error.response.data.detail])
+          })
+      } else if (this.selectedDeviceType == 'video') {
         this.$api
-          .post("/vm-manager/" + this.uuid + "/edit-video-delete", {
+          .post('/vm-manager/' + this.uuid + '/edit-video-delete', {
             index: this.selectedDevice.index,
           })
-          .then((response) => {
-            this.refreshData();
+          .then(() => {
+            this.refreshData()
           })
           .catch((error) => {
-            this.$refs.errorDialog.show("Error deleting video", [
-              error.response.data.detail,
-            ]);
-          });
-      } else if (this.selectedDeviceType == "sound") {
+            this.$refs.errorDialog.show('Error deleting video', [error.response.data.detail])
+          })
+      } else if (this.selectedDeviceType == 'sound') {
         this.$api
-          .post("/vm-manager/" + this.uuid + "/edit-sound-delete", {
+          .post('/vm-manager/' + this.uuid + '/edit-sound-delete', {
             index: this.selectedDevice.index,
           })
-          .then((response) => {
-            this.refreshData();
+          .then(() => {
+            this.refreshData()
           })
           .catch((error) => {
-            this.$refs.errorDialog.show("Error deleting sound", [
-              error.response.data.detail,
-            ]);
-          });
+            this.$refs.errorDialog.show('Error deleting sound', [error.response.data.detail])
+          })
       } else {
-        this.$refs.errorDialog.show("Error deleting device", [
-          "Device type not recognized",
-        ]);
+        this.$refs.errorDialog.show('Error deleting device', ['Device type not recognized'])
       }
     },
     calculateCpu() {
@@ -1080,9 +864,9 @@ export default {
         this.cpu_topology_sockets *
         this.cpu_topology_dies *
         this.cpu_topology_cores *
-        this.cpu_topology_threads;
-      this.current_vcpu = this.vcpu;
+        this.cpu_topology_threads
+      this.current_vcpu = this.vcpu
     },
   },
-};
+}
 </script>

@@ -34,9 +34,9 @@
 </template>
 
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import EditNetwork from "src/components/system/EditNetwork.vue";
-import ToolTip from "src/components/ToolTip.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import EditNetwork from 'src/components/system/EditNetwork.vue'
+import ToolTip from 'src/components/ToolTip.vue'
 
 export default {
   data() {
@@ -44,37 +44,37 @@ export default {
       networks: [],
       columns: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "ipv4_method",
-          label: "IPv4 Method",
-          field: "ipv4_method",
-          align: "left",
+          name: 'ipv4_method',
+          label: 'IPv4 Method',
+          field: 'ipv4_method',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "ipv4_address",
-          label: "IPv4 Address",
-          field: "ipv4_address_prefix",
-          align: "left",
+          name: 'ipv4_address',
+          label: 'IPv4 Address',
+          field: 'ipv4_address_prefix',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "ipv4_gateway",
-          label: "IPv4 Gateway",
-          field: "ipv4_gateway",
-          align: "left",
+          name: 'ipv4_gateway',
+          label: 'IPv4 Gateway',
+          field: 'ipv4_gateway',
+          align: 'left',
           sortable: true,
         },
       ],
       selectedNetwork: [],
       tableLoading: false,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -83,28 +83,26 @@ export default {
   },
   methods: {
     getData() {
-      this.selectedNetwork = [];
-      this.tableLoading = true;
+      this.selectedNetwork = []
+      this.tableLoading = true
       this.$api
-        .get("/system/networks")
+        .get('/system/networks')
         .then((response) => {
           this.networks = response.data.map((network) => {
             return {
               ...network,
               ipv4_address_prefix: `${network.ipv4_address}/${network.ipv4_prefix}`,
-            };
-          });
-          this.tableLoading = false;
+            }
+          })
+          this.tableLoading = false
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error loading networks", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error loading networks', [error.response.data.detail])
+        })
     },
   },
   mounted() {
-    this.getData();
+    this.getData()
   },
-};
+}
 </script>

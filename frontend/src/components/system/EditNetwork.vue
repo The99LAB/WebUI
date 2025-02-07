@@ -46,27 +46,26 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import errorDialog from "src/components/ErrorDialog.vue";
-import { update } from "lodash";
+import { ref } from 'vue'
+import errorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
     return {
-      hostName: "",
+      hostName: '',
       networkInterface: null,
       layout: ref(false),
-      ipv4_methods: ["manual", "auto"],
-    };
+      ipv4_methods: ['manual', 'auto'],
+    }
   },
   components: {
     errorDialog,
   },
-  emits: ["network-edit-finished"],
+  emits: ['network-edit-finished'],
   methods: {
     show(networkInterface) {
-      this.networkInterface = JSON.parse(JSON.stringify(networkInterface));
-      this.layout = true;
+      this.networkInterface = JSON.parse(JSON.stringify(networkInterface))
+      this.layout = true
     },
     updateNetwork() {
       // $api send an update request to the backend with the new networkInterface data
@@ -76,14 +75,14 @@ export default {
       this.$api
         .put(`/system/networks/`, this.networkInterface)
         .then(() => {
-          this.layout = false;
-          this.$emit("network-edit-finished");
+          this.layout = false
+          this.$emit('network-edit-finished')
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error);
-        });
+          this.$refs.errorDialog.show(error)
+        })
     },
   },
   mounted() {},
-};
+}
 </script>

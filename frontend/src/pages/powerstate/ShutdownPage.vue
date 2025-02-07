@@ -20,24 +20,24 @@
   </q-layout>
 </template>
 <script>
-import { ref } from "vue";
+import { ref } from 'vue'
 
 export default {
   data() {
     return {
       dots: 0,
-      dotsText: ref(""),
-    };
+      dotsText: ref(''),
+    }
   },
   mounted() {
     this.dots = setInterval(() => {
       if (this.dots < 3) {
-        this.dots++;
+        this.dots++
       } else {
-        this.dots = 0;
+        this.dots = 0
       }
-      this.dotsText = ".".repeat(this.dots);
-    }, 500);
+      this.dotsText = '.'.repeat(this.dots)
+    }, 500)
   },
-};
+}
 </script>

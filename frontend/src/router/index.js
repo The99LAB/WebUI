@@ -1,21 +1,21 @@
-import { route } from "quasar/wrappers";
+import { defineRouter } from '#q-app/wrappers'
 import {
   createRouter,
   createMemoryHistory,
   createWebHistory,
   createWebHashHistory,
-} from "vue-router";
-import routes from "./routes";
-import jwtDecode from "jwt-decode";
-import { useHostnameStore } from "src/stores/hostname.js";
+} from 'vue-router'
+import routes from './routes'
+import { jwtDecode } from 'jwt-decode'
+import { useHostnameStore } from '../stores/hostname.js'
 
 function isTokenExpired(token) {
-  if (token == null || token == undefined || token == "") {
-    return true;
+  if (token == null || token == undefined || token == '') {
+    return true
   }
-  const decoded = jwtDecode(token);
-  const currentTime = Date.now() / 1000;
-  return decoded.exp < currentTime;
+  const decoded = jwtDecode(token)
+  const currentTime = Date.now() / 1000
+  return decoded.exp < currentTime
 }
 
 /*
@@ -27,53 +27,52 @@ function isTokenExpired(token) {
  * with the Router instance.
  */
 
-export default route(function (/* { store, ssrContext } */) {
+export default defineRouter(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
-    : process.env.VUE_ROUTER_MODE === "history"
-    ? createWebHistory
-    : createWebHashHistory;
+    : process.env.VUE_ROUTER_MODE === 'history'
+      ? createWebHistory
+      : createWebHashHistory
 
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes:
-      process.env.NODE_ENV === "production"
-        ? routes.filter((route) => !route.devOnly)
-        : routes,
+      process.env.NODE_ENV === 'production' ? routes.filter((route) => !route.devOnly) : routes,
 
     // Leave this as is and make changes in quasar.conf.js instead!
     // quasar.conf.js -> build -> vueRouterMode
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE),
-  });
+  })
 
-  Router.afterEach((to, from) => {
-    const hostnameStore = useHostnameStore();
-    const hostname = hostnameStore.getHostname;
+  // set the title of the page
+  Router.afterEach((to) => {
+    const hostnameStore = useHostnameStore()
+    const hostname = hostnameStore.getHostname
 
     if (hostname == null) {
-      document.title = to.meta.title;
+      document.title = to.meta.title
     } else {
-      document.title = to.meta.title + " - " + hostname;
+      document.title = to.meta.title + ' - ' + hostname
     }
-  });
+  })
 
   // // check if user is logged in
   Router.beforeEach((to, from, next) => {
-    var token = localStorage.getItem("jwt-token");
-    const tokenIsExpired = isTokenExpired(token);
+    var token = localStorage.getItem('jwt-token')
+    const tokenIsExpired = isTokenExpired(token)
 
-    if (token == "" || token == null || token == undefined || tokenIsExpired) {
-      localStorage.removeItem("jwt-token");
-      if (to.path == "/login") {
-        next();
+    if (token == '' || token == null || token == undefined || tokenIsExpired) {
+      localStorage.removeItem('jwt-token')
+      if (to.path == '/login') {
+        next()
       } else {
-        next("/login");
+        next('/login')
       }
     } else {
-      next();
+      next()
     }
-  });
+  })
 
-  return Router;
-});
+  return Router
+})

@@ -17,16 +17,16 @@
   <ErrorDialog ref="errorDialog" />
 </template>
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
     return {
       vmList: [],
       selectedVm: null,
-    };
+    }
   },
-  emits: ["vm-selected"],
+  emits: ['vm-selected'],
   components: {
     ErrorDialog,
   },
@@ -34,29 +34,27 @@ export default {
   methods: {
     updateVms() {
       this.$api
-        .get("/vm-manager/all")
+        .get('/vm-manager/all')
         .then((response) => {
-          this.vmList = response.data;
+          this.vmList = response.data
           if (this.vmList.length > 0 && this.selectedVm == null) {
-            this.selectedVm = this.vmList[0];
-            this.alertVmSelected();
+            this.selectedVm = this.vmList[0]
+            this.alertVmSelected()
           }
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting VM list", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error getting VM list', [error.response.data.detail])
+        })
     },
     alertVmSelected() {
-      this.$emit("vm-selected", this.selectedVm);
+      this.$emit('vm-selected', this.selectedVm)
     },
     getSelectedVm() {
-      return this.selectedVm;
+      return this.selectedVm
     },
   },
   mounted() {
-    this.updateVms();
+    this.updateVms()
   },
-};
+}
 </script>

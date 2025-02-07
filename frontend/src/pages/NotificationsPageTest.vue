@@ -14,13 +14,13 @@
 </template>
 
 <script>
-import DirectoryList from "src/components/host-manager/DirectoryList.vue";
+import DirectoryList from 'src/components/host-manager/DirectoryList.vue'
 
 export default {
   data() {
     return {
-      pathValue: "",
-    };
+      pathValue: '',
+    }
   },
   components: {
     DirectoryList,
@@ -28,41 +28,41 @@ export default {
   methods: {
     AddOne() {
       this.$api
-        .post("/notifications", [
+        .post('/notifications', [
           {
-            title: "Test One Message",
-            type: "info",
-            message: "Test Single Message",
+            title: 'Test One Message',
+            type: 'info',
+            message: 'Test Single Message',
           },
         ])
-        .then((response) => {
-          console.log("success adding notification");
+        .then(() => {
+          console.log('success adding notification')
         })
         .catch((error) => {
-          console.log("error adding notification", error);
-        });
+          console.log('error adding notification', error)
+        })
     },
-    AddTwo(type = "info") {
+    AddTwo(type = 'info') {
       this.$api
-        .post("/notifications", [
+        .post('/notifications', [
           {
-            title: "Test Two Message",
+            title: 'Test Two Message',
             type: type,
-            message: "Test Double Message",
+            message: 'Test Double Message',
           },
           {
-            title: "Test Two Message 2",
+            title: 'Test Two Message 2',
             type: type,
-            message: "Test Double Message 2",
+            message: 'Test Double Message 2',
           },
         ])
-        .then((response) => {
-          console.log("success adding notification");
+        .then(() => {
+          console.log('success adding notification')
         })
         .catch((error) => {
-          console.log("error adding notification", error);
-        });
+          console.log('error adding notification', error)
+        })
     },
   },
-};
+}
 </script>

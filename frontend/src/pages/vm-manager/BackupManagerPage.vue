@@ -15,13 +15,7 @@
         </q-btn>
       </template> -->
       <template v-slot:top-right>
-        <q-btn
-          flat
-          color="primary"
-          round
-          icon="mdi-plus"
-          @click="openCreateConfigDialog"
-        >
+        <q-btn flat color="primary" round icon="mdi-plus" @click="openCreateConfigDialog">
           <q-tooltip :offset="[5, 5]"> Create new backup config </q-tooltip>
         </q-btn>
       </template>
@@ -37,24 +31,13 @@
             class="text-weight-regular text-body2"
             style="cursor: pointer; user-select: none"
           >
-            <q-icon
-              :name="props.row.expand ? 'mdi-menu-down' : 'mdi-menu-right'"
-              size="sm"
-            />
+            <q-icon :name="props.row.expand ? 'mdi-menu-down' : 'mdi-menu-right'" size="sm" />
             {{ props.row.config }}
           </q-td>
-          <q-td
-            key="lastResult"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="lastResult" :props="props" class="text-weight-regular text-body2">
             {{ props.row.lastResult }}
           </q-td>
-          <q-td
-            key="backups"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="backups" :props="props" class="text-weight-regular text-body2">
             {{ props.row.backupCount }}
           </q-td>
         </q-tr>
@@ -86,26 +69,18 @@
                   />
                 </div>
                 <div class="row q-my-xs">
-                  <span class="text-body2 text-weight-bold q-mr-sm">
-                    Destination:
-                  </span>
+                  <span class="text-body2 text-weight-bold q-mr-sm"> Destination: </span>
                   <span class="text-body2">{{ props.row.destination }}</span>
                 </div>
                 <div class="row q-my-xs">
-                  <span class="text-body2 text-weight-bold q-mr-sm">
-                    Auto shutdown:
-                  </span>
+                  <span class="text-body2 text-weight-bold q-mr-sm"> Auto shutdown: </span>
                   <span class="text-body2">
-                    {{ props.row.autoShutdown ? "Yes" : "No" }}
+                    {{ props.row.autoShutdown ? 'Yes' : 'No' }}
                   </span>
                 </div>
                 <div class="row q-mt-xs">
-                  <span class="text-body2 text-weight-bold q-mr-sm"
-                    >Disks:</span
-                  >
-                  <span class="text-body2">{{
-                    props.row.disks.join(", ")
-                  }}</span>
+                  <span class="text-body2 text-weight-bold q-mr-sm">Disks:</span>
+                  <span class="text-body2">{{ props.row.disks.join(', ') }}</span>
                 </div>
               </q-tab-panel>
               <q-tab-panel name="backups">
@@ -126,12 +101,7 @@
                       round
                       flat
                       :disable="props.row.selectedBackup.length == 0"
-                      @click="
-                        restoreBackup(
-                          props.row.config,
-                          props.row.selectedBackup,
-                        )
-                      "
+                      @click="restoreBackup(props.row.config, props.row.selectedBackup)"
                     >
                       <q-tooltip :offset="[5, 5]"> Restore backup </q-tooltip>
                     </q-btn>
@@ -141,9 +111,7 @@
                       round
                       flat
                       :disable="props.row.selectedBackup.length == 0"
-                      @click="
-                        deleteBackup(props.row.config, props.row.selectedBackup)
-                      "
+                      @click="deleteBackup(props.row.config, props.row.selectedBackup)"
                     >
                       <q-tooltip :offset="[5, 5]"> Delete backup </q-tooltip>
                     </q-btn>
@@ -153,12 +121,7 @@
                       round
                       flat
                       :disable="props.row.selectedBackup.length == 0"
-                      @click="
-                        showBackupLog(
-                          props.row.config,
-                          props.row.selectedBackup,
-                        )
-                      "
+                      @click="showBackupLog(props.row.config, props.row.selectedBackup)"
                     >
                       <q-tooltip :offset="[5, 5]"> Show backup log </q-tooltip>
                     </q-btn>
@@ -230,20 +193,14 @@
             >
               <template v-slot:append>
                 <q-icon name="mdi-help-circle-outline">
-                  <q-tooltip :offset="[5, 5]">
-                    The VM Disks that you want to backup.
-                  </q-tooltip>
+                  <q-tooltip :offset="[5, 5]"> The VM Disks that you want to backup. </q-tooltip>
                 </q-icon>
               </template>
             </q-select>
             <div class="row">
-              <q-toggle
-                v-model="createConfigAutoShutdown"
-                label="Auto shutdown"
-              >
+              <q-toggle v-model="createConfigAutoShutdown" label="Auto shutdown">
                 <q-tooltip :offset="[5, 5]">
-                  If the vm is running, it will be shutdown before the backup
-                  starts.
+                  If the vm is running, it will be shutdown before the backup starts.
                 </q-tooltip>
               </q-toggle>
               <q-space />
@@ -259,45 +216,45 @@
 </template>
 
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import VmListAll from "src/components/vm-manager/VmListAll.vue";
-import DirectoryList from "src/components/host-manager/DirectoryList.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import VmListAll from 'src/components/vm-manager/VmListAll.vue'
+import DirectoryList from 'src/components/host-manager/DirectoryList.vue'
 
 export default {
   data() {
     return {
       backupConfigRows: [],
       backupConfigColumns: [
-        { label: "Config", field: "config", name: "config", align: "left" },
+        { label: 'Config', field: 'config', name: 'config', align: 'left' },
         {
-          label: "Last result",
-          field: "lastResult",
-          name: "lastResult",
-          align: "left",
+          label: 'Last result',
+          field: 'lastResult',
+          name: 'lastResult',
+          align: 'left',
         },
-        { label: "Backups", field: "backups", name: "backups", align: "left" },
+        { label: 'Backups', field: 'backups', name: 'backups', align: 'left' },
       ],
       backupColumns: [
-        { label: "Name", field: "name", name: "name", align: "left" },
-        { label: "Status", field: "status", name: "status", align: "left" },
-        { label: "Size", field: "size", name: "size", align: "left" },
+        { label: 'Name', field: 'name', name: 'name', align: 'left' },
+        { label: 'Status', field: 'status', name: 'status', align: 'left' },
+        { label: 'Size', field: 'size', name: 'size', align: 'left' },
       ],
       backupConfigTableLoading: true,
       backupConfigTablePagination: {
         rowsPerPage: 15,
-        sortBy: "config",
+        sortBy: 'config',
         descending: false,
       },
       backupLogDialogShow: false,
-      backupLog: "",
+      backupLog: '',
       createConfigDialogShow: false,
       createConfigLoading: false,
-      createConfigName: "NewConfig",
+      createConfigName: 'NewConfig',
       createConfigDestination: null,
       createConfigAutoShutdown: false,
       createConfigDisksOptions: [],
       createConfigDisks: [],
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -306,126 +263,116 @@ export default {
   },
   methods: {
     getData() {
-      this.backupConfigTableLoading = true;
+      this.backupConfigTableLoading = true
       this.$api
-        .get("/backup-manager/configs")
+        .get('/backup-manager/configs')
         .then((response) => {
-          this.backupConfigRows = response.data;
+          this.backupConfigRows = response.data
           for (let i = 0; i < this.backupConfigRows.length; i++) {
-            this.backupConfigRows[i]["expand"] = false;
-            this.backupConfigRows[i]["tab"] = "overview";
-            this.backupConfigRows[i]["selectedBackup"] = [];
+            this.backupConfigRows[i]['expand'] = false
+            this.backupConfigRows[i]['tab'] = 'overview'
+            this.backupConfigRows[i]['selectedBackup'] = []
           }
-          this.backupConfigTableLoading = false;
+          this.backupConfigTableLoading = false
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error getting backup configs", [
-            errormsg,
-          ]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error getting backup configs', [errormsg])
+        })
     },
     createBackup(config) {
-      this.$api
-        .post("/backup-manager/config/" + config + "/create-backup")
-        .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error creating backup", [errormsg]);
-        });
+      this.$api.post('/backup-manager/config/' + config + '/create-backup').catch((error) => {
+        const errormsg = error.response ? error.response.data.detail : error
+        this.$refs.errorDialog.show('Error creating backup', [errormsg])
+      })
     },
     deleteBackup(config, backup) {
-      const backupname = backup[0]["name"];
-      this.$api
-        .post("/backup-manager/" + config + "/" + backupname + "/delete")
-        .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error deleting backup", [errormsg]);
-        });
+      const backupname = backup[0]['name']
+      this.$api.post('/backup-manager/' + config + '/' + backupname + '/delete').catch((error) => {
+        const errormsg = error.response ? error.response.data.detail : error
+        this.$refs.errorDialog.show('Error deleting backup', [errormsg])
+      })
     },
     restoreBackup(config, backup) {
-      const backupname = backup[0]["name"];
-      this.$api
-        .post("/backup-manager/" + config + "/" + backupname + "/restore")
-        .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error restoring backup", [errormsg]);
-        });
+      const backupname = backup[0]['name']
+      this.$api.post('/backup-manager/' + config + '/' + backupname + '/restore').catch((error) => {
+        const errormsg = error.response ? error.response.data.detail : error
+        this.$refs.errorDialog.show('Error restoring backup', [errormsg])
+      })
     },
     deleteConfig(config) {
-      this.$api
-        .post("/backup-manager/config/" + config + "/delete")
-        .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error deleting config", [errormsg]);
-        });
+      this.$api.post('/backup-manager/config/' + config + '/delete').catch((error) => {
+        const errormsg = error.response ? error.response.data.detail : error
+        this.$refs.errorDialog.show('Error deleting config', [errormsg])
+      })
     },
     showBackupLog(config, backup) {
-      const backupname = backup[0]["name"];
+      const backupname = backup[0]['name']
       this.$api
-        .post("/backup-manager/" + config + "/" + backupname + "/log")
+        .post('/backup-manager/' + config + '/' + backupname + '/log')
         .then((response) => {
-          this.backupLog = response.data;
-          this.backupLogDialogShow = true;
+          this.backupLog = response.data
+          this.backupLogDialogShow = true
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error getting backup log", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error getting backup log', [errormsg])
+        })
     },
     createConfig() {
-      this.createConfigLoading = true;
-      const vm = this.$refs.createConfigDialogVmList.getSelectedVm()["name"];
-      const destination = this.createConfigDestination;
-      const autoShutdown = this.createConfigAutoShutdown;
-      const disks = this.createConfigDisks.map((disk) => disk.value);
+      this.createConfigLoading = true
+      const vm = this.$refs.createConfigDialogVmList.getSelectedVm()['name']
+      const destination = this.createConfigDestination
+      const autoShutdown = this.createConfigAutoShutdown
+      const disks = this.createConfigDisks.map((disk) => disk.value)
       this.$api
-        .post("/backup-manager/configs", {
+        .post('/backup-manager/configs', {
           configName: this.createConfigName,
           vmName: vm,
           destination: destination,
           autoShutdown: autoShutdown,
           disks: disks,
         })
-        .then((response) => {
-          this.createConfigDialogShow = false;
-          this.createConfigLoading = false;
-          this.getData();
+        .then(() => {
+          this.createConfigDialogShow = false
+          this.createConfigLoading = false
+          this.getData()
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error creating config", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error creating config', [errormsg])
+        })
     },
     openCreateConfigDialog() {
-      this.createConfigDialogShow = true;
+      this.createConfigDialogShow = true
     },
     getDomainDisks(vmuuid) {
       this.$api
-        .get("/vm-manager/" + vmuuid + "/disk-data")
+        .get('/vm-manager/' + vmuuid + '/disk-data')
         .then((response) => {
           if (response.data.length > 0) {
-            this.createConfigDisks = [];
-            this.createConfigDisksOptions = [];
+            this.createConfigDisks = []
+            this.createConfigDisksOptions = []
             for (let i = 0; i < response.data.length; i++) {
-              const disk = response.data[i];
+              const disk = response.data[i]
               this.createConfigDisksOptions.push({
-                label: disk["sourcefile"],
-                value: disk["targetdev"],
-              });
+                label: disk['sourcefile'],
+                value: disk['targetdev'],
+              })
             }
           }
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error getting disks", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error getting disks', [errormsg])
+        })
     },
   },
   mounted() {
-    this.getData();
+    this.getData()
   },
   unmounted() {
-    clearInterval(this.getDataInterval);
+    clearInterval(this.getDataInterval)
   },
-};
+}
 </script>

@@ -63,20 +63,14 @@
               'Are you sure?',
               ['Are you sure you want to remove this OVMF path?'],
               () => {
-                removeOvmfPath();
+                removeOvmfPath()
               },
             )
           "
         >
           <q-tooltip :offset="[5, 5]"> Remove OVMF Path </q-tooltip>
         </q-btn>
-        <q-btn
-          color="primary"
-          round
-          flat
-          icon="mdi-plus"
-          @click="addOvmfPathDialogShow = true"
-        >
+        <q-btn color="primary" round flat icon="mdi-plus" @click="addOvmfPathDialogShow = true">
           <q-tooltip :offset="[5, 5]"> Add OVMF Path </q-tooltip>
         </q-btn>
       </template>
@@ -94,21 +88,14 @@
       </q-card-section>
       <q-card-section>
         <q-form @submit="editSetting" class="q-gutter-md">
-          <div
-            v-if="
-              selected_setting[0].verifyDir || selected_setting[0].verifyFile
-            "
-          >
+          <div v-if="selected_setting[0].verifyDir || selected_setting[0].verifyFile">
             <DirectoryList
               v-model="selected_setting[0].value"
               :label="selected_setting[0].name"
               :selectiontype="selected_setting[0].verifyDir ? 'dir' : 'file'"
               :startpath="selected_setting[0].value"
             />
-            <div
-              v-if="selected_setting[0].value == null"
-              class="q-mt-sm row items-center"
-            >
+            <div v-if="selected_setting[0].value == null" class="q-mt-sm row items-center">
               <q-icon name="mdi-alert" color="red" />
               <span class="text-red q-ml-xs">Path is required</span>
             </div>
@@ -183,20 +170,12 @@
             selectiontype="file"
             startpath="/usr/share/OVMF"
           />
-          <div
-            v-if="addOvmfPathDialogPath == null"
-            class="q-mt-sm row items-center"
-          >
+          <div v-if="addOvmfPathDialogPath == null" class="q-mt-sm row items-center">
             <q-icon name="mdi-alert" color="red" />
             <span class="text-red q-ml-xs">Path is required</span>
           </div>
           <div class="row justify-end">
-            <q-btn
-              label="Submit"
-              type="submit"
-              flat
-              :disable="addOvmfPathDialogPath == null"
-            />
+            <q-btn label="Submit" type="submit" flat :disable="addOvmfPathDialogPath == null" />
           </div>
         </q-form>
       </q-card-section>
@@ -206,9 +185,9 @@
   <ConfirmDialog ref="confirmDialog" />
 </template>
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
-import DirectoryList from "src/components/host-manager/DirectoryList.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
+import DirectoryList from 'src/components/host-manager/DirectoryList.vue'
 
 export default {
   data() {
@@ -216,41 +195,41 @@ export default {
       ovmf_paths: [],
       ovmf_paths_columns: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "path",
-          label: "Path",
-          field: "path",
-          align: "left",
+          name: 'path',
+          label: 'Path',
+          field: 'path',
+          align: 'left',
           sortable: true,
         },
       ],
       settings: [],
       settings_columns: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "value",
-          label: "Value",
-          field: "value",
-          align: "left",
+          name: 'value',
+          label: 'Value',
+          field: 'value',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "description",
-          label: "Description",
-          field: "description",
-          align: "left",
+          name: 'description',
+          label: 'Description',
+          field: 'description',
+          align: 'left',
           sortable: true,
         },
       ],
@@ -259,15 +238,15 @@ export default {
       editSettingDialogShow: false,
       editOvmfPathDialogShow: false,
       addOvmfPathDialogShow: false,
-      addOvmfPathDialogName: "OVMF_name",
-      addOvmfPathDialogPath: "/path/to/ovmf",
+      addOvmfPathDialogName: 'OVMF_name',
+      addOvmfPathDialogPath: '/path/to/ovmf',
       table_pagination: {
-        sortBy: "name",
+        sortBy: 'name',
         rowsPerPage: 0,
       },
       settings_loading: true,
       ovmf_paths_loading: true,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -277,103 +256,91 @@ export default {
   methods: {
     getData() {
       this.$api
-        .get("/settings")
+        .get('/settings')
         .then((response) => {
-          this.settings = response.data;
+          this.settings = response.data
           this.settings.forEach((item) => {
-            this.generateRegexRules(item);
-          });
-          console.log(this.settings);
-          this.settings_loading = false;
+            this.generateRegexRules(item)
+          })
+          console.log(this.settings)
+          this.settings_loading = false
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting settings", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error getting settings', [error.response.data.detail])
+        })
       this.$api
-        .get("/settings/ovmf-paths")
+        .get('/settings/ovmf-paths')
         .then((response) => {
-          this.ovmf_paths = response.data;
-          this.ovmf_paths_loading = false;
+          this.ovmf_paths = response.data
+          this.ovmf_paths_loading = false
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting OVMF paths", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error getting OVMF paths', [error.response.data.detail])
+        })
     },
 
     editSetting() {
       this.$api
-        .put("/setting/" + this.selected_setting[0].name, {
+        .put('/setting/' + this.selected_setting[0].name, {
           value: this.selected_setting[0].value,
         })
-        .then((response) => {
-          this.getData();
+        .then(() => {
+          this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error editing setting", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error editing setting', [error.response.data.detail])
+        })
     },
 
     editOvmfPath() {
       this.$api
-        .put("/settings/ovmf-paths/" + this.selected_ovmf_path[0].name, {
+        .put('/settings/ovmf-paths/' + this.selected_ovmf_path[0].name, {
           path: this.selected_ovmf_path[0].path,
         })
-        .then((response) => {
-          this.getData();
+        .then(() => {
+          this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error editing OVMF path", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error editing OVMF path', [error.response.data.detail])
+        })
     },
 
     removeOvmfPath() {
       this.$api
-        .delete("/settings/ovmf-paths/" + this.selected_ovmf_path[0].name)
-        .then((response) => {
-          this.getData();
+        .delete('/settings/ovmf-paths/' + this.selected_ovmf_path[0].name)
+        .then(() => {
+          this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error removing OVMF path", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error removing OVMF path', [error.response.data.detail])
+        })
     },
 
     addOvmfPath() {
       this.$api
-        .post("/settings/ovmf-paths/" + this.addOvmfPathDialogName, {
+        .post('/settings/ovmf-paths/' + this.addOvmfPathDialogName, {
           path: this.addOvmfPathDialogPath,
         })
-        .then((response) => {
-          this.getData();
+        .then(() => {
+          this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error adding OVMF path", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error adding OVMF path', [error.response.data.detail])
+        })
     },
     generateRegexRules(item) {
       if (item.regexrules == []) {
-        item.rules = [(val) => val.length > 0 || "Value is required"];
+        item.rules = [(val) => val.length > 0 || 'Value is required']
       } else {
         item.rules = item.regexrules.map((rule) => {
-          rule.regex = new RegExp(rule.regex);
-          return (val) => rule.regex.test(val) || rule.description;
-        });
+          rule.regex = new RegExp(rule.regex)
+          return (val) => rule.regex.test(val) || rule.description
+        })
       }
     },
   },
   mounted() {
-    this.getData();
+    this.getData()
   },
-};
+}
 </script>

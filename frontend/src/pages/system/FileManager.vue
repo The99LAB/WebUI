@@ -19,8 +19,8 @@
           icon="mdi-form-textbox"
           :disable="selected.length == 0 || selected.length > 1"
           @click="
-            renameDialogItem = JSON.parse(JSON.stringify(selected[0]));
-            renameDialog = true;
+            renameDialogItem = JSON.parse(JSON.stringify(selected[0]))
+            renameDialog = true
           "
         >
           <q-tooltip :offset="[0, 5]"> Rename </q-tooltip>
@@ -43,10 +43,7 @@
           @click="
             this.$refs.confirmDialog.show(
               'Are you sure?',
-              [
-                'Do you really want to remove this?',
-                'This action is not reversable!',
-              ],
+              ['Do you really want to remove this?', 'This action is not reversable!'],
               removePath,
             )
           "
@@ -113,10 +110,7 @@
         </q-tr>
       </template>
       <template v-slot:top-row v-if="currentPath != '/'">
-        <q-tr
-          style="cursor: pointer; user-select: none"
-          @click="getPath(paths[0].parentdir)"
-        >
+        <q-tr style="cursor: pointer; user-select: none" @click="getPath(paths[0].parentdir)">
           <q-td />
           <q-td>
             <q-icon :name="icons.dirparent" size="lg" />
@@ -132,13 +126,9 @@
           <q-td />
           <q-td colspan="100%">
             <q-item-label
-              >{{
-                paths.filter(
-                  (path) => path.type.startsWith("dir") && path.name != "..",
-                ).length
-              }}
+              >{{ paths.filter((path) => path.type.startsWith('dir') && path.name != '..').length }}
               directories,
-              {{ paths.filter((path) => path.type.startsWith("file")).length }}
+              {{ paths.filter((path) => path.type.startsWith('file')).length }}
               files</q-item-label
             >
           </q-td>
@@ -166,9 +156,7 @@
               style="width: 25em"
               :rules="[(val) => !!val || 'Cannot be empty']"
             />
-            <p class="q-mb-none q-mt-sm">
-              Folder will be created at: {{ currentPath }}
-            </p>
+            <p class="q-mb-none q-mt-sm">Folder will be created at: {{ currentPath }}</p>
             <div class="row justify-end">
               <q-btn flat label="Create" type="submit" />
             </div>
@@ -204,70 +192,70 @@
 </template>
 
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 export default {
   data() {
     return {
-      currentPath: "/",
+      currentPath: '/',
       tableLoading: false,
       paths: [],
       columns: [
         {
-          name: "type",
-          label: "Type",
-          field: "type",
-          align: "left",
+          name: 'type',
+          label: 'Type',
+          field: 'type',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "permissions",
-          label: "Permissions",
-          field: "permissions",
-          align: "left",
+          name: 'permissions',
+          label: 'Permissions',
+          field: 'permissions',
+          align: 'left',
           sortable: false,
         },
         {
-          name: "size",
-          label: "Size",
-          field: "size",
-          align: "left",
+          name: 'size',
+          label: 'Size',
+          field: 'size',
+          align: 'left',
           sortable: false,
         },
         {
-          name: "modified",
-          label: "Modified",
-          field: "modified",
-          align: "left",
+          name: 'modified',
+          label: 'Modified',
+          field: 'modified',
+          align: 'left',
           sortable: true,
         },
       ],
       tablePagination: {
         rowsPerPage: 0,
-        sortBy: "name",
+        sortBy: 'name',
         descending: false,
       },
       selected: [],
       icons: {
-        dir: "mdi-folder",
-        dirparent: "mdi-folder-upload-outline",
-        file: "mdi-file",
-        unknown: "mdi-file-question",
+        dir: 'mdi-folder',
+        dirparent: 'mdi-folder-upload-outline',
+        file: 'mdi-file',
+        unknown: 'mdi-file-question',
       },
       folderDialog: false,
-      folderDialogName: "newfolder",
+      folderDialogName: 'newfolder',
       folderDialogLoading: false,
       renameDialog: false,
       renameDialogItem: {},
       renameDialogLoading: false,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -275,79 +263,79 @@ export default {
   },
   methods: {
     clickRow(name) {
-      if (name.type.startsWith("dir")) {
-        this.getPath(name.path);
+      if (name.type.startsWith('dir')) {
+        this.getPath(name.path)
       }
     },
     getPath(path) {
-      this.selected = [];
-      this.tableLoading = true;
-      this.currentPath = path;
+      this.selected = []
+      this.tableLoading = true
+      this.currentPath = path
       this.$api
-        .post("system/file-manager", { path: path })
+        .post('system/file-manager', { path: path })
         .then((response) => {
-          this.paths = response.data.list;
-          this.tableLoading = false;
+          this.paths = response.data.list
+          this.tableLoading = false
         })
         .catch((error) => {
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error getting path", [errormsg]);
-          this.tableLoading = false;
-        });
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error getting path', [errormsg])
+          this.tableLoading = false
+        })
     },
     removePath() {
       for (let i = 0; i < this.selected.length; i++) {
-        let path = this.selected[i].path;
+        let path = this.selected[i].path
         this.$api
-          .post("system/file-manager/remove", { path: path })
-          .then((response) => {
+          .post('system/file-manager/remove', { path: path })
+          .then(() => {
             if (i == this.selected.length - 1) {
-              this.getPath(this.currentPath);
+              this.getPath(this.currentPath)
             }
           })
           .catch((error) => {
-            let errormsg = error.response ? error.response.data.detail : error;
-            this.$refs.errorDialog.show("Error removing path", [errormsg]);
-          });
+            let errormsg = error.response ? error.response.data.detail : error
+            this.$refs.errorDialog.show('Error removing path', [errormsg])
+          })
       }
     },
     folderDialogSubmit() {
-      const path = this.currentPath;
-      const name = this.folderDialogName;
-      this.folderDialogLoading = true;
+      const path = this.currentPath
+      const name = this.folderDialogName
+      this.folderDialogLoading = true
       this.$api
-        .post("system/file-manager/create-folder", { path: path, name: name })
-        .then((response) => {
-          this.getPath(this.currentPath);
-          this.folderDialogLoading = false;
-          this.folderDialog = false;
+        .post('system/file-manager/create-folder', { path: path, name: name })
+        .then(() => {
+          this.getPath(this.currentPath)
+          this.folderDialogLoading = false
+          this.folderDialog = false
         })
         .catch((error) => {
-          this.folderDialogLoading = false;
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error creating folder", [errormsg]);
-        });
+          this.folderDialogLoading = false
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error creating folder', [errormsg])
+        })
     },
     renameDialogSubmit() {
-      const path = this.renameDialogItem.path;
-      const name = this.renameDialogItem.name;
-      this.renameDialogLoading = true;
+      const path = this.renameDialogItem.path
+      const name = this.renameDialogItem.name
+      this.renameDialogLoading = true
       this.$api
-        .post("system/file-manager/rename", { path: path, name: name })
-        .then((response) => {
-          this.getPath(this.currentPath);
-          this.renameDialogLoading = false;
-          this.renameDialog = false;
+        .post('system/file-manager/rename', { path: path, name: name })
+        .then(() => {
+          this.getPath(this.currentPath)
+          this.renameDialogLoading = false
+          this.renameDialog = false
         })
         .catch((error) => {
-          this.renameDialogLoading = false;
-          let errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error renaming folder", [errormsg]);
-        });
+          this.renameDialogLoading = false
+          let errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error renaming folder', [errormsg])
+        })
     },
   },
   mounted() {
-    this.getPath(this.currentPath);
+    this.getPath(this.currentPath)
   },
-};
+}
 </script>

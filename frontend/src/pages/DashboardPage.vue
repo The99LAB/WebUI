@@ -5,22 +5,17 @@
         <div class="row justify-between full-height items-center q-pb-none">
           <div class="system-info-logo col-5 full-height column q-pa-sm">
             <div class="col">
-              <q-img
-                src="/src/assets/Server99-logo-text.png"
-                style="width: 9em"
-              />
+              <q-img src="../assets/Server99-logo-text.png" style="width: 9em" />
             </div>
             <div class="col">
               <q-img
-                src="/src/assets/Server99-logo-base.png"
+                src="../assets/Server99-logo-base.png"
                 style="width: 6em; transform: translateY(-50%)"
               />
             </div>
           </div>
           <div class="col self-start">
-            <p class="text-h6 q-my-none q-pl-md text-left">
-              System Information
-            </p>
+            <p class="text-h6 q-my-none q-pl-md text-left">System Information</p>
             <div class="row items-center q-my-none q-pl-md text-grey-8">
               <p class="text-subtitle2 q-my-none">Overview</p>
               <q-btn
@@ -31,29 +26,21 @@
                 size="sm"
                 @click="$router.push({ name: 'system/system-info' })"
               >
-                <q-tooltip :offset="[5, 5]"
-                  >View full system information</q-tooltip
-                >
+                <q-tooltip :offset="[5, 5]">View full system information</q-tooltip>
               </q-btn>
             </div>
             <div class="text-left row items-center q-pl-md q-my-md">
-              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">
-                Version:
-              </p>
+              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">Version:</p>
               <p class="text-weight-regular q-mb-none">{{ os_name }}</p>
             </div>
             <q-separator spaced="md" />
             <div class="text-left row items-center q-pl-md q-my-md">
-              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">
-                Hostname:
-              </p>
+              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">Hostname:</p>
               <p class="text-weight-regular q-mb-none">{{ hostname }}</p>
             </div>
             <q-separator spaced="md" />
             <div class="text-left row items-center q-pl-md q-my-md">
-              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">
-                Uptime:
-              </p>
+              <p class="text-subtitle2 text-weight-bolder q-mr-xs q-mb-none">Uptime:</p>
               <p class="text-weight-regular q-mb-none">
                 {{ uptime }}
               </p>
@@ -107,10 +94,7 @@
         <q-card-section class="text-left q-pb-none">
           <p class="text-h6 q-mb-none">Memory</p>
         </q-card-section>
-        <q-card-section
-          class="row items-center justify-center q-pt-none"
-          style="height: 85%"
-        >
+        <q-card-section class="row items-center justify-center q-pt-none" style="height: 85%">
           <div class="col">
             <div class="row justify-start q-ml-lg q-my-none items-center">
               <div class="q-py-none q-my-none row justify-center items-end">
@@ -121,22 +105,14 @@
               </div>
             </div>
             <div class="row justify-start q-ml-lg q-my-none items-center">
-              <p class="text-subtitle2 text-grey-8 q-py-none">
-                Total Available
-              </p>
+              <p class="text-subtitle2 text-grey-8 q-py-none">Total Available</p>
             </div>
             <div class="row justify-start q-ml-lg q-my-none items-center">
-              <q-icon
-                name="fiber_manual_record"
-                class="text-secondary q-mr-xs q-pa-none"
-              />
+              <q-icon name="fiber_manual_record" class="text-secondary q-mr-xs q-pa-none" />
               Used ({{ mem_used }} GB)
             </div>
             <div class="row justify-start q-ml-lg q-my-none items-center">
-              <q-icon
-                name="fiber_manual_record"
-                class="text-primary q-mr-xs q-pa-none"
-              />
+              <q-icon name="fiber_manual_record" class="text-primary q-mr-xs q-pa-none" />
               Free ( {{ (mem_total - mem_used).toFixed(2) }} GB)
             </div>
           </div>
@@ -203,16 +179,16 @@ body.body--dark {
 </style>
 
 <script>
-import WsReconnectDialog from "src/components/WsReconnectDialog.vue";
-import { convertEpochToUptime } from "src/utils/timeUtils.js";
-import { colors } from "quasar";
-import { useHostnameStore } from "stores/hostname";
-import { storeToRefs } from "pinia";
+import WsReconnectDialog from 'src/components/WsReconnectDialog.vue'
+import { convertEpochToUptime } from 'src/utils/timeUtils.js'
+import { colors } from 'quasar'
+import { useHostnameStore } from 'stores/hostname'
+import { storeToRefs } from 'pinia'
 
 export default {
   data() {
     return {
-      cpu_name: "",
+      cpu_name: '',
       cpu_progress: 0,
       cpu_thread_count: null,
       cpu_thread_categories: null,
@@ -220,10 +196,10 @@ export default {
         thread: 0,
         usage: 0,
       },
-      cpu_progress_text: "",
+      cpu_progress_text: '',
       mem_used: null,
       mem_total: null,
-      mem_unit: "GB",
+      mem_unit: 'GB',
       uptime: null,
       up_since: null,
       os_name: null,
@@ -250,7 +226,7 @@ export default {
         states: {
           hover: {
             filter: {
-              type: "none",
+              type: 'none',
             },
           },
         },
@@ -265,7 +241,7 @@ export default {
           tickAmount: 2,
           labels: {
             formatter: function (value) {
-              return value.toFixed(0);
+              return value.toFixed(0)
             },
           },
         },
@@ -275,13 +251,13 @@ export default {
       },
       cpuChartSeries: [
         {
-          name: "Thread",
+          name: 'Thread',
           data: [0],
         },
       ],
       memChartOptions: {
-        type: "donut",
-        labels: ["Used", "Free"],
+        type: 'donut',
+        labels: ['Used', 'Free'],
         legend: {
           show: false,
         },
@@ -297,7 +273,7 @@ export default {
         states: {
           hover: {
             filter: {
-              type: "none",
+              type: 'none',
             },
           },
         },
@@ -306,107 +282,102 @@ export default {
         },
       },
       memChartSeries: [0],
-    };
+    }
   },
   setup() {
-    const store = useHostnameStore();
-    const { getHostname } = storeToRefs(store);
+    const store = useHostnameStore()
+    const { getHostname } = storeToRefs(store)
     return {
       hostname: getHostname,
-    };
+    }
   },
   components: {
     WsReconnectDialog,
   },
   methods: {
     getSystemInfo() {
-      this.$api.get("/host/system-info/all").then((response) => {
-        this.mem_total = response.data.memory.value;
-        this.cpu_name = response.data.processor;
-        this.os_name = response.data.os;
-        this.up_since = response.data.up_since;
-        this.updateUptime();
-        this.connectWebSocket();
-      });
+      this.$api.get('/host/system-info/all').then((response) => {
+        this.mem_total = response.data.memory.value
+        this.cpu_name = response.data.processor
+        this.os_name = response.data.os
+        this.up_since = response.data.up_since
+        this.updateUptime()
+        this.connectWebSocket()
+      })
     },
     connectWebSocket() {
-      const jwt_token = localStorage.getItem("jwt-token");
-      this.ws = new WebSocket(
-        this.$WS_ENDPOINT + "/dashboard?token=" + jwt_token,
-      );
+      const jwt_token = localStorage.getItem('jwt-token')
+      this.ws = new WebSocket(this.$WS_ENDPOINT + '/dashboard?token=' + jwt_token)
 
       this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type == "dashboard") {
-          this.cpu_progress = data.data.cpu_percent;
-          this.cpu_progress_text = data.data.cpu_percent + "%";
-          this.cpu_thread_count = data.data.cpu_thread_data.length;
-          this.updateCpuChart(this.cpu_thread_count, data.data.cpu_thread_data);
-          let highest_thread_usage = Math.max(...data.data.cpu_thread_data);
+        const data = JSON.parse(event.data)
+        if (data.type == 'dashboard') {
+          this.cpu_progress = data.data.cpu_percent
+          this.cpu_progress_text = data.data.cpu_percent + '%'
+          this.cpu_thread_count = data.data.cpu_thread_data.length
+          this.updateCpuChart(this.cpu_thread_count, data.data.cpu_thread_data)
+          let highest_thread_usage = Math.max(...data.data.cpu_thread_data)
           this.cpu_thread_highest_usage.thread =
-            data.data.cpu_thread_data.indexOf(highest_thread_usage);
-          this.cpu_thread_highest_usage.usage = highest_thread_usage;
-          this.mem_used = data.data.mem_used.value;
-          this.updateMemChart(this.mem_used, this.mem_total);
-          this.loadingVisible = false;
-        } else if (data.type == "auth_error") {
-          localStorage.setItem("jwt-token", "");
-          this.$router.push({ path: "/login" });
+            data.data.cpu_thread_data.indexOf(highest_thread_usage)
+          this.cpu_thread_highest_usage.usage = highest_thread_usage
+          this.mem_used = data.data.mem_used.value
+          this.updateMemChart(this.mem_used, this.mem_total)
+          this.loadingVisible = false
+        } else if (data.type == 'auth_error') {
+          localStorage.setItem('jwt-token', '')
+          this.$router.push({ path: '/login' })
         }
-      };
+      }
 
-      this.ws.onclose = (event) => {
-        this.$refs.wsReconnectDialog.show();
-      };
+      this.ws.onclose = () => {
+        this.$refs.wsReconnectDialog.show()
+      }
     },
 
     updateCpuChart(threadCount, threadData) {
       if (this.cpu_thread_categories == null) {
-        this.cpu_thread_categories = [];
+        this.cpu_thread_categories = []
         for (let i = 0; i < threadCount; i++) {
-          this.cpu_thread_categories.push(i);
+          this.cpu_thread_categories.push(i)
         }
       }
       this.$refs.cpuThreadChart.updateOptions({
         xaxis: {
           categories: this.cpu_thread_categories,
         },
-      });
+      })
       this.$refs.cpuThreadChart.updateSeries([
         {
           data: threadData,
         },
-      ]);
+      ])
     },
     updateMemChart(used, total) {
       this.$refs.memUsageChart.updateOptions({
-        colors: [
-          colors.getPaletteColor("secondary"),
-          colors.getPaletteColor("primary"),
-        ],
-      });
-      this.$refs.memUsageChart.updateSeries([used, total - used]);
+        colors: [colors.getPaletteColor('secondary'), colors.getPaletteColor('primary')],
+      })
+      this.$refs.memUsageChart.updateSeries([used, total - used])
     },
     updateUptime() {
       if (this.up_since != null) {
-        this.uptime = convertEpochToUptime(this.up_since);
+        this.uptime = convertEpochToUptime(this.up_since)
       }
     },
   },
   created() {
-    this.getSystemInfo();
+    this.getSystemInfo()
   },
   mounted() {
     this.upTimeInterval = setInterval(() => {
-      this.updateUptime();
-    }, 1000);
+      this.updateUptime()
+    }, 1000)
   },
   unmounted() {
-    this.ws.onclose = () => {};
-    this.ws.close();
+    this.ws.onclose = () => {}
+    this.ws.close()
   },
   beforeUnmount() {
-    clearInterval(this.upTimeInterval);
+    clearInterval(this.upTimeInterval)
   },
-};
+}
 </script>

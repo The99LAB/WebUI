@@ -15,24 +15,24 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref } from 'vue'
 
 export default {
   data() {
     return {
       alert: ref(false),
-    };
+    }
   },
   methods: {
     // Usage: show("Title", ["Content line 1", "Contnent line 2"])
     show(title, content) {
-      this.title = title;
-      this.content = content;
-      this.alert = true;
+      this.title = title
+      this.content = content
+      this.alert = true
     },
     hide() {
-      this.alert = false;
+      this.alert = false
     },
   },
-};
+}
 </script>

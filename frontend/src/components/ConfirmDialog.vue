@@ -19,39 +19,39 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref } from 'vue'
 
 export default {
   data() {
     return {
-      title: "",
+      title: '',
       content: [],
       layout: ref(false),
       confirmAction: () => {},
       cancelAction: () => {},
-    };
+    }
   },
   methods: {
     show(
-      title = "Are you sure?",
-      content = ["Are you sure you want to do this?"],
+      title = 'Are you sure?',
+      content = ['Are you sure you want to do this?'],
       confirmAction = () => {},
       cancelAction = () => {},
     ) {
-      this.confirmAction = confirmAction;
-      this.cancelAction = cancelAction;
-      this.title = title;
-      this.content = content;
-      this.layout = true;
+      this.confirmAction = confirmAction
+      this.cancelAction = cancelAction
+      this.title = title
+      this.content = content
+      this.layout = true
     },
     confirmYes() {
-      this.confirmAction();
-      this.layout = false;
+      this.confirmAction()
+      this.layout = false
     },
     confirmNo() {
-      this.cancelAction();
-      this.layout = false;
+      this.cancelAction()
+      this.layout = false
     },
   },
-};
+}
 </script>

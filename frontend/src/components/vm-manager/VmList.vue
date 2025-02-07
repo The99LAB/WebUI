@@ -1,10 +1,5 @@
 <template>
-  <q-select
-    label="Virtual machine"
-    v-model="selectedVm"
-    :options="vmList"
-    option-label="name"
-  >
+  <q-select label="Virtual machine" v-model="selectedVm" :options="vmList" option-label="name">
     <template v-slot:option="scope">
       <q-item v-bind="scope.itemProps">
         <q-item-section>
@@ -16,14 +11,14 @@
   <ErrorDialog ref="errorDialog" />
 </template>
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
     return {
       vmList: [],
       selectedVm: null,
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -31,25 +26,23 @@ export default {
   methods: {
     updateVms() {
       this.$api
-        .get("/vm-manager/running")
+        .get('/vm-manager/running')
         .then((response) => {
-          this.vmList = response.data;
+          this.vmList = response.data
           if (this.vmList.length > 0 && this.selectedVm == null) {
-            this.selectedVm = this.vmList[0];
+            this.selectedVm = this.vmList[0]
           }
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting VM list", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error getting VM list', [error.response.data.detail])
+        })
     },
     getSelectedVm() {
-      return this.selectedVm;
+      return this.selectedVm
     },
   },
   mounted() {
-    this.updateVms();
+    this.updateVms()
   },
-};
+}
 </script>

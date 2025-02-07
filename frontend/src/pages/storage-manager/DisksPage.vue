@@ -20,30 +20,22 @@
           :disable="
             disksTableSelectedRows.length == 0 ||
             disksTableSelectedRows.some(
-              (item) =>
-                item.disktype != 'individual' || item.partitions.length > 0,
+              (item) => item.disktype != 'individual' || item.partitions.length > 0,
             )
           "
         >
           <q-tooltip
             :offset="[0, 5]"
-            v-if="
-              disksTableSelectedRows.some(
-                (item) => item.disktype != 'individual',
-              )
-            "
+            v-if="disksTableSelectedRows.some((item) => item.disktype != 'individual')"
           >
             Cannot create a partition on this disk because it is a
             {{ diskTypes[disksTableSelectedRows[0].disktype] }}.
           </q-tooltip>
           <q-tooltip
             :offset="[0, 5]"
-            v-else-if="
-              disksTableSelectedRows.some((item) => item.partitions.length > 0)
-            "
+            v-else-if="disksTableSelectedRows.some((item) => item.partitions.length > 0)"
           >
-            Cannot create a partition on this disk.<br />This disk already has a
-            partition.
+            Cannot create a partition on this disk.<br />This disk already has a partition.
           </q-tooltip>
           <q-tooltip :offset="[0, 5]" v-else>Create Partition</q-tooltip>
         </q-btn>
@@ -55,18 +47,13 @@
           @click="
             $refs.confirmDialog.show(
               'Wipe Disk',
-              [
-                'Are you sure you want to wipe this disk?',
-                'This action cannot be undone.',
-              ],
+              ['Are you sure you want to wipe this disk?', 'This action cannot be undone.'],
               () => this.diskWipe(),
             )
           "
           :disable="
             disksTableSelectedRows.length == 0 ||
-            disksTableSelectedRows.some(
-              (item) => item.disktype != 'individual',
-            ) ||
+            disksTableSelectedRows.some((item) => item.disktype != 'individual') ||
             disksTableSelectedRows.some((item) =>
               item.partitions.some((partition) => partition.mount != ''),
             )
@@ -84,11 +71,7 @@
           </q-tooltip>
           <q-tooltip
             :offset="[0, 5]"
-            v-else-if="
-              disksTableSelectedRows.some(
-                (item) => item.disktype != 'individual',
-              )
-            "
+            v-else-if="disksTableSelectedRows.some((item) => item.disktype != 'individual')"
           >
             Cannot wipe this disk because it is a
             {{ diskTypes[disksTableSelectedRows[0].disktype] }}.
@@ -111,9 +94,8 @@
             dense
             :disable="
               partitionTableSelected.length == 0 ||
-              disksTableData.find(
-                (item) => item.path == partitionTableSelected[0].parent,
-              ).disktype == 'system' ||
+              disksTableData.find((item) => item.path == partitionTableSelected[0].parent)
+                .disktype == 'system' ||
               partitionTableSelected[0].mount != ''
             "
             @click="
@@ -131,18 +113,14 @@
               :offset="[0, 2]"
               v-if="
                 partitionTableSelected.length != 0 &&
-                disksTableData.find(
-                  (item) => item.path == partitionTableSelected[0].parent,
-                ).disktype == 'system'
+                disksTableData.find((item) => item.path == partitionTableSelected[0].parent)
+                  .disktype == 'system'
               "
               >Cannot delete partitions on the system disk</q-tooltip
             >
             <q-tooltip
               :offset="[0, 2]"
-              v-if="
-                partitionTableSelected.length != 0 &&
-                partitionTableSelected[0].mount != ''
-              "
+              v-if="partitionTableSelected.length != 0 && partitionTableSelected[0].mount != ''"
               >Delete: Unmount this partition first</q-tooltip
             >
             <q-tooltip :offset="[0, 2]" v-else>Delete Partition</q-tooltip>
@@ -157,9 +135,8 @@
             v-if="
               partitionTableSelected.length != 0 &&
               partitionTableSelected[0].mount == '' &&
-              disksTableData.find(
-                (item) => item.path == partitionTableSelected[0].parent,
-              ).disktype != 'system'
+              disksTableData.find((item) => item.path == partitionTableSelected[0].parent)
+                .disktype != 'system'
             "
             @click="partitionMount"
           >
@@ -175,9 +152,8 @@
             v-if="
               partitionTableSelected.length != 0 &&
               partitionTableSelected[0].mount != '' &&
-              disksTableData.find(
-                (item) => item.path == partitionTableSelected[0].parent,
-              ).disktype != 'system'
+              disksTableData.find((item) => item.path == partitionTableSelected[0].parent)
+                .disktype != 'system'
             "
             @click="partitionUnmount"
           >
@@ -202,46 +178,21 @@
               >
             </q-checkbox>
           </q-td>
-          <q-td
-            key="name"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="name" :props="props" class="text-weight-regular text-body2">
             {{ props.row.name }}
           </q-td>
-          <q-td
-            key="model"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="model" :props="props" class="text-weight-regular text-body2">
             {{ props.row.model }}
           </q-td>
-          <q-td
-            key="type"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="type" :props="props" class="text-weight-regular text-body2">
             {{ diskTypes[props.row.disktype] }}
           </q-td>
-          <q-td
-            key="capacity"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
+          <q-td key="capacity" :props="props" class="text-weight-regular text-body2">
             {{ props.row.size }}
           </q-td>
-          <q-td
-            key="partitions"
-            :props="props"
-            class="text-weight-regular text-body2"
-          >
-            <span
-              class="row items-center"
-              v-if="props.row.has_partitiontable == false"
-            >
-              <p class="q-my-none text-body2">
-                This disk has no partitioning scheme.
-              </p>
+          <q-td key="partitions" :props="props" class="text-weight-regular text-body2">
+            <span class="row items-center" v-if="props.row.has_partitiontable == false">
+              <p class="q-my-none text-body2">This disk has no partitioning scheme.</p>
               <q-icon class="q-ml-xs" name="mdi-help-circle-outline" size="sm">
                 <q-tooltip :offset="[0, 2]">
                   If you want to use this disk, create a partition on it first.
@@ -250,29 +201,19 @@
                 </q-tooltip>
               </q-icon>
             </span>
-            <span
-              class="row items-center"
-              v-else-if="props.row.disktype == 'raid_member'"
-            >
-              <p class="q-my-none text-body2">
-                This disk is part of a RAID array.
-              </p>
+            <span class="row items-center" v-else-if="props.row.disktype == 'raid_member'">
+              <p class="q-my-none text-body2">This disk is part of a RAID array.</p>
               <q-icon class="q-ml-xs" name="mdi-help-circle-outline" size="sm">
                 <q-tooltip :offset="[0, 2]"
-                  >You cannot see the partitions of a disk which is part of a
-                  RAID array.</q-tooltip
+                  >You cannot see the partitions of a disk which is part of a RAID array.</q-tooltip
                 >
               </q-icon>
             </span>
-            <span
-              class="row items-center"
-              v-else-if="props.row.partitions.length == 0"
-            >
+            <span class="row items-center" v-else-if="props.row.partitions.length == 0">
               <p class="q-my-none text-body2">This disk has no partitions.</p>
               <q-icon class="q-ml-xs" name="mdi-help-circle-outline" size="sm">
                 <q-tooltip :offset="[0, 2]">
-                  If you want to use this disk, you need to create a partition
-                  first.
+                  If you want to use this disk, you need to create a partition first.
                   <br />
                   Or you can create a RAID array with this disk.
                 </q-tooltip>
@@ -293,9 +234,7 @@
                   <q-chip
                     class="q-mx-none"
                     style="cursor: pointer"
-                    :label="
-                      props.row.mount == '' ? 'unmounted' : props.row.mount
-                    "
+                    :label="props.row.mount == '' ? 'unmounted' : props.row.mount"
                     :color="props.row.mount == '' ? 'red' : 'primary'"
                   />
                 </q-td>
@@ -330,8 +269,7 @@
               lazy-rules
               :rules="[
                 (val) => !!val || 'Mountpoint is required',
-                (val) =>
-                  !val.includes(' ') || 'Mountpoint cannot contain spaces',
+                (val) => !val.includes(' ') || 'Mountpoint cannot contain spaces',
               ]"
             />
             <div class="row items-center">
@@ -388,8 +326,8 @@
   </q-page>
 </template>
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 
 export default {
   data() {
@@ -397,86 +335,86 @@ export default {
       disksTableData: [],
       disksTableColumns: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "model",
-          label: "Model",
-          field: "model",
-          align: "left",
+          name: 'model',
+          label: 'Model',
+          field: 'model',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "type",
-          label: "Type",
-          field: "type",
-          align: "left",
+          name: 'type',
+          label: 'Type',
+          field: 'type',
+          align: 'left',
         },
         {
-          name: "capacity",
-          label: "Capacity",
-          field: "size",
-          align: "left",
+          name: 'capacity',
+          label: 'Capacity',
+          field: 'size',
+          align: 'left',
         },
         {
-          name: "partitions",
-          label: "Partitions",
-          field: "partitions",
-          align: "left",
+          name: 'partitions',
+          label: 'Partitions',
+          field: 'partitions',
+          align: 'left',
         },
       ],
       disksTablePagination: {
         rowsPerPage: 15,
-        sortBy: "name",
+        sortBy: 'name',
       },
       disksTableSelectedRows: [],
       disksTableLoading: true,
       partitionTableColumns: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "fstype",
-          label: "Filesystem",
-          field: "fstype",
-          align: "left",
+          name: 'fstype',
+          label: 'Filesystem',
+          field: 'fstype',
+          align: 'left',
           sortable: true,
         },
         {
-          name: "used",
-          label: "Capacity",
-          field: "used",
-          align: "left",
+          name: 'used',
+          label: 'Capacity',
+          field: 'used',
+          align: 'left',
         },
         {
-          name: "mount",
-          label: "Mountpoint",
-          field: "mount",
-          align: "left",
+          name: 'mount',
+          label: 'Mountpoint',
+          field: 'mount',
+          align: 'left',
         },
       ],
       partitionTableSelected: [],
       mountPartitionDialog: false,
-      mountPartitionDialogMountpoint: "",
+      mountPartitionDialogMountpoint: '',
       mountPartitionLoading: false,
       createPartitionDialog: false,
-      createPartitionFsType: "",
-      createPartitionFsTypeOptions: ["ext4", "xfs"],
+      createPartitionFsType: '',
+      createPartitionFsTypeOptions: ['ext4', 'xfs'],
       createPartitionDialogLoading: false,
       diskTypes: {
-        system: "System Disk",
-        individual: "Individual Disk",
-        raid_member: "RAID Member",
+        system: 'System Disk',
+        individual: 'Individual Disk',
+        raid_member: 'RAID Member',
       },
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -484,109 +422,107 @@ export default {
   },
   methods: {
     fetchData() {
-      this.disksTableLoading = true;
+      this.disksTableLoading = true
       this.$api
-        .get("storage/disks")
+        .get('storage/disks')
         .then((response) => {
-          this.disksTableData = response.data;
-          this.disksTableLoading = false;
-          this.disksTableSelectedRows = [];
-          this.partitionTableSelected = [];
+          this.disksTableData = response.data
+          this.disksTableLoading = false
+          this.disksTableSelectedRows = []
+          this.partitionTableSelected = []
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Failed to fetch disks", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Failed to fetch disks', [errormsg])
+        })
     },
     partitionDelete() {
       this.$api
-        .post("storage/disks/partition/delete", {
+        .post('storage/disks/partition/delete', {
           disk: this.partitionTableSelected[0].parent,
           partition: this.partitionTableSelected[0].number,
         })
-        .then((response) => {
-          this.fetchData();
+        .then(() => {
+          this.fetchData()
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Failed to delete partition", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Failed to delete partition', [errormsg])
+        })
     },
     partitionMount() {
-      this.mountPartitionDialog = true;
+      this.mountPartitionDialog = true
       this.mountPartitionDialogMountpoint =
-        "/mnt/" +
+        '/mnt/' +
         this.disksTableData
           .find((item) => item.path == this.partitionTableSelected[0].parent)
-          .model.replaceAll(" ", "_");
+          .model.replaceAll(' ', '_')
     },
     partitionMountSubmit() {
-      this.mountPartitionLoading = true;
+      this.mountPartitionLoading = true
       this.$api
-        .post("storage/disks/partition/mount", {
+        .post('storage/disks/partition/mount', {
           partition: this.partitionTableSelected[0].uuid,
           mountpoint: this.mountPartitionDialogMountpoint,
         })
-        .then((response) => {
-          this.mountPartitionLoading = false;
-          this.mountPartitionDialog = false;
-          this.fetchData();
+        .then(() => {
+          this.mountPartitionLoading = false
+          this.mountPartitionDialog = false
+          this.fetchData()
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error mounting partition", [errormsg]);
-          this.mountPartitionLoading = false;
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error mounting partition', [errormsg])
+          this.mountPartitionLoading = false
+        })
     },
     partitionUnmount() {
       this.$api
-        .post("storage/disks/partition/unmount", {
+        .post('storage/disks/partition/unmount', {
           partition: this.partitionTableSelected[0].uuid,
         })
-        .then((response) => {
-          this.fetchData();
+        .then(() => {
+          this.fetchData()
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Failed to unmount partition", [
-            errormsg,
-          ]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Failed to unmount partition', [errormsg])
+        })
     },
     partitionCreate() {
-      this.createPartitionDialogLoading = true;
+      this.createPartitionDialogLoading = true
       this.$api
-        .post("storage/disks/partition/create", {
+        .post('storage/disks/partition/create', {
           diskpath: this.disksTableSelectedRows[0].path,
           fstype: this.createPartitionFsType,
         })
-        .then((response) => {
-          this.createPartitionDialogLoading = false;
-          this.createPartitionDialog = false;
-          this.fetchData();
+        .then(() => {
+          this.createPartitionDialogLoading = false
+          this.createPartitionDialog = false
+          this.fetchData()
         })
         .catch((error) => {
-          this.createPartitionDialogLoading = false;
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Failed to create partition", [errormsg]);
-        });
+          this.createPartitionDialogLoading = false
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Failed to create partition', [errormsg])
+        })
     },
     diskWipe() {
       this.$api
-        .post("storage/disks/disk/wipe", {
+        .post('storage/disks/disk/wipe', {
           diskpath: this.disksTableSelectedRows[0].path,
         })
-        .then((response) => {
-          this.fetchData();
+        .then(() => {
+          this.fetchData()
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Failed to wipe disk", [errormsg]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Failed to wipe disk', [errormsg])
+        })
     },
   },
   mounted() {
-    this.fetchData();
+    this.fetchData()
   },
-};
+}
 </script>

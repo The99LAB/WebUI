@@ -1,29 +1,43 @@
-# WebUI (quasar-project)
+# Server99 WebUI
 
-Web UI for managing libvirt based virtual machines
+A Quasar Project
 
 ## Install the dependencies
 
-`npm i -g @quasar/cli`
-`npm install`
+```bash
+yarn
+# or
+npm install
+```
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 
-- Set `SOCKETIO_ENDPOINT` in `quasar.config.js` correctly
-- Set `API_ENDPOINT` in `quasar.config.js` correctly
-- Run `quasar dev`
+```bash
+quasar dev
+```
 
 ### Lint the files
 
-`npm run lint`
+```bash
+yarn lint
+# or
+npm run lint
+```
 
 ### Format the files
 
-`npm run format`
+```bash
+yarn format
+# or
+npm run format
+```
 
 ### Build the app for production
 
-- Set `PRODUCTION_BACKEND_PORT` in `quasar.config.js` to the port of the backend
-- Run `quasar build`
-- Place files from dist/spa into backend/static except index.html
-- Place index.html into backend/templates
+```bash
+quasar build
+```
+
+### Customize the configuration
+
+See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).

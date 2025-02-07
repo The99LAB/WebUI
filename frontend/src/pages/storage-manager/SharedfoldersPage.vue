@@ -15,13 +15,7 @@
         <q-inner-loading showing />
       </template>
       <template v-slot:top-right>
-        <q-btn
-          flat
-          round
-          color="primary"
-          icon="mdi-plus"
-          @click="sharedFolderCreateDialogOpen"
-        >
+        <q-btn flat round color="primary" icon="mdi-plus" @click="sharedFolderCreateDialogOpen">
           <q-tooltip :offset="[5, 5]"> Add a new shared folder </q-tooltip>
         </q-btn>
         <q-btn
@@ -41,9 +35,7 @@
             )
           "
         >
-          <q-tooltip :offset="[5, 5]">
-            Remove the selected shared folder
-          </q-tooltip>
+          <q-tooltip :offset="[5, 5]"> Remove the selected shared folder </q-tooltip>
         </q-btn>
         <q-btn
           flat
@@ -53,9 +45,7 @@
           :disable="sharedFoldersSelected.length == 0"
           @click="sharedFolderShowEdit"
         >
-          <q-tooltip :offset="[5, 5]">
-            Edit the selected shared folder
-          </q-tooltip>
+          <q-tooltip :offset="[5, 5]"> Edit the selected shared folder </q-tooltip>
         </q-btn>
       </template>
       <template v-slot:body-cell-name="props">
@@ -71,19 +61,13 @@
             :color="props.row.active ? 'positive' : 'negative'"
           >
             <q-tooltip :offset="[5, 5]">
-              {{ props.row.active ? "Active" : "Inactive" }}
+              {{ props.row.active ? 'Active' : 'Inactive' }}
             </q-tooltip>
           </q-chip>
-          <q-icon
-            name="mdi-alert"
-            color="orange"
-            size="sm"
-            v-if="props.row.active == false"
-          >
+          <q-icon name="mdi-alert" color="orange" size="sm" v-if="props.row.active == false">
             <q-tooltip :offset="[5, 5]">
               This shared folder is offline. <br />
-              The RAID array or the disk where this shared folder is located is
-              offline.
+              The RAID array or the disk where this shared folder is located is offline.
             </q-tooltip>
           </q-icon>
         </q-td>
@@ -100,37 +84,22 @@
         <q-td key="storage" :props="props">
           <div class="row items-center justify-center">
             <q-icon
-              :name="
-                props.row.linked_storage.type == 'raid'
-                  ? 'mdi-database-outline'
-                  : 'bi-hdd'
-              "
+              :name="props.row.linked_storage.type == 'raid' ? 'mdi-database-outline' : 'bi-hdd'"
               size="sm"
             />
             <span class="text-weight-bold text-subtitle1 q-ml-xs">
-              {{
-                props.row.linked_storage.name
-                  ? props.row.linked_storage.name
-                  : "Unknown"
-              }}
+              {{ props.row.linked_storage.name ? props.row.linked_storage.name : 'Unknown' }}
             </span>
-            <q-tooltip
-              :offset="[5, 5]"
-              v-if="props.row.linked_storage.type == 'raid'"
-            >
+            <q-tooltip :offset="[5, 5]" v-if="props.row.linked_storage.type == 'raid'">
               This shared folder is located on the RAID array
               {{ props.row.linked_storage.name }}
             </q-tooltip>
-            <q-tooltip
-              :offset="[5, 5]"
-              v-else-if="props.row.linked_storage.type == 'disk'"
-            >
+            <q-tooltip :offset="[5, 5]" v-else-if="props.row.linked_storage.type == 'disk'">
               This shared folder is located on the disk
               {{ props.row.linked_storage.name }}
             </q-tooltip>
             <q-tooltip :offset="[5, 5]" v-else>
-              This shared folder is located on a device that is not managed by
-              the WebUI
+              This shared folder is located on a device that is not managed by the WebUI
             </q-tooltip>
           </div>
         </q-td>
@@ -166,11 +135,7 @@
         </q-card-section>
         <q-separator color="transparent" spaced="sm" inset />
         <q-card-section>
-          <q-form
-            @submit="sharedFolderCreate"
-            class="q-gutter-md"
-            style="width: 25em"
-          >
+          <q-form @submit="sharedFolderCreate" class="q-gutter-md" style="width: 25em">
             <q-input
               filled
               v-model="sharedFolderCreateName"
@@ -180,11 +145,7 @@
                 (val) => !val.includes(' ') || 'Name cannot contain spaces',
               ]"
             />
-            <q-toggle
-              v-model="sharedFolderCreateCustom"
-              label="Custom Path"
-              class="q-mt-none"
-            />
+            <q-toggle v-model="sharedFolderCreateCustom" label="Custom Path" class="q-mt-none" />
             <DirectoryList
               v-if="sharedFolderCreateCustom"
               v-model="sharedFolderCreateCustomPath"
@@ -207,11 +168,11 @@
                       <span class="row justify-between">
                         <span>
                           {{
-                            scope.opt.type == "raid"
-                              ? "RAID Array"
-                              : scope.opt.type == "disk"
-                              ? "Individual Disk"
-                              : ""
+                            scope.opt.type == 'raid'
+                              ? 'RAID Array'
+                              : scope.opt.type == 'disk'
+                                ? 'Individual Disk'
+                                : ''
                           }}
                         </span>
                         <span>
@@ -230,11 +191,11 @@
                       <span class="row justify-between">
                         <span>
                           {{
-                            scope.opt.type == "raid"
-                              ? "RAID Array"
-                              : scope.opt.type == "disk"
-                              ? "Individual Disk"
-                              : ""
+                            scope.opt.type == 'raid'
+                              ? 'RAID Array'
+                              : scope.opt.type == 'disk'
+                                ? 'Individual Disk'
+                                : ''
                           }}
                         </span>
                         <span>
@@ -254,12 +215,7 @@
         <q-inner-loading :showing="sharedFolderCreateLoading" />
       </q-card>
     </q-dialog>
-    <q-dialog
-      full-width
-      full-height
-      v-model="sharedFolderEditDialog"
-      persistent
-    >
+    <q-dialog full-width full-height v-model="sharedFolderEditDialog" persistent>
       <q-card>
         <q-card-section class="row items-center q-pb-none">
           <div class="text-h6">Edit Shared Folder</div>
@@ -272,18 +228,8 @@
             <p class="text-h6 q-mb-none">
               <q-icon class="q-mr-sm" name="mdi-share-variant-outline" />General
             </p>
-            <q-input
-              filled
-              v-model="sharedFolderEditDialogData.name"
-              label="Name"
-              readonly
-            />
-            <q-input
-              filled
-              v-model="sharedFolderEditDialogData.path"
-              label="Path"
-              readonly
-            />
+            <q-input filled v-model="sharedFolderEditDialogData.name" label="Name" readonly />
+            <q-input filled v-model="sharedFolderEditDialogData.path" label="Path" readonly />
             <p class="text-h6 q-mb-none q-mt-xl">
               <q-icon class="q-mr-sm" name="bi-hdd-network" />SMB Settings
             </p>
@@ -298,9 +244,7 @@
               v-model="sharedFolderEditDialogData.smb_share_guest"
               label="Guest Access"
               :options="sharedFolderEditDialogGuestOptions"
-              @update:model-value="
-                (val) => sharedFolderEditUsersChange(val.value)
-              "
+              @update:model-value="(val) => sharedFolderEditUsersChange(val.value)"
             >
               <template v-slot:after>
                 <q-icon
@@ -367,9 +311,9 @@
 </template>
 
 <script>
-import ErrorDialog from "src/components/ErrorDialog.vue";
-import ConfirmDialog from "src/components/ConfirmDialog.vue";
-import DirectoryList from "src/components/host-manager/DirectoryList.vue";
+import ErrorDialog from 'src/components/ErrorDialog.vue'
+import ConfirmDialog from 'src/components/ConfirmDialog.vue'
+import DirectoryList from 'src/components/host-manager/DirectoryList.vue'
 
 export default {
   data() {
@@ -378,52 +322,52 @@ export default {
       sharedFoldersLoading: false,
       SharedFoldersColumns: [
         {
-          name: "name",
-          label: "Name",
-          field: "name",
-          align: "left",
+          name: 'name',
+          label: 'Name',
+          field: 'name',
+          align: 'left',
         },
         {
-          name: "status",
-          label: "Status",
-          field: "status",
-          align: "center",
+          name: 'status',
+          label: 'Status',
+          field: 'status',
+          align: 'center',
         },
         {
-          name: "smb",
-          label: "SMB",
-          field: "smb",
-          align: "center",
+          name: 'smb',
+          label: 'SMB',
+          field: 'smb',
+          align: 'center',
         },
         {
-          name: "capacity",
-          label: "Free Space",
-          field: "capacity",
-          align: "center",
+          name: 'capacity',
+          label: 'Free Space',
+          field: 'capacity',
+          align: 'center',
         },
         {
-          name: "storage",
-          label: "Storage",
-          field: "storage",
-          align: "center",
+          name: 'storage',
+          label: 'Storage',
+          field: 'storage',
+          align: 'center',
         },
         {
-          name: "path",
-          label: "Path",
-          field: "path",
-          align: "center",
+          name: 'path',
+          label: 'Path',
+          field: 'path',
+          align: 'center',
         },
       ],
       sharedFoldersSelected: [],
       sharedFoldersPagination: {
-        sortBy: "name",
+        sortBy: 'name',
         descending: false,
         page: 1,
         rowsPerPage: 10,
       },
       sharedFolderCreateDialog: false,
-      sharedFolderCreateName: "",
-      sharedFolderCreateTarget: "",
+      sharedFolderCreateName: '',
+      sharedFolderCreateTarget: '',
       sharedFolderCreateTargetOptions: [],
       sharedFolderCreateLoading: false,
       sharedFolderCreateCustom: false,
@@ -433,45 +377,45 @@ export default {
       sharedFolderEditLoading: false,
       sharedFolderEditDialogGuestOptions: [
         {
-          label: "Read/Write",
-          value: "rw",
+          label: 'Read/Write',
+          value: 'rw',
         },
         {
-          label: "Read Only",
-          value: "ro",
+          label: 'Read Only',
+          value: 'ro',
         },
         {
-          label: "No Access",
-          value: "none",
+          label: 'No Access',
+          value: 'none',
         },
       ],
       sharedFolderEditDialogRoOptions: [
         {
-          label: "Read/Write",
-          value: "rw",
+          label: 'Read/Write',
+          value: 'rw',
         },
         {
-          label: "Read Only",
-          value: "ro",
+          label: 'Read Only',
+          value: 'ro',
         },
       ],
       sharedFolderEditDialogNoneOptions: [
         {
-          label: "Read/Write",
-          value: "rw",
+          label: 'Read/Write',
+          value: 'rw',
         },
         {
-          label: "Read Only",
-          value: "ro",
+          label: 'Read Only',
+          value: 'ro',
         },
         {
-          label: "No Access",
-          value: "none",
+          label: 'No Access',
+          value: 'none',
         },
       ],
       sharedFolderEditDialogSmbUsers: [],
       sharedFolderEditDialogSmbUsersOptions: [],
-    };
+    }
   },
   components: {
     ErrorDialog,
@@ -480,242 +424,212 @@ export default {
   },
   methods: {
     fetchData() {
-      this.sharedFoldersLoading = true;
+      this.sharedFoldersLoading = true
       this.$api
-        .get("storage/sharedfolders")
+        .get('storage/sharedfolders')
         .then((response) => {
-          this.sharedFolders = response.data;
-          this.sharedFoldersLoading = false;
-          this.sharedFoldersSelected = [];
+          this.sharedFolders = response.data
+          this.sharedFoldersLoading = false
+          this.sharedFoldersSelected = []
         })
         .catch((error) => {
-          this.sharedFoldersLoading = false;
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error fetching shared folders", [
-            errormsg,
-          ]);
-        });
+          this.sharedFoldersLoading = false
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error fetching shared folders', [errormsg])
+        })
     },
     sharedFolderCreate() {
-      this.sharedFolderCreateLoading = true;
-      let target;
+      this.sharedFolderCreateLoading = true
+      let target
       if (this.sharedFolderCreateCustom) {
-        target = this.sharedFolderCreateCustomPath;
+        target = this.sharedFolderCreateCustomPath
         if (target == null) {
-          this.sharedFolderCreateLoading = false;
-          this.$refs.errorDialog.show("Error creating shared folder", [
-            "Path is required",
-          ]);
-          return;
+          this.sharedFolderCreateLoading = false
+          this.$refs.errorDialog.show('Error creating shared folder', ['Path is required'])
+          return
         }
       } else {
-        target = this.sharedFolderCreateTarget.mountpoint;
+        target = this.sharedFolderCreateTarget.mountpoint
       }
 
       this.$api
-        .post("storage/sharedfolders/create", {
+        .post('storage/sharedfolders/create', {
           name: this.sharedFolderCreateName,
           target: target,
         })
-        .then((response) => {
-          this.fetchData();
-          this.sharedFolderCreateLoading = false;
-          this.sharedFolderCreateDialog = false;
+        .then(() => {
+          this.fetchData()
+          this.sharedFolderCreateLoading = false
+          this.sharedFolderCreateDialog = false
         })
         .catch((error) => {
-          this.sharedFolderCreateLoading = false;
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error creating shared folder", [
-            errormsg,
-          ]);
-        });
+          this.sharedFolderCreateLoading = false
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error creating shared folder', [errormsg])
+        })
     },
     sharedFolderDelete() {
       this.$api
-        .post("storage/sharedfolders/delete", {
+        .post('storage/sharedfolders/delete', {
           name: this.sharedFoldersSelected[0].name,
         })
-        .then((response) => {
-          this.fetchData();
+        .then(() => {
+          this.fetchData()
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error deleting shared folder", [
-            errormsg,
-          ]);
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error deleting shared folder', [errormsg])
+        })
     },
     sharedFolderEdit() {
-      const status = this.sharedFolderEditDialogData.smb_share_status;
-      const name = this.sharedFolderEditDialogData.name;
-      const path = this.sharedFolderEditDialogData.path;
+      const status = this.sharedFolderEditDialogData.smb_share_status
+      const name = this.sharedFolderEditDialogData.name
+      const path = this.sharedFolderEditDialogData.path
       if (status) {
-        const mode = this.sharedFolderEditDialogData.smb_share_guest.value;
-        if (mode == "rw") {
-          this.sharedFolderEditLoading = true;
+        const mode = this.sharedFolderEditDialogData.smb_share_guest.value
+        if (mode == 'rw') {
+          this.sharedFolderEditLoading = true
           this.$api
-            .post("storage/sharedfolders/smb-edit", {
+            .post('storage/sharedfolders/smb-edit', {
               name: name,
               status: true,
               path: path,
-              mode: "PUBLIC",
+              mode: 'PUBLIC',
             })
-            .then((response) => {
-              this.fetchData();
-              this.sharedFolderEditLoading = false;
-              this.sharedFolderEditDialog = false;
+            .then(() => {
+              this.fetchData()
+              this.sharedFolderEditLoading = false
+              this.sharedFolderEditDialog = false
             })
             .catch((error) => {
-              const errormsg = error.response
-                ? error.response.data.detail
-                : error;
-              this.$refs.errorDialog.show("Error editing shared folder", [
-                errormsg,
-              ]);
-            });
+              const errormsg = error.response ? error.response.data.detail : error
+              this.$refs.errorDialog.show('Error editing shared folder', [errormsg])
+            })
         } else {
           const users = this.sharedFolderEditDialogSmbUsers.map((user) => {
             return {
               name: user.name,
               mode: user.access.value,
-            };
-          });
-          this.sharedFolderEditLoading = true;
+            }
+          })
+          this.sharedFolderEditLoading = true
           this.$api
-            .post("storage/sharedfolders/smb-edit", {
+            .post('storage/sharedfolders/smb-edit', {
               name: name,
               status: true,
               path: path,
-              mode: mode == "ro" ? "SECURE" : "PRIVATE",
+              mode: mode == 'ro' ? 'SECURE' : 'PRIVATE',
               users: users,
             })
-            .then((response) => {
-              this.fetchData();
-              this.sharedFolderEditLoading = false;
-              this.sharedFolderEditDialog = false;
+            .then(() => {
+              this.fetchData()
+              this.sharedFolderEditLoading = false
+              this.sharedFolderEditDialog = false
             })
             .catch((error) => {
-              const errormsg = error.response
-                ? error.response.data.detail
-                : error;
-              this.$refs.errorDialog.show("Error editing shared folder", [
-                errormsg,
-              ]);
-            });
+              const errormsg = error.response ? error.response.data.detail : error
+              this.$refs.errorDialog.show('Error editing shared folder', [errormsg])
+            })
         }
       } else {
-        this.sharedFolderEditLoading = true;
+        this.sharedFolderEditLoading = true
         this.$api
-          .post("storage/sharedfolders/smb-edit", {
+          .post('storage/sharedfolders/smb-edit', {
             name: name,
             status: false,
           })
-          .then((response) => {
-            this.fetchData();
-            this.sharedFolderEditLoading = false;
-            this.sharedFolderEditDialog = false;
+          .then(() => {
+            this.fetchData()
+            this.sharedFolderEditLoading = false
+            this.sharedFolderEditDialog = false
           })
           .catch((error) => {
-            const errormsg = error.response
-              ? error.response.data.detail
-              : error;
-            this.$refs.errorDialog.show("Error editing shared folder", [
-              errormsg,
-            ]);
-          });
+            const errormsg = error.response ? error.response.data.detail : error
+            this.$refs.errorDialog.show('Error editing shared folder', [errormsg])
+          })
       }
     },
     sharedFolderShowEdit() {
-      this.sharedFolderEditDialogData = this.sharedFoldersSelected[0];
+      this.sharedFolderEditDialogData = this.sharedFoldersSelected[0]
 
       // add smbsharestatus  to sharedFolderEditDialogData
-      this.sharedFolderEditDialogData.smb_share_status = this
-        .sharedFolderEditDialogData.smb_share.name
+      this.sharedFolderEditDialogData.smb_share_status = this.sharedFolderEditDialogData.smb_share
+        .name
         ? true
-        : false;
+        : false
 
       if (!this.sharedFolderEditDialogData.smb_share_status) {
         this.sharedFolderEditDialogData.smb_share_guest =
-          this.sharedFolderEditDialogGuestOptions.find(
-            (option) => option.value == "rw",
-          );
-        this.sharedFolderEditUsersChange("rw");
+          this.sharedFolderEditDialogGuestOptions.find((option) => option.value == 'rw')
+        this.sharedFolderEditUsersChange('rw')
       } else {
         // smb_share_guest, depends on mode.
         // mode = PUBLIC, smb_share_guest = 'rw'
         // mode = SECURE, smb_share_guest = 'ro'
         // mode = PRIVATE, smb_share_guest = 'none'
         const smb_share_guest =
-          this.sharedFolderEditDialogData.smb_share.mode == "PUBLIC"
-            ? "rw"
-            : this.sharedFolderEditDialogData.smb_share.mode == "SECURE"
-            ? "ro"
-            : "none";
+          this.sharedFolderEditDialogData.smb_share.mode == 'PUBLIC'
+            ? 'rw'
+            : this.sharedFolderEditDialogData.smb_share.mode == 'SECURE'
+              ? 'ro'
+              : 'none'
         this.sharedFolderEditDialogData.smb_share_guest =
-          this.sharedFolderEditDialogGuestOptions.find(
-            (option) => option.value == smb_share_guest,
-          );
-        this.sharedFolderEditUsersChange(smb_share_guest, true);
+          this.sharedFolderEditDialogGuestOptions.find((option) => option.value == smb_share_guest)
+        this.sharedFolderEditUsersChange(smb_share_guest, true)
       }
-      console.log(
-        "sharedFolderEditDialogData",
-        this.sharedFolderEditDialogData,
-      );
-      this.sharedFolderEditDialog = true;
+      console.log('sharedFolderEditDialogData', this.sharedFolderEditDialogData)
+      this.sharedFolderEditDialog = true
     },
     sharedFolderEditUsersChange(mode, init = false) {
-      if (mode == "none") {
-        this.sharedFolderEditDialogSmbUsers =
-          this.sharedFolderEditDialogData.smb_share.users.map((user) => {
-            const accessval = init ? user.mode : "none";
+      if (mode == 'none') {
+        this.sharedFolderEditDialogSmbUsers = this.sharedFolderEditDialogData.smb_share.users.map(
+          (user) => {
+            const accessval = init ? user.mode : 'none'
             return {
               name: user.name,
               access: this.sharedFolderEditDialogGuestOptions.find(
                 (option) => option.value == accessval,
               ),
-            };
-          });
-        this.sharedFolderEditDialogSmbUsersOptions =
-          this.sharedFolderEditDialogNoneOptions;
-      } else if (mode == "ro") {
-        this.sharedFolderEditDialogSmbUsers =
-          this.sharedFolderEditDialogData.smb_share.users.map((user) => {
-            const accessval = init ? user.mode : "ro";
+            }
+          },
+        )
+        this.sharedFolderEditDialogSmbUsersOptions = this.sharedFolderEditDialogNoneOptions
+      } else if (mode == 'ro') {
+        this.sharedFolderEditDialogSmbUsers = this.sharedFolderEditDialogData.smb_share.users.map(
+          (user) => {
+            const accessval = init ? user.mode : 'ro'
             return {
               name: user.name,
               access: this.sharedFolderEditDialogGuestOptions.find(
                 (option) => option.value == accessval,
               ),
-            };
-          });
-        this.sharedFolderEditDialogSmbUsersOptions =
-          this.sharedFolderEditDialogRoOptions;
-      } else if (mode == "rw") {
-        this.sharedFolderEditDialogSmbUsers = [];
-        this.sharedFolderEditDialogSmbUsersOptions =
-          this.sharedFolderEditDialogGuestOptions;
+            }
+          },
+        )
+        this.sharedFolderEditDialogSmbUsersOptions = this.sharedFolderEditDialogRoOptions
+      } else if (mode == 'rw') {
+        this.sharedFolderEditDialogSmbUsers = []
+        this.sharedFolderEditDialogSmbUsersOptions = this.sharedFolderEditDialogGuestOptions
       }
     },
     sharedFolderCreateDialogOpen() {
-      this.sharedFolderCreateDialog = true;
-      this.sharedFolderCreateLoading = true;
+      this.sharedFolderCreateDialog = true
+      this.sharedFolderCreateLoading = true
       this.$api
-        .get("storage/sharedfolders/availabledevices")
+        .get('storage/sharedfolders/availabledevices')
         .then((response) => {
-          this.sharedFolderCreateTargetOptions = response.data;
-          this.sharedFolderCreateLoading = false;
+          this.sharedFolderCreateTargetOptions = response.data
+          this.sharedFolderCreateLoading = false
         })
         .catch((error) => {
-          const errormsg = error.response ? error.response.data.detail : error;
-          this.$refs.errorDialog.show("Error getting available devices", [
-            errormsg,
-          ]);
-          this.sharedFolderCreateLoading = false;
-        });
+          const errormsg = error.response ? error.response.data.detail : error
+          this.$refs.errorDialog.show('Error getting available devices', [errormsg])
+          this.sharedFolderCreateLoading = false
+        })
     },
   },
   mounted() {
-    this.fetchData();
+    this.fetchData()
   },
-};
+}
 </script>

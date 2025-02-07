@@ -18,15 +18,13 @@
             <p class="col">
               {{
                 systemInfo.memory === undefined
-                  ? "N/A"
-                  : systemInfo.memory.value + " " + systemInfo.memory.unit
+                  ? 'N/A'
+                  : systemInfo.memory.value + ' ' + systemInfo.memory.unit
               }}
             </p>
           </div>
           <div class="row items-start">
-            <p class="col text-right q-mr-sm text-weight-bold">
-              Operating System:
-            </p>
+            <p class="col text-right q-mr-sm text-weight-bold">Operating System:</p>
             <p class="col">{{ systemInfo.os }}</p>
           </div>
           <div class="row items-start">
@@ -106,15 +104,15 @@
 </template>
 
 <script>
-import { version } from "../../../package.json";
-import editHostName from "src/components/host-manager/EditHostName.vue";
-import { convertEpochToUptime } from "src/utils/timeUtils";
-import errorDialog from "src/components/ErrorDialog.vue";
-import ToolTip from "src/components/ToolTip.vue";
-import { useHostnameStore } from "src/stores/hostname";
-import { storeToRefs } from "pinia";
+import { version } from '../../../package.json'
+import editHostName from 'src/components/host-manager/EditHostName.vue'
+import { convertEpochToUptime } from 'src/utils/timeUtils'
+import errorDialog from 'src/components/ErrorDialog.vue'
+import ToolTip from 'src/components/ToolTip.vue'
+import { useHostnameStore } from 'src/stores/hostname'
+import { storeToRefs } from 'pinia'
 
-import { ref } from "vue";
+import { ref } from 'vue'
 export default {
   data() {
     return {
@@ -125,14 +123,14 @@ export default {
       webuiVersion: version,
       uptime: null,
       up_since: null,
-    };
+    }
   },
   setup() {
-    const hostname_store = useHostnameStore();
-    const { getHostname } = storeToRefs(hostname_store);
+    const hostname_store = useHostnameStore()
+    const { getHostname } = storeToRefs(hostname_store)
     return {
       hostname: getHostname,
-    };
+    }
   },
   components: {
     editHostName,
@@ -141,53 +139,49 @@ export default {
   },
   methods: {
     getSystemInfo() {
-      this.loadingSystem = true;
+      this.loadingSystem = true
       this.$api
-        .get("/host/system-info/all")
+        .get('/host/system-info/all')
         .then((response) => {
-          this.systemInfo = response.data;
-          this.up_since = this.systemInfo.up_since;
-          this.updateUpTime();
-          this.loadingSystem = false;
+          this.systemInfo = response.data
+          this.up_since = this.systemInfo.up_since
+          this.updateUpTime()
+          this.loadingSystem = false
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting system info", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error getting system info', [error.response.data.detail])
+        })
     },
     getDockerInfo() {
-      this.loadingDocker = true;
+      this.loadingDocker = true
       this.$api
-        .get("docker-manager/info")
+        .get('docker-manager/info')
         .then((response) => {
-          this.dockerInfo = response.data;
-          this.loadingDocker = false;
+          this.dockerInfo = response.data
+          this.loadingDocker = false
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error getting docker info", [
-            error.response.data.detail,
-          ]);
-        });
+          this.$refs.errorDialog.show('Error getting docker info', [error.response.data.detail])
+        })
     },
     editHostName() {
-      this.$refs.editHostNameDialog.show();
+      this.$refs.editHostNameDialog.show()
     },
     updateUpTime() {
       if (this.up_since != null) {
-        this.uptime = convertEpochToUptime(this.up_since);
+        this.uptime = convertEpochToUptime(this.up_since)
       }
     },
   },
   mounted() {
-    this.getSystemInfo();
-    this.getDockerInfo();
+    this.getSystemInfo()
+    this.getDockerInfo()
     this.upTimeInterval = setInterval(() => {
-      this.updateUpTime();
-    }, 1000);
+      this.updateUpTime()
+    }, 1000)
   },
   beforeUnmount() {
-    clearInterval(this.upTimeInterval);
+    clearInterval(this.upTimeInterval)
   },
-};
+}
 </script>

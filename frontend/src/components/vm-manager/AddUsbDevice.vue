@@ -18,44 +18,44 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import HostUsbDevicesList from "src/components/host-manager/HostUsbDevicesList.vue";
-import ErrorDialog from "src/components/ErrorDialog.vue";
+import { ref } from 'vue'
+import HostUsbDevicesList from 'src/components/host-manager/HostUsbDevicesList.vue'
+import ErrorDialog from 'src/components/ErrorDialog.vue'
 
 export default {
   data() {
     return {
       visible: ref(false),
       uuid: null,
-    };
+    }
   },
-  emits: ["usb-device-add-finished"],
+  emits: ['usb-device-add-finished'],
   components: {
     HostUsbDevicesList,
     ErrorDialog,
   },
   methods: {
     show(uuid) {
-      this.uuid = uuid;
-      this.visible = true;
+      this.uuid = uuid
+      this.visible = true
     },
     addUsbDevice() {
       this.$api
-        .post("/vm-manager/" + this.uuid + "/edit-usb-add", {
+        .post('/vm-manager/' + this.uuid + '/edit-usb-add', {
           product_id: this.$refs.hostUsbDevicesList.getSelectedUsbProductId(),
           vendor_id: this.$refs.hostUsbDevicesList.getSelectedUsbVendorId(),
         })
-        .then((response) => {
-          this.$emit("usb-device-add-finished");
-          this.visible = false;
+        .then(() => {
+          this.$emit('usb-device-add-finished')
+          this.visible = false
         })
         .catch((error) => {
-          this.$refs.errorDialog.show("Error", [
-            "Failed to add USB device.",
+          this.$refs.errorDialog.show('Error', [
+            'Failed to add USB device.',
             error.response.data.detail,
-          ]);
-        });
+          ])
+        })
     },
   },
-};
+}
 </script>
