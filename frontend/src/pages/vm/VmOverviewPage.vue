@@ -8,6 +8,8 @@
       selection="single"
       :loading="tableLoading"
       v-model:selected="selectedVm"
+      hide-selected-banner
+      :pagination="pagination"
     >
       <template v-slot:top-right>
         <q-btn flat round color="primary" icon="refresh" @click="getData">
@@ -92,7 +94,7 @@
   <ErrorDialog ref="errorDialog" />
   <ConfirmDialog ref="confirmDialog" />
   <ToolTip ref="toolTip" />
-  <EditVmDialog ref="editVmDialog" />
+  <EditVmDialog ref="editVmDialog" @finished="getData"/>
 </template>
 
 <script>
@@ -159,6 +161,12 @@ export default {
       ],
       tableLoading: false,
       selectedVm: [],
+      pagination: {
+        rowsPerPage: 15,
+        sortBy: 'id',
+        descending: false,
+
+      },
     }
   },
   components: {

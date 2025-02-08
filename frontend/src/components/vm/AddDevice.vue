@@ -48,18 +48,35 @@
         </q-list>
       </q-card-section>
       <q-card-section v-if="diskfileLayout">
-        <q-input filled v-model="diskfile" label="Disk File" />
-        <q-input filled v-model="diskfile" label="Disk File" />
-        <q-input filled v-model="diskfile" label="Disk File" />
+        <q-input filled v-model="diskFileName" label="Disk Name" class="q-pb-md" />
+        <q-select
+          class="q-pb-md"
+          v-model="diskFileBusType"
+          :options="diskBusTypes"
+          label="Disk Bus"
+          filled
+        />
+        <q-select
+          class="q-pb-md"
+          v-model="diskFileDeviceType"
+          :options="diskDeviceTypes"
+          label="Device Type"
+          filled
+        />
+        <DirectoryList
+          v-model="diskFileSource"
+          label="Disk Source"
+          selectiontype="file"
+        ></DirectoryList>
       </q-card-section>
       <q-card-section v-if="diskblockLayout">
         <q-input filled v-model="diskblock" label="Disk Block" />
         <q-input filled v-model="diskblock" label="Disk Block" />
         <q-input filled v-model="diskblock" label="Disk Block" />
       </q-card-section>
-      <q-card-section v-if="networkLayout" class="q-pa-md">
+      <q-card-section v-if="networkLayout" class="q-py-none">
         <q-select
-          class="q-py-md"
+          class="q-pb-md"
           v-model="networkSource"
           :options="libvirtNetworks"
           label="Network Source"
@@ -87,11 +104,13 @@
         <q-btn color="primary" icon="check" flat @click="networkCreate" v-if="networkLayout">
           <ToolTip content="Create" />
         </q-btn>
-        <!-- <q-btn flat label="Yes" @click="confirmYes" />
-            <q-btn flat label="No" @click="confirmNo()" /> -->
+        <q-btn color="primary" icon="check" flat @click="diskCreate" v-if="diskfileLayout">
+          <ToolTip content="Create" />
+        </q-btn>
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <ErrorDialog ref="errorDialog" />
 </template>
 
 <style lang="scss">
@@ -103,6 +122,8 @@
 
 <script>
 import ToolTip from '../ToolTip.vue'
+import DirectoryList from '../host-manager/DirectoryList.vue'
+import ErrorDialog from '../ErrorDialog.vue'
 
 export default {
   data() {
@@ -120,14 +141,31 @@ export default {
         { label: 'rtl8139', value: 'rtl8139' },
       ],
       networkInterfaceType: 'virtio',
-      networkSource: 'default',
+      networkSource: '',
       networkCustomMac: false,
       networkCustomMacAddress: '52:54:00:a8:7e:c9',
       libvirtNetworks: [{ label: 'default', value: 'default' }],
+      diskFileName: '',
+      diskFileBusType: 'virtio',
+      diskFileDeviceType: 'disk',
+      diskFileSource: null,
+      diskBusTypes: [
+        { label: 'VirtIO', value: 'virtio' },
+        { label: 'SATA', value: 'sata' },
+        { label: 'SCSI', value: 'scsi' },
+        { label: 'USB', value: 'usb' },
+      ],
+      diskDeviceTypes: [
+        { label: 'Disk', value: 'disk' },
+        { label: 'CDROM', value: 'cdrom' },
+      ],
     }
   },
+  emits: ['finished'],
   components: {
     ToolTip,
+    DirectoryList,
+    ErrorDialog,
   },
   methods: {
     show(vmid) {
@@ -142,13 +180,64 @@ export default {
       if (this.option === 'disk-file') {
         this.optionLayout = false
         this.diskfileLayout = true
+        this.diskFileBusType = this.diskBusTypes[0]
+        this.diskFileDeviceType = this.diskDeviceTypes[0]
+        this.diskFileName = ''
+        this.diskFileSource = null
       } else if (this.option === 'disk-block') {
         this.optionLayout = false
         this.diskblockLayout = true
       } else if (this.option === 'network') {
         this.optionLayout = false
         this.networkLayout = true
+        this.networkGetList()
+        this.networkInterfaceType = this.networkInterfaceTypes[0]
       }
+    },
+    networkGetList() {
+      this.$api.get('/vm/networks').then((res) => {
+        this.libvirtNetworks = res.data
+        for (let i = 0; i < this.libvirtNetworks.length; i++) {
+          this.libvirtNetworks[i].label = this.libvirtNetworks[i].name
+          this.libvirtNetworks[i].value = this.libvirtNetworks[i].name
+        }
+        if (this.libvirtNetworks.length > 0) {
+          this.networkSource = this.libvirtNetworks[0]
+        }
+      })
+    },
+    networkCreate() {
+      this.$api
+        .post('/vm/' + this.vmid + '/devices/network', {
+          libvirt_name: this.networkSource.value,
+          type: this.networkInterfaceType.value,
+          mac: this.networkCustomMac ? this.networkCustomMacAddress : null,
+        })
+        .then(() => {
+          this.layout = false
+          this.$emit('finished')
+        })
+    },
+    diskCreate() {
+      if (this.diskFileSource == null) {
+        this.$refs.errorDialog.show('Error', ['Disk source is required'])
+        return
+      }
+      if (this.diskFileName == '') {
+        this.$refs.errorDialog.show('Error', ['Disk name is required'])
+        return
+      }
+      this.$api
+        .post('/vm/' + this.vmid + '/devices/disk-file', {
+          name: this.diskFileName,
+          disk_bus: this.diskFileBusType.value,
+          device_type: this.diskFileDeviceType.value,
+          disk_source_file: this.diskFileSource,
+        })
+        .then(() => {
+          this.layout = false
+          this.$emit('finished')
+        })
     },
   },
 }

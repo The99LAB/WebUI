@@ -29,7 +29,7 @@
         v-model="focused"
         fit
         class="q-my-none q-py-none"
-        @hide="$refs.input.focus(); $refs.input.blur()"
+        @hide="onHide"
       >
         <q-list
           class="q-my-none q-py-none shadow-3"
@@ -61,7 +61,6 @@ export default {
       selectedPath: '',
       currentPath: this.modelValue,
       focused: false,
-      isValid: false,
       loading: false,
     }
   },
@@ -88,6 +87,10 @@ export default {
     },
   },
   methods: {
+    onHide() {
+      this.$refs.input.focus()
+      this.$refs.input.blur()
+    },
     getData(path, init = false) {
       this.loading = true
       this.$api
@@ -118,11 +121,15 @@ export default {
         if (this.selectiontype == 'dir' || this.selectiontype == 'both') {
           console.log('dir', value)
           this.setCurrentPath(value)
+        } else if (this.selectiontype == 'file') {
+          this.$emit('update:modelValue', null)
         }
         this.getData(value.path)
       } else if (value.type == 'dirparent') {
         if (this.selectiontype == 'dir' || this.selectiontype == 'both') {
           this.setCurrentPath(value)
+        } else if (this.selectiontype == 'file') {
+          this.$emit('update:modelValue', null)
         }
         this.getData(value.path)
       } else if (value.type == 'file') {
@@ -135,11 +142,6 @@ export default {
     setCurrentPath(value) {
       this.currentPath = value.path
       this.$emit('update:modelValue', value.path)
-      if (this.selectiontype == 'dir') {
-        value.type == 'dir' ? (this.isValid = true) : (this.isValid = false)
-      } else if (this.selectiontype == 'file') {
-        value.type == 'file' ? (this.isValid = true) : (this.isValid = false)
-      }
     },
   },
   mounted() {

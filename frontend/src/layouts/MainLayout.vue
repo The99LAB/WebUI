@@ -65,7 +65,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered>
+    <q-drawer show-if-above v-model="leftDrawerOpen" side="left" bordered :width="200">
       <q-list>
         <q-item class="q-pa-md">
           <q-item-section top avatar>

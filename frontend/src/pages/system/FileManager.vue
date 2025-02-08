@@ -41,7 +41,7 @@
             this.$refs.confirmDialog.show(
               'Are you sure?',
               ['Do you really want to remove this?', 'This action is not reversable!'],
-              removePath
+              removePath,
             )
           "
         >

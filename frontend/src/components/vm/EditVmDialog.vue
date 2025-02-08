@@ -6,7 +6,7 @@
       :class="{ 'bg-dark': $q.dark.isActive, 'bg-white': !$q.dark.isActive }"
     >
       <q-header bordered>
-        <q-toolbar class="row items-center" v-if="$q.screen.gt.sm">
+        <q-toolbar class="row items-center" v-if="$q.screen.gt.xs">
           <div style="width: 10em" class="text-left">
             <p class="text-h6 q-ma-none">Edit VM</p>
           </div>
@@ -17,29 +17,22 @@
           </q-tabs>
           <q-space />
           <div style="width: 10em" class="text-right">
-            <q-btn flat label="Apply" v-if="tab == 'general'">
-              <ToolTip content="Apply changes" />
-            </q-btn>
-            <q-btn icon="close" flat round dense v-close-popup @click="tab = 'general'">
+            <q-btn icon="close" flat round dense v-close-popup @click="$emit('finished')">
               <ToolTip content="Close" />
             </q-btn>
           </div>
         </q-toolbar>
-        <q-toolbar v-if="$q.screen.lt.md">
+        <q-toolbar v-if="$q.screen.lt.sm">
           <q-toolbar-title class="text-h6">Edit VM</q-toolbar-title>
-          <q-btn flat label="Apply" v-if="tab == 'general'">
-            <ToolTip content="Apply changes" />
-          </q-btn>
-          <q-btn icon="close" flat round dense v-close-popup @click="tab = 'general'">
+          <q-btn icon="close" flat round dense v-close-popup @click="$emit('finished')">
             <ToolTip content="Close" />
           </q-btn>
         </q-toolbar>
-        <q-tabs v-model="tab" v-if="$q.screen.lt.md">
+        <q-tabs v-model="tab" v-if="$q.screen.lt.sm">
           <q-tab name="general" label="General" />
           <q-tab name="devices" label="Devices" />
         </q-tabs>
       </q-header>
-
       <q-page-container>
         <q-page padding class="row q-pa-md">
           <q-tab-panels v-model="tab" style="width: 100%">
@@ -48,25 +41,23 @@
                 <q-card>
                   <q-card-section>
                     <div class="row">
-                      <div class="col q-mr-lg">
+                      <div class="col q-ma-sm">
                         <q-input label="Name" v-model="vm.name" />
-                        <div class="row items-center q-mt-md">
-                          <p class="text-body2 q-ma-none">Autostart:</p>
-                          <q-toggle v-model="vm.autostart" />
-                          <q-tooltip
-                            :delay="500"
-                            anchor="bottom left"
-                            self="top start"
-                            :offset="[0, 8]"
-                          >
-                            Automatically start the VM when the server boots
-                          </q-tooltip>
-                        </div>
                       </div>
-                      <div class="col q-ml-lg">
-                        <q-select label="Machine" v-model="vm.machine_type" readonly />
-                        <q-input label="BIOS" v-model="vm.bios_type" readonly />
+                      <div class="col q-ma-sm">
+                        <q-select
+                          label="Video Type"
+                          v-model="vm.video_type"
+                          :options="video_types"
+                          type="number"
+                          min="1"
+                        />
                       </div>
+                    </div>
+                    <div class="row items-center q-mt-md">
+                      <q-toggle v-model="vm.autostart" left-label label="Autostart:">
+                        <ToolTip content="Automatically start the VM when the server boots" />
+                      </q-toggle>
                     </div>
                   </q-card-section>
                 </q-card>
@@ -193,7 +184,7 @@
                     <p class="text-h6 q-ma-none">Devices</p>
                     <q-space />
                     <q-btn flat round color="primary" icon="add" @click="deviceAdd()">
-                      <q-tooltip :offset="[5, 5]">Add Device</q-tooltip>
+                      <ToolTip content="Add Device" />
                     </q-btn>
                   </div>
                   <q-separator class="q-mt-xs" />
@@ -307,12 +298,20 @@
           </q-tab-panels>
         </q-page>
       </q-page-container>
+      <q-footer v-if="tab == 'general'">
+        <div class="row q-pa-sm">
+          <q-space />
+          <q-btn flat rounded icon-right="check" v-if="tab == 'general'" @click="generalApply">
+            <ToolTip content="Apply changes" />
+          </q-btn>
+        </div>
+      </q-footer>
     </q-layout>
     <q-inner-loading :showing="loading" />
   </q-dialog>
   <ErrorDialog ref="errorDialog" />
   <ConfirmDialog ref="confirmDialog" />
-  <AddDevice ref="addDevice" />
+  <AddDevice ref="addDevice" @finished="getdata" />
 </template>
 
 <style lang="scss" scoped>
@@ -365,6 +364,7 @@ export default {
       memoryUnitOptions: ['B', 'KiB', 'MiB', 'GiB'],
       memory_minMemoryUnit: 'B',
       memory_maxMemoryUnit: 'B',
+      video_types: ['virtio', 'qxl', 'vga'],
       selectedDeviceTitle: null,
       selectedDevice: null,
       selectedDeviceType: null,
@@ -376,15 +376,19 @@ export default {
     ToolTip,
     AddDevice,
   },
+  emits: ['finished'],
   methods: {
     show(id) {
       this.vmid = id
+      this.vm = null
+      this.tab = 'general'
       this.getdata()
     },
     getdata() {
       this.selectedDevice = null
       this.selectedDeviceType = null
       this.selectedDeviceTitle = null
+      this.resetSelectedDevices()
       this.$api
         .get('/vm/' + this.vmid)
         .then((response) => {
@@ -395,15 +399,34 @@ export default {
           this.$refs.errorDialog.show(error)
         })
     },
+    resetSelectedDevices() {
+      if (this.vm !== null) {
+        this.vm.devices_network.forEach((element) => {
+          element.active = false
+        })
+        this.vm.devices_disk_file.forEach((element) => {
+          element.active = false
+        })
+        this.vm.devices_disk_block.forEach((element) => {
+          element.active = false
+        })
+      }
+    },
     deviceSelect(type, device, index = null) {
       this.selectedDevice = device
       this.selectedDeviceType = type
       if (this.selectedDeviceType == 'disk-file') {
+        this.resetSelectedDevices()
+        this.vm.devices_disk_file[index].active = true
         this.selectedDeviceTitle = 'Disk ' + (index + 1)
       } else if (this.selectedDeviceType == 'disk-block') {
+        this.resetSelectedDevices()
+        this.vm.devices_disk_block[index].active = true
         this.selectedDeviceTitle = 'Disk (Block)' + (index + 1)
       } else if (this.selectedDeviceType == 'network') {
-        this.selectedDeviceTitle = 'Network Interface' + (index + 1)
+        this.resetSelectedDevices()
+        this.vm.devices_network[index].active = true
+        this.selectedDeviceTitle = 'Network Interface ' + (index + 1)
       }
     },
     deviceDeleteInit() {
@@ -448,6 +471,37 @@ export default {
     },
     deviceAdd() {
       this.$refs.addDevice.show(this.vmid)
+    },
+    generalApply() {
+      this.$api
+        .put('/vm/' + this.vmid, 
+          {
+            name: this.vm.name,
+            status: null,
+            autostart: this.vm.autostart,
+            cpu_model: this.vm.cpu_model,
+            vcpu: this.vm.vcpu,
+            vcpu_current: this.vm.vcpu_current,
+            vcpu_custom_topology: this.vm.vcpu_custom_topology,
+            vcpu_custom_topology_sockets: this.vm.vcpu_custom_topology_sockets,
+            vcpu_custom_topology_dies: this.vm.vcpu_custom_topology_dies,
+            vcpu_custom_topology_cores: this.vm.vcpu_custom_topology_cores,
+            vcpu_custom_topology_threads: this.vm.vcpu_custom_topology_threads,
+            machine_type: this.vm.machine_type,
+            bios_type: this.vm.bios_type,
+            ovmf_path_id: this.vm.ovmf_path_id,
+            memory_min: this.vm.memory_min,
+            memory_max: this.vm.memory_max,
+            video_type: this.vm.video_type,
+            xml_template_id: this.vm.xml_template_id,
+          }
+        )
+        .then(() => {
+          this.getdata()
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show(error)
+        })
     },
     calculateCpu() {
       return

@@ -1,9 +1,11 @@
-from .VmManagerException import VmManagerException
+from .VmException import VmException
 from sqlmodel import Field, SQLModel, select, Relationship
 from typing import Optional
 from db import get_session
 from host_manager import libvirt_connection
 import libvirt
+import time
+import os
 
 class OvmfPath(SQLModel, table=True):
     __tablename__ = "ovmfpath"
@@ -98,7 +100,7 @@ class VirtualMachineBasic(SQLModel, table=True):
     ovmf_path: OvmfPath | None = Relationship()
     memory_min: int = Field(nullable=False)
     memory_max: int = Field(nullable=False)
-    video_type: str = Field(nullable=False)
+    video_type: str = Field(nullable=False) # VirtualMachineBasicVideoTypes
     devices_pci: list["VirtualMachineDevicePci"] = Relationship(back_populates="vm")
     devices_disk_file: list["VirtualMachineDeviceDiskFile"] = Relationship(back_populates="vm")
     devices_disk_block: list["VirtualMachineDeviceDiskBlock"] = Relationship(back_populates="vm")
@@ -150,7 +152,7 @@ class VirtualMachineDeviceNetwork(SQLModel, table=True):
     vm: VirtualMachineBasic | None = Relationship(back_populates="devices_network")
 
     
-class VirtualMachineBasicConfig:
+class VirtualMachineBasicLibvirtConfig:
     def __init__(self, vm: VirtualMachineBasic):
         self.vm = vm
         self.conn = libvirt_connection.connection
@@ -172,7 +174,12 @@ class VirtualMachineBasicConfig:
     
     def gen_loader(self):
         if self.vm.bios_type == VirtualMachineBasicBiosTypes.OVMF:
-            return f"<loader readonly='yes' type='pflash'>{self.vm.ovmf_path.path}</loader>"
+            nvram_path = "/mnt/data/s99-vmb-vars/"
+            if not os.path.exists(nvram_path):
+                os.makedirs(nvram_path)
+            nvram_path += f"{self.vm.id}.fd"
+            return f"""<loader readonly='yes' type='pflash'>{self.vm.ovmf_path.path}</loader>
+            <nvram>{nvram_path}</nvram>"""
         else:
             return ""
         
@@ -233,14 +240,27 @@ class VirtualMachineBasicConfig:
     
     def start(self):
         xml = self.gen_xml()
-        self.conn.defineXML(xml)
-        libvirt_domain = self.get_libvirt_domain()
-        libvirt_domain.create()
+        try:
+            self.conn.defineXML(xml)
+            libvirt_domain = self.get_libvirt_domain()
+            libvirt_domain.create()
+        except libvirt.libvirtError as e:
+            self.remove()
+            raise VmException(e)
 
     def shutdown(self):
         libvirt_domain = self.get_libvirt_domain()
         if libvirt_domain.isActive():
-            libvirt_domain.shutdown()
+            print("Shutting down VM")
+            libvirt_domain.shutdown() # send shutdown signal
+            # wait up to 30 seconds for the VM to shutdown
+            # if the VM is still running after 30 seconds, force stop it
+            for i in range(30):
+                if libvirt_domain.isActive():
+                    time.sleep(1)
+                else:
+                    print("VM has been shutdown")
+                    break
         self.remove()
 
     def forcestop(self):
@@ -281,6 +301,23 @@ class VirtualMachineBasicConfig:
             libvirt_domain.undefineFlags(4)
         except libvirt.libvirtError as e:
             pass
+
+def get_vm_networks():
+    networks = libvirt_connection.connection.listAllNetworks()
+    networks_list = []
+    for network in networks:
+        network_active = network.isActive()
+        if network_active == 1:
+            network_active = True
+        else:
+            network_active = False
+        _network = {
+            "uuid": network.UUIDString(),
+            "name": network.name(),
+            "active": network_active,            
+        }
+        networks_list.append(_network)
+    return networks_list
 
 def init_ovmfpaths():
     with get_session() as session:

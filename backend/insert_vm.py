@@ -4,8 +4,10 @@ from sqlmodel import select
 
 if __name__ == "__main__":
     xml_template = None
+    xml_template_2 = None
     with get_session() as session:
         xml_template = session.exec(select(VirtualMachineXmlTemplate).where(VirtualMachineXmlTemplate.name == "Basic VM")).first()
+        xml_template_2 = session.exec(select(VirtualMachineXmlTemplate).where(VirtualMachineXmlTemplate.name == "Basic VM USB2")).first()
 
     ovmf_path = None
     with get_session() as session:
@@ -74,7 +76,7 @@ if __name__ == "__main__":
         memory_min=1*1024*1024*1024,
         memory_max=1*1024*1024*1024,
         video_type=VirtualMachineBasicVideoTypes.QXL,
-        xml_template=xml_template
+        xml_template=xml_template_2
     )
 
     with get_session() as session:
