@@ -241,6 +241,11 @@ class VirtualMachineBasicLibvirtConfig:
     def start(self):
         xml = self.gen_xml()
         try:
+            try:
+                self.get_libvirt_domain()
+                self.remove()
+            except libvirt.libvirtError as e:
+                pass
             self.conn.defineXML(xml)
             libvirt_domain = self.get_libvirt_domain()
             libvirt_domain.create()
