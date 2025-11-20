@@ -22,6 +22,10 @@
             filled
             readonly
           />
+          <q-input
+            v-model="bridgeInterface.ipv4_dns"
+            label="IPv4 DNS (comma separated)"
+          />
           <q-select
             v-model="bridgeInterface.ipv4_method"
             :options="ipv4_methods"
@@ -77,6 +81,24 @@ export default {
     },
     updateBridge() {
       console.log(this.bridgeInterface)
+      // If ipv4_method is auto, clear address, prefix and gateway
+      if (this.bridgeInterface.ipv4_method === 'auto') {
+        this.bridgeInterface.ipv4_address = null
+        this.bridgeInterface.ipv4_prefix = null
+        this.bridgeInterface.ipv4_gateway = null
+      }
+      // Verify that ipv4_dns is a valid comma separated list of IPs
+      if (this.bridgeInterface.ipv4_dns) {
+        const dns_list = this.bridgeInterface.ipv4_dns.split(',')
+        for (let i = 0; i < dns_list.length; i++) {
+          const dns = dns_list[i].trim()
+          const ip_regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+          if (!ip_regex.test(dns)) {
+            this.$refs.errorDialog.show(`Invalid DNS IP address: ${dns}`)
+            return
+          }
+        }
+      }
       this.$api
         .put(`/system/networks/bridges`, this.bridgeInterface)
         .then(() => {
