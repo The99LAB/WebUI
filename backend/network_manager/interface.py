@@ -17,6 +17,7 @@ class NetworkInterfaceBridge(SQLModel, table=True):
     id: int = Field(primary_key=True)
     interface_name: str = Field(foreign_key="networkinterfaceethernet.name")
     bridge_name: str = Field()
+    mac_address: Optional[str] = None  # Persistent MAC address for the bridge
     ipv4_method: Optional[str] = None  # 'auto' or 'manual'
     ipv4_address: Optional[str] = None
     ipv4_gateway: Optional[str] = None
@@ -111,7 +112,10 @@ def apply_interface_bridge(bridge: NetworkInterfaceBridge):
             subprocess.run(["nmcli", "connection", "modify", bridge_uuid, "ipv4.addresses", ""], check=False)
         subprocess.run(["nmcli", "connection", "modify", bridge_uuid, "ipv4.dns", ",".join(bridge.ipv4_dns) if bridge.ipv4_dns else ""], check=False)
         subprocess.run(["nmcli", "connection", "modify", bridge_uuid, "ipv4.method", bridge.ipv4_method or ""], check=False)
-
+        
+        if bridge.mac_address:
+            subprocess.run(["nmcli", "connection", "modify", bridge_uuid, "ethernet.cloned-mac-address", bridge.mac_address], check=False)
+        
         # Bring down the physical/slave interface and bring up the bridge
         if interface_uuid:
             subprocess.run(["nmcli", "connection", "down", interface_uuid], check=False)
@@ -217,6 +221,24 @@ def apply_interface_ethernet(interface: NetworkInterfaceEthernet):
         print(f"Error applying interface: {e}")
 
 
+def update_interface_bridges_mac_addresses():
+    """Fetch and update MAC addresses for bridges that don't have one stored yet."""
+    with get_session() as session:
+        bridges = session.exec(select(NetworkInterfaceBridge)).all()
+        for bridge in bridges:
+            print(f"Checking MAC address for bridge {bridge.bridge_name}")
+            if not bridge.mac_address:
+                # Fetch and store the generated MAC address for the bridge
+                detail_output = subprocess.check_output(["nmcli", "device", "show", bridge.bridge_name], text=True)
+                detail_result = jc.parse('nmcli', detail_output)[0]
+                mac_address = detail_result.get("hwaddr")
+                if mac_address:
+                    print(f"Storing MAC address {mac_address} for bridge {bridge.bridge_name}")
+                    bridge.mac_address = mac_address
+        # Commit all changes at once within the same session
+        session.commit()
+
+
 def apply():
     """
     - Reset all interfaces to default (deleting all existing nmcli connections except loopback)
@@ -235,6 +257,8 @@ def apply():
         bridges = session.exec(select(NetworkInterfaceBridge)).all()
         for bridge in bridges:
             apply_interface_bridge(bridge)
+    
+    update_interface_bridges_mac_addresses()
 
 
 def read():
