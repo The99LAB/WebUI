@@ -10,10 +10,9 @@ def get_session():
     return Session(engine)
 
 def create_db_and_tables():
-    from network_manager.interface import NetworkInterface, read_interfaces, apply_interfaces
-    from vm_manager.vmbasic import OvmfPath, VirtualMachineBasicTemplate, VirtualMachineBasic, VirtualMachineDeviceDiskFile, VirtualMachineDeviceDiskBlock, VirtualMachineDeviceNetwork, VirtualMachineDevicePci, init_ovmfpaths, init_templates
+    from network_manager.interface import read, apply
+    from vm_manager.vmbasic import init_ovmfpaths
     SQLModel.metadata.create_all(engine)
-    read_interfaces()
-    apply_interfaces()
     init_ovmfpaths()
-
+    read()
+    apply()

@@ -1,1 +1,1 @@
-from .interface import get_interfaces, NetworkInterface
+from .interface import NetworkInterfaceEthernet, NetworkInterfaceBridge, get_interface_ethernets, get_interface_bridges, edit_interface_ethernet, edit_interface_bridge, apply_interface_ethernet, apply_interface_bridge, reset, apply

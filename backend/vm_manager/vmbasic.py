@@ -329,6 +329,7 @@ def init_ovmfpaths():
         for ovmf_path in session.exec(select(OvmfPath)).all():
             if ovmf_path.name == "OVMF" or ovmf_path.name == "OVMF_SECBOOT":
                 session.delete(ovmf_path)
+                session.commit()
         session.add(OvmfPath(name="OVMF", path="/usr/share/OVMF/OVMF_CODE_4M.fd", description="OVMF firmware"))
         session.add(OvmfPath(name="OVMF_SECBOOT", path="/usr/share/OVMF/OVMF_CODE_4M.secboot.fd", description="OVMF firmware with secure boot"))
         session.commit()
