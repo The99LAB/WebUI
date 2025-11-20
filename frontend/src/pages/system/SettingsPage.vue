@@ -259,6 +259,7 @@ export default {
         .get('/settings')
         .then((response) => {
           this.settings = response.data
+          this.settings = this.settings.filter((item) => !item.hidden)
           this.settings.forEach((item) => {
             this.generateRegexRules(item)
           })

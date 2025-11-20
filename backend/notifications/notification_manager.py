@@ -1,7 +1,8 @@
-import sqlite3
-import os
 from enum import Enum
 from datetime import datetime
+from sqlmodel import Field, SQLModel, select
+from db import get_session
+from typing import Optional
 
 class NotificationType(Enum):
     ERROR = 'error'
@@ -9,6 +10,15 @@ class NotificationType(Enum):
     SUCCESS = 'success'
     INFO = 'info'
     PROGRESS = 'progress' # Progress: value from 0 to 100 or -1 for indeterminate
+
+class NotificationModel(SQLModel, table=True):
+    __tablename__ = "notifications"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    type: str = Field(nullable=False)
+    timestamp: str = Field(nullable=False)
+    title: str = Field(nullable=False)
+    message: str = Field(nullable=False)
+    progress: int = Field(default=-1)
 
 class Notification:
     def __init__(self, type:NotificationType, title, message, id=None, timestamp=None, progress=-1):
@@ -42,80 +52,100 @@ class Notification:
             message=data['message'],
             progress=data['progress']
         )
+    
+    @classmethod
+    def from_model(cls, model: NotificationModel):
+        return cls(
+            id=model.id,
+            type=NotificationType(model.type),
+            timestamp=model.timestamp,
+            title=model.title,
+            message=model.message,
+            progress=model.progress
+        )
+    
+    def to_model(self) -> NotificationModel:
+        return NotificationModel(
+            id=self.id,
+            type=self.type.value,
+            timestamp=self.timestamp,
+            title=self.title,
+            message=self.message,
+            progress=self.progress
+        )
+
 
 class NotificationManager:
     def __init__(self):
-        self.conn = self._initialize_database()
         self.datetime_format = '%Y-%m-%d %H:%M:%S'
-    
-    def _initialize_database(self):
-        database_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database.db')
-        conn = sqlite3.connect(database_path)
-
-        # Set row_factory to return a dictionary
-        conn.row_factory = sqlite3.Row
-
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS notifications (
-                id INTEGER PRIMARY KEY,
-                type TEXT,
-                timestamp TEXT,
-                title TEXT,
-                message TEXT,
-                progress INTEGER
-            )
-        ''')
-        conn.commit()
-        return conn
         
     def create_notification(self, notification:Notification):
-        cursor = self.conn.cursor()
-        cursor.execute('''
-            INSERT INTO notifications (type, timestamp, title, message, progress)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (notification.type.value, notification.timestamp, notification.title, notification.message, notification.progress))
-        self.conn.commit()
-        # Return the id of the notification
-        return cursor.lastrowid
+        with get_session() as session:
+            model = notification.to_model()
+            session.add(model)
+            session.commit()
+            session.refresh(model)
+            # Return the id of the notification
+            return model.id
     
     def update_notification(self, notification:Notification):
-        cursor = self.conn.cursor()
-        cursor.execute('''
-            UPDATE notifications
-            SET type = ?,
-                timestamp = ?,
-                title = ?,
-                message = ?,
-                progress = ?
-            WHERE id = ?
-        ''', (notification.type.value, notification.timestamp, notification.title, notification.message, notification.progress, notification.id))
-        self.conn.commit()
+        with get_session() as session:
+            model = session.exec(
+                select(NotificationModel).where(NotificationModel.id == notification.id)
+            ).first()
+            if not model:
+                return
+            
+            model.type = notification.type.value
+            model.timestamp = notification.timestamp
+            model.title = notification.title
+            model.message = notification.message
+            model.progress = notification.progress
+            session.add(model)
+            session.commit()
     
     def get_notifications(self):
-        cursor = self.conn.cursor()
-        cursor.execute('SELECT * FROM notifications')
-        notifications = []
-        for row in cursor.fetchall():
-            notifications.append(Notification.from_json(row))
-        return notifications
+        with get_session() as session:
+            models = session.exec(
+                select(NotificationModel).order_by(NotificationModel.timestamp.desc())
+            ).all()
+            return [Notification.from_model(model) for model in models]
     
     def get_notification(self, notification_id):
-        cursor = self.conn.cursor()
-        cursor.execute('SELECT * FROM notifications WHERE id = ?', (notification_id,))
-        row = cursor.fetchone()
-        if row is None:
-            return None
-        return Notification.from_json(row)
+        with get_session() as session:
+            model = session.exec(
+                select(NotificationModel).where(NotificationModel.id == notification_id)
+            ).first()
+            if model is None:
+                return None
+            return Notification.from_model(model)
     
     def delete_notification(self, notification:Notification):
-        cursor = self.conn.cursor()
-        cursor.execute('DELETE FROM notifications WHERE id = ?', (notification.id,))
-        self.conn.commit()
+        with get_session() as session:
+            model = session.exec(
+                select(NotificationModel).where(NotificationModel.id == notification.id)
+            ).first()
+            if model:
+                session.delete(model)
+                session.commit()
     
     def delete_all_notifications(self):
-        cursor = self.conn.cursor()
-        # Delete all notifications except the ones with type progress which are completed (progress != 100)
-        cursor.execute('DELETE FROM notifications WHERE type != ?', (NotificationType.PROGRESS.value,))
-        cursor.execute('DELETE FROM notifications WHERE type = ? AND progress == ?', (NotificationType.PROGRESS.value, 100))
-        self.conn.commit()
+        with get_session() as session:
+            # Delete all notifications except the ones with type progress which are not completed (progress != 100)
+            non_progress = session.exec(
+                select(NotificationModel).where(NotificationModel.type != NotificationType.PROGRESS.value)
+            ).all()
+            for notification in non_progress:
+                session.delete(notification)
+            
+            completed_progress = session.exec(
+                select(NotificationModel).where(
+                    NotificationModel.type == NotificationType.PROGRESS.value,
+                    NotificationModel.progress == 100
+                )
+            ).all()
+            for notification in completed_progress:
+                session.delete(notification)
+            
+            session.commit()
+

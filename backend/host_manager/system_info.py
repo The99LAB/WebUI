@@ -1,6 +1,9 @@
 from .libvirt_con import libvirt_connection
 from .hostManagerException import HostManagerException
 from storage_manager import convertSizeUnit, SizeUnit, ConvertSizeUnitMode
+from settings import SettingsManager, Setting
+from settings.settingsException import SettingsException
+from notifications import NotificationManager, NotificationType, Notification
 from xml.etree import ElementTree as ET
 import distro
 import os
@@ -76,6 +79,8 @@ class UsbDevice:
 class SystemInfo:
     def __init__(self):
         self.libvirt_conn = libvirt_connection.connection
+        self.settings_manager = SettingsManager()
+        self.notification_manager = NotificationManager()
         self._cpu_model = "Unknown"
         self._motherboard = "Unknown"
         self._memory_size = 0
@@ -100,7 +105,7 @@ class SystemInfo:
     
     @property
     def hostname(self):
-        return self.libvirt_conn.getHostname()
+        return self.settings_manager.get_setting("hostname").value
     
     @property
     def cpu_model(self):
@@ -151,9 +156,16 @@ class SystemInfo:
 
     def setHostname(self, hostname):
         try:
-            subprocess.run(["hostnamectl", "set-hostname", hostname], check=True)
-        except subprocess.CalledProcessError:
-            raise HostManagerException("Failed to set hostname")
+            hostname_setting = self.settings_manager.get_setting("hostname")
+            hostname_setting.value = hostname
+            self.settings_manager.update_setting(hostname_setting)
+            self.notification_manager.create_notification(Notification(
+                type=NotificationType.INFO,
+                title="Hostname Changed",
+                message=f"Hostname changed to {hostname} successfully. Reboot the system to apply the changes.",
+            ))
+        except SettingsException as e:
+            raise HostManagerException(f"Failed to set hostname: {str(e)}")
 
     def get_cpu_info(self):
         with open('/proc/cpuinfo') as f:
