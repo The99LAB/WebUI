@@ -112,6 +112,13 @@ export default {
           align: 'left',
           sortable: true,
         },
+        {
+          name: 'ipv4_dns',
+          label: 'IPv4 DNS',
+          field: 'ipv4_dns',
+          align: 'left',
+          sortable: true,
+        }
       ],
       bridges_columns: [
         {
@@ -149,6 +156,13 @@ export default {
           align: 'left',
           sortable: true,
         },
+        {
+          name: 'ipv4_dns',
+          label: 'IPv4 DNS',
+          field: 'ipv4_dns',
+          align: 'left',
+          sortable: true,
+        }
       ],
       ethernetSelected: [],
       ethernetTableLoading: false,
