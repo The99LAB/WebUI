@@ -221,6 +221,34 @@
                       <q-item
                         clickable
                         v-ripple
+                        v-for="(disk, index) in vm.devices_disk_block"
+                        :key="disk"
+                        :active="disk.active"
+                        @click="deviceSelect('disk-block', disk, index)"
+                      >
+                        <q-item-section thumbnail class="q-pr-sm">
+                          <q-icon
+                            color="primary"
+                            :name="disk.device_type == 'cdrom' ? 'mdi-disc' : 'mdi-harddisk'"
+                          />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>
+                            {{ disk.disk_bus == 'virtio' ? 'VirtIO' : disk.disk_bus.toUpperCase() }}
+                            {{
+                              disk.device_type == 'cdrom'
+                                ? 'CDROM'
+                                : disk.device_type == 'disk'
+                                  ? 'Block Disk'
+                                  : disk.device_type
+                            }}
+                            {{ disk.index }}
+                          </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        v-ripple
                         v-for="(network, index) in vm.devices_network"
                         :key="network"
                         :active="network.active"
@@ -275,6 +303,16 @@
                     <q-input
                       label="Source File"
                       v-model="selectedDevice.disk_source_file"
+                      readonly
+                    />
+                  </div>
+                  <div v-if="selectedDeviceType == 'disk-block'">
+                    <q-input label="Name" v-model="selectedDevice.name" readonly />
+                    <q-input label="Device Type" v-model="selectedDevice.device_type" readonly />
+                    <q-input label="Disk Bus" v-model="selectedDevice.disk_bus" readonly />
+                    <q-input
+                      label="Source Block Device"
+                      v-model="selectedDevice.disk_source_block"
                       readonly
                     />
                   </div>

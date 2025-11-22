@@ -199,6 +199,20 @@ class VirtualMachineBasicLibvirtConfig:
         print(devices_disk_file)
         return devices_disk_file
     
+    def gen_devices_disk_block(self):
+        devices_disk_block = ""
+        # Calculate starting index based on number of file disks
+        start_index = len(self.vm.devices_disk_file)
+        for index, device in enumerate(self.vm.devices_disk_block):
+            targetdev = "sd"
+            targetdev += chr(ord("a") + start_index + index)
+            devices_disk_block += f"""<disk type='block' device='{device.device_type}'>
+            <driver name='qemu' type='raw'/>
+            <source dev='{device.disk_source_block}'/>
+            <target dev='{targetdev}' bus='{device.disk_bus}'/>
+            </disk>"""
+        return devices_disk_block
+    
     def gen_devices_network(self):
         devices_network = ""
         for index, device in enumerate(self.vm.devices_network):
@@ -229,6 +243,7 @@ class VirtualMachineBasicLibvirtConfig:
         xml = xml.replace("{%loader%}", self.gen_loader())
         xml = xml.replace("{%qemu_path%}", "/usr/bin/qemu-system-x86_64")
         xml = xml.replace("{%devices_disk_file%}", self.gen_devices_disk_file())
+        xml = xml.replace("{%devices_disk_block%}", self.gen_devices_disk_block())
         xml = xml.replace("{%devices_network%}", self.gen_devices_network())
         xml = xml.replace("{%graphics%}", self.gen_graphics())
         xml = xml.replace("{%video%}", self.gen_video())

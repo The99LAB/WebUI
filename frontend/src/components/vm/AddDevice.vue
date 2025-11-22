@@ -70,9 +70,27 @@
         ></DirectoryList>
       </q-card-section>
       <q-card-section v-if="diskblockLayout">
-        <q-input filled v-model="diskblock" label="Disk Block" />
-        <q-input filled v-model="diskblock" label="Disk Block" />
-        <q-input filled v-model="diskblock" label="Disk Block" />
+        <q-input filled v-model="diskBlockName" label="Disk Name" class="q-pb-md" />
+        <q-select
+          class="q-pb-md"
+          v-model="diskBlockBusType"
+          :options="diskBusTypes"
+          label="Disk Bus"
+          filled
+        />
+        <q-select
+          class="q-pb-md"
+          v-model="diskBlockDeviceType"
+          :options="diskDeviceTypes"
+          label="Device Type"
+          filled
+        />
+        <q-input
+          filled
+          v-model="diskBlockSource"
+          label="Block Device Path (e.g., /dev/sdb)"
+          hint="Enter the path to the physical disk device"
+        />
       </q-card-section>
       <q-card-section v-if="networkLayout" class="q-py-none">
         <q-select
@@ -105,6 +123,9 @@
           <ToolTip content="Create" />
         </q-btn>
         <q-btn color="primary" icon="check" flat @click="diskCreate" v-if="diskfileLayout">
+          <ToolTip content="Create" />
+        </q-btn>
+        <q-btn color="primary" icon="check" flat @click="diskBlockCreate" v-if="diskblockLayout">
           <ToolTip content="Create" />
         </q-btn>
       </q-card-actions>
@@ -159,6 +180,10 @@ export default {
         { label: 'Disk', value: 'disk' },
         { label: 'CDROM', value: 'cdrom' },
       ],
+      diskBlockName: '',
+      diskBlockBusType: 'virtio',
+      diskBlockDeviceType: 'disk',
+      diskBlockSource: '',
     }
   },
   emits: ['finished'],
@@ -187,6 +212,10 @@ export default {
       } else if (this.option === 'disk-block') {
         this.optionLayout = false
         this.diskblockLayout = true
+        this.diskBlockBusType = this.diskBusTypes[0]
+        this.diskBlockDeviceType = this.diskDeviceTypes[0]
+        this.diskBlockName = ''
+        this.diskBlockSource = ''
       } else if (this.option === 'network') {
         this.optionLayout = false
         this.networkLayout = true
@@ -237,6 +266,32 @@ export default {
         .then(() => {
           this.layout = false
           this.$emit('finished')
+        })
+    },
+    diskBlockCreate() {
+      if (this.diskBlockSource == '') {
+        this.$refs.errorDialog.show('Error', ['Block device path is required'])
+        return
+      }
+      if (this.diskBlockName == '') {
+        this.$refs.errorDialog.show('Error', ['Disk name is required'])
+        return
+      }
+      this.$api
+        .post('/vm/' + this.vmid + '/devices/disk-block', {
+          name: this.diskBlockName,
+          disk_bus: this.diskBlockBusType.value,
+          device_type: this.diskBlockDeviceType.value,
+          disk_source_block: this.diskBlockSource,
+        })
+        .then(() => {
+          this.layout = false
+          this.$emit('finished')
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show('Error creating block device', [
+            error.response?.data?.detail || error.message,
+          ])
         })
     },
   },
