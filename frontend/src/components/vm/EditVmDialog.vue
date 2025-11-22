@@ -249,6 +249,34 @@
                       <q-item
                         clickable
                         v-ripple
+                        v-for="(disk, index) in vm.devices_disk_iscsi"
+                        :key="disk"
+                        :active="disk.active"
+                        @click="deviceSelect('disk-iscsi', disk, index)"
+                      >
+                        <q-item-section thumbnail class="q-pr-sm">
+                          <q-icon
+                            color="primary"
+                            :name="disk.device_type == 'cdrom' ? 'mdi-disc' : 'mdi-harddisk'"
+                          />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>
+                            {{ disk.disk_bus == 'virtio' ? 'VirtIO' : disk.disk_bus.toUpperCase() }}
+                            {{
+                              disk.device_type == 'cdrom'
+                                ? 'CDROM'
+                                : disk.device_type == 'disk'
+                                  ? 'iSCSI Disk'
+                                  : disk.device_type
+                            }}
+                            {{ disk.index }}
+                          </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        v-ripple
                         v-for="(network, index) in vm.devices_network"
                         :key="network"
                         :active="network.active"
@@ -315,6 +343,18 @@
                       v-model="selectedDevice.disk_source_block"
                       readonly
                     />
+                  </div>
+                  <div v-if="selectedDeviceType == 'disk-iscsi'">
+                    <q-input label="Name" v-model="selectedDevice.name" readonly />
+                    <q-input label="Device Type" v-model="selectedDevice.device_type" readonly />
+                    <q-input label="Disk Bus" v-model="selectedDevice.disk_bus" readonly />
+                    <q-input
+                      label="iSCSI Name (IQN)"
+                      v-model="selectedDevice.iscsi_name"
+                      readonly
+                    />
+                    <q-input label="iSCSI Host" v-model="selectedDevice.iscsi_host" readonly />
+                    <q-input label="iSCSI Port" v-model="selectedDevice.iscsi_port" readonly />
                   </div>
                   <div v-if="selectedDeviceType == 'network'">
                     <q-input label="Type" v-model="selectedDevice.type" readonly />
@@ -448,6 +488,9 @@ export default {
         this.vm.devices_disk_block.forEach((element) => {
           element.active = false
         })
+        this.vm.devices_disk_iscsi.forEach((element) => {
+          element.active = false
+        })
       }
     },
     deviceSelect(type, device, index = null) {
@@ -461,6 +504,10 @@ export default {
         this.resetSelectedDevices()
         this.vm.devices_disk_block[index].active = true
         this.selectedDeviceTitle = 'Disk (Block)' + (index + 1)
+      } else if (this.selectedDeviceType == 'disk-iscsi') {
+        this.resetSelectedDevices()
+        this.vm.devices_disk_iscsi[index].active = true
+        this.selectedDeviceTitle = 'Disk (iSCSI) ' + (index + 1)
       } else if (this.selectedDeviceType == 'network') {
         this.resetSelectedDevices()
         this.vm.devices_network[index].active = true
@@ -504,6 +551,15 @@ export default {
           })
           .catch((error) => {
             this.$refs.errorDialog.show('Error deleting disk device', [error.response.data.detail])
+          })
+      } else if (this.selectedDeviceType == 'disk-iscsi') {
+        this.$api
+          .delete('/vm/' + this.vmid + '/devices/disk-iscsi/' + this.selectedDevice.id)
+          .then(() => {
+            this.getdata()
+          })
+          .catch((error) => {
+            this.$refs.errorDialog.show('Error deleting iSCSI disk device', [error.response.data.detail])
           })
       }
     },

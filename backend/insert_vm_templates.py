@@ -36,6 +36,7 @@ def insert_vm_templates():
     <emulator>{%qemu_path%}</emulator>
     {%devices_disk_file%}
     {%devices_disk_block%}
+    {%devices_disk_iscsi%}
     {%devices_network%}
     <controller type='pci' index='0' model='pcie-root'/>
     <input type='tablet' bus='usb'>
@@ -81,6 +82,7 @@ def insert_vm_templates():
     <emulator>{%qemu_path%}</emulator>
     {%devices_disk_file%}
     {%devices_disk_block%}
+    {%devices_disk_iscsi%}
     {%devices_network%}
     <controller type='pci' index='0' model='pcie-root'/>
     <controller type="usb" index="0" model="ich9-ehci1"/>

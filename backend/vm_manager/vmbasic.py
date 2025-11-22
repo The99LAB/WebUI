@@ -104,6 +104,7 @@ class VirtualMachineBasic(SQLModel, table=True):
     devices_pci: list["VirtualMachineDevicePci"] = Relationship(back_populates="vm")
     devices_disk_file: list["VirtualMachineDeviceDiskFile"] = Relationship(back_populates="vm")
     devices_disk_block: list["VirtualMachineDeviceDiskBlock"] = Relationship(back_populates="vm")
+    devices_disk_iscsi: list["VirtualMachineDeviceDiskIscsi"] = Relationship(back_populates="vm")
     devices_network: list["VirtualMachineDeviceNetwork"] = Relationship(back_populates="vm")
     xml_template_id: int | None = Field(nullable=False, foreign_key="virtualmachinexmltemplate.id")
     xml_template: VirtualMachineXmlTemplate | None = Relationship()
@@ -142,6 +143,18 @@ class VirtualMachineDeviceDiskBlock(SQLModel, table=True):
     vm_id: int | None = Field(foreign_key="virtualmachine.id")
     vm: VirtualMachineBasic | None = Relationship(back_populates="devices_disk_block")
 
+class VirtualMachineDeviceDiskIscsi(SQLModel, table=True):
+    __tablename__ = "virtualmachinedevicediskiscsi"
+    id: int | None = Field(primary_key=True)
+    name: str = Field(nullable=False)
+    disk_bus: str = Field(nullable=False) # VirtualMachineBasicDiskBusTypes
+    device_type: str = Field(nullable=False) # VirtualMachineBasicDiskDeviceTypes
+    iscsi_name: str = Field(nullable=False) # iqn.2013-07.com.example:iscsi-nopool/2
+    iscsi_host: str = Field(nullable=False) # example.com
+    iscsi_port: int = Field(nullable=False, default=3260) # 3260
+    vm_id: int | None = Field(foreign_key="virtualmachine.id")
+    vm: VirtualMachineBasic | None = Relationship(back_populates="devices_disk_iscsi")
+
 class VirtualMachineDeviceNetwork(SQLModel, table=True):
     __tablename__ = "virtualmachinedevicenetwork"
     id: int | None = Field(primary_key=True)
@@ -163,6 +176,7 @@ class VirtualMachineBasicLibvirtConfig:
         vm_dict["devices_pci"] = [device.model_dump() for device in self.vm.devices_pci]
         vm_dict["devices_disk_file"] = [device.model_dump() for device in self.vm.devices_disk_file]
         vm_dict["devices_disk_block"] = [device.model_dump() for device in self.vm.devices_disk_block]
+        vm_dict["devices_disk_iscsi"] = [device.model_dump() for device in self.vm.devices_disk_iscsi]
         vm_dict["devices_network"] = [device.model_dump() for device in self.vm.devices_network]
         return vm_dict
 
@@ -213,6 +227,22 @@ class VirtualMachineBasicLibvirtConfig:
             </disk>"""
         return devices_disk_block
     
+    def gen_devices_disk_iscsi(self):
+        devices_disk_iscsi = ""
+        # Calculate starting index based on number of file and block disks
+        start_index = len(self.vm.devices_disk_file) + len(self.vm.devices_disk_block)
+        for index, device in enumerate(self.vm.devices_disk_iscsi):
+            targetdev = "sd"
+            targetdev += chr(ord("a") + start_index + index)
+            devices_disk_iscsi += f"""<disk type='network' device='{device.device_type}'>
+            <driver name='qemu' type='raw'/>
+            <source protocol='iscsi' name='{device.iscsi_name}'>
+              <host name='{device.iscsi_host}' port='{device.iscsi_port}'/>
+            </source>
+            <target dev='{targetdev}' bus='{device.disk_bus}'/>
+            </disk>"""
+        return devices_disk_iscsi
+    
     def gen_devices_network(self):
         devices_network = ""
         for index, device in enumerate(self.vm.devices_network):
@@ -244,6 +274,7 @@ class VirtualMachineBasicLibvirtConfig:
         xml = xml.replace("{%qemu_path%}", "/usr/bin/qemu-system-x86_64")
         xml = xml.replace("{%devices_disk_file%}", self.gen_devices_disk_file())
         xml = xml.replace("{%devices_disk_block%}", self.gen_devices_disk_block())
+        xml = xml.replace("{%devices_disk_iscsi%}", self.gen_devices_disk_iscsi())
         xml = xml.replace("{%devices_network%}", self.gen_devices_network())
         xml = xml.replace("{%graphics%}", self.gen_graphics())
         xml = xml.replace("{%video%}", self.gen_video())

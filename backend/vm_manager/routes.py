@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from auth_manager.auth import check_auth
 from db.database import get_session
 from sqlmodel import select
-from .vmbasic import VirtualMachineBasic, VirtualMachineBasicTemplate, OvmfPath, VirtualMachineBasicLibvirtConfig, VirtualMachineXmlTemplate, VirtualMachineDeviceDiskFile, VirtualMachineDeviceNetwork, VirtualMachineDeviceDiskBlock, get_vm_networks
+from .vmbasic import VirtualMachineBasic, VirtualMachineBasicTemplate, OvmfPath, VirtualMachineBasicLibvirtConfig, VirtualMachineXmlTemplate, VirtualMachineDeviceDiskFile, VirtualMachineDeviceNetwork, VirtualMachineDeviceDiskBlock, VirtualMachineDeviceDiskIscsi, get_vm_networks
 
 router = APIRouter()
 
@@ -189,6 +189,28 @@ async def api_vm_delete_device_disk_block(vm_id: int, device_id: int, username: 
 @router.post("/{vm_id}/devices/disk-block")
 async def api_vm_add_device_disk_block(vm_id: int, device: VirtualMachineDeviceDiskBlock, username: str = Depends(check_auth)):
     print(f"Adding disk device {device}")
+    with get_session() as session:
+        vm = session.exec(select(VirtualMachineBasic).where(VirtualMachineBasic.id == vm_id)).first()
+        if vm is None:
+            raise HTTPException(status_code=404, detail="VM not found")
+        device.vm = vm
+        session.add(device)
+        session.commit()
+        return device
+    return
+
+@router.delete("/{vm_id}/devices/disk-iscsi/{device_id}")
+async def api_vm_delete_device_disk_iscsi(vm_id: int, device_id: int, username: str = Depends(check_auth)):
+    with get_session() as session:
+        disk_device_iscsi = session.exec(select(VirtualMachineDeviceDiskIscsi).where(VirtualMachineDeviceDiskIscsi.id == device_id)).first()
+        if disk_device_iscsi is None:
+            raise HTTPException(status_code=404, detail="iSCSI disk device not found")
+        session.delete(disk_device_iscsi)
+        session.commit()
+
+@router.post("/{vm_id}/devices/disk-iscsi")
+async def api_vm_add_device_disk_iscsi(vm_id: int, device: VirtualMachineDeviceDiskIscsi, username: str = Depends(check_auth)):
+    print(f"Adding iSCSI disk device {device}")
     with get_session() as session:
         vm = session.exec(select(VirtualMachineBasic).where(VirtualMachineBasic.id == vm_id)).first()
         if vm is None:

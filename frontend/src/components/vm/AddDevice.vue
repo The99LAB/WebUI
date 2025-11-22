@@ -36,6 +36,18 @@
           <q-item
             clickable
             v-ripple
+            :active="option === 'disk-iscsi'"
+            @click="option = 'disk-iscsi'"
+            active-class="my-menu-link"
+          >
+            <q-item-section avatar>
+              <q-icon color="primary" name="mdi-harddisk" />
+            </q-item-section>
+            <q-item-section>Disk (iSCSI)</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
             :active="option === 'network'"
             @click="option = 'network'"
             active-class="my-menu-link"
@@ -92,6 +104,44 @@
           hint="Enter the path to the physical disk device"
         />
       </q-card-section>
+      <q-card-section v-if="diskiscsiLayout">
+        <q-input filled v-model="diskIscsiName" label="Disk Name" class="q-pb-md" />
+        <q-select
+          class="q-pb-md"
+          v-model="diskIscsiBusType"
+          :options="diskBusTypes"
+          label="Disk Bus"
+          filled
+        />
+        <q-select
+          class="q-pb-md"
+          v-model="diskIscsiDeviceType"
+          :options="diskDeviceTypes"
+          label="Device Type"
+          filled
+        />
+        <q-input
+          filled
+          v-model="diskIscsiIqn"
+          label="iSCSI Name (IQN)"
+          hint="e.g., iqn.2013-07.com.example:iscsi-nopool/2"
+          class="q-pb-md"
+        />
+        <q-input
+          filled
+          v-model="diskIscsiHost"
+          label="iSCSI Host"
+          hint="e.g., example.com or 192.168.1.100"
+          class="q-pb-md"
+        />
+        <q-input
+          filled
+          v-model="diskIscsiPort"
+          type="number"
+          label="iSCSI Port"
+          hint="Default: 3260"
+        />
+      </q-card-section>
       <q-card-section v-if="networkLayout" class="q-py-none">
         <q-select
           class="q-pb-md"
@@ -128,6 +178,9 @@
         <q-btn color="primary" icon="check" flat @click="diskBlockCreate" v-if="diskblockLayout">
           <ToolTip content="Create" />
         </q-btn>
+        <q-btn color="primary" icon="check" flat @click="diskIscsiCreate" v-if="diskiscsiLayout">
+          <ToolTip content="Create" />
+        </q-btn>
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -155,6 +208,7 @@ export default {
       optionLayout: true,
       diskfileLayout: false,
       diskblockLayout: false,
+      diskiscsiLayout: false,
       networkLayout: false,
       networkInterfaceTypes: [
         { label: 'VirtIO', value: 'virtio' },
@@ -184,6 +238,12 @@ export default {
       diskBlockBusType: 'virtio',
       diskBlockDeviceType: 'disk',
       diskBlockSource: '',
+      diskIscsiName: '',
+      diskIscsiBusType: 'virtio',
+      diskIscsiDeviceType: 'disk',
+      diskIscsiIqn: '',
+      diskIscsiHost: '',
+      diskIscsiPort: 3260,
     }
   },
   emits: ['finished'],
@@ -199,6 +259,7 @@ export default {
       this.optionLayout = true
       this.diskfileLayout = false
       this.diskblockLayout = false
+      this.diskiscsiLayout = false
       this.networkLayout = false
     },
     optionChose() {
@@ -216,6 +277,15 @@ export default {
         this.diskBlockDeviceType = this.diskDeviceTypes[0]
         this.diskBlockName = ''
         this.diskBlockSource = ''
+      } else if (this.option === 'disk-iscsi') {
+        this.optionLayout = false
+        this.diskiscsiLayout = true
+        this.diskIscsiBusType = this.diskBusTypes[0]
+        this.diskIscsiDeviceType = this.diskDeviceTypes[0]
+        this.diskIscsiName = ''
+        this.diskIscsiIqn = ''
+        this.diskIscsiHost = ''
+        this.diskIscsiPort = 3260
       } else if (this.option === 'network') {
         this.optionLayout = false
         this.networkLayout = true
@@ -290,6 +360,38 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show('Error creating block device', [
+            error.response?.data?.detail || error.message,
+          ])
+        })
+    },
+    diskIscsiCreate() {
+      if (this.diskIscsiIqn == '') {
+        this.$refs.errorDialog.show('Error', ['iSCSI IQN is required'])
+        return
+      }
+      if (this.diskIscsiHost == '') {
+        this.$refs.errorDialog.show('Error', ['iSCSI Host is required'])
+        return
+      }
+      if (this.diskIscsiName == '') {
+        this.$refs.errorDialog.show('Error', ['Disk name is required'])
+        return
+      }
+      this.$api
+        .post('/vm/' + this.vmid + '/devices/disk-iscsi', {
+          name: this.diskIscsiName,
+          disk_bus: this.diskIscsiBusType.value,
+          device_type: this.diskIscsiDeviceType.value,
+          iscsi_name: this.diskIscsiIqn,
+          iscsi_host: this.diskIscsiHost,
+          iscsi_port: this.diskIscsiPort,
+        })
+        .then(() => {
+          this.layout = false
+          this.$emit('finished')
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show('Error creating iSCSI device', [
             error.response?.data?.detail || error.message,
           ])
         })
