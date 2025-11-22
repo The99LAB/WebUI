@@ -243,6 +243,20 @@ class VirtualMachineBasicLibvirtConfig:
             </disk>"""
         return devices_disk_iscsi
     
+    def gen_devices_pci(self):
+        devices_pci = ""
+        for device in self.vm.devices_pci:
+            rom_section = ""
+            if device.rom_use and device.rom_file:
+                rom_section = f"<rom file='{device.rom_file}'/>"
+            devices_pci += f"""<hostdev mode='subsystem' type='pci' managed='yes'>
+            <source>
+                <address domain='0x{device.domain}' bus='0x{device.bus}' slot='0x{device.slot}' function='0x{device.function}'/>
+            </source>
+            {rom_section}
+        </hostdev>"""
+        return devices_pci
+    
     def gen_devices_network(self):
         devices_network = ""
         for index, device in enumerate(self.vm.devices_network):
@@ -275,6 +289,7 @@ class VirtualMachineBasicLibvirtConfig:
         xml = xml.replace("{%devices_disk_file%}", self.gen_devices_disk_file())
         xml = xml.replace("{%devices_disk_block%}", self.gen_devices_disk_block())
         xml = xml.replace("{%devices_disk_iscsi%}", self.gen_devices_disk_iscsi())
+        xml = xml.replace("{%devices_pci%}", self.gen_devices_pci())
         xml = xml.replace("{%devices_network%}", self.gen_devices_network())
         xml = xml.replace("{%graphics%}", self.gen_graphics())
         xml = xml.replace("{%video%}", self.gen_video())

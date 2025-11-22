@@ -48,6 +48,18 @@
           <q-item
             clickable
             v-ripple
+            :active="option === 'pci'"
+            @click="option = 'pci'"
+            active-class="my-menu-link"
+          >
+            <q-item-section avatar>
+              <q-icon color="primary" name="bi-pci-card" />
+            </q-item-section>
+            <q-item-section>PCI Device</q-item-section>
+          </q-item>
+          <q-item
+            clickable
+            v-ripple
             :active="option === 'network'"
             @click="option = 'network'"
             active-class="my-menu-link"
@@ -142,6 +154,19 @@
           hint="Default: 3260"
         />
       </q-card-section>
+      <q-card-section v-if="pciLayout">
+        <q-input filled v-model="pciName" label="Device Name" class="q-pb-md" />
+        <HostPcieDevicesList ref="hostPcieDevicesList" />
+        <q-checkbox left-label v-model="pciCustomRom" label="Use Custom ROM" class="q-mt-md" />
+        <q-input
+          v-if="pciCustomRom"
+          filled
+          v-model="pciRomFile"
+          label="ROM File Path"
+          hint="e.g., /path/to/custom.rom"
+          class="q-mt-md"
+        />
+      </q-card-section>
       <q-card-section v-if="networkLayout" class="q-py-none">
         <q-select
           class="q-pb-md"
@@ -181,6 +206,9 @@
         <q-btn color="primary" icon="check" flat @click="diskIscsiCreate" v-if="diskiscsiLayout">
           <ToolTip content="Create" />
         </q-btn>
+        <q-btn color="primary" icon="check" flat @click="pciCreate" v-if="pciLayout">
+          <ToolTip content="Create" />
+        </q-btn>
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -197,6 +225,7 @@
 <script>
 import ToolTip from '../ToolTip.vue'
 import DirectoryList from '../host-manager/DirectoryList.vue'
+import HostPcieDevicesList from '../host-manager/HostPcieDevicesList.vue'
 import ErrorDialog from '../ErrorDialog.vue'
 
 export default {
@@ -209,6 +238,7 @@ export default {
       diskfileLayout: false,
       diskblockLayout: false,
       diskiscsiLayout: false,
+      pciLayout: false,
       networkLayout: false,
       networkInterfaceTypes: [
         { label: 'VirtIO', value: 'virtio' },
@@ -244,12 +274,16 @@ export default {
       diskIscsiIqn: '',
       diskIscsiHost: '',
       diskIscsiPort: 3260,
+      pciName: '',
+      pciCustomRom: false,
+      pciRomFile: '',
     }
   },
   emits: ['finished'],
   components: {
     ToolTip,
     DirectoryList,
+    HostPcieDevicesList,
     ErrorDialog,
   },
   methods: {
@@ -260,6 +294,7 @@ export default {
       this.diskfileLayout = false
       this.diskblockLayout = false
       this.diskiscsiLayout = false
+      this.pciLayout = false
       this.networkLayout = false
     },
     optionChose() {
@@ -286,6 +321,12 @@ export default {
         this.diskIscsiIqn = ''
         this.diskIscsiHost = ''
         this.diskIscsiPort = 3260
+      } else if (this.option === 'pci') {
+        this.optionLayout = false
+        this.pciLayout = true
+        this.pciName = ''
+        this.pciCustomRom = false
+        this.pciRomFile = ''
       } else if (this.option === 'network') {
         this.optionLayout = false
         this.networkLayout = true
@@ -392,6 +433,37 @@ export default {
         })
         .catch((error) => {
           this.$refs.errorDialog.show('Error creating iSCSI device', [
+            error.response?.data?.detail || error.message,
+          ])
+        })
+    },
+    pciCreate() {
+      if (this.pciName == '') {
+        this.$refs.errorDialog.show('Error', ['Device name is required'])
+        return
+      }
+      const selectedPciDevice = this.$refs.hostPcieDevicesList.getSelectedPciDevice()
+      if (!selectedPciDevice) {
+        this.$refs.errorDialog.show('Error', ['Please select a PCI device'])
+        return
+      }
+      this.$api
+        .post('/vm/' + this.vmid + '/devices/pci', {
+          name: this.pciName,
+          domain: selectedPciDevice.domain,
+          bus: selectedPciDevice.bus,
+          slot: selectedPciDevice.slot,
+          function: selectedPciDevice.function,
+          rom_use: this.pciCustomRom,
+          rom_file: this.pciCustomRom ? this.pciRomFile : null,
+          last_pci_id: null,
+        })
+        .then(() => {
+          this.layout = false
+          this.$emit('finished')
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show('Error creating PCI device', [
             error.response?.data?.detail || error.message,
           ])
         })

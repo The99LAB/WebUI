@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from auth_manager.auth import check_auth
 from db.database import get_session
 from sqlmodel import select
-from .vmbasic import VirtualMachineBasic, VirtualMachineBasicTemplate, OvmfPath, VirtualMachineBasicLibvirtConfig, VirtualMachineXmlTemplate, VirtualMachineDeviceDiskFile, VirtualMachineDeviceNetwork, VirtualMachineDeviceDiskBlock, VirtualMachineDeviceDiskIscsi, get_vm_networks
+from .vmbasic import VirtualMachineBasic, VirtualMachineBasicTemplate, OvmfPath, VirtualMachineBasicLibvirtConfig, VirtualMachineXmlTemplate, VirtualMachineDeviceDiskFile, VirtualMachineDeviceNetwork, VirtualMachineDeviceDiskBlock, VirtualMachineDeviceDiskIscsi, VirtualMachineDevicePci, get_vm_networks
 
 router = APIRouter()
 
@@ -211,6 +211,28 @@ async def api_vm_delete_device_disk_iscsi(vm_id: int, device_id: int, username: 
 @router.post("/{vm_id}/devices/disk-iscsi")
 async def api_vm_add_device_disk_iscsi(vm_id: int, device: VirtualMachineDeviceDiskIscsi, username: str = Depends(check_auth)):
     print(f"Adding iSCSI disk device {device}")
+    with get_session() as session:
+        vm = session.exec(select(VirtualMachineBasic).where(VirtualMachineBasic.id == vm_id)).first()
+        if vm is None:
+            raise HTTPException(status_code=404, detail="VM not found")
+        device.vm = vm
+        session.add(device)
+        session.commit()
+        return device
+    return
+
+@router.delete("/{vm_id}/devices/pci/{device_id}")
+async def api_vm_delete_device_pci(vm_id: int, device_id: int, username: str = Depends(check_auth)):
+    with get_session() as session:
+        pci_device = session.exec(select(VirtualMachineDevicePci).where(VirtualMachineDevicePci.id == device_id)).first()
+        if pci_device is None:
+            raise HTTPException(status_code=404, detail="PCI device not found")
+        session.delete(pci_device)
+        session.commit()
+
+@router.post("/{vm_id}/devices/pci")
+async def api_vm_add_device_pci(vm_id: int, device: VirtualMachineDevicePci, username: str = Depends(check_auth)):
+    print(f"Adding PCI device {device}")
     with get_session() as session:
         vm = session.exec(select(VirtualMachineBasic).where(VirtualMachineBasic.id == vm_id)).first()
         if vm is None:

@@ -277,6 +277,21 @@
                       <q-item
                         clickable
                         v-ripple
+                        v-for="(pci, index) in vm.devices_pci"
+                        :key="pci"
+                        :active="pci.active"
+                        @click="deviceSelect('pci', pci, index)"
+                      >
+                        <q-item-section thumbnail class="q-pr-sm">
+                          <q-icon color="primary" name="mdi-expansion-card" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label> PCI Device {{ index + 1 }} </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        v-ripple
                         v-for="(network, index) in vm.devices_network"
                         :key="network"
                         :active="network.active"
@@ -355,6 +370,25 @@
                     />
                     <q-input label="iSCSI Host" v-model="selectedDevice.iscsi_host" readonly />
                     <q-input label="iSCSI Port" v-model="selectedDevice.iscsi_port" readonly />
+                  </div>
+                  <div v-if="selectedDeviceType == 'pci'">
+                    <q-input label="Name" v-model="selectedDevice.name" readonly />
+                    <q-input label="Domain" v-model="selectedDevice.domain" readonly />
+                    <q-input label="Bus" v-model="selectedDevice.bus" readonly />
+                    <q-input label="Slot" v-model="selectedDevice.slot" readonly />
+                    <q-input label="Function" v-model="selectedDevice.function" readonly />
+                    <q-checkbox
+                      label="Use Custom ROM"
+                      v-model="selectedDevice.rom_use"
+                      readonly
+                      disable
+                    />
+                    <q-input
+                      v-if="selectedDevice.rom_use"
+                      label="ROM File"
+                      v-model="selectedDevice.rom_file"
+                      readonly
+                    />
                   </div>
                   <div v-if="selectedDeviceType == 'network'">
                     <q-input label="Type" v-model="selectedDevice.type" readonly />
@@ -491,6 +525,9 @@ export default {
         this.vm.devices_disk_iscsi.forEach((element) => {
           element.active = false
         })
+        this.vm.devices_pci.forEach((element) => {
+          element.active = false
+        })
       }
     },
     deviceSelect(type, device, index = null) {
@@ -508,6 +545,10 @@ export default {
         this.resetSelectedDevices()
         this.vm.devices_disk_iscsi[index].active = true
         this.selectedDeviceTitle = 'Disk (iSCSI) ' + (index + 1)
+      } else if (this.selectedDeviceType == 'pci') {
+        this.resetSelectedDevices()
+        this.vm.devices_pci[index].active = true
+        this.selectedDeviceTitle = 'PCI Device ' + (index + 1)
       } else if (this.selectedDeviceType == 'network') {
         this.resetSelectedDevices()
         this.vm.devices_network[index].active = true
@@ -561,6 +602,15 @@ export default {
           .catch((error) => {
             this.$refs.errorDialog.show('Error deleting iSCSI disk device', [error.response.data.detail])
           })
+      } else if (this.selectedDeviceType == 'pci') {
+        this.$api
+          .delete('/vm/' + this.vmid + '/devices/pci/' + this.selectedDevice.id)
+          .then(() => {
+            this.getdata()
+          })
+          .catch((error) => {
+            this.$refs.errorDialog.show('Error deleting PCI device', [error.response.data.detail])
+          })
       }
     },
     deviceAdd() {
@@ -568,7 +618,7 @@ export default {
     },
     generalApply() {
       this.$api
-        .put('/vm/' + this.vmid, 
+        .put('/vm/' + this.vmid,
           {
             name: this.vm.name,
             status: null,
