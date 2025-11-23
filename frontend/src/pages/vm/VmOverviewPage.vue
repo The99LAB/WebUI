@@ -10,6 +10,7 @@
       v-model:selected="selectedVm"
       hide-selected-banner
       :pagination="pagination"
+      hide-bottom
     >
       <template v-slot:top-right>
         <q-btn flat round color="primary" icon="refresh" @click="getData">
@@ -103,6 +104,7 @@ import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 import ToolTip from 'src/components/ToolTip.vue'
 import EditVmDialog from 'src/components/vm/EditVmDialog.vue'
 import { convertsize } from 'src/utils/convertsize'
+import { useApi } from 'src/composables/useApi'
 
 export default {
   data() {
@@ -162,7 +164,7 @@ export default {
       tableLoading: false,
       selectedVm: [],
       pagination: {
-        rowsPerPage: 15,
+        rowsPerPage: 0,
         sortBy: 'id',
         descending: false,
 
@@ -187,10 +189,12 @@ export default {
       this.tableLoading = true
       var selectedvmid = this.selectedVm.length > 0 ? this.selectedVm[0].id : null
       this.selectedVm = []
-      this.$api
-        .get('/vm/')
-        .then((response) => {
-          this.data = response.data
+
+      const api = useApi()
+      api.vm
+        .getAll()
+        .then((data) => {
+          this.data = data
           console.log(this.data)
           this.tableLoading = false
           if (selectedvmid) {
@@ -198,7 +202,7 @@ export default {
           }
         })
         .catch((error) => {
-          this.$refs.errorDialog.show('Error loading VM templates', [error.response.data.detail])
+          this.$refs.errorDialog.show('Error loading VMs', [error?.detail || error.message])
           this.tableLoading = false
         })
     },
@@ -206,43 +210,47 @@ export default {
       this.$refs.editVmDialog.show(this.selectedVm[0].id)
     },
     startVm() {
-      this.$api
-        .post(`/vm/${this.selectedVm[0].id}/start`)
+      const api = useApi()
+      api.vm
+        .start(this.selectedVm[0].id)
         .then(() => {
           this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show('Error starting VM', [error.response.data.detail])
+          this.$refs.errorDialog.show('Error starting VM', [error?.detail || error.message])
         })
     },
     shutdownVm() {
-      this.$api
-        .post(`/vm/${this.selectedVm[0].id}/shutdown`)
+      const api = useApi()
+      api.vm
+        .shutdown(this.selectedVm[0].id)
         .then(() => {
           this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show('Error shutting down VM', [error.response.data.detail])
+          this.$refs.errorDialog.show('Error shutting down VM', [error?.detail || error.message])
         })
     },
     forcestopVm() {
-      this.$api
-        .post(`/vm/${this.selectedVm[0].id}/forcestop`)
+      const api = useApi()
+      api.vm
+        .forcestop(this.selectedVm[0].id)
         .then(() => {
           this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show('Error stopping VM', [error.response.data.detail])
+          this.$refs.errorDialog.show('Error stopping VM', [error?.detail || error.message])
         })
     },
     resetVm() {
-      this.$api
-        .post(`/vm/${this.selectedVm[0].id}/reset`)
+      const api = useApi()
+      api.vm
+        .reset(this.selectedVm[0].id)
         .then(() => {
           this.getData()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show('Error resetting VM', [error.response.data.detail])
+          this.$refs.errorDialog.show('Error resetting VM', [error?.detail || error.message])
         })
     },
     removeVm() {
@@ -250,13 +258,14 @@ export default {
         'Remove VM',
         ['Are you sure you want to remove the selected VM?'],
         () => {
-          this.$api
-            .delete(`/vm/${this.selectedVm[0].id}`)
+          const api = useApi()
+          api.vm
+            .delete(this.selectedVm[0].id)
             .then(() => {
               this.getData()
             })
             .catch((error) => {
-              this.$refs.errorDialog.show('Error removing VM', [error.response.data.detail])
+              this.$refs.errorDialog.show('Error removing VM', [error?.detail || error.message])
             })
         },
       )

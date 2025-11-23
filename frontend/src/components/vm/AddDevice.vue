@@ -168,6 +168,7 @@
         />
       </q-card-section>
       <q-card-section v-if="networkLayout" class="q-py-none">
+        <q-input filled v-model="networkName" label="Network Name" class="q-pb-md" />
         <q-select
           class="q-pb-md"
           v-model="networkSource"
@@ -227,6 +228,7 @@ import ToolTip from '../ToolTip.vue'
 import DirectoryList from '../host-manager/DirectoryList.vue'
 import HostPcieDevicesList from '../host-manager/HostPcieDevicesList.vue'
 import ErrorDialog from '../ErrorDialog.vue'
+import { useApi } from 'src/composables/useApi'
 
 export default {
   data() {
@@ -247,6 +249,7 @@ export default {
       ],
       networkInterfaceType: 'virtio',
       networkSource: '',
+      networkName: '',
       networkCustomMac: false,
       networkCustomMacAddress: '52:54:00:a8:7e:c9',
       libvirtNetworks: [{ label: 'default', value: 'default' }],
@@ -296,6 +299,7 @@ export default {
       this.diskiscsiLayout = false
       this.pciLayout = false
       this.networkLayout = false
+      this.networkName = ''
     },
     optionChose() {
       if (this.option === 'disk-file') {
@@ -332,30 +336,60 @@ export default {
         this.networkLayout = true
         this.networkGetList()
         this.networkInterfaceType = this.networkInterfaceTypes[0]
+        this.networkName = ''
       }
     },
     networkGetList() {
-      this.$api.get('/vm/networks').then((res) => {
-        this.libvirtNetworks = res.data
-        for (let i = 0; i < this.libvirtNetworks.length; i++) {
-          this.libvirtNetworks[i].label = this.libvirtNetworks[i].name
-          this.libvirtNetworks[i].value = this.libvirtNetworks[i].name
-        }
-        if (this.libvirtNetworks.length > 0) {
-          this.networkSource = this.libvirtNetworks[0]
-        }
-      })
+      const api = useApi()
+      api.vm.getNetworks()
+        .then((data) => {
+          this.libvirtNetworks = data.map(net => ({
+            label: net.name,
+            value: net.name,
+            ...net
+          }))
+          if (this.libvirtNetworks.length > 0) {
+            this.networkSource = this.libvirtNetworks[0]
+          }
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show('Error loading networks', [error?.detail || error.message])
+        })
     },
     networkCreate() {
-      this.$api
-        .post('/vm/' + this.vmid + '/devices/network', {
-          libvirt_name: this.networkSource.value,
-          type: this.networkInterfaceType.value,
-          mac: this.networkCustomMac ? this.networkCustomMacAddress : null,
+      if (this.networkName == '') {
+        this.$refs.errorDialog.show('Error', ['Network name is required'])
+        return
+      }
+
+      const api = useApi()
+
+      // Fetch current VM state
+      api.vm.get(this.vmid)
+        .then((vm) => {
+          // Add new network device
+          const newDevice = {
+            name: this.networkName,
+            libvirt_name: this.networkSource.value,
+            type: this.networkInterfaceType.value,
+            mac: this.networkCustomMac ? this.networkCustomMacAddress : null,
+          }
+
+          const updatedVm = JSON.parse(JSON.stringify(vm))
+          delete updatedVm.status
+          updatedVm.devices_network.push(newDevice)
+
+          // Update VM with new device
+          return api.vm.update(this.vmid, updatedVm)
         })
         .then(() => {
           this.layout = false
           this.$emit('finished')
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show('Error adding network device', [
+            error?.detail || error.message,
+          ])
         })
     },
     diskCreate() {
@@ -367,16 +401,35 @@ export default {
         this.$refs.errorDialog.show('Error', ['Disk name is required'])
         return
       }
-      this.$api
-        .post('/vm/' + this.vmid + '/devices/disk-file', {
-          name: this.diskFileName,
-          disk_bus: this.diskFileBusType.value,
-          device_type: this.diskFileDeviceType.value,
-          disk_source_file: this.diskFileSource,
+
+      const api = useApi()
+
+      // Fetch current VM state
+      api.vm.get(this.vmid)
+        .then((vm) => {
+          // Add new disk file device
+          const newDevice = {
+            name: this.diskFileName,
+            disk_bus: this.diskFileBusType.value,
+            device_type: this.diskFileDeviceType.value,
+            disk_source_file: this.diskFileSource,
+          }
+
+          const updatedVm = JSON.parse(JSON.stringify(vm))
+          delete updatedVm.status
+          updatedVm.devices_disk_file.push(newDevice)
+
+          // Update VM with new device
+          return api.vm.update(this.vmid, updatedVm)
         })
         .then(() => {
           this.layout = false
           this.$emit('finished')
+        })
+        .catch((error) => {
+          this.$refs.errorDialog.show('Error adding disk device', [
+            error?.detail || error.message,
+          ])
         })
     },
     diskBlockCreate() {
@@ -388,20 +441,34 @@ export default {
         this.$refs.errorDialog.show('Error', ['Disk name is required'])
         return
       }
-      this.$api
-        .post('/vm/' + this.vmid + '/devices/disk-block', {
-          name: this.diskBlockName,
-          disk_bus: this.diskBlockBusType.value,
-          device_type: this.diskBlockDeviceType.value,
-          disk_source_block: this.diskBlockSource,
+
+      const api = useApi()
+
+      // Fetch current VM state
+      api.vm.get(this.vmid)
+        .then((vm) => {
+          // Add new disk block device
+          const newDevice = {
+            name: this.diskBlockName,
+            disk_bus: this.diskBlockBusType.value,
+            device_type: this.diskBlockDeviceType.value,
+            disk_source_dev: this.diskBlockSource,
+          }
+
+          const updatedVm = JSON.parse(JSON.stringify(vm))
+          delete updatedVm.status
+          updatedVm.devices_disk_block.push(newDevice)
+
+          // Update VM with new device
+          return api.vm.update(this.vmid, updatedVm)
         })
         .then(() => {
           this.layout = false
           this.$emit('finished')
         })
         .catch((error) => {
-          this.$refs.errorDialog.show('Error creating block device', [
-            error.response?.data?.detail || error.message,
+          this.$refs.errorDialog.show('Error adding block device', [
+            error?.detail || error.message,
           ])
         })
     },
@@ -418,22 +485,36 @@ export default {
         this.$refs.errorDialog.show('Error', ['Disk name is required'])
         return
       }
-      this.$api
-        .post('/vm/' + this.vmid + '/devices/disk-iscsi', {
-          name: this.diskIscsiName,
-          disk_bus: this.diskIscsiBusType.value,
-          device_type: this.diskIscsiDeviceType.value,
-          iscsi_name: this.diskIscsiIqn,
-          iscsi_host: this.diskIscsiHost,
-          iscsi_port: this.diskIscsiPort,
+
+      const api = useApi()
+
+      // Fetch current VM state
+      api.vm.get(this.vmid)
+        .then((vm) => {
+          // Add new iSCSI disk device
+          const newDevice = {
+            name: this.diskIscsiName,
+            disk_bus: this.diskIscsiBusType.value,
+            device_type: this.diskIscsiDeviceType.value,
+            iscsi_name: this.diskIscsiIqn,
+            iscsi_host: this.diskIscsiHost,
+            iscsi_port: this.diskIscsiPort,
+          }
+
+          const updatedVm = JSON.parse(JSON.stringify(vm))
+          delete updatedVm.status
+          updatedVm.devices_disk_iscsi.push(newDevice)
+
+          // Update VM with new device
+          return api.vm.update(this.vmid, updatedVm)
         })
         .then(() => {
           this.layout = false
           this.$emit('finished')
         })
         .catch((error) => {
-          this.$refs.errorDialog.show('Error creating iSCSI device', [
-            error.response?.data?.detail || error.message,
+          this.$refs.errorDialog.show('Error adding iSCSI device', [
+            error?.detail || error.message,
           ])
         })
     },
@@ -447,24 +528,33 @@ export default {
         this.$refs.errorDialog.show('Error', ['Please select a PCI device'])
         return
       }
-      this.$api
-        .post('/vm/' + this.vmid + '/devices/pci', {
-          name: this.pciName,
-          domain: selectedPciDevice.domain,
-          bus: selectedPciDevice.bus,
-          slot: selectedPciDevice.slot,
-          function: selectedPciDevice.function,
-          rom_use: this.pciCustomRom,
-          rom_file: this.pciCustomRom ? this.pciRomFile : null,
-          last_pci_id: null,
+
+      const api = useApi()
+
+      // Fetch current VM state
+      api.vm.get(this.vmid)
+        .then((vm) => {
+          // Add new PCI device
+          const newDevice = {
+            pci_address: `${selectedPciDevice.domain}:${selectedPciDevice.bus}:${selectedPciDevice.slot}.${selectedPciDevice.function}`,
+            rom_use: this.pciCustomRom,
+            rom_file: this.pciCustomRom ? this.pciRomFile : null,
+          }
+
+          const updatedVm = JSON.parse(JSON.stringify(vm))
+          delete updatedVm.status
+          updatedVm.devices_pci.push(newDevice)
+
+          // Update VM with new device
+          return api.vm.update(this.vmid, updatedVm)
         })
         .then(() => {
           this.layout = false
           this.$emit('finished')
         })
         .catch((error) => {
-          this.$refs.errorDialog.show('Error creating PCI device', [
-            error.response?.data?.detail || error.message,
+          this.$refs.errorDialog.show('Error adding PCI device', [
+            error?.detail || error.message,
           ])
         })
     },

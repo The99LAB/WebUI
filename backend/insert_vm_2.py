@@ -24,6 +24,7 @@ if __name__ == "__main__":
     )
 
     network_device = VirtualMachineDeviceNetwork(
+        name="Default Network",
         libvirt_name="default",
         type=VirtualMachineBasicNetworkTypes.VIRTIO
     )

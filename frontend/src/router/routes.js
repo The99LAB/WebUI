@@ -70,6 +70,12 @@ const routes = [
         meta: { title: 'VM Templates' },
       },
       {
+        path: 'vm/networks',
+        name: 'vm/networks',
+        component: () => import('pages/vm/NetworkOverviewPage.vue'),
+        meta: { title: 'VM Networks' },
+      },
+      {
         path: 'docker-manager/containers',
         name: 'docker-manager/containers',
         component: () => import('pages/docker-manager/ContainersPage.vue'),

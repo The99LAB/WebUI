@@ -12,6 +12,7 @@ def get_session():
 def create_db_and_tables():
     from network_manager.interface import read, apply
     from vm_manager.vmbasic import init_ovmfpaths
+    from vm_manager.network import LibvirtNetworkBridge, LibvirtNetworkCustom
     from settings.settings import SettingModel, OvmfPathModel
     from notifications.notification_manager import NotificationModel
     SQLModel.metadata.create_all(engine)

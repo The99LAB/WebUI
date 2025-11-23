@@ -91,7 +91,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vm/templates": {
+    "/api/vm/templates/basic": {
         parameters: {
             query?: never;
             header?: never;
@@ -99,7 +99,7 @@ export interface paths {
             cookie?: never;
         };
         /** Api Vm Templates Get */
-        get: operations["api_vm_templates_get_api_vm_templates_get"];
+        get: operations["api_vm_templates_get_api_vm_templates_basic_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -108,7 +108,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vm/templates/{template_id}": {
+    "/api/vm/templates/basic/{template_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -116,7 +116,7 @@ export interface paths {
             cookie?: never;
         };
         /** Api Vm Template Get */
-        get: operations["api_vm_template_get_api_vm_templates__template_id__get"];
+        get: operations["api_vm_template_get_api_vm_templates_basic__template_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -125,7 +125,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vm/xml_templates": {
+    "/api/vm/templates/xml": {
         parameters: {
             query?: never;
             header?: never;
@@ -133,7 +133,7 @@ export interface paths {
             cookie?: never;
         };
         /** Api Vm Xml Templates Get */
-        get: operations["api_vm_xml_templates_get_api_vm_xml_templates_get"];
+        get: operations["api_vm_xml_templates_get_api_vm_templates_xml_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -142,7 +142,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vm/xml_templates/{xml_template_id}": {
+    "/api/vm/templates/xml/{xml_template_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -150,7 +150,7 @@ export interface paths {
             cookie?: never;
         };
         /** Api Vm Xml Template Get */
-        get: operations["api_vm_xml_template_get_api_vm_xml_templates__xml_template_id__get"];
+        get: operations["api_vm_xml_template_get_api_vm_templates_xml__xml_template_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -159,18 +159,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/vm/networks": {
+    "/api/vm/network/bridge": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Api Vm Networks Get */
-        get: operations["api_vm_networks_get_api_vm_networks_get"];
+        /** Api Vm Network Bridges Get */
+        get: operations["api_vm_network_bridges_get_api_vm_network_bridge_get"];
         put?: never;
-        post?: never;
+        /** Api Vm Network Bridge Create */
+        post: operations["api_vm_network_bridge_create_api_vm_network_bridge_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vm/network/bridge/{bridge_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Vm Network Bridge Get */
+        get: operations["api_vm_network_bridge_get_api_vm_network_bridge__bridge_id__get"];
+        /** Api Vm Network Bridge Update */
+        put: operations["api_vm_network_bridge_update_api_vm_network_bridge__bridge_id__put"];
+        post?: never;
+        /** Api Vm Network Bridge Delete */
+        delete: operations["api_vm_network_bridge_delete_api_vm_network_bridge__bridge_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vm/network/custom": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Vm Network Customs Get */
+        get: operations["api_vm_network_customs_get_api_vm_network_custom_get"];
+        put?: never;
+        /** Api Vm Network Custom Create */
+        post: operations["api_vm_network_custom_create_api_vm_network_custom_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vm/network/custom/{custom_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Vm Network Custom Get */
+        get: operations["api_vm_network_custom_get_api_vm_network_custom__custom_id__get"];
+        /** Api Vm Network Custom Update */
+        put: operations["api_vm_network_custom_update_api_vm_network_custom__custom_id__put"];
+        post?: never;
+        /** Api Vm Network Custom Delete */
+        delete: operations["api_vm_network_custom_delete_api_vm_network_custom__custom_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -274,176 +331,6 @@ export interface paths {
         put?: never;
         /** Api Vm Reset */
         post: operations["api_vm_reset_api_vm__vm_id__reset_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/network/{device_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Api Vm Delete Device Network */
-        delete: operations["api_vm_delete_device_network_api_vm__vm_id__devices_network__device_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/network": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Api Vm Add Device Network */
-        post: operations["api_vm_add_device_network_api_vm__vm_id__devices_network_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/disk-file/{device_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Api Vm Delete Device Disk File */
-        delete: operations["api_vm_delete_device_disk_file_api_vm__vm_id__devices_disk_file__device_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/disk-file": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Api Vm Add Device Disk File */
-        post: operations["api_vm_add_device_disk_file_api_vm__vm_id__devices_disk_file_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/disk-block/{device_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Api Vm Delete Device Disk Block */
-        delete: operations["api_vm_delete_device_disk_block_api_vm__vm_id__devices_disk_block__device_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/disk-block": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Api Vm Add Device Disk Block */
-        post: operations["api_vm_add_device_disk_block_api_vm__vm_id__devices_disk_block_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/disk-iscsi/{device_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Api Vm Delete Device Disk Iscsi */
-        delete: operations["api_vm_delete_device_disk_iscsi_api_vm__vm_id__devices_disk_iscsi__device_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/disk-iscsi": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Api Vm Add Device Disk Iscsi */
-        post: operations["api_vm_add_device_disk_iscsi_api_vm__vm_id__devices_disk_iscsi_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/pci/{device_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Api Vm Delete Device Pci */
-        delete: operations["api_vm_delete_device_pci_api_vm__vm_id__devices_pci__device_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/vm/{vm_id}/devices/pci": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Api Vm Add Device Pci */
-        post: operations["api_vm_add_device_pci_api_vm__vm_id__devices_pci_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1216,6 +1103,68 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** LibvirtNetworkBridge */
+        LibvirtNetworkBridge: {
+            /** Id */
+            id: number | null;
+            /** Name */
+            name: string;
+            /** Bridge Name */
+            bridge_name: string;
+            /** Description */
+            description: string;
+            /**
+             * Autostart
+             * @default false
+             */
+            autostart: boolean;
+        };
+        /** LibvirtNetworkBridgeResponse */
+        LibvirtNetworkBridgeResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Bridge Name */
+            bridge_name: string;
+            /** Description */
+            description: string | null;
+            /** Autostart */
+            autostart: boolean;
+            /** Active */
+            active: boolean;
+        };
+        /** LibvirtNetworkCustom */
+        LibvirtNetworkCustom: {
+            /** Id */
+            id: number | null;
+            /** Name */
+            name: string;
+            /** Xml Content */
+            xml_content: string;
+            /** Description */
+            description: string;
+            /**
+             * Autostart
+             * @default false
+             */
+            autostart: boolean;
+        };
+        /** LibvirtNetworkCustomResponse */
+        LibvirtNetworkCustomResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Xml Content */
+            xml_content: string;
+            /** Description */
+            description: string | null;
+            /** Autostart */
+            autostart: boolean;
+            /** Active */
+            active: boolean;
+        };
         /** NetworkInterfaceBridge */
         NetworkInterfaceBridge: {
             /** Id */
@@ -1263,19 +1212,14 @@ export interface components {
             /** Error Type */
             type: string;
         };
-        /** VirtualMachineBasic */
-        VirtualMachineBasic: {
+        /** VirtualMachineBasicTemplate */
+        VirtualMachineBasicTemplate: {
             /** Id */
             id: number | null;
             /** Name */
             name: string;
-            /** Status */
-            status: string;
-            /**
-             * Autostart
-             * @default false
-             */
-            autostart: boolean;
+            /** Description */
+            description: string;
             /** Cpu Model */
             cpu_model: string;
             /** Vcpu */
@@ -1307,96 +1251,267 @@ export interface components {
             memory_max: number;
             /** Video Type */
             video_type: string;
+            /** Vdisk Required */
+            vdisk_required: boolean;
+            /** Vdisk Type */
+            vdisk_type: string;
+            /** Vdisk Bus Type */
+            vdisk_bus_type: string;
+            /** Vdisk Min Size */
+            vdisk_min_size: number;
+            /** Network Interface Required */
+            network_interface_required: boolean;
+            /** Network Interface Type */
+            network_interface_type: string;
+            /** Cdrom Required */
+            cdrom_required: boolean;
+            /** Cdrom Bus Type */
+            cdrom_bus_type: string;
             /** Xml Template Id */
             xml_template_id: number | null;
         };
-        /** VirtualMachineDeviceDiskBlock */
-        VirtualMachineDeviceDiskBlock: {
-            /** Id */
-            id: number | null;
-            /** Name */
-            name: string;
-            /** Disk Bus */
-            disk_bus: string;
-            /** Device Type */
-            device_type: string;
-            /** Disk Source Block */
-            disk_source_block: string;
-            /** Vm Id */
-            vm_id: number | null;
-        };
-        /** VirtualMachineDeviceDiskFile */
-        VirtualMachineDeviceDiskFile: {
-            /** Id */
-            id: number | null;
-            /** Name */
-            name: string;
-            /** Disk Bus */
-            disk_bus: string;
-            /** Device Type */
-            device_type: string;
-            /** Disk Source File */
-            disk_source_file: string;
-            /** Vm Id */
-            vm_id: number | null;
-        };
-        /** VirtualMachineDeviceDiskIscsi */
-        VirtualMachineDeviceDiskIscsi: {
-            /** Id */
-            id: number | null;
-            /** Name */
-            name: string;
-            /** Disk Bus */
-            disk_bus: string;
-            /** Device Type */
-            device_type: string;
-            /** Iscsi Name */
-            iscsi_name: string;
-            /** Iscsi Host */
-            iscsi_host: string;
-            /**
-             * Iscsi Port
-             * @default 3260
-             */
-            iscsi_port: number;
-            /** Vm Id */
-            vm_id: number | null;
-        };
-        /** VirtualMachineDeviceNetwork */
-        VirtualMachineDeviceNetwork: {
-            /** Id */
-            id: number | null;
-            /** Libvirt Name */
-            libvirt_name: string;
-            /** Type */
-            type: string;
-            /** Mac */
-            mac: string;
-            /** Vm Id */
-            vm_id: number | null;
-        };
-        /** VirtualMachineDevicePci */
-        VirtualMachineDevicePci: {
+        /**
+         * VirtualMachineDeviceDiskBlockRequest
+         * @description Request model for block-based disk device
+         */
+        VirtualMachineDeviceDiskBlockRequest: {
             /** Id */
             id?: number | null;
-            /** Name */
-            name: string;
-            /** Domain */
-            domain: string;
-            /** Bus */
-            bus: string;
-            /** Slot */
-            slot: string;
-            /** Function */
-            function: string;
-            /** Rom Use */
-            rom_use: boolean;
-            /** Rom File */
-            rom_file: string;
-            /** Last Pci Id */
-            last_pci_id: string;
             /** Vm Id */
             vm_id?: number | null;
+            /** Device Type */
+            device_type: string;
+            /** Name */
+            name: string;
+            /** Disk Bus */
+            disk_bus: string;
+            /** Disk Source Dev */
+            disk_source_dev: string;
+        };
+        /**
+         * VirtualMachineDeviceDiskFileRequest
+         * @description Request model for file-based disk device
+         */
+        VirtualMachineDeviceDiskFileRequest: {
+            /** Id */
+            id?: number | null;
+            /** Vm Id */
+            vm_id?: number | null;
+            /** Device Type */
+            device_type: string;
+            /** Name */
+            name: string;
+            /** Disk Bus */
+            disk_bus: string;
+            /** Disk Source File */
+            disk_source_file: string;
+        };
+        /**
+         * VirtualMachineDeviceDiskIscsiRequest
+         * @description Request model for iSCSI disk device
+         */
+        VirtualMachineDeviceDiskIscsiRequest: {
+            /** Id */
+            id?: number | null;
+            /** Vm Id */
+            vm_id?: number | null;
+            /** Device Type */
+            device_type: string;
+            /** Name */
+            name: string;
+            /** Disk Bus */
+            disk_bus: string;
+            /** Iscsi Host */
+            iscsi_host: string;
+            /** Iscsi Name */
+            iscsi_name: string;
+            /** Iscsi Port */
+            iscsi_port: number;
+        };
+        /**
+         * VirtualMachineDeviceNetworkRequest
+         * @description Request model for network device
+         */
+        VirtualMachineDeviceNetworkRequest: {
+            /** Id */
+            id?: number | null;
+            /** Vm Id */
+            vm_id?: number | null;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Libvirt Name */
+            libvirt_name: string;
+            /** Mac */
+            mac?: string | null;
+        };
+        /**
+         * VirtualMachineDevicePciRequest
+         * @description Request model for PCI device
+         */
+        VirtualMachineDevicePciRequest: {
+            /** Id */
+            id?: number | null;
+            /** Vm Id */
+            vm_id?: number | null;
+            /** Pci Address */
+            pci_address: string;
+        };
+        /**
+         * VirtualMachineResponse
+         * @description Response model for VM with computed status field
+         */
+        VirtualMachineResponse: {
+            /** Id */
+            id: number | null;
+            /** Name */
+            name: string;
+            /** Status */
+            status?: string | null;
+            /** Autostart */
+            autostart: boolean;
+            /** Cpu Model */
+            cpu_model: string;
+            /** Vcpu */
+            vcpu: number;
+            /** Vcpu Current */
+            vcpu_current: number;
+            /** Vcpu Custom Topology */
+            vcpu_custom_topology: boolean;
+            /** Vcpu Custom Topology Sockets */
+            vcpu_custom_topology_sockets: number | null;
+            /** Vcpu Custom Topology Dies */
+            vcpu_custom_topology_dies: number | null;
+            /** Vcpu Custom Topology Cores */
+            vcpu_custom_topology_cores: number | null;
+            /** Vcpu Custom Topology Threads */
+            vcpu_custom_topology_threads: number | null;
+            /** Machine Type */
+            machine_type: string;
+            /** Bios Type */
+            bios_type: string;
+            /** Ovmf Path Id */
+            ovmf_path_id: number | null;
+            /** Memory Min */
+            memory_min: number;
+            /** Memory Max */
+            memory_max: number;
+            /** Video Type */
+            video_type: string;
+            /** Xml Template Id */
+            xml_template_id: number | null;
+            /**
+             * Devices Pci
+             * @default []
+             */
+            devices_pci: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Devices Disk File
+             * @default []
+             */
+            devices_disk_file: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Devices Disk Block
+             * @default []
+             */
+            devices_disk_block: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Devices Disk Iscsi
+             * @default []
+             */
+            devices_disk_iscsi: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Devices Network
+             * @default []
+             */
+            devices_network: {
+                [key: string]: unknown;
+            }[];
+        };
+        /**
+         * VirtualMachineUpdateRequest
+         * @description Request model for updating a VM
+         */
+        VirtualMachineUpdateRequest: {
+            /** Name */
+            name: string;
+            /** Autostart */
+            autostart: boolean;
+            /** Cpu Model */
+            cpu_model: string;
+            /** Vcpu */
+            vcpu: number;
+            /** Vcpu Current */
+            vcpu_current: number;
+            /** Vcpu Custom Topology */
+            vcpu_custom_topology: boolean;
+            /** Vcpu Custom Topology Sockets */
+            vcpu_custom_topology_sockets: number | null;
+            /** Vcpu Custom Topology Dies */
+            vcpu_custom_topology_dies: number | null;
+            /** Vcpu Custom Topology Cores */
+            vcpu_custom_topology_cores: number | null;
+            /** Vcpu Custom Topology Threads */
+            vcpu_custom_topology_threads: number | null;
+            /** Machine Type */
+            machine_type: string;
+            /** Bios Type */
+            bios_type: string;
+            /** Ovmf Path Id */
+            ovmf_path_id: number | null;
+            /** Memory Min */
+            memory_min: number;
+            /** Memory Max */
+            memory_max: number;
+            /** Video Type */
+            video_type: string;
+            /** Xml Template Id */
+            xml_template_id: number | null;
+            /**
+             * Devices Pci
+             * @default []
+             */
+            devices_pci: components["schemas"]["VirtualMachineDevicePciRequest"][];
+            /**
+             * Devices Disk File
+             * @default []
+             */
+            devices_disk_file: components["schemas"]["VirtualMachineDeviceDiskFileRequest"][];
+            /**
+             * Devices Disk Block
+             * @default []
+             */
+            devices_disk_block: components["schemas"]["VirtualMachineDeviceDiskBlockRequest"][];
+            /**
+             * Devices Disk Iscsi
+             * @default []
+             */
+            devices_disk_iscsi: components["schemas"]["VirtualMachineDeviceDiskIscsiRequest"][];
+            /**
+             * Devices Network
+             * @default []
+             */
+            devices_network: components["schemas"]["VirtualMachineDeviceNetworkRequest"][];
+        };
+        /** VirtualMachineXmlTemplate */
+        VirtualMachineXmlTemplate: {
+            /** Id */
+            id: number | null;
+            /** Name */
+            name: string;
+            /** Content */
+            content: string;
+            /** Description */
+            description: string;
         };
     };
     responses: never;
@@ -1595,7 +1710,7 @@ export interface operations {
             };
         };
     };
-    api_vm_templates_get_api_vm_templates_get: {
+    api_vm_templates_get_api_vm_templates_basic_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1610,12 +1725,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VirtualMachineBasicTemplate"][];
                 };
             };
         };
     };
-    api_vm_template_get_api_vm_templates__template_id__get: {
+    api_vm_template_get_api_vm_templates_basic__template_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1632,7 +1747,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VirtualMachineBasicTemplate"];
                 };
             };
             /** @description Validation Error */
@@ -1646,7 +1761,7 @@ export interface operations {
             };
         };
     };
-    api_vm_xml_templates_get_api_vm_xml_templates_get: {
+    api_vm_xml_templates_get_api_vm_templates_xml_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1661,12 +1776,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VirtualMachineXmlTemplate"][];
                 };
             };
         };
     };
-    api_vm_xml_template_get_api_vm_xml_templates__xml_template_id__get: {
+    api_vm_xml_template_get_api_vm_templates_xml__xml_template_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1683,7 +1798,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VirtualMachineXmlTemplate"];
                 };
             };
             /** @description Validation Error */
@@ -1697,7 +1812,7 @@ export interface operations {
             };
         };
     };
-    api_vm_networks_get_api_vm_networks_get: {
+    api_vm_network_bridges_get_api_vm_network_bridge_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1712,7 +1827,287 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["LibvirtNetworkBridgeResponse"][];
+                };
+            };
+        };
+    };
+    api_vm_network_bridge_create_api_vm_network_bridge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LibvirtNetworkBridge"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibvirtNetworkBridge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_vm_network_bridge_get_api_vm_network_bridge__bridge_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bridge_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibvirtNetworkBridgeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_vm_network_bridge_update_api_vm_network_bridge__bridge_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bridge_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LibvirtNetworkBridge"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibvirtNetworkBridge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_vm_network_bridge_delete_api_vm_network_bridge__bridge_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bridge_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_vm_network_customs_get_api_vm_network_custom_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibvirtNetworkCustomResponse"][];
+                };
+            };
+        };
+    };
+    api_vm_network_custom_create_api_vm_network_custom_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LibvirtNetworkCustom"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibvirtNetworkCustom"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_vm_network_custom_get_api_vm_network_custom__custom_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                custom_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibvirtNetworkCustomResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_vm_network_custom_update_api_vm_network_custom__custom_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                custom_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LibvirtNetworkCustom"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibvirtNetworkCustom"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_vm_network_custom_delete_api_vm_network_custom__custom_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                custom_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1732,7 +2127,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VirtualMachineResponse"][];
                 };
             };
         };
@@ -1754,7 +2149,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VirtualMachineResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1779,7 +2174,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VirtualMachineBasic"];
+                "application/json": components["schemas"]["VirtualMachineUpdateRequest"];
             };
         };
         responses: {
@@ -1789,7 +2184,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VirtualMachineResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1937,341 +2332,6 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_delete_device_network_api_vm__vm_id__devices_network__device_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-                device_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_add_device_network_api_vm__vm_id__devices_network_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VirtualMachineDeviceNetwork"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_delete_device_disk_file_api_vm__vm_id__devices_disk_file__device_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-                device_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_add_device_disk_file_api_vm__vm_id__devices_disk_file_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VirtualMachineDeviceDiskFile"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_delete_device_disk_block_api_vm__vm_id__devices_disk_block__device_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-                device_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_add_device_disk_block_api_vm__vm_id__devices_disk_block_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VirtualMachineDeviceDiskBlock"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_delete_device_disk_iscsi_api_vm__vm_id__devices_disk_iscsi__device_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-                device_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_add_device_disk_iscsi_api_vm__vm_id__devices_disk_iscsi_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VirtualMachineDeviceDiskIscsi"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_delete_device_pci_api_vm__vm_id__devices_pci__device_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-                device_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    api_vm_add_device_pci_api_vm__vm_id__devices_pci_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                vm_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VirtualMachineDevicePci"];
-            };
-        };
         responses: {
             /** @description Successful Response */
             200: {

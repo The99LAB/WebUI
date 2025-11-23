@@ -391,6 +391,7 @@
                     />
                   </div>
                   <div v-if="selectedDeviceType == 'network'">
+                    <q-input label="Name" v-model="selectedDevice.name" readonly />
                     <q-input label="Type" v-model="selectedDevice.type" readonly />
                     <q-input
                       label="Libvirt network"
@@ -463,6 +464,7 @@ import ErrorDialog from 'src/components/ErrorDialog.vue'
 import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 import ToolTip from 'src/components/ToolTip.vue'
 import AddDevice from './AddDevice.vue'
+import { useApi } from 'src/composables/useApi'
 
 export default {
   data() {
@@ -501,14 +503,16 @@ export default {
       this.selectedDeviceType = null
       this.selectedDeviceTitle = null
       this.resetSelectedDevices()
-      this.$api
-        .get('/vm/' + this.vmid)
-        .then((response) => {
+
+      const api = useApi()
+      api.vm
+        .get(this.vmid)
+        .then((data) => {
           this.layout = true
-          this.vm = JSON.parse(JSON.stringify(response.data))
+          this.vm = JSON.parse(JSON.stringify(data))
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error)
+          this.$refs.errorDialog.show(error?.detail || error.message)
         })
     },
     resetSelectedDevices() {
@@ -564,87 +568,50 @@ export default {
       )
     },
     deleteDevice() {
+      // Remove device from local VM object
       if (this.selectedDeviceType == 'network') {
-        this.$api
-          .delete('/vm/' + this.vmid + '/devices/network/' + this.selectedDevice.id)
-          .then(() => {
-            this.getdata()
-          })
-          .catch((error) => {
-            this.$refs.errorDialog.show('Error deleting network device', [
-              error.response.data.detail,
-            ])
-          })
+        const index = this.vm.devices_network.findIndex(d => d.id === this.selectedDevice.id)
+        if (index > -1) this.vm.devices_network.splice(index, 1)
       } else if (this.selectedDeviceType == 'disk-file') {
-        this.$api
-          .delete('/vm/' + this.vmid + '/devices/disk-file/' + this.selectedDevice.id)
-          .then(() => {
-            this.getdata()
-          })
-          .catch((error) => {
-            this.$refs.errorDialog.show('Error deleting disk device', [error.response.data.detail])
-          })
+        const index = this.vm.devices_disk_file.findIndex(d => d.id === this.selectedDevice.id)
+        if (index > -1) this.vm.devices_disk_file.splice(index, 1)
       } else if (this.selectedDeviceType == 'disk-block') {
-        this.$api
-          .delete('/vm/' + this.vmid + '/devices/disk-block/' + this.selectedDevice.id)
-          .then(() => {
-            this.getdata()
-          })
-          .catch((error) => {
-            this.$refs.errorDialog.show('Error deleting disk device', [error.response.data.detail])
-          })
+        const index = this.vm.devices_disk_block.findIndex(d => d.id === this.selectedDevice.id)
+        if (index > -1) this.vm.devices_disk_block.splice(index, 1)
       } else if (this.selectedDeviceType == 'disk-iscsi') {
-        this.$api
-          .delete('/vm/' + this.vmid + '/devices/disk-iscsi/' + this.selectedDevice.id)
-          .then(() => {
-            this.getdata()
-          })
-          .catch((error) => {
-            this.$refs.errorDialog.show('Error deleting iSCSI disk device', [error.response.data.detail])
-          })
+        const index = this.vm.devices_disk_iscsi.findIndex(d => d.id === this.selectedDevice.id)
+        if (index > -1) this.vm.devices_disk_iscsi.splice(index, 1)
       } else if (this.selectedDeviceType == 'pci') {
-        this.$api
-          .delete('/vm/' + this.vmid + '/devices/pci/' + this.selectedDevice.id)
-          .then(() => {
-            this.getdata()
-          })
-          .catch((error) => {
-            this.$refs.errorDialog.show('Error deleting PCI device', [error.response.data.detail])
-          })
+        const index = this.vm.devices_pci.findIndex(d => d.id === this.selectedDevice.id)
+        if (index > -1) this.vm.devices_pci.splice(index, 1)
       }
+
+      // Save the changes
+      this.generalApply()
     },
     deviceAdd() {
       this.$refs.addDevice.show(this.vmid)
     },
     generalApply() {
-      this.$api
-        .put('/vm/' + this.vmid,
-          {
-            name: this.vm.name,
-            status: null,
-            autostart: this.vm.autostart,
-            cpu_model: this.vm.cpu_model,
-            vcpu: this.vm.vcpu,
-            vcpu_current: this.vm.vcpu_current,
-            vcpu_custom_topology: this.vm.vcpu_custom_topology,
-            vcpu_custom_topology_sockets: this.vm.vcpu_custom_topology_sockets,
-            vcpu_custom_topology_dies: this.vm.vcpu_custom_topology_dies,
-            vcpu_custom_topology_cores: this.vm.vcpu_custom_topology_cores,
-            vcpu_custom_topology_threads: this.vm.vcpu_custom_topology_threads,
-            machine_type: this.vm.machine_type,
-            bios_type: this.vm.bios_type,
-            ovmf_path_id: this.vm.ovmf_path_id,
-            memory_min: this.vm.memory_min,
-            memory_max: this.vm.memory_max,
-            video_type: this.vm.video_type,
-            xml_template_id: this.vm.xml_template_id,
-          }
-        )
+      const api = useApi()
+      // Remove 'active' properties added by UI and 'status' from the VM object
+      const vmToSend = JSON.parse(JSON.stringify(this.vm))
+      delete vmToSend.status
+
+      // Remove UI-only properties from devices
+      vmToSend.devices_network?.forEach(d => delete d.active)
+      vmToSend.devices_disk_file?.forEach(d => delete d.active)
+      vmToSend.devices_disk_block?.forEach(d => delete d.active)
+      vmToSend.devices_disk_iscsi?.forEach(d => delete d.active)
+      vmToSend.devices_pci?.forEach(d => delete d.active)
+
+      api.vm
+        .update(this.vmid, vmToSend)
         .then(() => {
           this.getdata()
         })
         .catch((error) => {
-          this.$refs.errorDialog.show(error)
+          this.$refs.errorDialog.show(error?.detail || error.message)
         })
     },
     calculateCpu() {
