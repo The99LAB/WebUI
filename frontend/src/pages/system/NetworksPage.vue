@@ -72,6 +72,7 @@ import ErrorDialog from 'src/components/ErrorDialog.vue'
 import EditEthernet from 'src/components/system/EditEthernet.vue'
 import EditBridge from 'src/components/system/EditBridge.vue'
 import ToolTip from 'src/components/ToolTip.vue'
+import { useApi } from 'src/composables/useApi'
 
 export default {
   data() {
@@ -177,57 +178,57 @@ export default {
     ToolTip,
   },
   methods: {
-    getData() {
+    async getData() {
       this.ethernetSelected = []
       this.bridgeSelected = []
       this.ethernetTableLoading = true
       this.bridgesTableLoading = true
 
-      this.$api
-        .get('/system/networks/ethernets')
-        .then((response) => {
-          console.log(response.data)
-          this.ethernets = response.data.map((network) => {
-            return {
-              ...network,
-              ipv4_method: network.ipv4_method || 'N/A',
-              ipv4_address: network.ipv4_address || 'N/A',
-              ipv4_prefix: network.ipv4_prefix || 'N/A',
-              ipv4_gateway: network.ipv4_gateway || 'N/A',
-              ipv4_address_prefix:
-                network.ipv4_address && network.ipv4_prefix
-                  ? `${network.ipv4_address}/${network.ipv4_prefix}`
-                  : 'N/A',
-            }
-          })
-          this.ethernetTableLoading = false
-        })
-        .catch((error) => {
-          this.$refs.errorDialog.show('Error loading ethernets', [error.response.data.detail])
-        })
+      const api = useApi()
 
-      this.$api
-        .get('/system/networks/bridges')
-        .then((response) => {
-          console.log(response.data)
-          this.bridges = response.data.map((bridge) => {
-            return {
-              ...bridge,
-              ipv4_method: bridge.ipv4_method || 'N/A',
-              ipv4_address: bridge.ipv4_address || 'N/A',
-              ipv4_prefix: bridge.ipv4_prefix || 'N/A',
-              ipv4_gateway: bridge.ipv4_gateway || 'N/A',
-              ipv4_address_prefix:
-                bridge.ipv4_address && bridge.ipv4_prefix
-                  ? `${bridge.ipv4_address}/${bridge.ipv4_prefix}`
-                  : 'N/A',
-            }
-          })
-          this.bridgesTableLoading = false
+      try {
+        const ethernetData = await api.networks.getEthernets()
+        this.ethernets = ethernetData.map((network) => {
+          return {
+            ...network,
+            ipv4_method: network.ipv4_method || 'N/A',
+            ipv4_address: network.ipv4_address || 'N/A',
+            ipv4_prefix: network.ipv4_prefix || 'N/A',
+            ipv4_gateway: network.ipv4_gateway || 'N/A',
+            ipv4_dns: Array.isArray(network.ipv4_dns) ? network.ipv4_dns.join(',') : (network.ipv4_dns || 'N/A'),
+            ipv4_address_prefix:
+              network.ipv4_address && network.ipv4_prefix
+                ? `${network.ipv4_address}/${network.ipv4_prefix}`
+                : 'N/A',
+          }
         })
-        .catch((error) => {
-          this.$refs.errorDialog.show('Error loading bridges', [error.response.data.detail])
+        this.ethernetTableLoading = false
+      } catch (error) {
+        this.$refs.errorDialog.show('Error loading ethernets', [error?.detail || error.message])
+        this.ethernetTableLoading = false
+      }
+
+      try {
+        const bridgeData = await api.networks.getBridges()
+        this.bridges = bridgeData.map((bridge) => {
+          return {
+            ...bridge,
+            ipv4_method: bridge.ipv4_method || 'N/A',
+            ipv4_address: bridge.ipv4_address || 'N/A',
+            ipv4_prefix: bridge.ipv4_prefix || 'N/A',
+            ipv4_gateway: bridge.ipv4_gateway || 'N/A',
+            ipv4_dns: Array.isArray(bridge.ipv4_dns) ? bridge.ipv4_dns.join(',') : (bridge.ipv4_dns || 'N/A'),
+            ipv4_address_prefix:
+              bridge.ipv4_address && bridge.ipv4_prefix
+                ? `${bridge.ipv4_address}/${bridge.ipv4_prefix}`
+                : 'N/A',
+          }
         })
+        this.bridgesTableLoading = false
+      } catch (error) {
+        this.$refs.errorDialog.show('Error loading bridges', [error?.detail || error.message])
+        this.bridgesTableLoading = false
+      }
     },
   },
   mounted() {

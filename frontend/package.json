@@ -12,12 +12,14 @@
     "test": "echo \"No test specified\" && exit 0",
     "dev": "quasar dev",
     "build": "quasar build",
-    "postinstall": "quasar prepare"
+    "postinstall": "quasar prepare",
+    "generate-api-types": "openapi-typescript http://172.16.254.11:8000/openapi.json -o ./src/types/api.d.ts"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
     "axios": "^1.2.1",
     "jwt-decode": "^4.0.0",
+    "openapi-fetch": "^0.13.3",
     "pinia": "^2.0.11",
     "quasar": "^2.16.0",
     "vue": "^3.4.18",
@@ -32,6 +34,7 @@
     "eslint": "^9.14.0",
     "eslint-plugin-vue": "^9.30.0",
     "globals": "^15.12.0",
+    "openapi-typescript": "^7.4.4",
     "postcss": "^8.4.14",
     "prettier": "^3.3.3",
     "vite-plugin-checker": "^0.8.0"
