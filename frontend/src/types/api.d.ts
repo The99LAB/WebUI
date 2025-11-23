@@ -196,6 +196,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vm/network/bridge/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Api Vm Network Bridges Apply
+         * @description Apply all network bridge settings from the database to libvirt.
+         */
+        post: operations["api_vm_network_bridges_apply_api_vm_network_bridge_apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vm/network/custom": {
         parameters: {
             query?: never;
@@ -1119,6 +1139,19 @@ export interface components {
              */
             autostart: boolean;
         };
+        /** LibvirtNetworkBridgeApplyResponse */
+        LibvirtNetworkBridgeApplyResponse: {
+            /** Checked */
+            checked: number;
+            /** Removed */
+            removed: number;
+            /** Defined */
+            defined: number;
+            /** Started */
+            started: number;
+            /** Errors */
+            errors: string[];
+        };
         /** LibvirtNetworkBridgeResponse */
         LibvirtNetworkBridgeResponse: {
             /** Id */
@@ -1958,6 +1991,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_vm_network_bridges_apply_api_vm_network_bridge_apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibvirtNetworkBridgeApplyResponse"];
                 };
             };
         };

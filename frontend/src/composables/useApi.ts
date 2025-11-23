@@ -188,6 +188,12 @@ export function useApi() {
         return data
       },
 
+      async applyBridgeNetworks() {
+        const { data, error } = await client.POST('/api/vm/network/bridge/apply')
+        if (error) throw error
+        return data
+      },
+
       async getCustomNetworks() {
         const { data, error } = await client.GET('/api/vm/network/custom')
         if (error) throw error

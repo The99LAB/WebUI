@@ -6,6 +6,7 @@ from sqlmodel import select
 from .vmbasic import VirtualMachineBasic, VirtualMachineBasicTemplate, OvmfPath, VirtualMachineXmlTemplate, VirtualMachineDeviceDiskFile, VirtualMachineDeviceNetwork, VirtualMachineDeviceDiskBlock, VirtualMachineDeviceDiskIscsi, VirtualMachineDevicePci
 from .network import (
     LibvirtNetworkBridge,
+    LibvirtNetworkBridgeApplyResponse,
     LibvirtNetworkBridgeResponse,
     LibvirtNetworkCustom,
     LibvirtNetworkCustomResponse,
@@ -14,6 +15,7 @@ from .network import (
     update_network_bridge,
     delete_network_bridge,
     create_network_bridge,
+    apply_network_bridges,
     get_network_custom,
     get_network_custom_all,
     update_network_custom,
@@ -214,6 +216,16 @@ async def api_vm_network_bridge_delete(bridge_id: int, username: str = Depends(c
     if not success:
         raise HTTPException(status_code=404, detail="Network bridge not found")
     return
+
+
+@router.post("/network/bridge/apply", response_model=LibvirtNetworkBridgeApplyResponse)
+async def api_vm_network_bridges_apply(username: str = Depends(check_auth)):
+    """Apply all network bridge settings from the database to libvirt."""
+    try:
+        result = apply_network_bridges()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return result
 
 @router.get("/network/custom", response_model=list[LibvirtNetworkCustomResponse])
 async def api_vm_network_customs_get(username: str = Depends(check_auth)):

@@ -2,6 +2,7 @@ from sqlmodel import Field, SQLModel, select
 from pydantic import BaseModel, ConfigDict
 from db import get_session
 import libvirt
+from host_manager import libvirt_connection
 
 
 class LibvirtNetworkBridge(SQLModel, table=True):
@@ -22,6 +23,14 @@ class LibvirtNetworkBridgeResponse(BaseModel):
     autostart: bool
     active: bool
 
+
+class LibvirtNetworkBridgeApplyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    checked: int
+    removed: int
+    defined: int
+    started: int
+    errors: list[str]
 
 class LibvirtNetworkCustom(SQLModel, table=True):
     __tablename__ = "libvirtnetworkcustom"
@@ -47,15 +56,13 @@ def get_network_bridge(id: int) -> LibvirtNetworkBridgeResponse | None:
         statement = select(LibvirtNetworkBridge).where(LibvirtNetworkBridge.id == id)
         result = session.exec(statement).first()
         if result:
-            # Check if active in libvirt
-            conn = libvirt.open(None)
+            # Check if active in libvirt using shared connection
             try:
+                conn = libvirt_connection.connection
                 network = conn.networkLookupByName(result.name)
                 active = network.isActive() == 1
             except libvirt.libvirtError:
                 active = False
-            finally:
-                conn.close()
             return LibvirtNetworkBridgeResponse(
                 id=result.id,
                 name=result.name,
@@ -128,15 +135,13 @@ def get_network_custom(id: int) -> LibvirtNetworkCustomResponse | None:
         statement = select(LibvirtNetworkCustom).where(LibvirtNetworkCustom.id == id)
         result = session.exec(statement).first()
         if result:
-            # Check if active in libvirt
-            conn = libvirt.open(None)
+            # Check if active in libvirt using shared connection
             try:
+                conn = libvirt_connection.connection
                 network = conn.networkLookupByName(result.name)
                 active = network.isActive() == 1
             except libvirt.libvirtError:
                 active = False
-            finally:
-                conn.close()
             return LibvirtNetworkCustomResponse(
                 id=result.id,
                 name=result.name,
@@ -202,3 +207,95 @@ def delete_network_custom(id: int) -> bool:
             session.commit()
             return True
     return False
+
+
+def apply_network_bridges() -> LibvirtNetworkBridgeApplyResponse:
+    """Apply network bridge settings from the database to libvirt.
+
+    For every bridge entry in the database:
+    - If a libvirt network with the same name exists, destroy and undefine it.
+    - Define a new network XML for the bridge and register it with libvirt.
+    - If the DB entry has `autostart=True`, set autostart and start the network.
+
+    Returns a summary dict with counts and any errors encountered.
+    """
+    summary = {
+        "checked": 0,
+        "removed": 0,
+        "defined": 0,
+        "started": 0,
+        "errors": [],
+    }
+
+    try:
+        conn = libvirt_connection.connection
+    except Exception as e:
+        summary["errors"].append(f"failed-to-get-libvirt-connection:{e}")
+        return summary
+
+    with get_session() as session:
+            stmt = select(LibvirtNetworkBridge)
+            bridges = session.exec(stmt).all()
+            for b in bridges:
+                summary["checked"] += 1
+                # Remove existing definition if present
+                try:
+                    try:
+                        existing = conn.networkLookupByName(b.name)
+                    except libvirt.libvirtError:
+                        existing = None
+
+                    if existing is not None:
+                        try:
+                            if existing.isActive() == 1:
+                                existing.destroy()
+                        except libvirt.libvirtError as e:
+                            # record but continue
+                            summary["errors"].append(f"destroy:{b.name}:{e}")
+                        try:
+                            existing.undefine()
+                            summary["removed"] += 1
+                        except libvirt.libvirtError as e:
+                            summary["errors"].append(f"undefine:{b.name}:{e}")
+
+                    # Build network XML for a bridged network
+                    xml = (
+                        f"<network>"
+                        f"<name>{b.name}</name>"
+                        f"<forward mode='bridge'/>"
+                        f"<bridge name='{b.bridge_name}'/>"
+                        f"</network>"
+                    )
+
+                    try:
+                        net = conn.networkDefineXML(xml)
+                        if net is None:
+                            summary["errors"].append(f"define-failed:{b.name}")
+                        else:
+                            summary["defined"] += 1
+                            # Set autostart and start if requested
+                            if b.autostart:
+                                try:
+                                    net.setAutostart(1)
+                                except libvirt.libvirtError as e:
+                                    summary["errors"].append(f"set-autostart:{b.name}:{e}")
+                                try:
+                                    if net.isActive() != 1:
+                                        net.create()
+                                    summary["started"] += 1
+                                except libvirt.libvirtError as e:
+                                    summary["errors"].append(f"start:{b.name}:{e}")
+                    except libvirt.libvirtError as e:
+                        summary["errors"].append(f"defineXML:{b.name}:{e}")
+
+                except Exception as e:
+                    # Catch-all per-bridge to avoid aborting the whole operation
+                    summary["errors"].append(f"unexpected:{b.name}:{e}")
+                    continue
+    return LibvirtNetworkBridgeApplyResponse(
+        checked=summary["checked"],
+        removed=summary["removed"],
+        defined=summary["defined"],
+        started=summary["started"],
+        errors=summary["errors"],
+    )

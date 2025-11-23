@@ -35,6 +35,15 @@
         <q-btn
           flat
           round
+          color="primary"
+          icon="mdi-play-circle"
+          @click="applyBridgeNetworks"
+        >
+          <ToolTip content="Apply" />
+        </q-btn>
+        <q-btn
+          flat
+          round
           color="negative"
           icon="mdi-delete"
           :disable="networkBridgesSelected.length === 0"
@@ -99,7 +108,8 @@
   <q-dialog v-model="networkBridgeEditDialog">
     <q-card style="min-width: 70vw">
       <q-card-section class="row items-center q-pb-none">
-        <div class="text-h6">Edit bridge network '{{ editedBridge.name }}'</div>
+        <div v-if="editedBridge && editedBridge.id" class="text-h6">Edit bridge network '{{ editedBridge.name }}'</div>
+        <div v-else class="text-h6">Create bridge network</div>
         <q-space />
         <q-btn icon="close" flat round dense @click="networkBridgeEditDialog = false" />
       </q-card-section>
@@ -131,7 +141,8 @@
   <q-dialog v-model="networkCustomEditDialog">
     <q-card style="min-width: 70vw">
       <q-card-section class="row items-center q-pb-none">
-        <div class="text-h6">Edit custom network '{{ editedCustom.name }}'</div>
+        <div v-if="editedCustom && editedCustom.id" class="text-h6">Edit custom network '{{ editedCustom.name }}'</div>
+        <div v-else class="text-h6">Create custom network</div>
         <q-space />
         <q-btn icon="close" flat round dense @click="networkCustomEditDialog = false" />
       </q-card-section>
@@ -163,6 +174,33 @@
   <ErrorDialog ref="errorDialog" />
   <ConfirmDialog ref="confirmDialog" />
   <ToolTip ref="toolTip" />
+  <q-dialog v-model="applyResultDialog">
+    <q-card>
+      <q-card-section class="row items-center q-pb-none">
+        <div class="text-h6">Apply Result</div>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup @click="applyResultDialog = false" />
+      </q-card-section>
+      <q-separator color="transparent" spaced="lg" inset />
+      <q-card-section class="q-pt-none">
+        <div v-if="applyResult">
+          <div>Checked: {{ applyResult.checked }}</div>
+          <div>Removed: {{ applyResult.removed }}</div>
+          <div>Defined: {{ applyResult.defined }}</div>
+          <div>Started: {{ applyResult.started }}</div>
+          <div v-if="applyResult.errors && applyResult.errors.length">
+            <div class="q-mt-sm text-subtitle2">Errors:</div>
+            <ul>
+              <li v-for="(err, idx) in applyResult.errors" :key="idx">{{ err }}</li>
+            </ul>
+          </div>
+        </div>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Close" color="primary" @click="applyResultDialog = false" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script>
@@ -223,6 +261,8 @@ export default {
       ],
       networkBridgesLoading: false,
       networkBridgesSelected: [],
+      applyResultDialog: false,
+      applyResult: null,
 
       networkCustomEditDialog: false,
       editedCustom: {},
@@ -454,6 +494,28 @@ export default {
           this.$refs.errorDialog.show('Error loading VM templates', [error?.detail || error.message])
           this.networkCustomLoading = false
         })
+    },
+
+    applyBridgeNetworks() {
+      this.$refs.confirmDialog.show(
+        'Apply bridge networks',
+        ['This will remove any existing libvirt definitions for the bridges and (re)define and start networks configured in the database. Continue?'],
+        () => {
+          const api = useApi()
+          api.vm
+            .applyBridgeNetworks()
+            .then((res) => {
+              this.applyResult = res
+              this.applyResultDialog = true
+              // refresh data after applying
+              this.getData()
+            })
+            .catch((error) => {
+              this.$refs.errorDialog.show('Error applying bridge networks', [error?.detail || error.message])
+            })
+        },
+        () => {}
+      )
     },
 
   },
